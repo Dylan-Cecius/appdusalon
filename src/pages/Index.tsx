@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon } from "lucide-react";
+import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServiceCard from "@/components/ServiceCard";
 import CartSidebar from "@/components/CartSidebar";
 import StatsOverview from "@/components/StatsOverview";
+import TransactionsManager from "@/components/TransactionsManager";
+import CustomDateRangeStats from "@/components/CustomDateRangeStats";
 import BlockCalendar from "@/components/BlockCalendar";
 import Settings from "@/components/Settings";
 import EmailReports from "@/components/EmailReports";
@@ -23,6 +25,7 @@ interface CartItem {
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState("pos");
+  const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
   const [salonSettings, setSalonSettings] = useState({
     name: 'SalonPOS',
     logo: '', // URL du logo
@@ -236,7 +239,21 @@ const Index = () => {
 
           <TabsContent value="stats">
             <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Statistiques & Analyses</h2>
+                <Button 
+                  onClick={() => setIsTransactionsManagerOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Gérer les encaissements
+                </Button>
+              </div>
+              
               <StatsOverview stats={stats} />
+              
+              <CustomDateRangeStats />
               
               <Card className="p-6 bg-gradient-to-br from-card to-background">
                 <div className="text-center text-muted-foreground py-8">
@@ -257,6 +274,11 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <TransactionsManager 
+        isOpen={isTransactionsManagerOpen}
+        onClose={() => setIsTransactionsManagerOpen(false)}
+      />
     </div>
   );
 };
