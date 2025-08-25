@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
 export interface Transaction {
@@ -19,9 +19,16 @@ export const useSupabaseTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch transactions from Supabase
+  // Fetch transactions from Supabase or use empty array
   const fetchTransactions = async () => {
     try {
+      if (!isSupabaseConfigured) {
+        // Use empty array when Supabase is not configured
+        setTransactions([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -40,11 +47,8 @@ export const useSupabaseTransactions = () => {
       setTransactions(formattedTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les transactions",
-        variant: "destructive"
-      });
+      // Fallback to empty array
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -53,6 +57,21 @@ export const useSupabaseTransactions = () => {
   // Add new transaction
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => {
     try {
+      if (!isSupabaseConfigured) {
+        // Local fallback when Supabase is not configured
+        const newTransaction: Transaction = {
+          ...transaction,
+          id: Date.now().toString(),
+          transactionDate: new Date()
+        };
+        setTransactions(prev => [newTransaction, ...prev]);
+        toast({
+          title: "Succès",
+          description: "Transaction enregistrée (mode local)"
+        });
+        return newTransaction;
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .insert({

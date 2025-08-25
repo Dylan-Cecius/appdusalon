@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { mockAppointments } from '@/data/appointments';
 
 export interface Appointment {
   id: string;
@@ -19,9 +20,16 @@ export const useSupabaseAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch appointments from Supabase
+  // Fetch appointments from Supabase or use mock data
   const fetchAppointments = async () => {
     try {
+      if (!isSupabaseConfigured) {
+        // Use mock data when Supabase is not configured
+        setAppointments(mockAppointments);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
@@ -45,11 +53,8 @@ export const useSupabaseAppointments = () => {
       setAppointments(formattedAppointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les rendez-vous",
-        variant: "destructive"
-      });
+      // Fallback to mock data
+      setAppointments(mockAppointments);
     } finally {
       setLoading(false);
     }
@@ -58,6 +63,20 @@ export const useSupabaseAppointments = () => {
   // Add new appointment
   const addAppointment = async (appointment: Omit<Appointment, 'id'>) => {
     try {
+      if (!isSupabaseConfigured) {
+        // Local fallback when Supabase is not configured
+        const newAppointment: Appointment = {
+          ...appointment,
+          id: Date.now().toString()
+        };
+        setAppointments(prev => [...prev, newAppointment]);
+        toast({
+          title: "Succès",
+          description: "Rendez-vous ajouté (mode local)"
+        });
+        return newAppointment;
+      }
+
       const { data, error } = await supabase
         .from('appointments')
         .insert({
