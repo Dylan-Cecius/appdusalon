@@ -226,9 +226,7 @@ const BlockCalendar = () => {
                 )} style={{ gridTemplateColumns: '80px 1fr' }}>
                   {/* Time column - plus petite et couleur douce */}
                   <div className="flex items-center justify-center text-xs font-medium text-gray-600 bg-gray-100 border-r-2 border-gray-300 p-2 min-h-[70px]">
-                    <span className="writing-mode-vertical-lr transform rotate-180 text-center">
-                      {timeSlot}
-                    </span>
+                    {timeSlot}
                   </div>
                   
                   {/* Appointment column */}
