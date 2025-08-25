@@ -5,74 +5,141 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Send, FileText, Calendar, TrendingUp } from 'lucide-react';
+import { Mail, Send, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 
-interface EmailReportsProps {
-  statsData: {
-    todayRevenue: number;
-    todayClients: number;
-    monthlyRevenue: number;
-    monthlyClients: number;
+interface StatsData {
+  todayRevenue: number;
+  todayClients: number;
+  weeklyRevenue: number;
+  weeklyClients: number;
+  monthlyRevenue: number;
+  monthlyClients: number;
+  paymentStats: {
+    today: {
+      cash: number;
+      card: number;
+      cashPercent: number;
+      cardPercent: number;
+    };
+    weekly: {
+      cash: number;
+      card: number;
+      cashPercent: number;
+      cardPercent: number;
+    };
+    monthly: {
+      cash: number;
+      card: number;
+      cashPercent: number;
+      cardPercent: number;
+    };
   };
+}
+
+interface EmailReportsProps {
+  statsData: StatsData;
 }
 
 const EmailReports = ({ statsData }: EmailReportsProps) => {
   const [email, setEmail] = useState('');
-  const [reportType, setReportType] = useState('');
-  const [customMessage, setCustomMessage] = useState('');
+  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const generateReportContent = (type: string) => {
-    const today = new Date().toLocaleDateString('fr-FR');
+  const generateReport = () => {
+    const currentDate = new Date(selectedDate);
+    const formattedDate = format(currentDate, 'dd MMMM yyyy', { locale: fr });
     
-    switch (type) {
+    let reportContent = '';
+    let subject = '';
+
+    switch (reportType) {
       case 'daily':
-        return `Rapport journalier du ${today}
+        subject = `Rapport journalier - ${formattedDate}`;
+        reportContent = `
+📊 RAPPORT JOURNALIER - ${formattedDate.toUpperCase()}
 
-📊 STATISTIQUES DU JOUR
-• Chiffre d'affaires: ${statsData.todayRevenue.toFixed(2)}€
-• Nombre de clients: ${statsData.todayClients}
-• Ticket moyen: ${(statsData.todayRevenue / (statsData.todayClients || 1)).toFixed(2)}€
+💰 CHIFFRE D'AFFAIRES
+• Total du jour : ${statsData.todayRevenue.toFixed(2)}€
 
-${customMessage ? '\n📝 NOTES:\n' + customMessage : ''}
+👥 CLIENTS
+• Nombre de clients : ${statsData.todayClients}
 
-Rapport généré automatiquement par SalonPOS`;
+💳 MÉTHODES DE PAIEMENT
+• Espèces : ${statsData.paymentStats.today.cash} (${statsData.paymentStats.today.cashPercent.toFixed(1)}%)
+• Bancontact : ${statsData.paymentStats.today.card} (${statsData.paymentStats.today.cardPercent.toFixed(1)}%)
 
+${message ? `\n📝 NOTES :\n${message}` : ''}
+
+---
+Rapport généré automatiquement par SalonPOS
+${format(new Date(), 'dd/MM/yyyy à HH:mm')}
+        `;
+        break;
+        
       case 'weekly':
-        return `Rapport hebdomadaire - Semaine du ${today}
+        subject = `Rapport hebdomadaire - Semaine du ${formattedDate}`;
+        reportContent = `
+📊 RAPPORT HEBDOMADAIRE - SEMAINE DU ${formattedDate.toUpperCase()}
 
-📊 STATISTIQUES DE LA SEMAINE
-• CA estimé: ${(statsData.todayRevenue * 6).toFixed(2)}€
-• Clients estimés: ${statsData.todayClients * 6}
+💰 CHIFFRE D'AFFAIRES
+• Total de la semaine : ${statsData.weeklyRevenue.toFixed(2)}€
+• Moyenne journalière : ${(statsData.weeklyRevenue / 7).toFixed(2)}€
 
-${customMessage ? '\n📝 NOTES:\n' + customMessage : ''}
+👥 CLIENTS
+• Nombre de clients : ${statsData.weeklyClients}
+• Moyenne par jour : ${(statsData.weeklyClients / 7).toFixed(1)}
 
-Rapport généré automatiquement par SalonPOS`;
+💳 MÉTHODES DE PAIEMENT
+• Espèces : ${statsData.paymentStats.weekly.cash} (${statsData.paymentStats.weekly.cashPercent.toFixed(1)}%)
+• Bancontact : ${statsData.paymentStats.weekly.card} (${statsData.paymentStats.weekly.cardPercent.toFixed(1)}%)
 
+${message ? `\n📝 NOTES :\n${message}` : ''}
+
+---
+Rapport généré automatiquement par SalonPOS
+${format(new Date(), 'dd/MM/yyyy à HH:mm')}
+        `;
+        break;
+        
       case 'monthly':
-        return `Rapport mensuel - ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+        subject = `Rapport mensuel - ${format(currentDate, 'MMMM yyyy', { locale: fr })}`;
+        reportContent = `
+📊 RAPPORT MENSUEL - ${format(currentDate, 'MMMM yyyy', { locale: fr }).toUpperCase()}
 
-📊 STATISTIQUES DU MOIS
-• Chiffre d'affaires: ${statsData.monthlyRevenue.toFixed(2)}€
-• Nombre de clients: ${statsData.monthlyClients}
-• Ticket moyen: ${(statsData.monthlyRevenue / (statsData.monthlyClients || 1)).toFixed(2)}€
-• Evolution vs jour: +${((statsData.monthlyRevenue / 30 / statsData.todayRevenue - 1) * 100).toFixed(1)}%
+💰 CHIFFRE D'AFFAIRES
+• Total du mois : ${statsData.monthlyRevenue.toFixed(2)}€
+• Moyenne journalière : ${(statsData.monthlyRevenue / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()).toFixed(2)}€
 
-${customMessage ? '\n📝 NOTES:\n' + customMessage : ''}
+👥 CLIENTS
+• Nombre de clients : ${statsData.monthlyClients}
+• Moyenne par jour : ${(statsData.monthlyClients / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()).toFixed(1)}
 
-Rapport généré automatiquement par SalonPOS`;
+💳 MÉTHODES DE PAIEMENT
+• Espèces : ${statsData.paymentStats.monthly.cash} (${statsData.paymentStats.monthly.cashPercent.toFixed(1)}%)
+• Bancontact : ${statsData.paymentStats.monthly.card} (${statsData.paymentStats.monthly.cardPercent.toFixed(1)}%)
 
-      default:
-        return '';
+${message ? `\n📝 NOTES :\n${message}` : ''}
+
+---
+Rapport généré automatiquement par SalonPOS
+${format(new Date(), 'dd/MM/yyyy à HH:mm')}
+        `;
+        break;
     }
+
+    return { subject, content: reportContent };
   };
 
   const handleSendReport = async () => {
-    if (!email || !reportType) {
+    if (!email) {
       toast({
         title: "Erreur",
-        description: "Veuillez remplir l'email et sélectionner un type de rapport",
+        description: "Veuillez saisir une adresse email",
         variant: "destructive",
       });
       return;
@@ -82,40 +149,30 @@ Rapport généré automatiquement par SalonPOS`;
 
     try {
       // Simulation d'envoi d'email
-      // En production, ceci ferait appel à votre API d'envoi d'emails
-      const reportContent = generateReportContent(reportType);
+      const { content } = generateReport();
       
-      // Pour la démonstration, on copie le contenu dans le presse-papiers
-      await navigator.clipboard.writeText(reportContent);
+      // Copier le contenu dans le presse-papiers
+      await navigator.clipboard.writeText(content);
       
       setTimeout(() => {
         toast({
-          title: "Rapport envoyé",
-          description: `Le rapport ${reportType} a été envoyé à ${email}`,
+          title: "Rapport préparé",
+          description: `Le rapport ${reportType} a été copié dans le presse-papiers pour envoi à ${email}`,
         });
-        
-        // Reset form
-        setEmail('');
-        setReportType('');
-        setCustomMessage('');
         setIsLoading(false);
-      }, 2000);
+      }, 1500);
       
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer le rapport. Le contenu a été copié dans le presse-papiers.",
+        description: "Impossible de préparer le rapport",
         variant: "destructive",
       });
       setIsLoading(false);
     }
   };
 
-  const reportTypes = [
-    { value: 'daily', label: 'Rapport journalier', icon: Calendar },
-    { value: 'weekly', label: 'Rapport hebdomadaire', icon: TrendingUp },
-    { value: 'monthly', label: 'Rapport mensuel', icon: FileText }
-  ];
+  const { content: previewContent } = generateReport();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -127,7 +184,7 @@ Rapport généré automatiquement par SalonPOS`;
           </div>
           <div>
             <h3 className="text-xl font-semibold text-primary">Envoi de rapports</h3>
-            <p className="text-sm text-muted-foreground">Envoyez vos statistiques par email</p>
+            <p className="text-sm text-muted-foreground">Générez et envoyez vos statistiques par email</p>
           </div>
         </div>
 
@@ -145,33 +202,43 @@ Rapport généré automatiquement par SalonPOS`;
           </div>
 
           <div>
-            <Label>Type de rapport *</Label>
-            <Select value={reportType} onValueChange={setReportType}>
+            <Label htmlFor="reportType">Type de rapport</Label>
+            <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez un rapport" />
+                <SelectValue placeholder="Sélectionner le type de rapport" />
               </SelectTrigger>
-              <SelectContent>
-                {reportTypes.map((type) => {
-                  const Icon = type.icon;
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
+              <SelectContent className="bg-background border z-50">
+                <SelectItem value="daily">Rapport journalier</SelectItem>
+                <SelectItem value="weekly">Rapport hebdomadaire</SelectItem>
+                <SelectItem value="monthly">Rapport mensuel</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {reportType === 'daily' && (
+            <div>
+              <Label htmlFor="selectedDate" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Date du rapport journalier
+              </Label>
+              <Input
+                id="selectedDate"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Sélectionnez la date pour laquelle générer le rapport journalier
+              </p>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="message">Message personnalisé (optionnel)</Label>
             <Textarea
               id="message"
-              value={customMessage}
-              onChange={(e) => setCustomMessage(e.target.value)}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               placeholder="Ajoutez des notes ou commentaires..."
               rows={3}
             />
@@ -179,31 +246,27 @@ Rapport généré automatiquement par SalonPOS`;
 
           <Button 
             onClick={handleSendReport}
-            disabled={isLoading || !email || !reportType}
+            disabled={isLoading || !email}
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
           >
             <Send className="h-4 w-4 mr-2" />
-            {isLoading ? 'Envoi en cours...' : 'Envoyer le rapport'}
+            {isLoading ? 'Préparation...' : 'Préparer le rapport'}
           </Button>
         </div>
       </Card>
 
       {/* Preview */}
       <Card className="p-6">
-        <h4 className="text-lg font-semibold mb-4 text-primary">Aperçu du rapport</h4>
+        <h4 className="text-lg font-semibold mb-4 text-primary flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Aperçu du rapport
+        </h4>
         
-        {reportType ? (
-          <div className="bg-muted/20 p-4 rounded-lg">
-            <pre className="text-sm whitespace-pre-wrap font-mono">
-              {generateReportContent(reportType)}
-            </pre>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Sélectionnez un type de rapport pour voir l'aperçu</p>
-          </div>
-        )}
+        <div className="bg-muted/20 p-4 rounded-lg max-h-96 overflow-y-auto">
+          <pre className="text-sm whitespace-pre-wrap font-mono">
+            {previewContent}
+          </pre>
+        </div>
       </Card>
     </div>
   );

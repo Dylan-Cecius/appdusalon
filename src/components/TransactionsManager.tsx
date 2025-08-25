@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Edit, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Edit, Eye, EyeOff, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Transaction, useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
@@ -36,6 +37,10 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
     items: []
   });
   const [showDetails, setShowDetails] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    format(new Date(), 'yyyy-MM-dd')
+  );
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -82,6 +87,29 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
     setShowDetails(showDetails === transactionId ? null : transactionId);
   };
 
+  // Filter transactions by selected date
+  const filterTransactionsByDate = (date: string) => {
+    const selectedDay = new Date(date);
+    selectedDay.setHours(0, 0, 0, 0);
+    
+    const nextDay = new Date(selectedDay);
+    nextDay.setDate(nextDay.getDate() + 1);
+    
+    const filtered = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return txDate >= selectedDay && txDate < nextDay;
+    });
+    
+    setFilteredTransactions(filtered);
+  };
+
+  // Update filtered transactions when date or transactions change
+  React.useEffect(() => {
+    filterTransactionsByDate(selectedDate);
+  }, [selectedDate, transactions]);
+
+  const displayedTransactions = filteredTransactions;
+
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -101,16 +129,38 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Gestion des encaissements ({transactions.length} transactions)</DialogTitle>
+          <DialogTitle>Gestion des encaissements</DialogTitle>
         </DialogHeader>
 
+        {/* Date Filter */}
+        <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
+          <Calendar className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-2">
+            <Label htmlFor="dateFilter">Filtrer par date :</Label>
+            <Input
+              id="dateFilter"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-auto"
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {displayedTransactions.length} transaction{displayedTransactions.length !== 1 ? 's' : ''} 
+            {selectedDate && ` le ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: fr })}`}
+          </div>
+        </div>
+
         <div className="space-y-4">
-          {transactions.length === 0 ? (
+          {displayedTransactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Aucune transaction enregistrée
+              {selectedDate 
+                ? `Aucune transaction le ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: fr })}`
+                : 'Aucune transaction enregistrée'
+              }
             </div>
           ) : (
-            transactions.map((transaction) => (
+            displayedTransactions.map((transaction) => (
               <Card key={transaction.id} className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
