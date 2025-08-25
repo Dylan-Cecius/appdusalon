@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Plus, ChevronLeft, ChevronRight, Settings, CalendarDays } from 'lucide-react';
 import { format, addDays, subDays, addWeeks, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -14,6 +16,7 @@ import { defaultBarbers, Barber, getActiveBarbers } from '@/data/barbers';
 const BlockCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [barbers, setBarbers] = useState<Barber[]>(defaultBarbers);
   const [selectedBarber, setSelectedBarber] = useState<string>('1'); // Sélectionner le premier coiffeur par défaut
   const { appointments, markAsPaid, loading } = useSupabaseAppointments();
@@ -141,7 +144,7 @@ const BlockCalendar = () => {
           ))}
         </div>
 
-        {/* Navigation */}
+        {/* Navigation avec sélecteur de date */}
         <div className="flex items-center justify-between">
           <Button 
             variant="outline" 
@@ -151,14 +154,36 @@ const BlockCalendar = () => {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <h2 className="text-lg font-semibold">
-            {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+          <div className="flex items-center gap-3">
+            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="min-w-[200px] justify-start text-left font-normal">
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setIsDatePickerOpen(false);
+                    }
+                  }}
+                  locale={fr}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            
             {currentBarber && (
-              <span className="ml-3 text-base font-normal text-muted-foreground">
+              <span className="text-base font-normal text-muted-foreground">
                 - Planning de {currentBarber.name}
               </span>
             )}
-          </h2>
+          </div>
           
           <Button 
             variant="outline" 
@@ -175,8 +200,8 @@ const BlockCalendar = () => {
         <Card className="p-4">
           <div className="border-2 border-black rounded-lg overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-2 gap-0 bg-gray-100">
-              <div className="text-sm font-bold text-center p-3 bg-black text-white border-r-2 border-black">
+            <div className="grid gap-0 bg-gray-100" style={{ gridTemplateColumns: '80px 1fr' }}>
+              <div className="text-xs font-medium text-center p-2 bg-gray-300 text-gray-700 border-r-2 border-black">
                 Horaires
               </div>
               <div className="text-sm font-bold text-center p-3 bg-gray-100">
@@ -196,26 +221,28 @@ const BlockCalendar = () => {
               
               return (
                 <div key={timeSlot} className={cn(
-                  "grid grid-cols-2 gap-0",
-                  index < timeSlots.length - 1 && "border-b border-black"
-                )}>
-                  {/* Time column */}
-                  <div className="flex items-center justify-center text-sm font-medium text-white bg-black border-r-2 border-black p-3 min-h-[80px]">
-                    {timeSlot}
+                  "grid gap-0",
+                  index < timeSlots.length - 1 && "border-b border-gray-300"
+                )} style={{ gridTemplateColumns: '80px 1fr' }}>
+                  {/* Time column - plus petite et couleur douce */}
+                  <div className="flex items-center justify-center text-xs font-medium text-gray-600 bg-gray-100 border-r-2 border-gray-300 p-2 min-h-[70px]">
+                    <span className="writing-mode-vertical-lr transform rotate-180 text-center">
+                      {timeSlot}
+                    </span>
                   </div>
                   
                   {/* Appointment column */}
                   <div className={cn(
-                    "p-2 min-h-[80px] flex items-center justify-center",
-                    isWorking ? "bg-white" : "bg-gray-200"
+                    "p-3 min-h-[70px] flex items-center justify-center",
+                    isWorking ? "bg-white" : "bg-gray-50"
                   )}>
                     {!isWorking ? (
                       <div className="text-center">
-                        <span className="text-sm text-gray-500">🔒 Fermé</span>
+                        <span className="text-sm text-gray-400">🔒 Fermé</span>
                       </div>
                     ) : slotAppointments.length === 0 ? (
                       <div className="text-center">
-                        <span className="text-sm text-green-600">✓ Libre</span>
+                        <span className="text-sm text-green-600 font-medium">✓ Disponible</span>
                       </div>
                     ) : (
                       <div className="w-full space-y-2">
@@ -223,9 +250,9 @@ const BlockCalendar = () => {
                           <div
                             key={appointment.id}
                             className={cn(
-                              "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-md border-2 border-black",
+                              "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-lg border border-gray-400",
                               getServiceColor(appointment.services),
-                              appointment.isPaid && "opacity-50"
+                              appointment.isPaid && "opacity-60"
                             )}
                             onClick={() => !appointment.isPaid && handlePayAppointment(appointment.id, 'cash')}
                           >
