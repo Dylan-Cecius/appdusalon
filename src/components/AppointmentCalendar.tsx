@@ -155,72 +155,79 @@ const AppointmentCalendar = () => {
               <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
                 <div className="grid grid-cols-12 h-full">
                   <div className="col-span-2"></div>
-                  <div className="col-span-10 relative pr-2">
+                  <div className="col-span-10 relative px-1">
                     {selectedDateAppointments.map((appointment) => {
                       const position = getAppointmentPosition(appointment);
                       return (
                         <div
                           key={appointment.id}
                           className={cn(
-                            "absolute left-2 right-2 rounded-md p-2 pointer-events-auto cursor-pointer transition-all duration-200 overflow-hidden",
+                            "absolute rounded-md p-1.5 pointer-events-auto cursor-pointer transition-all duration-200 overflow-hidden text-xs",
                             appointment.isPaid 
-                              ? "bg-muted/40 text-muted-foreground border border-muted/30" 
-                              : "bg-accent/90 text-accent-foreground border border-accent shadow-sm hover:shadow-md"
+                              ? "bg-muted/60 text-muted-foreground border border-muted/40" 
+                              : "bg-accent/95 text-accent-foreground border border-accent shadow-sm hover:shadow-md"
                           )}
                           style={{
-                            top: `${position.top}px`,
-                            height: `${Math.max(position.height, 40)}px`,
-                            maxWidth: 'calc(100% - 16px)'
+                            top: `${position.top + 1}px`,
+                            left: '4px',
+                            right: '4px',
+                            height: `${Math.max(position.height - 2, 38)}px`,
+                            width: 'calc(100% - 8px)'
                           }}
                         >
-                          <div className="flex justify-between items-start h-full">
-                            <div className="flex-1 min-w-0 pr-2">
-                              <div className="flex items-center gap-2 mb-1">
-                                <User className="h-3 w-3 flex-shrink-0" />
+                          <div className="h-full flex flex-col justify-between">
+                            {/* Header avec nom et badge */}
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-1 min-w-0 flex-1">
+                                <User className="h-2.5 w-2.5 flex-shrink-0 opacity-80" />
                                 <span className="font-semibold text-xs truncate">
                                   {appointment.clientName}
                                 </span>
-                                <Badge 
-                                  className={cn(
-                                    "text-xs px-1 py-0 flex-shrink-0",
-                                    getStatusColor(appointment.status, appointment.isPaid)
-                                  )}
-                                >
-                                  {appointment.isPaid ? 'Payé' : 'RDV'}
-                                </Badge>
                               </div>
-                              
-                              <div className="text-xs opacity-90 mb-1 truncate">
+                              <Badge 
+                                className={cn(
+                                  "text-xs px-1 py-0 ml-1 flex-shrink-0 h-4",
+                                  getStatusColor(appointment.status, appointment.isPaid)
+                                )}
+                              >
+                                {appointment.isPaid ? 'Payé' : 'RDV'}
+                              </Badge>
+                            </div>
+                            
+                            {/* Contenu principal */}
+                            <div className="flex-1 min-h-0">
+                              <div className="text-xs opacity-90 truncate mb-0.5">
                                 {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
                               </div>
                               
-                              <div className="text-xs opacity-80 truncate">
+                              <div className="text-xs opacity-80 truncate mb-0.5">
                                 {appointment.services.map(s => s.name).join(', ')}
                               </div>
                               
-                              <div className="flex items-center gap-1 mt-1">
-                                <Euro className="h-3 w-3 flex-shrink-0" />
+                              <div className="flex items-center gap-1">
+                                <Euro className="h-2.5 w-2.5 flex-shrink-0 opacity-80" />
                                 <span className="text-xs font-medium">
                                   {appointment.totalPrice.toFixed(2)}€
                                 </span>
                               </div>
                             </div>
 
+                            {/* Boutons de paiement */}
                             {!appointment.isPaid && (
-                              <div className="flex flex-col gap-1 flex-shrink-0">
+                              <div className="flex gap-1 mt-1">
                                 <Button
                                   size="sm"
                                   onClick={() => handlePayAppointment(appointment.id, 'cash')}
-                                  className="h-6 px-2 text-xs bg-pos-success hover:bg-pos-success/90 text-pos-success-foreground"
+                                  className="h-5 px-1.5 text-xs bg-pos-success hover:bg-pos-success/90 text-pos-success-foreground flex-1"
                                 >
                                   Cash
                                 </Button>
                                 <Button
                                   size="sm"
                                   onClick={() => handlePayAppointment(appointment.id, 'card')}
-                                  className="h-6 px-2 text-xs bg-pos-card hover:bg-pos-card/90 text-white"
+                                  className="h-5 px-1.5 text-xs bg-pos-card hover:bg-pos-card/90 text-white flex-1"
                                 >
-                                  <CreditCard className="h-2 w-2 mr-1" />
+                                  <CreditCard className="h-2 w-2 mr-0.5" />
                                   BC
                                 </Button>
                               </div>
