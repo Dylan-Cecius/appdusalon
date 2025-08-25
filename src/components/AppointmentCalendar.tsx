@@ -77,7 +77,7 @@ const AppointmentCalendar = () => {
     
     return { 
       top: startSlot * 40, // 40px par créneau de 30min
-      height: Math.max(duration * 40, 40) // Minimum 40px
+      height: Math.max(duration * 40, 60) // Minimum 60px (plus grand)
     };
   };
 
@@ -180,17 +180,22 @@ const AppointmentCalendar = () => {
                             minHeight: '36px'
                           }}
                         >
-                          <div className="h-full overflow-hidden">
-                            {/* Ligne 1: Nom + Badge */}
+                          <div className="h-full overflow-hidden p-1">
+                            {/* Ligne 1: Nom + Service + Badge */}
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-1 min-w-0">
-                                <User className="h-2 w-2 flex-shrink-0" />
-                                <span className="font-medium text-xs truncate">
-                                  {appointment.clientName}
-                                </span>
+                                <User className="h-3 w-3 flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <span className="font-medium text-sm truncate block">
+                                    {appointment.clientName}
+                                  </span>
+                                  <span className="text-xs opacity-75 truncate block">
+                                    ({appointment.services[0]?.name})
+                                  </span>
+                                </div>
                               </div>
                               <Badge 
-                                className="text-xs px-1 py-0 h-3 flex-shrink-0 ml-1"
+                                className="text-xs px-2 py-1 flex-shrink-0 ml-2"
                                 variant={appointment.isPaid ? "secondary" : "default"}
                               >
                                 RDV
@@ -198,32 +203,32 @@ const AppointmentCalendar = () => {
                             </div>
                             
                             {/* Ligne 2: Horaire */}
-                            <div className="text-xs opacity-90 mb-1 truncate">
-                              {format(appointment.startTime, 'HH:mm')}-{format(appointment.endTime, 'HH:mm')}
+                            <div className="text-sm font-medium mb-2">
+                              {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
                             </div>
                             
                             {/* Ligne 3: Prix + Boutons */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1">
-                                <Euro className="h-2 w-2" />
-                                <span className="text-xs font-medium">
+                                <Euro className="h-3 w-3" />
+                                <span className="text-sm font-medium">
                                   {appointment.totalPrice.toFixed(2)}€
                                 </span>
                               </div>
                               
                               {!appointment.isPaid && (
-                                <div className="flex gap-1">
+                                <div className="flex gap-2">
                                   <Button
                                     size="sm"
                                     onClick={() => handlePayAppointment(appointment.id, 'cash')}
-                                    className="h-4 px-1 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                    className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
                                   >
                                     Cash
                                   </Button>
                                   <Button
                                     size="sm"
                                     onClick={() => handlePayAppointment(appointment.id, 'card')}
-                                    className="h-4 px-1 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
                                   >
                                     BC
                                   </Button>
