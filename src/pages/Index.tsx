@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, ShoppingCart, Scissors, Calendar, Mail } from "lucide-react";
+import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +7,7 @@ import ServiceCard from "@/components/ServiceCard";
 import CartSidebar from "@/components/CartSidebar";
 import StatsOverview from "@/components/StatsOverview";
 import BlockCalendar from "@/components/BlockCalendar";
+import Settings from "@/components/Settings";
 import EmailReports from "@/components/EmailReports";
 import { services, getAllCategories } from "@/data/services";
 import { toast } from "@/hooks/use-toast";
@@ -149,10 +150,10 @@ const Index = () => {
 
       <div className="container mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl bg-card">
+          <TabsList className="grid w-full grid-cols-5 max-w-3xl bg-card">
             <TabsTrigger value="pos" className="flex items-center gap-2">
               <Scissors className="h-4 w-4" />
-              POS
+              Services et produits
             </TabsTrigger>
             <TabsTrigger value="agenda" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -165,6 +166,10 @@ const Index = () => {
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Rapports
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <SettingsIcon className="h-4 w-4" />
+              Paramètres
             </TabsTrigger>
           </TabsList>
 
@@ -233,6 +238,10 @@ const Index = () => {
 
           <TabsContent value="reports">
             <EmailReports statsData={stats} />
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <Settings />
           </TabsContent>
         </Tabs>
       </div>

@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Plus, ChevronLeft, ChevronRight, Settings, CalendarDays } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Settings, CalendarDays, Coffee } from 'lucide-react';
 import { format, addDays, subDays, addWeeks, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import AppointmentModal from './AppointmentModal';
+import BlockModal, { BlockData } from './BlockModal';
+import LunchBreakModal, { LunchBreakData } from './LunchBreakModal';
 import { toast } from '@/hooks/use-toast';
 import { defaultBarbers, Barber, getActiveBarbers } from '@/data/barbers';
 
@@ -17,8 +19,13 @@ const BlockCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [isLunchBreakModalOpen, setIsLunchBreakModalOpen] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [barbers, setBarbers] = useState<Barber[]>(defaultBarbers);
   const [selectedBarber, setSelectedBarber] = useState<string>('1'); // Sélectionner le premier coiffeur par défaut
+  const [lunchBreaks, setLunchBreaks] = useState<LunchBreakData[]>([]);
+  const [customBlocks, setCustomBlocks] = useState<BlockData[]>([]);
   const { appointments, markAsPaid, loading } = useSupabaseAppointments();
 
   const activeBarbers = getActiveBarbers(barbers);
@@ -106,6 +113,59 @@ const BlockCalendar = () => {
     return slotTime >= startTime && slotTime < endTime;
   };
 
+  // Check if time slot is blocked by lunch break
+  const isLunchBreakTime = (barberId: string, timeSlot: string) => {
+    const lunchBreak = lunchBreaks.find(lb => lb.barberId === barberId && lb.isActive);
+    if (!lunchBreak) return false;
+    
+    const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
+    const [startHour, startMinute] = lunchBreak.startTime.split(':').map(Number);
+    const [endHour, endMinute] = lunchBreak.endTime.split(':').map(Number);
+    
+    const slotTime = slotHour * 60 + slotMinute;
+    const startTime = startHour * 60 + startMinute;
+    const endTime = endHour * 60 + endMinute;
+    
+    return slotTime >= startTime && slotTime < endTime;
+  };
+
+  // Get custom blocks for a specific time slot
+  const getCustomBlocksForSlot = (date: Date, timeSlot: string, barberId: string) => {
+    return customBlocks.filter(block => {
+      if (block.barberId !== barberId) return false;
+      if (block.startTime !== timeSlot) return false;
+      // TODO: Check date when we add date-specific blocks
+      return true;
+    });
+  };
+
+  const handleTimeSlotClick = (timeSlot: string) => {
+    if (!currentBarber) return;
+    
+    const isWorking = isBarberWorking(currentBarber, timeSlot);
+    const isLunchTime = isLunchBreakTime(currentBarber.id, timeSlot);
+    
+    if (!isWorking || isLunchTime) return;
+    
+    setSelectedTimeSlot(timeSlot);
+    setIsBlockModalOpen(true);
+  };
+
+  const handleSaveBlock = (blockData: BlockData) => {
+    setCustomBlocks(prev => [...prev, { ...blockData, barberId: selectedBarber }]);
+    toast({
+      title: "Créneau ajouté",
+      description: `${blockData.title} ajouté à ${blockData.startTime}`,
+    });
+  };
+
+  const handleSaveLunchBreak = (breakData: LunchBreakData) => {
+    setLunchBreaks(prev => {
+      const filtered = prev.filter(lb => lb.barberId !== breakData.barberId);
+      return [...filtered, breakData];
+    });
+  };
+
   const timeSlots = getTimeSlots();
 
   return (
@@ -142,6 +202,19 @@ const BlockCalendar = () => {
               </span>
             </Button>
           ))}
+          
+          {/* Bouton Configuration Temps de midi */}
+          {currentBarber && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsLunchBreakModalOpen(true)}
+              className="ml-4 text-orange-600 border-orange-600 hover:bg-orange-50"
+            >
+              <Coffee className="h-4 w-4 mr-2" />
+              Temps de midi
+            </Button>
+          )}
         </div>
 
         {/* Navigation avec sélecteur de date */}
@@ -217,7 +290,9 @@ const BlockCalendar = () => {
             {/* Time slots */}
             {timeSlots.map((timeSlot, index) => {
               const isWorking = isBarberWorking(currentBarber, timeSlot);
+              const isLunchTime = isLunchBreakTime(currentBarber.id, timeSlot);
               const slotAppointments = getAppointmentsForSlot(selectedDate, timeSlot, currentBarber.id);
+              const customBlocksForSlot = getCustomBlocksForSlot(selectedDate, timeSlot, currentBarber.id);
               
               return (
                 <div key={timeSlot} className={cn(
@@ -230,20 +305,31 @@ const BlockCalendar = () => {
                   </div>
                   
                   {/* Appointment column */}
-                  <div className={cn(
-                    "p-3 min-h-[70px] flex items-center justify-center",
-                    isWorking ? "bg-white" : "bg-gray-50"
-                  )}>
+                  <div 
+                    className={cn(
+                      "p-3 min-h-[70px] flex items-center justify-center cursor-pointer transition-colors",
+                      isWorking ? (isLunchTime ? "bg-orange-100 hover:bg-orange-200" : "bg-white hover:bg-gray-50") : "bg-gray-50"
+                    )}
+                    onClick={() => handleTimeSlotClick(timeSlot)}
+                  >
                     {!isWorking ? (
                       <div className="text-center">
                         <span className="text-sm text-gray-400">🔒 Fermé</span>
                       </div>
-                    ) : slotAppointments.length === 0 ? (
+                    ) : isLunchTime ? (
                       <div className="text-center">
-                        <span className="text-sm text-green-600 font-medium">✓ Disponible</span>
+                        <div className="flex items-center gap-2 text-orange-600">
+                          <Coffee className="h-4 w-4" />
+                          <span className="text-sm font-medium">Pause déjeuner</span>
+                        </div>
+                      </div>
+                    ) : slotAppointments.length === 0 && customBlocksForSlot.length === 0 ? (
+                      <div className="text-center">
+                        <span className="text-sm text-green-600 font-medium">✓ Disponible - Cliquer pour ajouter</span>
                       </div>
                     ) : (
                       <div className="w-full space-y-2">
+                        {/* Rendez-vous clients */}
                         {slotAppointments.map((appointment) => (
                           <div
                             key={appointment.id}
@@ -252,7 +338,10 @@ const BlockCalendar = () => {
                               getServiceColor(appointment.services),
                               appointment.isPaid && "opacity-60"
                             )}
-                            onClick={() => !appointment.isPaid && handlePayAppointment(appointment.id, 'cash')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!appointment.isPaid) handlePayAppointment(appointment.id, 'cash');
+                            }}
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="font-bold truncate">
@@ -303,6 +392,39 @@ const BlockCalendar = () => {
                             </div>
                           </div>
                         ))}
+                        
+                        {/* Blocs personnalisés (non disponible, rdv médecin, etc.) */}
+                        {customBlocksForSlot.map((block) => (
+                          <div
+                            key={`block-${block.startTime}`}
+                            className={cn(
+                              "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-lg border border-gray-400",
+                              block.type === 'break' ? 'bg-orange-500' :
+                              block.type === 'unavailable' ? 'bg-gray-500' :
+                              block.type === 'rdv-comptable' ? 'bg-purple-500' :
+                              block.type === 'rdv-medecin' ? 'bg-red-500' :
+                              block.type === 'formation' ? 'bg-green-500' :
+                              block.type === 'conge' ? 'bg-yellow-500' :
+                              'bg-blue-500'
+                            )}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-bold truncate">
+                                📅 {block.title}
+                              </div>
+                            </div>
+                            
+                            <div className="text-sm opacity-90 mb-2">
+                              ⏰ {block.startTime} - {block.endTime}
+                            </div>
+                            
+                            {block.notes && (
+                              <div className="text-sm opacity-75">
+                                📝 {block.notes}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -318,6 +440,25 @@ const BlockCalendar = () => {
         onClose={() => setIsModalOpen(false)}
         selectedDate={selectedDate}
       />
+      
+      <BlockModal
+        isOpen={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        selectedDate={selectedDate}
+        selectedTime={selectedTimeSlot}
+        barberId={selectedBarber}
+        onSave={handleSaveBlock}
+      />
+      
+      {currentBarber && (
+        <LunchBreakModal
+          isOpen={isLunchBreakModalOpen}
+          onClose={() => setIsLunchBreakModalOpen(false)}
+          barberId={currentBarber.id}
+          barberName={currentBarber.name}
+          onSave={handleSaveLunchBreak}
+        />
+      )}
     </div>
   );
 };
