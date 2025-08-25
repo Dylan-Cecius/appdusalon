@@ -155,25 +155,26 @@ const AppointmentCalendar = () => {
               <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
                 <div className="grid grid-cols-12 h-full">
                   <div className="col-span-2"></div>
-                  <div className="col-span-10 relative">
+                  <div className="col-span-10 relative pr-2">
                     {selectedDateAppointments.map((appointment) => {
                       const position = getAppointmentPosition(appointment);
                       return (
                         <div
                           key={appointment.id}
                           className={cn(
-                            "absolute left-1 right-1 rounded-md p-2 pointer-events-auto cursor-pointer transition-all duration-200",
+                            "absolute left-2 right-2 rounded-md p-2 pointer-events-auto cursor-pointer transition-all duration-200 overflow-hidden",
                             appointment.isPaid 
                               ? "bg-muted/40 text-muted-foreground border border-muted/30" 
                               : "bg-accent/90 text-accent-foreground border border-accent shadow-sm hover:shadow-md"
                           )}
                           style={{
                             top: `${position.top}px`,
-                            height: `${Math.max(position.height, 40)}px`
+                            height: `${Math.max(position.height, 40)}px`,
+                            maxWidth: 'calc(100% - 16px)'
                           }}
                         >
                           <div className="flex justify-between items-start h-full">
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 pr-2">
                               <div className="flex items-center gap-2 mb-1">
                                 <User className="h-3 w-3 flex-shrink-0" />
                                 <span className="font-semibold text-xs truncate">
@@ -181,7 +182,7 @@ const AppointmentCalendar = () => {
                                 </span>
                                 <Badge 
                                   className={cn(
-                                    "text-xs px-1 py-0",
+                                    "text-xs px-1 py-0 flex-shrink-0",
                                     getStatusColor(appointment.status, appointment.isPaid)
                                   )}
                                 >
@@ -189,7 +190,7 @@ const AppointmentCalendar = () => {
                                 </Badge>
                               </div>
                               
-                              <div className="text-xs opacity-90 mb-1">
+                              <div className="text-xs opacity-90 mb-1 truncate">
                                 {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
                               </div>
                               
@@ -198,7 +199,7 @@ const AppointmentCalendar = () => {
                               </div>
                               
                               <div className="flex items-center gap-1 mt-1">
-                                <Euro className="h-3 w-3" />
+                                <Euro className="h-3 w-3 flex-shrink-0" />
                                 <span className="text-xs font-medium">
                                   {appointment.totalPrice.toFixed(2)}€
                                 </span>
@@ -206,7 +207,7 @@ const AppointmentCalendar = () => {
                             </div>
 
                             {!appointment.isPaid && (
-                              <div className="flex flex-col gap-1 ml-2">
+                              <div className="flex flex-col gap-1 flex-shrink-0">
                                 <Button
                                   size="sm"
                                   onClick={() => handlePayAppointment(appointment.id, 'cash')}
