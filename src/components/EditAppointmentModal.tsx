@@ -37,6 +37,8 @@ const EditAppointmentModal = ({
         clientName: appointment.clientName,
         clientPhone: appointment.clientPhone,
         notes: appointment.notes || '',
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
       });
     }
   }, [appointment]);
@@ -140,6 +142,67 @@ const EditAppointmentModal = ({
               <span className="font-bold text-green-800">
                 Total: {appointment.totalPrice.toFixed(2)}€
               </span>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Modifier l'horaire */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">Modifier l'horaire</Label>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="startTime">Heure de début</Label>
+                <Input 
+                  id="startTime"
+                  type="time"
+                  value={editedAppointment.startTime ? format(editedAppointment.startTime, 'HH:mm') : ''}
+                  onChange={(e) => {
+                    if (e.target.value && editedAppointment.startTime) {
+                      const [hours, minutes] = e.target.value.split(':');
+                      const newStartTime = new Date(editedAppointment.startTime);
+                      newStartTime.setHours(parseInt(hours), parseInt(minutes));
+                      
+                      // Calculer automatiquement l'heure de fin basée sur la durée des services
+                      const totalDuration = appointment.services.reduce((total, service) => 
+                        total + service.duration + (service.appointmentBuffer || 0), 0
+                      );
+                      const newEndTime = new Date(newStartTime);
+                      newEndTime.setMinutes(newEndTime.getMinutes() + totalDuration);
+                      
+                      setEditedAppointment({
+                        ...editedAppointment,
+                        startTime: newStartTime,
+                        endTime: newEndTime
+                      });
+                    }
+                  }}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="endTime">Heure de fin</Label>
+                <Input 
+                  id="endTime"
+                  type="time"
+                  value={editedAppointment.endTime ? format(editedAppointment.endTime, 'HH:mm') : ''}
+                  onChange={(e) => {
+                    if (e.target.value && editedAppointment.endTime) {
+                      const [hours, minutes] = e.target.value.split(':');
+                      const newEndTime = new Date(editedAppointment.endTime);
+                      newEndTime.setHours(parseInt(hours), parseInt(minutes));
+                      
+                      setEditedAppointment({
+                        ...editedAppointment,
+                        endTime: newEndTime
+                      });
+                    }
+                  }}
+                  className="mt-1"
+                />
+              </div>
             </div>
           </div>
 
