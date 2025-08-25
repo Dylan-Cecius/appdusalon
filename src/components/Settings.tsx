@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Plus, User, Mail, Clock, Save } from 'lucide-react';
+import { Trash2, Plus, User, Mail, Clock, Save, Upload, Building, Image } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { defaultBarbers, Barber } from '@/data/barbers';
 
@@ -14,6 +14,12 @@ const Settings = () => {
   const [newBarberName, setNewBarberName] = useState('');
   const [newBarberStart, setNewBarberStart] = useState('10:00');
   const [newBarberEnd, setNewBarberEnd] = useState('19:00');
+  
+  // Salon settings
+  const [salonSettings, setSalonSettings] = useState({
+    name: 'SalonPOS',
+    logo: '', // URL du logo
+  });
   
   // Email reports settings
   const [emailSettings, setEmailSettings] = useState({
@@ -72,6 +78,27 @@ const Settings = () => {
     });
   };
 
+  const saveSalonSettings = () => {
+    // TODO: Save to database
+    toast({
+      title: "Succès",
+      description: "Paramètres du salon sauvegardés"
+    });
+  };
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Simulate file upload - in a real app, you'd upload to your storage
+      const logoUrl = URL.createObjectURL(file);
+      setSalonSettings({...salonSettings, logo: logoUrl});
+      
+      toast({
+        title: "Logo téléchargé",
+        description: "Votre logo a été mis à jour avec succès"
+      });
+    }
+  };
   const saveEmailSettings = () => {
     if (emailSettings.enabled && !emailSettings.email) {
       toast({
@@ -101,6 +128,82 @@ const Settings = () => {
 
   return (
     <div className="space-y-6">
+      {/* Paramètres du salon */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Building className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Paramètres du salon</h2>
+        </div>
+
+        <div className="space-y-6">
+          {/* Logo du salon */}
+          <div>
+            <Label htmlFor="logo">Logo du salon</Label>
+            <div className="mt-2 flex items-center gap-4">
+              {salonSettings.logo ? (
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={salonSettings.logo} 
+                    alt="Logo du salon" 
+                    className="w-16 h-16 object-cover rounded-lg border"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSalonSettings({...salonSettings, logo: ''})}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                    <Image className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <div>
+                    <input
+                      type="file"
+                      id="logo"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={() => document.getElementById('logo')?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Télécharger un logo
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PNG, JPG jusqu'à 2MB
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Nom du salon */}
+          <div>
+            <Label htmlFor="salonName">Nom du salon</Label>
+            <Input 
+              id="salonName"
+              value={salonSettings.name}
+              onChange={(e) => setSalonSettings({...salonSettings, name: e.target.value})}
+              placeholder="Nom de votre salon"
+              className="max-w-md"
+            />
+          </div>
+
+          <Button onClick={saveSalonSettings} className="w-full md:w-auto">
+            <Save className="h-4 w-4 mr-2" />
+            Sauvegarder les paramètres du salon
+          </Button>
+        </div>
+      </Card>
+
+      <Separator />
+
       {/* Gestion des coiffeurs */}
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-6">

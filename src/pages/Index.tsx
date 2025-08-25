@@ -23,6 +23,10 @@ interface CartItem {
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState("pos");
+  const [salonSettings, setSalonSettings] = useState({
+    name: 'SalonPOS',
+    logo: '', // URL du logo
+  });
   const { addTransaction, getStats } = useSupabaseTransactions();
   
   // Get real stats from transactions
@@ -117,11 +121,19 @@ const Index = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-accent rounded-lg">
-                <Scissors className="h-6 w-6 text-accent-foreground" />
-              </div>
+              {salonSettings.logo ? (
+                <img 
+                  src={salonSettings.logo} 
+                  alt="Logo du salon" 
+                  className="h-10 w-10 object-cover rounded-lg"
+                />
+              ) : (
+                <div className="p-2 bg-accent rounded-lg">
+                  <Scissors className="h-6 w-6 text-accent-foreground" />
+                </div>
+              )}
               <div>
-                <h1 className="text-2xl font-bold text-primary">SalonPOS</h1>
+                <h1 className="text-2xl font-bold text-primary">{salonSettings.name}</h1>
                 <p className="text-sm text-muted-foreground">Coiffure & Barbier</p>
               </div>
             </div>

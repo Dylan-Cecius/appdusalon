@@ -12,6 +12,7 @@ import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import AppointmentModal from './AppointmentModal';
 import BlockModal, { BlockData } from './BlockModal';
 import LunchBreakModal, { LunchBreakData } from './LunchBreakModal';
+import EditAppointmentModal from './EditAppointmentModal';
 import { toast } from '@/hooks/use-toast';
 import { defaultBarbers, Barber, getActiveBarbers } from '@/data/barbers';
 
@@ -21,12 +22,14 @@ const BlockCalendar = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [isLunchBreakModalOpen, setIsLunchBreakModalOpen] = useState(false);
+  const [isEditAppointmentModalOpen, setIsEditAppointmentModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [barbers, setBarbers] = useState<Barber[]>(defaultBarbers);
   const [selectedBarber, setSelectedBarber] = useState<string>('1'); // Sélectionner le premier coiffeur par défaut
   const [lunchBreaks, setLunchBreaks] = useState<LunchBreakData[]>([]);
   const [customBlocks, setCustomBlocks] = useState<BlockData[]>([]);
-  const { appointments, markAsPaid, loading } = useSupabaseAppointments();
+  const { appointments, markAsPaid, updateAppointment, deleteAppointment, loading } = useSupabaseAppointments();
 
   const activeBarbers = getActiveBarbers(barbers);
   const currentBarber = activeBarbers.find(b => b.id === selectedBarber);
@@ -64,6 +67,11 @@ const BlockCalendar = () => {
       title: "Paiement encaissé",
       description: `${appointment?.totalPrice.toFixed(2)}€ encaissé par ${method === 'cash' ? 'espèces' : 'Bancontact'}`,
     });
+  };
+
+  const handleEditAppointment = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setIsEditAppointmentModalOpen(true);
   };
 
   // Get time slots for the day (10h-19h) with 30-minute intervals
@@ -340,7 +348,7 @@ const BlockCalendar = () => {
                             )}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!appointment.isPaid) handlePayAppointment(appointment.id, 'cash');
+                              handleEditAppointment(appointment);
                             }}
                           >
                             <div className="flex items-center justify-between mb-2">
@@ -365,30 +373,9 @@ const BlockCalendar = () => {
                                 💰 {appointment.totalPrice.toFixed(2)}€
                               </div>
                               
-                              {!appointment.isPaid && (
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePayAppointment(appointment.id, 'cash');
-                                    }}
-                                    className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
-                                  >
-                                    Cash
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePayAppointment(appointment.id, 'card');
-                                    }}
-                                    className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                                  >
-                                    CB
-                                  </Button>
-                                </div>
-                              )}
+                              <div className="text-xs bg-black bg-opacity-20 px-2 py-1 rounded">
+                                Cliquer pour éditer
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -448,6 +435,15 @@ const BlockCalendar = () => {
         selectedTime={selectedTimeSlot}
         barberId={selectedBarber}
         onSave={handleSaveBlock}
+      />
+      
+      <EditAppointmentModal
+        isOpen={isEditAppointmentModalOpen}
+        onClose={() => setIsEditAppointmentModalOpen(false)}
+        appointment={selectedAppointment}
+        onUpdate={updateAppointment}
+        onDelete={deleteAppointment}
+        onPay={handlePayAppointment}
       />
       
       {currentBarber && (
