@@ -70,10 +70,15 @@ const AppointmentCalendar = () => {
     const endHour = appointment.endTime.getHours();
     const endMinute = appointment.endTime.getMinutes();
     
-    const startPosition = ((startHour - 10) * 2 + startMinute / 30); // Position relative to 10h, 2 slots per hour
-    const duration = ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 30; // Duration in 30-min slots
+    // Position relative à 10h, en créneaux de 30min
+    const startSlot = (startHour - 10) * 2 + Math.floor(startMinute / 30);
+    const endSlot = (endHour - 10) * 2 + Math.floor(endMinute / 30);
+    const duration = endSlot - startSlot;
     
-    return { top: startPosition * 40, height: duration * 40 }; // 40px per 30-min slot
+    return { 
+      top: startSlot * 40, // 40px par créneau de 30min
+      height: Math.max(duration * 40, 40) // Minimum 40px
+    };
   };
 
   return (
@@ -155,83 +160,76 @@ const AppointmentCalendar = () => {
               <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
                 <div className="grid grid-cols-12 h-full">
                   <div className="col-span-2"></div>
-                  <div className="col-span-10 relative px-1">
+                  <div className="col-span-10 relative">
                     {selectedDateAppointments.map((appointment) => {
                       const position = getAppointmentPosition(appointment);
                       return (
                         <div
                           key={appointment.id}
                           className={cn(
-                            "absolute rounded-md p-1.5 pointer-events-auto cursor-pointer transition-all duration-200 overflow-hidden text-xs",
+                            "absolute rounded p-1 pointer-events-auto cursor-pointer transition-all duration-200 text-xs border",
                             appointment.isPaid 
-                              ? "bg-muted/60 text-muted-foreground border border-muted/40" 
-                              : "bg-accent/95 text-accent-foreground border border-accent shadow-sm hover:shadow-md"
+                              ? "bg-muted/50 text-muted-foreground border-muted/40" 
+                              : "bg-accent text-accent-foreground border-accent shadow-sm"
                           )}
                           style={{
-                            top: `${position.top + 1}px`,
-                            left: '4px',
-                            right: '4px',
-                            height: `${Math.max(position.height - 2, 38)}px`,
-                            width: 'calc(100% - 8px)'
+                            top: `${position.top + 2}px`,
+                            left: '2px',
+                            right: '2px',
+                            height: `${position.height - 4}px`,
+                            minHeight: '36px'
                           }}
                         >
-                          <div className="h-full flex flex-col justify-between">
-                            {/* Header avec nom et badge */}
+                          <div className="h-full overflow-hidden">
+                            {/* Ligne 1: Nom + Badge */}
                             <div className="flex items-center justify-between mb-1">
-                              <div className="flex items-center gap-1 min-w-0 flex-1">
-                                <User className="h-2.5 w-2.5 flex-shrink-0 opacity-80" />
-                                <span className="font-semibold text-xs truncate">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <User className="h-2 w-2 flex-shrink-0" />
+                                <span className="font-medium text-xs truncate">
                                   {appointment.clientName}
                                 </span>
                               </div>
                               <Badge 
-                                className={cn(
-                                  "text-xs px-1 py-0 ml-1 flex-shrink-0 h-4",
-                                  getStatusColor(appointment.status, appointment.isPaid)
-                                )}
+                                className="text-xs px-1 py-0 h-3 flex-shrink-0 ml-1"
+                                variant={appointment.isPaid ? "secondary" : "default"}
                               >
-                                {appointment.isPaid ? 'Payé' : 'RDV'}
+                                RDV
                               </Badge>
                             </div>
                             
-                            {/* Contenu principal */}
-                            <div className="flex-1 min-h-0">
-                              <div className="text-xs opacity-90 truncate mb-0.5">
-                                {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
-                              </div>
-                              
-                              <div className="text-xs opacity-80 truncate mb-0.5">
-                                {appointment.services.map(s => s.name).join(', ')}
-                              </div>
-                              
+                            {/* Ligne 2: Horaire */}
+                            <div className="text-xs opacity-90 mb-1 truncate">
+                              {format(appointment.startTime, 'HH:mm')}-{format(appointment.endTime, 'HH:mm')}
+                            </div>
+                            
+                            {/* Ligne 3: Prix + Boutons */}
+                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1">
-                                <Euro className="h-2.5 w-2.5 flex-shrink-0 opacity-80" />
+                                <Euro className="h-2 w-2" />
                                 <span className="text-xs font-medium">
                                   {appointment.totalPrice.toFixed(2)}€
                                 </span>
                               </div>
+                              
+                              {!appointment.isPaid && (
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handlePayAppointment(appointment.id, 'cash')}
+                                    className="h-4 px-1 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Cash
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handlePayAppointment(appointment.id, 'card')}
+                                    className="h-4 px-1 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    BC
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-
-                            {/* Boutons de paiement */}
-                            {!appointment.isPaid && (
-                              <div className="flex gap-1 mt-1">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handlePayAppointment(appointment.id, 'cash')}
-                                  className="h-5 px-1.5 text-xs bg-pos-success hover:bg-pos-success/90 text-pos-success-foreground flex-1"
-                                >
-                                  Cash
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handlePayAppointment(appointment.id, 'card')}
-                                  className="h-5 px-1.5 text-xs bg-pos-card hover:bg-pos-card/90 text-white flex-1"
-                                >
-                                  <CreditCard className="h-2 w-2 mr-0.5" />
-                                  BC
-                                </Button>
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
