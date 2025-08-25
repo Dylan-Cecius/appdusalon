@@ -51,12 +51,14 @@ const AppointmentCalendar = () => {
     });
   };
 
-  // Generate time slots for the day (8h-18h)
+  // Generate time slots for the day (10h-19h) with half-hour intervals
   const generateTimeSlots = () => {
     const slots = [];
-    for (let hour = 8; hour < 18; hour++) {
-      slots.push(hour);
+    for (let hour = 10; hour < 19; hour++) {
+      slots.push({ hour, minute: 0 }); // :00
+      slots.push({ hour, minute: 30 }); // :30
     }
+    slots.push({ hour: 19, minute: 0 }); // End at 19:00
     return slots;
   };
 
@@ -68,10 +70,10 @@ const AppointmentCalendar = () => {
     const endHour = appointment.endTime.getHours();
     const endMinute = appointment.endTime.getMinutes();
     
-    const startPosition = ((startHour - 8) * 60 + startMinute) / 60; // Position relative to 8h
-    const duration = ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60; // Duration in hours
+    const startPosition = ((startHour - 10) * 2 + startMinute / 30); // Position relative to 10h, 2 slots per hour
+    const duration = ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 30; // Duration in 30-min slots
     
-    return { top: startPosition * 60, height: duration * 60 }; // 60px per hour
+    return { top: startPosition * 40, height: duration * 40 }; // 40px per 30-min slot
   };
 
   return (
@@ -133,14 +135,14 @@ const AppointmentCalendar = () => {
             
             <div className="relative border rounded-lg overflow-hidden">
               {/* Time slots */}
-              {timeSlots.map((hour) => (
-                <div key={hour} className="grid grid-cols-12 border-b border-muted/20 min-h-[60px]">
-                  <div className="col-span-2 p-3 bg-muted/5 border-r border-muted/20">
+              {timeSlots.map((slot, index) => (
+                <div key={`${slot.hour}-${slot.minute}`} className={cn(
+                  "grid grid-cols-12 border-b border-muted/20 min-h-[40px]",
+                  slot.minute === 0 ? "border-b-2" : "border-b border-dashed"
+                )}>
+                  <div className="col-span-2 p-2 bg-muted/5 border-r border-muted/20">
                     <div className="text-sm font-medium">
-                      {hour.toString().padStart(2, '0')}:00
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {(hour + 1).toString().padStart(2, '0')}:00
+                      {slot.hour.toString().padStart(2, '0')}:{slot.minute.toString().padStart(2, '0')}
                     </div>
                   </div>
                   <div className="col-span-10 relative">

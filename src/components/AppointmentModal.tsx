@@ -148,7 +148,6 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
                   <div className="text-sm font-medium">{service.name}</div>
                   <div className="text-xs text-muted-foreground">
                     {service.price.toFixed(2)}€ • {service.duration}min
-                    {service.appointmentBuffer && ` (+${service.appointmentBuffer}min)`}
                   </div>
                 </Card>
               ))}
@@ -165,7 +164,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{service.name}</span>
                       <Badge variant="outline">
-                        {service.duration}min {service.appointmentBuffer && `+${service.appointmentBuffer}min`}
+                        {service.duration}min
                       </Badge>
                       <span className="text-sm text-muted-foreground">
                         {service.price.toFixed(2)}€
