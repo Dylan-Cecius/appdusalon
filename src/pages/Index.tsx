@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServiceCard from "@/components/ServiceCard";
 import CartSidebar from "@/components/CartSidebar";
 import StatsOverview from "@/components/StatsOverview";
-import AppointmentCalendar from "@/components/AppointmentCalendar";
+import BlockCalendar from "@/components/BlockCalendar";
 import EmailReports from "@/components/EmailReports";
 import { services, getAllCategories } from "@/data/services";
 import { toast } from "@/hooks/use-toast";
@@ -214,7 +214,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="agenda">
-            <AppointmentCalendar />
+            <BlockCalendar />
           </TabsContent>
 
           <TabsContent value="stats">
