@@ -216,6 +216,7 @@ export const useSupabaseTransactions = () => {
       tx.transactionDate >= startOfMonth
     );
 
+    // Revenue stats
     const todayRevenue = todayTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
     const todayClients = todayTransactions.length;
     const weeklyRevenue = weekTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
@@ -223,13 +224,50 @@ export const useSupabaseTransactions = () => {
     const monthlyRevenue = monthTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
     const monthlyClients = monthTransactions.length;
 
+    // Payment method stats
+    const todayCash = todayTransactions.filter(tx => tx.paymentMethod === 'cash').length;
+    const todayCard = todayTransactions.filter(tx => tx.paymentMethod === 'card').length;
+    const weeklyCash = weekTransactions.filter(tx => tx.paymentMethod === 'cash').length;
+    const weeklyCard = weekTransactions.filter(tx => tx.paymentMethod === 'card').length;
+    const monthlyCash = monthTransactions.filter(tx => tx.paymentMethod === 'cash').length;
+    const monthlyCard = monthTransactions.filter(tx => tx.paymentMethod === 'card').length;
+
+    // Calculate percentages
+    const todayCashPercent = todayClients > 0 ? (todayCash / todayClients) * 100 : 0;
+    const todayCardPercent = todayClients > 0 ? (todayCard / todayClients) * 100 : 0;
+    const weeklyCashPercent = weeklyClients > 0 ? (weeklyCash / weeklyClients) * 100 : 0;
+    const weeklyCardPercent = weeklyClients > 0 ? (weeklyCard / weeklyClients) * 100 : 0;
+    const monthlyCashPercent = monthlyClients > 0 ? (monthlyCash / monthlyClients) * 100 : 0;
+    const monthlyCardPercent = monthlyClients > 0 ? (monthlyCard / monthlyClients) * 100 : 0;
+
     return {
       todayRevenue,
       todayClients,
       weeklyRevenue,
       weeklyClients,
       monthlyRevenue,
-      monthlyClients
+      monthlyClients,
+      // Payment method stats
+      paymentStats: {
+        today: {
+          cash: todayCash,
+          card: todayCard,
+          cashPercent: todayCashPercent,
+          cardPercent: todayCardPercent
+        },
+        weekly: {
+          cash: weeklyCash,
+          card: weeklyCard,
+          cashPercent: weeklyCashPercent,
+          cardPercent: weeklyCardPercent
+        },
+        monthly: {
+          cash: monthlyCash,
+          card: monthlyCard,
+          cashPercent: monthlyCashPercent,
+          cardPercent: monthlyCardPercent
+        }
+      }
     };
   };
 

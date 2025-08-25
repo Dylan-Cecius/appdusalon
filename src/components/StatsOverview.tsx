@@ -8,6 +8,26 @@ interface StatsData {
   weeklyClients: number;
   monthlyRevenue: number;
   monthlyClients: number;
+  paymentStats: {
+    today: {
+      cash: number;
+      card: number;
+      cashPercent: number;
+      cardPercent: number;
+    };
+    weekly: {
+      cash: number;
+      card: number;
+      cashPercent: number;
+      cardPercent: number;
+    };
+    monthly: {
+      cash: number;
+      card: number;
+      cashPercent: number;
+      cardPercent: number;
+    };
+  };
 }
 
 interface StatsOverviewProps {

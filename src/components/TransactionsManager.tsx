@@ -64,7 +64,7 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
   };
 
   const handleDelete = async (transactionId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette transaction ?')) {
+    if (window.confirm('⚠️ Êtes-vous sûr de vouloir supprimer définitivement cette transaction ?\n\nCette action ne peut pas être annulée.')) {
       await deleteTransaction(transactionId);
     }
   };

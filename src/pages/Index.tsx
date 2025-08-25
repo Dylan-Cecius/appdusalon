@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServiceCard from "@/components/ServiceCard";
 import CartSidebar from "@/components/CartSidebar";
 import StatsOverview from "@/components/StatsOverview";
+import PaymentMethodStats from "@/components/PaymentMethodStats";
 import TransactionsManager from "@/components/TransactionsManager";
 import CustomDateRangeStats from "@/components/CustomDateRangeStats";
 import BlockCalendar from "@/components/BlockCalendar";
@@ -252,6 +253,8 @@ const Index = () => {
               </div>
               
               <StatsOverview stats={stats} />
+              
+              <PaymentMethodStats paymentStats={stats.paymentStats} />
               
               <CustomDateRangeStats />
               
