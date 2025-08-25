@@ -11,6 +11,7 @@ export interface Appointment {
   totalPrice: number;
   notes?: string;
   isPaid: boolean;
+  barberId?: string; // ID du coiffeur assigné
 }
 
 // Mock appointments for demonstration
@@ -33,7 +34,8 @@ export const mockAppointments: Appointment[] = [
     endTime: new Date(new Date().setHours(10, 30, 0, 0)),
     status: 'scheduled',
     totalPrice: 18.00,
-    isPaid: false
+    isPaid: false,
+    barberId: '1'
   },
   {
     id: '2',
@@ -53,7 +55,8 @@ export const mockAppointments: Appointment[] = [
     endTime: new Date(new Date().setHours(14, 40, 0, 0)),
     status: 'scheduled',
     totalPrice: 23.00,
-    isPaid: false
+    isPaid: false,
+    barberId: '2'
   }
 ];
 

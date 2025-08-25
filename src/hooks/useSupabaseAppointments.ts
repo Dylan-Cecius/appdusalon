@@ -1,20 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { mockAppointments } from '@/data/appointments';
-
-export interface Appointment {
-  id: string;
-  clientName: string;
-  clientPhone: string;
-  services: any[];
-  startTime: Date;
-  endTime: Date;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  totalPrice: number;
-  notes?: string;
-  isPaid: boolean;
-}
+import { mockAppointments, Appointment } from '@/data/appointments';
 
 export const useSupabaseAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -47,7 +34,8 @@ export const useSupabaseAppointments = () => {
         status: apt.status,
         totalPrice: parseFloat(apt.total_price),
         notes: apt.notes,
-        isPaid: apt.is_paid
+        isPaid: apt.is_paid,
+        barberId: apt.barber_id
       }));
 
       setAppointments(formattedAppointments);
@@ -88,7 +76,8 @@ export const useSupabaseAppointments = () => {
           status: appointment.status,
           total_price: appointment.totalPrice,
           notes: appointment.notes,
-          is_paid: appointment.isPaid
+          is_paid: appointment.isPaid,
+          barber_id: appointment.barberId
         })
         .select()
         .single();
@@ -105,7 +94,8 @@ export const useSupabaseAppointments = () => {
         status: data.status,
         totalPrice: parseFloat(data.total_price),
         notes: data.notes,
-        isPaid: data.is_paid
+        isPaid: data.is_paid,
+        barberId: data.barber_id
       };
 
       setAppointments(prev => [...prev, newAppointment]);
@@ -140,6 +130,7 @@ export const useSupabaseAppointments = () => {
       if (updates.totalPrice !== undefined) updateData.total_price = updates.totalPrice;
       if (updates.notes !== undefined) updateData.notes = updates.notes;
       if (updates.isPaid !== undefined) updateData.is_paid = updates.isPaid;
+      if (updates.barberId !== undefined) updateData.barber_id = updates.barberId;
 
       const { error } = await supabase
         .from('appointments')
