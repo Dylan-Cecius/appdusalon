@@ -15,10 +15,11 @@ const BlockCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [barbers, setBarbers] = useState<Barber[]>(defaultBarbers);
-  const [selectedBarber, setSelectedBarber] = useState<string>('all');
+  const [selectedBarber, setSelectedBarber] = useState<string>('1'); // Sélectionner le premier coiffeur par défaut
   const { appointments, markAsPaid, loading } = useSupabaseAppointments();
 
   const activeBarbers = getActiveBarbers(barbers);
+  const currentBarber = activeBarbers.find(b => b.id === selectedBarber);
 
   // Colors for different service categories
   const getServiceColor = (services: any[]) => {
@@ -71,16 +72,16 @@ const BlockCalendar = () => {
   };
 
   // Get appointments for a specific date and barber
-  const getAppointmentsForDateAndBarber = (date: Date, barberId?: string) => {
+  const getAppointmentsForDateAndBarber = (date: Date, barberId: string) => {
     return appointments.filter(apt => {
       if (apt.startTime.toDateString() !== date.toDateString()) return false;
-      if (barberId && barberId !== 'all' && apt.barberId !== barberId) return false;
+      if (apt.barberId !== barberId) return false;
       return true;
     });
   };
 
   // Get appointments for a specific time slot and barber
-  const getAppointmentsForSlot = (date: Date, timeSlot: string, barberId?: string) => {
+  const getAppointmentsForSlot = (date: Date, timeSlot: string, barberId: string) => {
     const [hour, minute] = timeSlot.split(':').map(Number);
     return getAppointmentsForDateAndBarber(date, barberId).filter(apt => {
       const aptHour = apt.startTime.getHours();
@@ -111,24 +112,7 @@ const BlockCalendar = () => {
       <Card className="p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Coiffeur" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les coiffeurs</SelectItem>
-                {activeBarbers.map((barber) => (
-                  <SelectItem key={barber.id} value={barber.id}>
-                    {barber.name} ({barber.startTime}-{barber.endTime})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Gérer les coiffeurs
-            </Button>
+            <h3 className="text-lg font-semibold">Planning des coiffeurs</h3>
           </div>
           
           <Button 
@@ -138,6 +122,23 @@ const BlockCalendar = () => {
             <Plus className="h-4 w-4 mr-2" />
             Nouveau RDV
           </Button>
+        </div>
+
+        {/* Barber Selection Tabs */}
+        <div className="flex gap-2 mb-4 overflow-x-auto">
+          {activeBarbers.map((barber) => (
+            <Button
+              key={barber.id}
+              variant={selectedBarber === barber.id ? 'default' : 'outline'}
+              onClick={() => setSelectedBarber(barber.id)}
+              className="min-w-fit whitespace-nowrap"
+            >
+              {barber.name}
+              <span className="ml-2 text-xs opacity-75">
+                ({barber.startTime}-{barber.endTime})
+              </span>
+            </Button>
+          ))}
         </div>
 
         {/* Navigation */}
@@ -152,6 +153,11 @@ const BlockCalendar = () => {
           
           <h2 className="text-lg font-semibold">
             {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+            {currentBarber && (
+              <span className="ml-3 text-base font-normal text-muted-foreground">
+                - Planning de {currentBarber.name}
+              </span>
+            )}
           </h2>
           
           <Button 
@@ -164,119 +170,123 @@ const BlockCalendar = () => {
         </div>
       </Card>
 
-      {/* Calendar Grid */}
-      <Card className="p-4">
-        <div className="border-2 border-black rounded-lg overflow-hidden">
-          {/* Header with barber names */}
-          <div className="grid grid-cols-4 gap-0 mb-0 bg-gray-100">
-            <div className="text-sm font-bold text-center p-3 bg-black text-white border-r-2 border-black">
-              Horaires
-            </div>
-            {selectedBarber === 'all' 
-              ? activeBarbers.slice(0, 3).map((barber, index) => (
-                  <div key={barber.id} className={cn(
-                    "text-sm font-bold text-center p-3 bg-gray-100",
-                    index < 2 && "border-r-2 border-black"
-                  )}>
-                    <div>{barber.name}</div>
-                    <div className="text-xs text-gray-600">{barber.startTime}-{barber.endTime}</div>
-                  </div>
-                ))
-              : (
-                  <div className="text-sm font-bold text-center p-3 bg-gray-100 col-span-3">
-                    {activeBarbers.find(b => b.id === selectedBarber)?.name || 'Tous les coiffeurs'}
-                  </div>
-                )
-            }
-          </div>
-
-          {/* Time slots */}
-          {timeSlots.map((timeSlot, index) => (
-            <div key={timeSlot} className={cn(
-              selectedBarber === 'all' ? "grid grid-cols-4 gap-0" : "grid grid-cols-2 gap-0",
-              index < timeSlots.length - 1 && "border-b border-black"
-            )}>
-              {/* Time column */}
-              <div className="flex items-center justify-center text-sm font-medium text-white bg-black border-r-2 border-black p-3 min-h-[60px]">
-                {timeSlot}
+      {/* Individual Barber Calendar */}
+      {currentBarber && (
+        <Card className="p-4">
+          <div className="border-2 border-black rounded-lg overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-2 gap-0 bg-gray-100">
+              <div className="text-sm font-bold text-center p-3 bg-black text-white border-r-2 border-black">
+                Horaires
               </div>
-              
-              {/* Appointment columns */}
-              {selectedBarber === 'all' 
-                ? activeBarbers.slice(0, 3).map((barber, barberIndex) => {
-                    const slotAppointments = getAppointmentsForSlot(selectedDate, timeSlot, barber.id);
-                    const isWorking = isBarberWorking(barber, timeSlot);
-                    
-                    return (
-                      <div key={barber.id} className={cn(
-                        "p-1 min-h-[60px] flex items-center justify-center",
-                        barberIndex < 2 && "border-r-2 border-black",
-                        isWorking ? "bg-white" : "bg-gray-200"
-                      )}>
-                        {!isWorking ? (
-                          <span className="text-xs text-gray-500">Fermé</span>
-                        ) : slotAppointments.length === 0 ? (
-                          <span className="text-xs text-gray-400">Libre</span>
-                        ) : (
-                          <div className="w-full space-y-1">
-                            {slotAppointments.map((appointment) => (
-                              <div
-                                key={appointment.id}
-                                className={cn(
-                                  "rounded p-2 text-white text-xs cursor-pointer transition-all hover:shadow-md border border-black",
-                                  getServiceColor(appointment.services),
-                                  appointment.isPaid && "opacity-50"
-                                )}
-                                onClick={() => !appointment.isPaid && handlePayAppointment(appointment.id, 'cash')}
-                              >
-                                <div className="font-medium truncate">{appointment.clientName}</div>
-                                <div className="text-xs opacity-90 truncate">{appointment.services[0]?.name}</div>
-                                <div className="text-xs font-medium">{appointment.totalPrice.toFixed(2)}€</div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                : (
-                    <div className="p-1 min-h-[60px] bg-white col-span-3">
-                      {(() => {
-                        const barber = activeBarbers.find(b => b.id === selectedBarber);
-                        if (!barber || !isBarberWorking(barber, timeSlot)) {
-                          return <span className="text-xs text-gray-500 flex items-center justify-center h-full">Fermé</span>;
-                        }
-                        const slotAppointments = getAppointmentsForSlot(selectedDate, timeSlot, selectedBarber);
-                        return slotAppointments.length === 0 ? (
-                          <span className="text-xs text-gray-400 flex items-center justify-center h-full">Libre</span>
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
-                            {slotAppointments.map((appointment) => (
-                              <div
-                                key={appointment.id}
-                                className={cn(
-                                  "rounded p-2 text-white text-xs cursor-pointer transition-all hover:shadow-md border border-black",
-                                  getServiceColor(appointment.services),
-                                  appointment.isPaid && "opacity-50"
-                                )}
-                                onClick={() => !appointment.isPaid && handlePayAppointment(appointment.id, 'cash')}
-                              >
-                                <div className="font-medium truncate">{appointment.clientName}</div>
-                                <div className="text-xs opacity-90 truncate">{appointment.services[0]?.name}</div>
-                                <div className="text-xs font-medium">{appointment.totalPrice.toFixed(2)}€</div>
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })()
-                      }
-                    </div>
-                  )
-              }
+              <div className="text-sm font-bold text-center p-3 bg-gray-100">
+                <div className={cn("inline-block px-3 py-1 rounded", currentBarber.color)}>
+                  <span className="text-white">{currentBarber.name}</span>
+                </div>
+                <div className="text-xs text-gray-600 mt-1">
+                  {currentBarber.startTime} - {currentBarber.endTime}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </Card>
+
+            {/* Time slots */}
+            {timeSlots.map((timeSlot, index) => {
+              const isWorking = isBarberWorking(currentBarber, timeSlot);
+              const slotAppointments = getAppointmentsForSlot(selectedDate, timeSlot, currentBarber.id);
+              
+              return (
+                <div key={timeSlot} className={cn(
+                  "grid grid-cols-2 gap-0",
+                  index < timeSlots.length - 1 && "border-b border-black"
+                )}>
+                  {/* Time column */}
+                  <div className="flex items-center justify-center text-sm font-medium text-white bg-black border-r-2 border-black p-3 min-h-[80px]">
+                    {timeSlot}
+                  </div>
+                  
+                  {/* Appointment column */}
+                  <div className={cn(
+                    "p-2 min-h-[80px] flex items-center justify-center",
+                    isWorking ? "bg-white" : "bg-gray-200"
+                  )}>
+                    {!isWorking ? (
+                      <div className="text-center">
+                        <span className="text-sm text-gray-500">🔒 Fermé</span>
+                      </div>
+                    ) : slotAppointments.length === 0 ? (
+                      <div className="text-center">
+                        <span className="text-sm text-green-600">✓ Libre</span>
+                      </div>
+                    ) : (
+                      <div className="w-full space-y-2">
+                        {slotAppointments.map((appointment) => (
+                          <div
+                            key={appointment.id}
+                            className={cn(
+                              "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-md border-2 border-black",
+                              getServiceColor(appointment.services),
+                              appointment.isPaid && "opacity-50"
+                            )}
+                            onClick={() => !appointment.isPaid && handlePayAppointment(appointment.id, 'cash')}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-bold truncate">
+                                👤 {appointment.clientName}
+                              </div>
+                              {appointment.isPaid && (
+                                <span className="text-xs bg-green-500 px-2 py-1 rounded">✓ Payé</span>
+                              )}
+                            </div>
+                            
+                            <div className="text-sm opacity-90 mb-1">
+                              ✂️ {appointment.services[0]?.name}
+                            </div>
+                            
+                            <div className="text-sm opacity-90 mb-2">
+                              ⏰ {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-bold">
+                                💰 {appointment.totalPrice.toFixed(2)}€
+                              </div>
+                              
+                              {!appointment.isPaid && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePayAppointment(appointment.id, 'cash');
+                                    }}
+                                    className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Cash
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePayAppointment(appointment.id, 'card');
+                                    }}
+                                    className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    CB
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <AppointmentModal 
         isOpen={isModalOpen}
