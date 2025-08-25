@@ -18,25 +18,25 @@ export const useSupabaseAppointments = () => {
       }
 
       const { data, error } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .select('*')
         .order('start_time', { ascending: true });
 
       if (error) throw error;
 
-      const formattedAppointments = data.map(apt => ({
+      const formattedAppointments = data?.map((apt: any) => ({
         id: apt.id,
         clientName: apt.client_name,
         clientPhone: apt.client_phone,
-        services: apt.services,
+        services: apt.services as any,
         startTime: new Date(apt.start_time),
         endTime: new Date(apt.end_time),
-        status: apt.status,
-        totalPrice: parseFloat(apt.total_price),
+        status: apt.status as 'scheduled' | 'completed' | 'cancelled',
+        totalPrice: apt.total_price,
         notes: apt.notes,
         isPaid: apt.is_paid,
         barberId: apt.barber_id
-      }));
+      })) || [];
 
       setAppointments(formattedAppointments);
     } catch (error) {
@@ -66,11 +66,11 @@ export const useSupabaseAppointments = () => {
       }
 
       const { data, error } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .insert({
           client_name: appointment.clientName,
           client_phone: appointment.clientPhone,
-          services: appointment.services,
+          services: appointment.services as any,
           start_time: appointment.startTime.toISOString(),
           end_time: appointment.endTime.toISOString(),
           status: appointment.status,
@@ -85,17 +85,17 @@ export const useSupabaseAppointments = () => {
       if (error) throw error;
 
       const newAppointment: Appointment = {
-        id: data.id,
-        clientName: data.client_name,
-        clientPhone: data.client_phone,
-        services: data.services,
-        startTime: new Date(data.start_time),
-        endTime: new Date(data.end_time),
-        status: data.status,
-        totalPrice: parseFloat(data.total_price),
-        notes: data.notes,
-        isPaid: data.is_paid,
-        barberId: data.barber_id
+        id: (data as any).id,
+        clientName: (data as any).client_name,
+        clientPhone: (data as any).client_phone,
+        services: (data as any).services as any,
+        startTime: new Date((data as any).start_time),
+        endTime: new Date((data as any).end_time),
+        status: (data as any).status as 'scheduled' | 'completed' | 'cancelled',
+        totalPrice: (data as any).total_price,
+        notes: (data as any).notes,
+        isPaid: (data as any).is_paid,
+        barberId: (data as any).barber_id
       };
 
       setAppointments(prev => [...prev, newAppointment]);
@@ -133,7 +133,7 @@ export const useSupabaseAppointments = () => {
       if (updates.barberId !== undefined) updateData.barber_id = updates.barberId;
 
       const { error } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .update(updateData)
         .eq('id', id);
 
@@ -161,7 +161,7 @@ export const useSupabaseAppointments = () => {
   const deleteAppointment = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .delete()
         .eq('id', id);
 

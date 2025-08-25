@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          barber_id: string | null
+          client_name: string
+          client_phone: string
+          created_at: string
+          end_time: string
+          id: string
+          is_paid: boolean
+          notes: string | null
+          services: Json
+          start_time: string
+          status: string
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          barber_id?: string | null
+          client_name: string
+          client_phone: string
+          created_at?: string
+          end_time: string
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          services: Json
+          start_time: string
+          status?: string
+          total_price: number
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string | null
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          services?: Json
+          start_time?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          payment_method: string
+          total_amount: number
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items: Json
+          payment_method: string
+          total_amount: number
+          transaction_date?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          payment_method?: string
+          total_amount?: number
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

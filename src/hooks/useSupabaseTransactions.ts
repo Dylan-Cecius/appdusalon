@@ -30,19 +30,19 @@ export const useSupabaseTransactions = () => {
       }
 
       const { data, error } = await supabase
-        .from('transactions')
+        .from('transactions' as any)
         .select('*')
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
 
-      const formattedTransactions = data.map(tx => ({
+      const formattedTransactions = data?.map((tx: any) => ({
         id: tx.id,
-        items: tx.items,
-        totalAmount: parseFloat(tx.total_amount),
-        paymentMethod: tx.payment_method,
+        items: tx.items as any,
+        totalAmount: tx.total_amount,
+        paymentMethod: tx.payment_method as 'cash' | 'card',
         transactionDate: new Date(tx.transaction_date)
-      }));
+      })) || [];
 
       setTransactions(formattedTransactions);
     } catch (error) {
@@ -73,9 +73,9 @@ export const useSupabaseTransactions = () => {
       }
 
       const { data, error } = await supabase
-        .from('transactions')
+        .from('transactions' as any)
         .insert({
-          items: transaction.items,
+          items: transaction.items as any,
           total_amount: transaction.totalAmount,
           payment_method: transaction.paymentMethod
         })
@@ -85,11 +85,11 @@ export const useSupabaseTransactions = () => {
       if (error) throw error;
 
       const newTransaction: Transaction = {
-        id: data.id,
-        items: data.items,
-        totalAmount: parseFloat(data.total_amount),
-        paymentMethod: data.payment_method,
-        transactionDate: new Date(data.transaction_date)
+        id: (data as any).id,
+        items: (data as any).items as any,
+        totalAmount: (data as any).total_amount,
+        paymentMethod: (data as any).payment_method as 'cash' | 'card',
+        transactionDate: new Date((data as any).transaction_date)
       };
 
       setTransactions(prev => [newTransaction, ...prev]);
