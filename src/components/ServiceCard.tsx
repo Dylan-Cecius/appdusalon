@@ -7,7 +7,7 @@ interface Service {
   name: string;
   price: number;
   duration: number;
-  category: 'coupe' | 'barbe' | 'soin' | 'combo';
+  category: 'coupe' | 'barbe' | 'combo' | 'produit';
 }
 
 interface ServiceCardProps {
@@ -20,8 +20,8 @@ const ServiceCard = ({ service, onAdd }: ServiceCardProps) => {
     const colors = {
       coupe: 'bg-primary/10 text-primary',
       barbe: 'bg-accent/10 text-accent-foreground',
-      soin: 'bg-pos-success/10 text-pos-success',
-      combo: 'bg-pos-card/10 text-pos-card'
+      combo: 'bg-pos-card/10 text-pos-card',
+      produit: 'bg-pos-success/10 text-pos-success'
     };
     return colors[category] || colors.coupe;
   };
@@ -36,7 +36,11 @@ const ServiceCard = ({ service, onAdd }: ServiceCardProps) => {
           <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
             {service.name}
           </h3>
-          <p className="text-sm text-muted-foreground">{service.duration} min</p>
+          {service.category !== 'produit' ? (
+            <p className="text-sm text-muted-foreground">{service.duration} min</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Produit</p>
+          )}
         </div>
       </div>
       

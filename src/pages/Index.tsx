@@ -143,8 +143,8 @@ const Index = () => {
                       <h2 className="text-xl font-semibold text-primary capitalize flex items-center gap-2">
                         {category === 'coupe' && <Scissors className="h-5 w-5" />}
                         {category === 'barbe' && <div className="h-5 w-5 bg-accent rounded" />}
-                        {category === 'soin' && <div className="h-5 w-5 bg-pos-success rounded-full" />}
                         {category === 'combo' && <div className="h-5 w-5 bg-pos-card rounded-lg" />}
+                        {category === 'produit' && <div className="h-5 w-5 bg-pos-success rounded-full" />}
                         {category}s
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
