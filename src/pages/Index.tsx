@@ -10,6 +10,7 @@ import AppointmentCalendar from "@/components/AppointmentCalendar";
 import EmailReports from "@/components/EmailReports";
 import { services, getAllCategories } from "@/data/services";
 import { toast } from "@/hooks/use-toast";
+import { useSupabaseTransactions } from "@/hooks/useSupabaseTransactions";
 
 interface CartItem {
   id: string;
@@ -21,14 +22,10 @@ interface CartItem {
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState("pos");
+  const { addTransaction, getStats } = useSupabaseTransactions();
   
-  // Mock stats data
-  const statsData = {
-    todayRevenue: 450.50,
-    todayClients: 18,
-    monthlyRevenue: 12350.75,
-    monthlyClients: 342
-  };
+  // Get real stats from transactions
+  const stats = getStats();
 
   const categories = getAllCategories();
 
@@ -67,34 +64,49 @@ const Index = () => {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleCheckout = (method: 'cash' | 'card') => {
+  const handleCheckout = async (method: 'cash' | 'card') => {
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // Deep link vers Belfius Mobile pour les paiements Bancontact
-    if (method === 'card') {
-      const belfiusUrl = 'belfius://';
-      window.open(belfiusUrl, '_blank');
+    try {
+      // Enregistrer la transaction dans Supabase
+      await addTransaction({
+        items: cartItems,
+        totalAmount: total,
+        paymentMethod: method
+      });
+
+      // Deep link vers Belfius Mobile pour les paiements Bancontact
+      if (method === 'card') {
+        const belfiusUrl = 'belfius://';
+        window.open(belfiusUrl, '_blank');
+        
+        // Fallback vers l'app store si l'app n'est pas installée
+        setTimeout(() => {
+          if (document.hasFocus()) {
+            const playStoreUrl = 'https://play.google.com/store/apps/details?id=be.belfius.directmobile.android';
+            const appStoreUrl = 'https://apps.apple.com/be/app/belfius-mobile/id516419482';
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            window.open(isIOS ? appStoreUrl : playStoreUrl, '_blank');
+          }
+        }, 1000);
+      }
       
-      // Fallback vers l'app store si l'app n'est pas installée
+      toast({
+        title: "Paiement confirmé",
+        description: `Paiement de ${total.toFixed(2)}€ par ${method === 'cash' ? 'espèces' : 'Bancontact'}`,
+      });
+      
+      // Clear cart after successful payment
       setTimeout(() => {
-        if (document.hasFocus()) {
-          const playStoreUrl = 'https://play.google.com/store/apps/details?id=be.belfius.directmobile.android';
-          const appStoreUrl = 'https://apps.apple.com/be/app/belfius-mobile/id516419482';
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          window.open(isIOS ? appStoreUrl : playStoreUrl, '_blank');
-        }
-      }, 1000);
+        setCartItems([]);
+      }, 1500);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer la transaction",
+        variant: "destructive"
+      });
     }
-    
-    toast({
-      title: "Paiement confirmé",
-      description: `Paiement de ${total.toFixed(2)}€ par ${method === 'cash' ? 'espèces' : 'Bancontact'}`,
-    });
-    
-    // Clear cart after successful payment
-    setTimeout(() => {
-      setCartItems([]);
-    }, 1500);
   };
 
   return (
@@ -207,7 +219,7 @@ const Index = () => {
 
           <TabsContent value="stats">
             <div className="space-y-6">
-              <StatsOverview stats={statsData} />
+              <StatsOverview stats={stats} />
               
               <Card className="p-6 bg-gradient-to-br from-card to-background">
                 <div className="text-center text-muted-foreground py-8">
@@ -220,7 +232,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="reports">
-            <EmailReports statsData={statsData} />
+            <EmailReports statsData={stats} />
           </TabsContent>
         </Tabs>
       </div>

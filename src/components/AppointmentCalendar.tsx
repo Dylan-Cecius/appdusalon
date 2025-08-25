@@ -7,14 +7,14 @@ import { Clock, User, Euro, Plus, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useAppointments } from '@/hooks/useAppointments';
+import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import AppointmentModal from './AppointmentModal';
 import { toast } from '@/hooks/use-toast';
 
 const AppointmentCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { appointments, getAppointmentsForDate, markAsPaid } = useAppointments();
+  const { appointments, markAsPaid, getAppointmentsForDate, loading } = useSupabaseAppointments();
   
   const selectedDateAppointments = getAppointmentsForDate(selectedDate);
   

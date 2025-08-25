@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { X, Plus } from 'lucide-react';
 import { services, Service } from '@/data/services';
-import { useAppointments } from '@/hooks/useAppointments';
+import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -25,7 +25,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
-  const { addAppointment } = useAppointments();
+  const { addAppointment } = useSupabaseAppointments();
 
   const totalDuration = selectedServices.reduce((total, service) => 
     total + service.duration + (service.appointmentBuffer || 0), 0
