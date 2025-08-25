@@ -51,6 +51,29 @@ const AppointmentCalendar = () => {
     });
   };
 
+  // Generate time slots for the day (8h-18h)
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 8; hour < 18; hour++) {
+      slots.push(hour);
+    }
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
+
+  const getAppointmentPosition = (appointment: any) => {
+    const startHour = appointment.startTime.getHours();
+    const startMinute = appointment.startTime.getMinutes();
+    const endHour = appointment.endTime.getHours();
+    const endMinute = appointment.endTime.getMinutes();
+    
+    const startPosition = ((startHour - 8) * 60 + startMinute) / 60; // Position relative to 8h
+    const duration = ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60; // Duration in hours
+    
+    return { top: startPosition * 60, height: duration * 60 }; // 60px per hour
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Calendar */}
@@ -75,7 +98,7 @@ const AppointmentCalendar = () => {
         />
       </Card>
 
-      {/* Appointments List */}
+      {/* Schedule Grid */}
       <Card className="p-6 lg:col-span-2">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -95,78 +118,120 @@ const AppointmentCalendar = () => {
           </Button>
         </div>
 
-        <div className="space-y-4">
-          {selectedDateAppointments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucun rendez-vous ce jour</p>
+        {selectedDateAppointments.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Aucun rendez-vous ce jour</p>
+          </div>
+        ) : (
+          <div className="relative">
+            {/* Time Grid */}
+            <div className="grid grid-cols-12 gap-1 mb-4">
+              <div className="col-span-2 text-sm font-medium text-muted-foreground">Heure</div>
+              <div className="col-span-10 text-sm font-medium text-muted-foreground">Planning</div>
             </div>
-          ) : (
-            selectedDateAppointments.map((appointment) => (
-              <Card 
-                key={appointment.id} 
-                className={cn(
-                  "p-4 transition-all duration-200",
-                  appointment.isPaid ? "opacity-60 bg-muted/20" : "hover:shadow-md"
-                )}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold">{appointment.clientName}</span>
-                      </div>
-                      <Badge className={getStatusColor(appointment.status, appointment.isPaid)}>
-                        {appointment.isPaid ? 'Payé' : 'En attente'}
-                      </Badge>
+            
+            <div className="relative border rounded-lg overflow-hidden">
+              {/* Time slots */}
+              {timeSlots.map((hour) => (
+                <div key={hour} className="grid grid-cols-12 border-b border-muted/20 min-h-[60px]">
+                  <div className="col-span-2 p-3 bg-muted/5 border-r border-muted/20">
+                    <div className="text-sm font-medium">
+                      {hour.toString().padStart(2, '0')}:00
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
-                      </div>
-                      <div>{appointment.clientPhone}</div>
-                      <div className="flex items-center gap-1">
-                        <Euro className="h-3 w-3" />
-                        {appointment.totalPrice.toFixed(2)}€
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {appointment.services.map((service) => (
-                        <Badge key={service.id} variant="outline" className="text-xs">
-                          {service.name} ({service.duration}min)
-                        </Badge>
-                      ))}
+                    <div className="text-xs text-muted-foreground">
+                      {(hour + 1).toString().padStart(2, '0')}:00
                     </div>
                   </div>
-
-                  {!appointment.isPaid && (
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        onClick={() => handlePayAppointment(appointment.id, 'cash')}
-                        className="bg-pos-success hover:bg-pos-success/90 text-pos-success-foreground"
-                      >
-                        Cash
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handlePayAppointment(appointment.id, 'card')}
-                        className="bg-pos-card hover:bg-pos-card/90 text-white"
-                      >
-                        <CreditCard className="h-3 w-3 mr-1" />
-                        Bancontact
-                      </Button>
-                    </div>
-                  )}
+                  <div className="col-span-10 relative">
+                    {/* This will contain the appointments */}
+                  </div>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
+              ))}
+              
+              {/* Appointments overlay */}
+              <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
+                <div className="grid grid-cols-12 h-full">
+                  <div className="col-span-2"></div>
+                  <div className="col-span-10 relative">
+                    {selectedDateAppointments.map((appointment) => {
+                      const position = getAppointmentPosition(appointment);
+                      return (
+                        <div
+                          key={appointment.id}
+                          className={cn(
+                            "absolute left-1 right-1 rounded-md p-2 pointer-events-auto cursor-pointer transition-all duration-200",
+                            appointment.isPaid 
+                              ? "bg-muted/40 text-muted-foreground border border-muted/30" 
+                              : "bg-accent/90 text-accent-foreground border border-accent shadow-sm hover:shadow-md"
+                          )}
+                          style={{
+                            top: `${position.top}px`,
+                            height: `${Math.max(position.height, 40)}px`
+                          }}
+                        >
+                          <div className="flex justify-between items-start h-full">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <User className="h-3 w-3 flex-shrink-0" />
+                                <span className="font-semibold text-xs truncate">
+                                  {appointment.clientName}
+                                </span>
+                                <Badge 
+                                  className={cn(
+                                    "text-xs px-1 py-0",
+                                    getStatusColor(appointment.status, appointment.isPaid)
+                                  )}
+                                >
+                                  {appointment.isPaid ? 'Payé' : 'RDV'}
+                                </Badge>
+                              </div>
+                              
+                              <div className="text-xs opacity-90 mb-1">
+                                {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
+                              </div>
+                              
+                              <div className="text-xs opacity-80 truncate">
+                                {appointment.services.map(s => s.name).join(', ')}
+                              </div>
+                              
+                              <div className="flex items-center gap-1 mt-1">
+                                <Euro className="h-3 w-3" />
+                                <span className="text-xs font-medium">
+                                  {appointment.totalPrice.toFixed(2)}€
+                                </span>
+                              </div>
+                            </div>
+
+                            {!appointment.isPaid && (
+                              <div className="flex flex-col gap-1 ml-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handlePayAppointment(appointment.id, 'cash')}
+                                  className="h-6 px-2 text-xs bg-pos-success hover:bg-pos-success/90 text-pos-success-foreground"
+                                >
+                                  Cash
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handlePayAppointment(appointment.id, 'card')}
+                                  className="h-6 px-2 text-xs bg-pos-card hover:bg-pos-card/90 text-white"
+                                >
+                                  <CreditCard className="h-2 w-2 mr-1" />
+                                  BC
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
 
       <AppointmentModal 
