@@ -8,6 +8,7 @@ interface Service {
   price: number;
   duration: number;
   category: 'coupe' | 'barbe' | 'combo' | 'produit';
+  appointmentBuffer?: number;
 }
 
 interface ServiceCardProps {

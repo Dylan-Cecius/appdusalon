@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { BarChart3, ShoppingCart, Scissors, Calendar } from "lucide-react";
+import { BarChart3, ShoppingCart, Scissors, Calendar, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServiceCard from "@/components/ServiceCard";
 import CartSidebar from "@/components/CartSidebar";
 import StatsOverview from "@/components/StatsOverview";
+import AppointmentCalendar from "@/components/AppointmentCalendar";
+import EmailReports from "@/components/EmailReports";
 import { services, getAllCategories } from "@/data/services";
 import { toast } from "@/hooks/use-toast";
 
@@ -68,6 +70,22 @@ const Index = () => {
   const handleCheckout = (method: 'cash' | 'card') => {
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
+    // Deep link vers Belfius Mobile pour les paiements Bancontact
+    if (method === 'card') {
+      const belfiusUrl = 'belfius://';
+      window.open(belfiusUrl, '_blank');
+      
+      // Fallback vers l'app store si l'app n'est pas installée
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          const playStoreUrl = 'https://play.google.com/store/apps/details?id=be.belfius.directmobile.android';
+          const appStoreUrl = 'https://apps.apple.com/be/app/belfius-mobile/id516419482';
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          window.open(isIOS ? appStoreUrl : playStoreUrl, '_blank');
+        }
+      }, 1000);
+    }
+    
     toast({
       title: "Paiement confirmé",
       description: `Paiement de ${total.toFixed(2)}€ par ${method === 'cash' ? 'espèces' : 'Bancontact'}`,
@@ -119,14 +137,22 @@ const Index = () => {
 
       <div className="container mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md bg-card">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl bg-card">
             <TabsTrigger value="pos" className="flex items-center gap-2">
               <Scissors className="h-4 w-4" />
-              Point de Vente
+              POS
+            </TabsTrigger>
+            <TabsTrigger value="agenda" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Agenda
             </TabsTrigger>
             <TabsTrigger value="stats" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Statistiques
+              Stats
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Rapports
             </TabsTrigger>
           </TabsList>
 
@@ -175,6 +201,10 @@ const Index = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="agenda">
+            <AppointmentCalendar />
+          </TabsContent>
+
           <TabsContent value="stats">
             <div className="space-y-6">
               <StatsOverview stats={statsData} />
@@ -187,6 +217,10 @@ const Index = () => {
                 </div>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <EmailReports statsData={statsData} />
           </TabsContent>
         </Tabs>
       </div>

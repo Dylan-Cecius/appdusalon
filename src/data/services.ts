@@ -4,6 +4,7 @@ export interface Service {
   price: number;
   duration: number;
   category: 'coupe' | 'barbe' | 'combo' | 'produit';
+  appointmentBuffer?: number; // Délai en minutes après le RDV (optionnel)
 }
 
 export const services: Service[] = [
@@ -13,14 +14,16 @@ export const services: Service[] = [
     name: 'Coupe Homme',
     price: 18.00,
     duration: 30,
-    category: 'coupe'
+    category: 'coupe',
+    appointmentBuffer: 10
   },
   {
     id: '2',
     name: 'Coupe Enfant',
     price: 16.00,
     duration: 25,
-    category: 'coupe'
+    category: 'coupe',
+    appointmentBuffer: 5
   },
   
   // Barbe
@@ -29,14 +32,16 @@ export const services: Service[] = [
     name: 'Barbe',
     price: 10.00,
     duration: 15,
-    category: 'barbe'
+    category: 'barbe',
+    appointmentBuffer: 5
   },
   {
     id: '4',
     name: 'Barbe à l\'Ancienne',
     price: 15.00,
     duration: 25,
-    category: 'barbe'
+    category: 'barbe',
+    appointmentBuffer: 10
   },
   
   // Combos Services
@@ -45,21 +50,24 @@ export const services: Service[] = [
     name: 'Coupe + Barbe',
     price: 23.00,
     duration: 40,
-    category: 'combo'
+    category: 'combo',
+    appointmentBuffer: 15
   },
   {
     id: '6',
     name: 'Coupe + Barbe à l\'Ancienne',
     price: 28.00,
     duration: 50,
-    category: 'combo'
+    category: 'combo',
+    appointmentBuffer: 15
   },
   {
     id: '7',
     name: 'Double Ancienne',
     price: 32.00,
     duration: 60,
-    category: 'combo'
+    category: 'combo',
+    appointmentBuffer: 20
   },
   
   // Produits
