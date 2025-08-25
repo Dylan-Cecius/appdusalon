@@ -142,10 +142,13 @@ const BlockCalendar = () => {
         {viewMode === 'week' ? (
           <div className="space-y-2">
             {/* Days header */}
-            <div className="grid grid-cols-8 gap-2 mb-4">
-              <div className="text-xs font-medium text-muted-foreground p-2"></div>
-              {weekDays.map((day) => (
-                <div key={day.toString()} className="text-center">
+            <div className="grid grid-cols-8 gap-0 mb-4 border-2 border-black rounded-lg overflow-hidden">
+              <div className="text-xs font-medium text-muted-foreground p-2 bg-gray-100 border-r-2 border-black"></div>
+              {weekDays.map((day, index) => (
+                <div key={day.toString()} className={cn(
+                  "text-center p-2 bg-gray-50",
+                  index < weekDays.length - 1 && "border-r-2 border-black"
+                )}>
                   <div className="text-xs font-medium text-muted-foreground">
                     {format(day, 'EEE', { locale: fr })}
                   </div>
@@ -157,107 +160,122 @@ const BlockCalendar = () => {
             </div>
 
             {/* Time slots and appointments */}
-            {timeSlots.map((hour) => (
-              <div key={hour} className="grid grid-cols-8 gap-2 min-h-[60px]">
-                <div className="flex items-center justify-center text-xs font-medium text-muted-foreground bg-muted/30 rounded">
-                  {hour}h
+            <div className="border-2 border-black rounded-lg overflow-hidden">
+              {timeSlots.map((hour, hourIndex) => (
+                <div key={hour} className={cn(
+                  "grid grid-cols-8 gap-0 min-h-[60px]",
+                  hourIndex < timeSlots.length - 1 && "border-b-2 border-black"
+                )}>
+                  <div className="flex items-center justify-center text-xs font-medium text-white bg-black border-r-2 border-black">
+                    {hour}h
+                  </div>
+                  {weekDays.map((day, dayIndex) => {
+                    const dayAppointments = getAppointmentsForDate(day).filter(apt => 
+                      apt.startTime.getHours() >= hour && apt.startTime.getHours() < hour + 1
+                    );
+                    
+                    return (
+                      <div key={`${day.toString()}-${hour}`} className={cn(
+                        "space-y-1 p-1 bg-white",
+                        dayIndex < weekDays.length - 1 && "border-r-2 border-black"
+                      )}>
+                        {dayAppointments.map((appointment) => (
+                          <div
+                            key={appointment.id}
+                            className={cn(
+                              "rounded-lg p-2 text-white text-xs cursor-pointer transition-all hover:shadow-md border-2 border-black",
+                              getServiceColor(appointment.services),
+                              appointment.isPaid && "opacity-50"
+                            )}
+                            onClick={() => {
+                              if (!appointment.isPaid) {
+                                handlePayAppointment(appointment.id, 'cash');
+                              }
+                            }}
+                          >
+                            <div className="font-medium truncate">
+                              {appointment.clientName}
+                            </div>
+                            <div className="text-xs opacity-90 truncate">
+                              {appointment.services[0]?.name}
+                            </div>
+                            <div className="text-xs opacity-90">
+                              {format(appointment.startTime, 'HH:mm')}
+                            </div>
+                            <div className="text-xs font-medium">
+                              {appointment.totalPrice.toFixed(2)}€
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
-                {weekDays.map((day) => {
-                  const dayAppointments = getAppointmentsForDate(day).filter(apt => 
-                    apt.startTime.getHours() >= hour && apt.startTime.getHours() < hour + 1
-                  );
-                  
-                  return (
-                    <div key={`${day.toString()}-${hour}`} className="space-y-1">
-                      {dayAppointments.map((appointment) => (
-                        <div
-                          key={appointment.id}
-                          className={cn(
-                            "rounded-lg p-2 text-white text-xs cursor-pointer transition-all hover:shadow-md",
-                            getServiceColor(appointment.services),
-                            appointment.isPaid && "opacity-50"
-                          )}
-                          onClick={() => {
-                            if (!appointment.isPaid) {
-                              handlePayAppointment(appointment.id, 'cash');
-                            }
-                          }}
-                        >
-                          <div className="font-medium truncate">
-                            {appointment.clientName}
-                          </div>
-                          <div className="text-xs opacity-90 truncate">
-                            {appointment.services[0]?.name}
-                          </div>
-                          <div className="text-xs opacity-90">
-                            {format(appointment.startTime, 'HH:mm')}
-                          </div>
-                          <div className="text-xs font-medium">
-                            {appointment.totalPrice.toFixed(2)}€
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
           /* Day View */
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {timeSlots.map((hour) => {
-              const hourAppointments = getAppointmentsForDate(selectedDate).filter(apt => 
-                apt.startTime.getHours() >= hour && apt.startTime.getHours() < hour + 1
-              );
-              
-              return (
-                <div key={hour} className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground text-center p-2 bg-muted/30 rounded">
-                    {hour}h00 - {hour + 1}h00
-                  </div>
-                  {hourAppointments.length === 0 ? (
-                    <div className="h-20 border-2 border-dashed border-muted/30 rounded-lg flex items-center justify-center text-muted-foreground text-xs">
-                      Libre
+          <div className="border-2 border-black rounded-lg overflow-hidden">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0">
+              {timeSlots.map((hour, index) => {
+                const hourAppointments = getAppointmentsForDate(selectedDate).filter(apt => 
+                  apt.startTime.getHours() >= hour && apt.startTime.getHours() < hour + 1
+                );
+                
+                return (
+                  <div key={hour} className={cn(
+                    "border-r-2 border-b-2 border-black p-3 bg-white min-h-[120px]",
+                    "last:border-r-0 [&:nth-child(4n)]:border-r-0 [&:nth-child(3n)]:md:border-r-0 [&:nth-child(2n)]:sm:border-r-0"
+                  )}>
+                    <div className="text-sm font-bold text-black text-center p-2 bg-gray-100 rounded mb-2 border border-black">
+                      {hour}h00 - {hour + 1}h00
                     </div>
-                  ) : (
-                    hourAppointments.map((appointment) => (
-                      <div
-                        key={appointment.id}
-                        className={cn(
-                          "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-lg min-h-[80px]",
-                          getServiceColor(appointment.services),
-                          appointment.isPaid && "opacity-50"
-                        )}
-                        onClick={() => {
-                          if (!appointment.isPaid) {
-                            handlePayAppointment(appointment.id, 'cash');
-                          }
-                        }}
-                      >
-                        <div className="font-medium text-sm truncate mb-1">
-                          {appointment.clientName}
-                        </div>
-                        <div className="text-xs opacity-90 truncate mb-1">
-                          {appointment.services[0]?.name}
-                        </div>
-                        <div className="text-xs opacity-90 mb-1">
-                          {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
-                        </div>
-                        <div className="text-sm font-bold">
-                          {appointment.totalPrice.toFixed(2)}€
-                        </div>
-                        {appointment.isPaid && (
-                          <div className="text-xs opacity-75 mt-1">
-                            ✓ Payé
-                          </div>
-                        )}
+                    {hourAppointments.length === 0 ? (
+                      <div className="h-16 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-gray-500 text-xs">
+                        Libre
                       </div>
-                    ))
-                  )}
-                </div>
-              );
-            })}
+                    ) : (
+                      <div className="space-y-2">
+                        {hourAppointments.map((appointment) => (
+                          <div
+                            key={appointment.id}
+                            className={cn(
+                              "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-lg min-h-[80px] border-2 border-black",
+                              getServiceColor(appointment.services),
+                              appointment.isPaid && "opacity-50"
+                            )}
+                            onClick={() => {
+                              if (!appointment.isPaid) {
+                                handlePayAppointment(appointment.id, 'cash');
+                              }
+                            }}
+                          >
+                            <div className="font-medium text-sm truncate mb-1">
+                              {appointment.clientName}
+                            </div>
+                            <div className="text-xs opacity-90 truncate mb-1">
+                              {appointment.services[0]?.name}
+                            </div>
+                            <div className="text-xs opacity-90 mb-1">
+                              {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
+                            </div>
+                            <div className="text-sm font-bold">
+                              {appointment.totalPrice.toFixed(2)}€
+                            </div>
+                            {appointment.isPaid && (
+                              <div className="text-xs opacity-75 mt-1">
+                                ✓ Payé
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </Card>
