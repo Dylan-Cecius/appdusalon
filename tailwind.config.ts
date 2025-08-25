@@ -52,6 +52,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				pos: {
+					success: 'hsl(var(--pos-success))',
+					'success-foreground': 'hsl(var(--pos-success-foreground))',
+					cash: 'hsl(var(--pos-cash))',
+					card: 'hsl(var(--pos-card))',
+					warning: 'hsl(var(--pos-warning))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
