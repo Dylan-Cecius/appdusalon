@@ -303,42 +303,6 @@ const BlockModal = ({ isOpen, onClose, selectedDate, selectedTime, barberId, onS
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={() => setBlockData({
-                ...blockData, 
-                endTime: calculateEndTime(blockData.startTime, 30)
-              })}
-            >
-              +30min
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={() => setBlockData({
-                ...blockData, 
-                endTime: calculateEndTime(blockData.startTime, 60)
-              })}
-            >
-              +1h
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={() => setBlockData({
-                ...blockData, 
-                endTime: calculateEndTime(blockData.startTime, 90)
-              })}
-            >
-              +1h30
-            </Button>
-          </div>
-
           <div>
             <Label htmlFor="notes">Notes (optionnel)</Label>
             <Textarea 
