@@ -31,7 +31,6 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
 
   // Pre-fill time when selectedTimeSlot is provided
   useEffect(() => {
-    console.log('Modal state change - isOpen:', isOpen, 'selectedTimeSlot:', selectedTimeSlot, 'selectedDate:', selectedDate?.toISOString());
     if (selectedTimeSlot && isOpen) {
       setStartTime(selectedTimeSlot);
     } else if (!isOpen) {
@@ -83,6 +82,17 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     );
     appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDurationWithBuffer);
 
+    console.log('Creating appointment with barberId:', barberId, 'selectedDate:', selectedDate);
+    
+    if (!barberId) {
+      toast({
+        title: "Erreur",
+        description: "Aucun coiffeur sélectionné",
+        variant: "destructive",
+      });
+      return;
+    }
+
     addAppointment({
       clientName,
       clientPhone,
@@ -93,7 +103,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       totalPrice,
       notes: notes || undefined,
       isPaid: false,
-      barberId: barberId || ''
+      barberId: barberId
     });
 
     toast({

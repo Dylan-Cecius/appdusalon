@@ -134,13 +134,18 @@ const BlockCalendar = () => {
     setSelectedDate(direction === 'next' ? addWeeks(selectedDate, 1) : subWeeks(selectedDate, 1));
   };
 
+  console.log('Current appointments in calendar:', appointments.length);
+  console.log('Selected barber:', selectedBarber, 'Current barber:', currentBarber?.name);
+  
   // Get appointments for a specific date and barber
   const getAppointmentsForDateAndBarber = (date: Date, barberId: string) => {
     const filteredAppts = appointments.filter(apt => {
       const dateMatch = apt.startTime.toDateString() === date.toDateString();
       const barberMatch = apt.barberId === barberId;
+      console.log('Filtering appointment:', apt.clientName, 'Date:', apt.startTime.toDateString(), '=== target:', date.toDateString(), dateMatch, 'Barber:', apt.barberId, '=== target:', barberId, barberMatch);
       return dateMatch && barberMatch;
     });
+    console.log('Filtered appointments for', date.toDateString(), 'barber', barberId, ':', filteredAppts.length);
     return filteredAppts;
   };
 
