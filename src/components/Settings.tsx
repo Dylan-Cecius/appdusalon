@@ -20,7 +20,7 @@ const Settings = () => {
     if (salonSettings) {
       setSalonName(salonSettings.name || 'SalonPOS');
       setLogoUrl(salonSettings.logo_url || '');
-      // Note: stats_password will be added to the hook later
+      setStatsPassword(salonSettings.stats_password || '');
     }
   }, [salonSettings]);
 
@@ -29,7 +29,8 @@ const Settings = () => {
     try {
       await saveSalonSettings({
         name: salonName,
-        logo_url: logoUrl
+        logo_url: logoUrl,
+        stats_password: statsPassword || null
       });
       
       toast({
@@ -151,6 +152,13 @@ const Settings = () => {
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               🔒 Si défini, ce mot de passe sera demandé pour accéder aux statistiques et empêchera vos employés de voir le chiffre d'affaires
+            </p>
+          </div>
+
+          <div className="bg-muted/30 p-4 rounded-lg border-l-4 border-destructive">
+            <p className="text-sm text-muted-foreground">
+              ℹ️ <strong>Protection activée :</strong> Ce mot de passe protégera l'accès aux statistiques et aux paramètres de votre salon. 
+              Laissez vide pour désactiver la protection.
             </p>
           </div>
 

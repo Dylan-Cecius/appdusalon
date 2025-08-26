@@ -6,6 +6,7 @@ export interface SalonSettings {
   id?: string;
   name: string;
   logo_url?: string;
+  stats_password?: string;
   user_id?: string;
 }
 
@@ -23,7 +24,8 @@ export interface Barber {
 export const useSupabaseSettings = () => {
   const [salonSettings, setSalonSettings] = useState<SalonSettings>({
     name: 'SalonPOS',
-    logo_url: ''
+    logo_url: '',
+    stats_password: ''
   });
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,7 @@ export const useSupabaseSettings = () => {
           id: data.id,
           name: data.name,
           logo_url: data.logo_url,
+          stats_password: data.stats_password,
           user_id: data.user_id
         });
       }
@@ -127,6 +130,7 @@ export const useSupabaseSettings = () => {
         id: data.id,
         name: data.name,
         logo_url: data.logo_url,
+        stats_password: data.stats_password,
         user_id: data.user_id
       });
       

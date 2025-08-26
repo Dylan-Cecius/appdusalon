@@ -36,9 +36,11 @@ interface CartItem {
 
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [activeTab, setActiveTab] = useState("pos");
-  const [showStatsPassword, setShowStatsPassword] = useState(false);
-  const [statsUnlocked, setStatsUnlocked] = useState(false);
+  const [currentView, setCurrentView] = useState<string>('pos');
+  const [showStatsPasswordModal, setShowStatsPasswordModal] = useState(false);
+  const [showSettingsPasswordModal, setShowSettingsPasswordModal] = useState(false);
+  const [isStatsUnlocked, setIsStatsUnlocked] = useState(false);
+  const [isSettingsUnlocked, setIsSettingsUnlocked] = useState(false);
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
@@ -78,8 +80,28 @@ const Index = () => {
   // Get real stats from transactions
   const stats = getStats();
 
-  const handleStatsTabChange = (value: string) => {
-    setActiveTab(value);
+  const handleViewChange = (view: string) => {
+    if (view === 'stats' && salonSettings?.stats_password && !isStatsUnlocked) {
+      setShowStatsPasswordModal(true);
+      return;
+    }
+    if (view === 'settings' && salonSettings?.stats_password && !isSettingsUnlocked) {
+      setShowSettingsPasswordModal(true);
+      return;
+    }
+    setCurrentView(view);
+  };
+
+  const handleStatsPasswordSuccess = () => {
+    setIsStatsUnlocked(true);
+    setShowStatsPasswordModal(false);
+    setCurrentView('stats');
+  };
+
+  const handleSettingsPasswordSuccess = () => {
+    setIsSettingsUnlocked(true);
+    setShowSettingsPasswordModal(false);
+    setCurrentView('settings');
   };
 
   const addToCart = (service: any) => {
@@ -204,7 +226,7 @@ const Index = () => {
               </div>
               
               <div className="flex items-center gap-2 sm:gap-3">
-                {activeTab === "pos" && isMobile && (
+                {currentView === "pos" && isMobile && (
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -236,7 +258,7 @@ const Index = () => {
       </header>
 
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <Tabs value={activeTab} onValueChange={handleStatsTabChange} className="space-y-4 sm:space-y-6">{/* */}
+        <Tabs value={currentView} onValueChange={handleViewChange} className="space-y-4 sm:space-y-6">
           <TabsList className={cn(
             "grid w-full bg-card",
             isMobile ? "grid-cols-3 max-w-full" : "grid-cols-6 max-w-4xl"
@@ -275,27 +297,27 @@ const Index = () => {
           {isMobile && (
             <div className="flex gap-2 overflow-x-auto pb-2">
               <Button
-                variant={activeTab === "todo" ? "default" : "outline"}
+                variant={currentView === "todo" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setActiveTab("todo")}
+                onClick={() => handleViewChange("todo")}
                 className="flex items-center gap-2 min-w-fit"
               >
                 <CheckSquare className="h-4 w-4" />
                 To-Do
               </Button>
               <Button
-                variant={activeTab === "reports" ? "default" : "outline"}
+                variant={currentView === "reports" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setActiveTab("reports")}
+                onClick={() => handleViewChange("reports")}
                 className="flex items-center gap-2 min-w-fit"
               >
                 <Mail className="h-4 w-4" />
                 Rapports
               </Button>
               <Button
-                variant={activeTab === "settings" ? "default" : "outline"}
+                variant={currentView === "settings" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setActiveTab("settings")}
+                onClick={() => handleViewChange("settings")}
                 className="flex items-center gap-2 min-w-fit"
               >
                 <SettingsIcon className="h-4 w-4" />
@@ -342,7 +364,7 @@ const Index = () => {
                           <ServiceCard 
                             key={service.id}
                             service={service as any}
-                            onAddToCart={addToCart}
+                            onAdd={addToCart}
                           />
                           ))}
                         </div>
@@ -421,20 +443,24 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="settings">
-          <Settings />
-        </TabsContent>
-      </Tabs>
+            <Settings />
+          </TabsContent>
+        </Tabs>
 
-      {/* Stats Password Modal - Temporarily disabled until hook is fixed */}
-      {/*
-      <StatsPasswordModal
-        isOpen={showStatsPassword}
-        onClose={() => setShowStatsPassword(false)}
-        onSuccess={() => {}}
-        expectedPassword=""
-      />
-      */}
-    </div>
+        <StatsPasswordModal
+          isOpen={showStatsPasswordModal}
+          onClose={() => setShowStatsPasswordModal(false)}
+          onSuccess={handleStatsPasswordSuccess}
+          expectedPassword={salonSettings?.stats_password || ''}
+        />
+
+        <StatsPasswordModal
+          isOpen={showSettingsPasswordModal}
+          onClose={() => setShowSettingsPasswordModal(false)}
+          onSuccess={handleSettingsPasswordSuccess}
+          expectedPassword={salonSettings?.stats_password || ''}
+        />
+      </div>
 
       <TransactionsManager 
         isOpen={isTransactionsManagerOpen}
