@@ -46,7 +46,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!clientName || !clientPhone || !startTime || selectedServices.length === 0) {
+    if (!clientName || !startTime || selectedServices.length === 0) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -115,14 +115,13 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
               />
             </div>
             <div>
-              <Label htmlFor="clientPhone">Téléphone *</Label>
+              <Label htmlFor="clientPhone">Téléphone</Label>
               <Input
                 id="clientPhone"
                 type="tel"
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
-                placeholder="0123456789"
-                required
+                placeholder="0123456789 (optionnel)"
               />
             </div>
           </div>
