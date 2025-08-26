@@ -10,9 +10,17 @@ export const useSupabaseLunchBreaks = () => {
   const fetchLunchBreaks = async () => {
     try {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLunchBreaks([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('lunch_breaks')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching lunch breaks:', error);
@@ -38,6 +46,16 @@ export const useSupabaseLunchBreaks = () => {
 
   const saveLunchBreak = async (breakData: LunchBreakData) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('lunch_breaks')
         .upsert({
@@ -45,7 +63,8 @@ export const useSupabaseLunchBreaks = () => {
           start_time: breakData.startTime,
           end_time: breakData.endTime,
           duration: breakData.duration,
-          is_active: breakData.isActive
+          is_active: breakData.isActive,
+          user_id: user.id
         })
         .select()
         .single();

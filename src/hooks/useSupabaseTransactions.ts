@@ -29,9 +29,17 @@ export const useSupabaseTransactions = () => {
         return;
       }
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setTransactions([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('transactions' as any)
         .select('*')
+        .eq('user_id', user.id)
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
@@ -72,12 +80,23 @@ export const useSupabaseTransactions = () => {
         return newTransaction;
       }
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('transactions' as any)
         .insert({
           items: transaction.items as any,
           total_amount: transaction.totalAmount,
-          payment_method: transaction.paymentMethod
+          payment_method: transaction.paymentMethod,
+          user_id: user.id
         })
         .select()
         .single();

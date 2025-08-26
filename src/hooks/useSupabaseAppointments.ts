@@ -17,9 +17,17 @@ export const useSupabaseAppointments = () => {
         return;
       }
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setAppointments([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('appointments' as any)
         .select('*')
+        .eq('user_id', user.id)
         .order('start_time', { ascending: true });
 
       if (error) throw error;
@@ -65,6 +73,16 @@ export const useSupabaseAppointments = () => {
         return newAppointment;
       }
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('appointments' as any)
         .insert({
@@ -77,7 +95,8 @@ export const useSupabaseAppointments = () => {
           total_price: appointment.totalPrice,
           notes: appointment.notes,
           is_paid: appointment.isPaid,
-          barber_id: appointment.barberId
+          barber_id: appointment.barberId,
+          user_id: user.id
         })
         .select()
         .single();

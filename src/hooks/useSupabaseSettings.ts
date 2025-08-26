@@ -6,6 +6,7 @@ export interface SalonSettings {
   id?: string;
   name: string;
   logo_url?: string;
+  user_id?: string;
 }
 
 export interface Barber {
@@ -15,6 +16,7 @@ export interface Barber {
   end_time: string;
   is_active: boolean;
   color: string;
+  user_id?: string;
 }
 
 export const useSupabaseSettings = () => {
@@ -28,9 +30,14 @@ export const useSupabaseSettings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
       const { data, error } = await supabase
         .from('salon_settings')
         .select('*')
+        .eq('user_id', user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -42,7 +49,8 @@ export const useSupabaseSettings = () => {
         setSalonSettings({
           id: data.id,
           name: data.name,
-          logo_url: data.logo_url
+          logo_url: data.logo_url,
+          user_id: data.user_id
         });
       }
     } catch (error) {
@@ -54,9 +62,14 @@ export const useSupabaseSettings = () => {
 
   const fetchBarbers = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
       const { data, error } = await supabase
         .from('barbers')
         .select('*')
+        .eq('user_id', user.id)
         .order('name');
 
       if (error) {
@@ -74,16 +87,29 @@ export const useSupabaseSettings = () => {
 
   const saveSalonSettings = async (settings: SalonSettings) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour sauvegarder",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('salon_settings')
         .upsert({
           ...settings,
+          user_id: user.id,
           id: settings.id || undefined
         })
         .select()
         .single();
 
       if (error) {
+        console.error('Error saving settings:', error);
         toast({
           title: "Erreur",
           description: "Impossible de sauvegarder les paramètres",
@@ -104,13 +130,28 @@ export const useSupabaseSettings = () => {
 
   const addBarber = async (barber: Omit<Barber, 'id'>) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('barbers')
-        .insert(barber)
+        .insert({
+          ...barber,
+          user_id: user.id
+        })
         .select()
         .single();
 
       if (error) {
+        console.error('Error adding barber:', error);
         toast({
           title: "Erreur",
           description: "Impossible d'ajouter le coiffeur",

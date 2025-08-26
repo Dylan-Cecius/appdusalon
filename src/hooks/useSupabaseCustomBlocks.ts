@@ -17,9 +17,17 @@ export const useSupabaseCustomBlocks = () => {
   const fetchCustomBlocks = async () => {
     try {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCustomBlocks([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('custom_blocks')
         .select('*')
+        .eq('user_id', user.id)
         .order('block_date', { ascending: true })
         .order('start_time', { ascending: true });
 
@@ -50,6 +58,16 @@ export const useSupabaseCustomBlocks = () => {
 
   const addCustomBlock = async (blockData: BlockData, barberId: string, date: Date) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('custom_blocks')
         .insert({
@@ -59,7 +77,8 @@ export const useSupabaseCustomBlocks = () => {
           end_time: blockData.endTime,
           title: blockData.title,
           block_type: blockData.type,
-          notes: blockData.notes
+          notes: blockData.notes,
+          user_id: user.id
         })
         .select()
         .single();

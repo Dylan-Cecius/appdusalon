@@ -22,9 +22,17 @@ export const useSupabaseTodos = () => {
   const fetchTodos = async () => {
     try {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setTodos([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('todo_items')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -44,9 +52,22 @@ export const useSupabaseTodos = () => {
 
   const addTodo = async (todo: Omit<TodoItem, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('todo_items')
-        .insert(todo)
+        .insert({
+          ...todo,
+          user_id: user.id
+        })
         .select()
         .single();
 
