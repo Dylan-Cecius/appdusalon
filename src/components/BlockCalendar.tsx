@@ -37,6 +37,8 @@ const BlockCalendar = () => {
   const { 
     lunchBreaks, 
     saveLunchBreak, 
+    deleteLunchBreak,
+    getLunchBreak,
     isLunchBreakTime, 
     loading: lunchBreaksLoading 
   } = useSupabaseLunchBreaks();
@@ -660,6 +662,8 @@ const BlockCalendar = () => {
           barberId={currentBarber.id}
           barberName={currentBarber.name}
           onSave={handleSaveLunchBreak}
+          onDelete={deleteLunchBreak}
+          existingBreak={getLunchBreak(currentBarber.id)}
         />
       )}
     </div>

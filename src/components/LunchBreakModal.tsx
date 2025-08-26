@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Coffee, Clock } from 'lucide-react';
+import { Coffee, Clock, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface LunchBreakModalProps {
@@ -13,6 +13,8 @@ interface LunchBreakModalProps {
   barberId: string;
   barberName: string;
   onSave: (breakData: LunchBreakData) => void;
+  onDelete: (barberId: string) => void;
+  existingBreak?: LunchBreakData | null;
 }
 
 export interface LunchBreakData {
@@ -23,7 +25,7 @@ export interface LunchBreakData {
   isActive: boolean;
 }
 
-const LunchBreakModal = ({ isOpen, onClose, barberId, barberName, onSave }: LunchBreakModalProps) => {
+const LunchBreakModal = ({ isOpen, onClose, barberId, barberName, onSave, onDelete, existingBreak }: LunchBreakModalProps) => {
   const [breakData, setBreakData] = useState<LunchBreakData>({
     barberId,
     startTime: '12:00',
@@ -31,6 +33,23 @@ const LunchBreakModal = ({ isOpen, onClose, barberId, barberName, onSave }: Lunc
     duration: 60,
     isActive: true
   });
+
+  // Charger les données existantes quand le modal s'ouvre
+  useEffect(() => {
+    if (isOpen) {
+      if (existingBreak) {
+        setBreakData(existingBreak);
+      } else {
+        setBreakData({
+          barberId,
+          startTime: '12:00',
+          endTime: '13:00',
+          duration: 60,
+          isActive: true
+        });
+      }
+    }
+  }, [isOpen, existingBreak, barberId]);
 
   const calculateEndTime = (startTime: string, duration: number) => {
     const [hours, minutes] = startTime.split(':').map(Number);
@@ -70,6 +89,13 @@ const LunchBreakModal = ({ isOpen, onClose, barberId, barberName, onSave }: Lunc
     });
   };
 
+  const handleDelete = () => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer le temps de midi automatique pour ${barberName} ?`)) {
+      onDelete(barberId);
+      onClose();
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -81,6 +107,20 @@ const LunchBreakModal = ({ isOpen, onClose, barberId, barberName, onSave }: Lunc
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Indicateur si pause existe déjà */}
+          {existingBreak && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">Pause existante détectée</span>
+              </div>
+              <p className="text-xs text-blue-600">
+                Actuellement configurée de {existingBreak.startTime} à {existingBreak.endTime}
+                {existingBreak.isActive ? ' (Active)' : ' (Inactive)'}
+              </p>
+            </div>
+          )}
+
           <div className="p-4 bg-muted rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
@@ -152,11 +192,22 @@ const LunchBreakModal = ({ isOpen, onClose, barberId, barberName, onSave }: Lunc
           </div>
 
           <div className="flex gap-2 pt-4">
+            {existingBreak && (
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={handleDelete}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Supprimer
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Annuler
             </Button>
             <Button type="submit" className="flex-1">
-              Sauvegarder
+              {existingBreak ? 'Modifier' : 'Sauvegarder'}
             </Button>
           </div>
         </form>
