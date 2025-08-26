@@ -31,6 +31,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
 
   // Pre-fill time when selectedTimeSlot is provided
   useEffect(() => {
+    console.log('Modal state change - isOpen:', isOpen, 'selectedTimeSlot:', selectedTimeSlot, 'selectedDate:', selectedDate?.toISOString());
     if (selectedTimeSlot && isOpen) {
       setStartTime(selectedTimeSlot);
     } else if (!isOpen) {

@@ -248,7 +248,11 @@ const BlockCalendar = () => {
           </div>
           
           <Button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setSelectedDate(new Date());
+              setSelectedTimeSlot('');
+              setIsModalOpen(true);
+            }}
             className="bg-green-500 hover:bg-green-600 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -396,6 +400,7 @@ const BlockCalendar = () => {
                         )}
                          onClick={() => {
                            if (!isWorking || isLunchTimeSlot) return;
+                           console.log('Calendar click - Date:', date.toISOString(), 'TimeSlot:', timeSlot);
                            setSelectedDate(date);
                            setSelectedTimeSlot(timeSlot);
                            setSelectedCustomBlock(null);
