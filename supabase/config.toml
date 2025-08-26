@@ -1,1 +1,13 @@
 project_id = "vrawwiqeutbqqdzkhrax"
+
+[functions.get-available-slots]
+verify_jwt = false
+
+[functions.create-booking]
+verify_jwt = false
+
+[functions.get-services]
+verify_jwt = false
+
+[functions.get-barbers]
+verify_jwt = false
