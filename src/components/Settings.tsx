@@ -143,6 +143,37 @@ const Settings = () => {
     }
   };
 
+  const handleDisablePassword = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir désactiver la protection par mot de passe ? Les statistiques seront accessibles sans mot de passe.')) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Explicitly set stats_password to null to disable it
+      const settingsToSave = {
+        name: "L'app du salon",
+        stats_password: null
+      };
+      
+      await saveSalonSettings(settingsToSave);
+      
+      toast({
+        title: "✅ Mot de passe désactivé",
+        description: "L'accès aux statistiques n'est plus protégé par mot de passe",
+      });
+    } catch (error) {
+      console.error('Error disabling password:', error);
+      toast({
+        title: "❌ Erreur",
+        description: "Impossible de désactiver le mot de passe",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleAddBarber = async () => {
     if (!newBarber.name.trim()) {
       toast({
@@ -440,13 +471,26 @@ const Settings = () => {
             </div>
           </div>
 
-          <Button 
-            onClick={handleSave}
-            disabled={loading || isSaving}
-            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-          >
-            {isSaving ? 'Sauvegarde...' : 'Sauvegarder la sécurité'}
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleSave}
+              disabled={loading || isSaving}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {isSaving ? 'Sauvegarde...' : 'Sauvegarder la sécurité'}
+            </Button>
+            
+            {salonSettings?.stats_password && (
+              <Button 
+                onClick={handleDisablePassword}
+                disabled={loading || isSaving}
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                {isSaving ? 'Suppression...' : 'Désactiver le mot de passe'}
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
 
