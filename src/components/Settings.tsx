@@ -45,14 +45,22 @@ const Settings = () => {
   };
 
   const handleSave = async () => {
+    console.log('🔍 [DEBUG] handleSave started', { 
+      statsPassword: statsPassword ? '[PASSWORD PROVIDED]' : '[NO PASSWORD]',
+      statsPasswordLength: statsPassword.length,
+      currentSalonSettings: salonSettings 
+    });
+    
     setIsSaving(true);
     try {
       let processedPassword = null;
       
       // Only process password if user entered one
       if (statsPassword.trim()) {
+        console.log('🔍 [DEBUG] Processing new password');
         const validation = validatePassword(statsPassword);
         if (!validation.isValid) {
+          console.log('🔍 [DEBUG] Password validation failed:', validation.message);
           toast({
             title: "❌ Mot de passe invalide",
             description: validation.message,
@@ -64,8 +72,14 @@ const Settings = () => {
 
         // Hash the password using the secure database function
         try {
+          console.log('🔍 [DEBUG] Calling hash_password RPC');
           const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
             password_text: statsPassword
+          });
+          
+          console.log('🔍 [DEBUG] hash_password result:', { 
+            hashedPassword: hashedPassword ? '[HASH GENERATED]' : null, 
+            hashError 
           });
           
           if (hashError) {
@@ -73,8 +87,9 @@ const Settings = () => {
           }
           
           processedPassword = hashedPassword;
+          console.log('🔍 [DEBUG] Password hashed successfully');
         } catch (hashingError) {
-          console.error('Password hashing error:', hashingError);
+          console.error('🔍 [DEBUG] Password hashing error:', hashingError);
           toast({
             title: "❌ Erreur de sécurité",
             description: "Impossible de sécuriser le mot de passe. Veuillez réessayer.",
@@ -83,6 +98,8 @@ const Settings = () => {
           setIsSaving(false);
           return;
         }
+      } else {
+        console.log('🔍 [DEBUG] No new password provided, keeping existing');
       }
 
       // Construire l'objet settings sans écraser le mot de passe existant
@@ -93,9 +110,18 @@ const Settings = () => {
       // N'inclure stats_password que si un nouveau mot de passe a été saisi
       if (processedPassword) {
         settingsToSave.stats_password = processedPassword;
+        console.log('🔍 [DEBUG] Including new password in save');
+      } else {
+        console.log('🔍 [DEBUG] NOT including password field in save - keeping existing');
       }
+      
+      console.log('🔍 [DEBUG] Calling saveSalonSettings with:', { 
+        settingsToSave: { ...settingsToSave, stats_password: settingsToSave.stats_password ? '[HASH]' : 'undefined' } 
+      });
 
       await saveSalonSettings(settingsToSave);
+      
+      console.log('🔍 [DEBUG] saveSalonSettings completed');
       
       // Clear the password input after successful save
       setStatsPassword('');
@@ -105,7 +131,7 @@ const Settings = () => {
         description: processedPassword ? "Mot de passe sécurisé mis à jour avec succès" : "Paramètres sauvegardés avec succès",
       });
     } catch (error) {
-      console.error('Settings save error:', error);
+      console.error('🔍 [DEBUG] Settings save error:', error);
       toast({
         title: "❌ Erreur",
         description: "Impossible de sauvegarder les paramètres",
@@ -113,6 +139,7 @@ const Settings = () => {
       });
     } finally {
       setIsSaving(false);
+      console.log('🔍 [DEBUG] handleSave completed');
     }
   };
 

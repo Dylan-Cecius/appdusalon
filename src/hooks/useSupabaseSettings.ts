@@ -34,14 +34,16 @@ export const useSupabaseSettings = () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) return;
 
+      // Récupérer le plus récent enregistrement au lieu du premier
       const { data, error } = await supabase
         .from('salon_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching salon settings:', error);
@@ -49,6 +51,12 @@ export const useSupabaseSettings = () => {
       }
 
       if (data) {
+        console.log('🔍 [DEBUG] Fetched settings:', { 
+          id: data.id, 
+          name: data.name, 
+          has_password: !!data.stats_password,
+          updated_at: data.updated_at
+        });
         setSalonSettings({
           id: data.id,
           name: data.name,
@@ -56,6 +64,9 @@ export const useSupabaseSettings = () => {
           stats_password: data.stats_password,
           user_id: data.user_id
         });
+      } else {
+        console.log('🔍 [DEBUG] No settings found');
+        setSalonSettings(null);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -93,10 +104,18 @@ export const useSupabaseSettings = () => {
   };
 
   const saveSalonSettings = async (settings: SalonSettings) => {
+    console.log('🔍 [DEBUG] saveSalonSettings called with:', { 
+      settings: { 
+        ...settings, 
+        stats_password: settings.stats_password ? '[HASH PROVIDED]' : 'undefined' 
+      } 
+    });
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log('🔍 [DEBUG] No authenticated user found');
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour sauvegarder",
@@ -105,18 +124,37 @@ export const useSupabaseSettings = () => {
         return;
       }
 
+      console.log('🔍 [DEBUG] User authenticated:', user.id);
+      console.log('🔍 [DEBUG] Current salonSettings ID:', salonSettings?.id);
+
+      // Utiliser l'ID existant du salonSettings pour faire un vrai UPDATE
+      const dataToUpsert = {
+        ...settings,
+        user_id: user.id,
+        id: salonSettings?.id || settings.id
+      };
+      
+      console.log('🔍 [DEBUG] Data to upsert:', {
+        ...dataToUpsert,
+        stats_password: dataToUpsert.stats_password ? '[HASH]' : undefined
+      });
+
       const { data, error } = await supabase
         .from('salon_settings')
-        .upsert({
-          ...settings,
-          user_id: user.id,
-          id: settings.id || undefined
-        })
+        .upsert(dataToUpsert)
         .select()
         .single();
 
+      console.log('🔍 [DEBUG] Supabase upsert result:', { 
+        data: data ? { 
+          ...data, 
+          stats_password: data.stats_password ? '[HASH IN DB]' : null 
+        } : null, 
+        error 
+      });
+
       if (error) {
-        console.error('Error saving settings:', error);
+        console.error('🔍 [DEBUG] Error saving settings:', error);
         toast({
           title: "Erreur",
           description: "Impossible de sauvegarder les paramètres",
@@ -126,6 +164,12 @@ export const useSupabaseSettings = () => {
       }
 
       // Update local state immediately
+      console.log('🔍 [DEBUG] Updating local state with:', { 
+        id: data.id,
+        name: data.name,
+        stats_password: data.stats_password ? '[HASH]' : null
+      });
+      
       setSalonSettings({
         id: data.id,
         name: data.name,
@@ -140,9 +184,11 @@ export const useSupabaseSettings = () => {
       });
       
       // Force refresh to ensure UI updates
+      console.log('🔍 [DEBUG] Calling fetchSettings to refresh');
       await fetchSettings();
+      console.log('🔍 [DEBUG] fetchSettings completed');
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('🔍 [DEBUG] Error saving settings:', error);
     }
   };
 
