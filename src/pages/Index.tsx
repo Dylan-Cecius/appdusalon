@@ -164,46 +164,52 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {salonSettings?.logo_url ? (
-                <img 
-                  src={salonSettings.logo_url} 
-                  alt="Logo du salon" 
-                  className="h-10 w-10 object-cover rounded-lg"
-                />
-              ) : (
-                <div className="p-2 bg-accent rounded-lg">
-                  <Scissors className="h-6 w-6 text-accent-foreground" />
-                </div>
-              )}
-              <div>
-                <h1 className="text-2xl font-bold text-primary">{salonSettings?.name || 'SalonPOS'}</h1>
-                <p className="text-sm text-muted-foreground">Coiffure & Barbier</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {cartItems.length > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                    {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                  </span>
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {salonSettings?.logo_url ? (
+                  <img 
+                    src={salonSettings.logo_url} 
+                    alt="Logo du salon" 
+                    className="h-10 w-10 object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="p-2 bg-accent rounded-lg">
+                    <Scissors className="h-6 w-6 text-accent-foreground" />
+                  </div>
                 )}
+                <div>
+                  <h1 className="text-xl font-bold text-primary">
+                    {salonSettings?.name || 'SalonPOS'}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date().toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
               </div>
-              <span className="text-sm text-muted-foreground ml-2">
-                {new Date().toLocaleDateString('fr-FR', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </span>
+              
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Connecté en tant que:</p>
+                  <p className="text-sm font-medium">{user.email}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={signOut}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Déconnexion
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
       </header>
 
       <div className="container mx-auto px-6 py-6">

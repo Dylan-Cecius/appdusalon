@@ -118,11 +118,21 @@ export const useSupabaseSettings = () => {
         return;
       }
 
-      setSalonSettings(data);
+      // Update local state immediately
+      setSalonSettings({
+        id: data.id,
+        name: data.name,
+        logo_url: data.logo_url,
+        user_id: data.user_id
+      });
+      
       toast({
         title: "Succès",
         description: "Paramètres du salon sauvegardés"
       });
+      
+      // Force refresh to ensure UI updates
+      await fetchSettings();
     } catch (error) {
       console.error('Error saving settings:', error);
     }
