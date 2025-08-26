@@ -204,6 +204,7 @@ export type Database = {
           id: string
           logo_url: string | null
           salon_name: string | null
+          stats_password: string | null
           updated_at: string
         }
         Insert: {
@@ -211,6 +212,7 @@ export type Database = {
           id: string
           logo_url?: string | null
           salon_name?: string | null
+          stats_password?: string | null
           updated_at?: string
         }
         Update: {
@@ -218,6 +220,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           salon_name?: string | null
+          stats_password?: string | null
           updated_at?: string
         }
         Relationships: []
