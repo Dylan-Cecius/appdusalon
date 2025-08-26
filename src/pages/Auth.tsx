@@ -118,7 +118,7 @@ const Auth = () => {
           <div className="p-3 bg-accent rounded-lg mb-4">
             <Scissors className="h-8 w-8 text-accent-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-center">L&apos;app du salon</h1>
+          <h1 className="text-2xl font-bold text-center font-dancing">L&apos;app du salon</h1>
           <p className="text-muted-foreground text-center">
             {isLogin ? 'Connectez-vous à votre compte' : 'Créez votre compte salon'}
           </p>
