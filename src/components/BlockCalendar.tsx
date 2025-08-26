@@ -136,21 +136,27 @@ const BlockCalendar = () => {
 
   // Get appointments for a specific date and barber
   const getAppointmentsForDateAndBarber = (date: Date, barberId: string) => {
-    return appointments.filter(apt => {
+    const filteredAppts = appointments.filter(apt => {
+      console.log('Filtering appointment:', apt.id, 'Date match:', apt.startTime.toDateString() === date.toDateString(), 'Barber match:', apt.barberId, '===', barberId, apt.barberId === barberId);
       if (apt.startTime.toDateString() !== date.toDateString()) return false;
       if (apt.barberId !== barberId) return false;
       return true;
     });
+    console.log('Filtered appointments for date', date.toDateString(), 'and barber', barberId, ':', filteredAppts);
+    return filteredAppts;
   };
 
   // Get appointments for a specific time slot and barber
   const getAppointmentsForSlot = (date: Date, timeSlot: string, barberId: string) => {
     const [hour, minute] = timeSlot.split(':').map(Number);
-    return getAppointmentsForDateAndBarber(date, barberId).filter(apt => {
+    const appts = getAppointmentsForDateAndBarber(date, barberId).filter(apt => {
       const aptHour = apt.startTime.getHours();
       const aptMinute = apt.startTime.getMinutes();
+      console.log('Time slot check:', timeSlot, 'vs appointment time:', `${aptHour}:${aptMinute}`, 'Match:', aptHour === hour && aptMinute === minute);
       return aptHour === hour && aptMinute === minute;
     });
+    console.log('Appointments for slot', timeSlot, 'on date', date.toDateString(), ':', appts);
+    return appts;
   };
 
   // Check if barber is working on this day
@@ -398,7 +404,7 @@ const BlockCalendar = () => {
                          {!isWorking ? (
                            <div className="text-center">
                              <span className="text-xs text-red-500 font-medium">
-                               Congé
+                               Non disponible
                              </span>
                            </div>
                         ) : isLunchTimeSlot ? (
