@@ -50,6 +50,7 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
   const generateReport = () => {
     const currentDate = new Date(selectedDate);
@@ -136,13 +137,19 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
     return { subject, content: reportContent };
   };
 
+  const addDebugLog = (message: string) => {
+    const timestamp = format(new Date(), 'HH:mm:ss');
+    setDebugLogs(prev => [...prev, `[${timestamp}] ${message}`]);
+  };
+
   const handleSendReport = async () => {
-    console.log('🔍 Starting handleSendReport...');
-    console.log('📧 Email:', email);
-    console.log('📊 Report type:', reportType);
+    setDebugLogs([]); // Clear previous logs
+    addDebugLog('🔍 Démarrage de l\'envoi...');
+    addDebugLog(`📧 Email: ${email}`);
+    addDebugLog(`📊 Type de rapport: ${reportType}`);
 
     if (!email) {
-      console.log('❌ No email provided');
+      addDebugLog('❌ Aucun email fourni');
       toast({
         title: "Erreur",
         description: "Veuillez saisir une adresse email",
@@ -153,7 +160,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log('❌ Invalid email format');
+      addDebugLog('❌ Format email invalide');
       toast({
         title: "Erreur",
         description: "Veuillez saisir une adresse email valide",
@@ -162,28 +169,24 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       return;
     }
 
+    addDebugLog('✅ Email valide, vérification authentification...');
+    
     // Check authentication status
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    console.log('👤 Current user:', user ? user.email : 'Not authenticated');
+    addDebugLog(`👤 Utilisateur: ${user ? user.email : 'Non connecté'}`);
     
-    if (authError || !user) {
-      console.log('❌ Authentication error:', authError);
-      toast({
-        title: "Erreur d'authentification",
-        description: "Vous devez être connecté pour envoyer des rapports",
-        variant: "destructive",
-      });
-      return;
+    if (authError) {
+      addDebugLog(`❌ Erreur auth: ${authError.message}`);
     }
 
     setIsLoading(true);
 
     try {
       const { subject, content } = generateReport();
-      console.log('📝 Generated report - Subject:', subject);
-      console.log('📄 Content length:', content.length);
+      addDebugLog(`📝 Rapport généré - Sujet: ${subject.substring(0, 50)}...`);
+      addDebugLog(`📄 Taille contenu: ${content.length} caractères`);
       
-      console.log('🚀 Invoking supabase function send-report-email...');
+      addDebugLog('🚀 Appel fonction Supabase...');
       
       const { data, error } = await supabase.functions.invoke('send-report-email', {
         body: {
@@ -194,20 +197,19 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         }
       });
 
-      console.log('📨 Function response - Data:', data);
-      console.log('📨 Function response - Error:', error);
-
+      addDebugLog(`📨 Réponse reçue - Succès: ${data?.success}`);
       if (error) {
-        console.error('❌ Supabase function error:', error);
+        addDebugLog(`📨 Erreur fonction: ${JSON.stringify(error)}`);
+        addDebugLog(`❌ Erreur Supabase: ${error.message}`);
         throw new Error(error.message || 'Erreur lors de l\'envoi');
       }
 
       if (!data?.success) {
-        console.error('❌ Function returned failure:', data);
+        addDebugLog(`❌ Échec fonction: ${data?.error || 'Raison inconnue'}`);
         throw new Error(data?.error || data?.details || 'Erreur lors de l\'envoi');
       }
 
-      console.log('✅ Email sent successfully!');
+      addDebugLog('✅ Email envoyé avec succès!');
       toast({
         title: "✅ Email envoyé !",
         description: `Le rapport ${reportType} a été envoyé avec succès à ${email}`,
@@ -218,8 +220,8 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       setMessage('');
       
     } catch (error: any) {
-      console.error('❌ Error sending report:', error);
-      console.error('❌ Error details:', error.message);
+      addDebugLog(`❌ Erreur envoi: ${error.message}`);
+      addDebugLog(`❌ Détails: ${JSON.stringify(error)}`);
       
       let errorMessage = "Impossible d'envoyer le rapport par email";
       if (error.message?.includes("domain")) {
@@ -337,6 +339,32 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             {previewContent}
           </pre>
         </div>
+        
+        {/* Debug Panel - Only show if there are logs */}
+        {debugLogs.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-lg font-semibold mb-4 text-destructive flex items-center gap-2">
+              🔍 Diagnostic
+            </h4>
+            <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-lg max-h-64 overflow-y-auto">
+              <div className="space-y-1">
+                {debugLogs.map((log, index) => (
+                  <div key={index} className="text-sm font-mono text-destructive">
+                    {log}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setDebugLogs([])}
+              className="mt-2"
+            >
+              Effacer les logs
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
