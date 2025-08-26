@@ -263,21 +263,13 @@ const Index = () => {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {salonSettings?.logo_url ? (
-                  <img 
-                    src={salonSettings.logo_url} 
-                    alt="Logo du salon" 
-                    className="h-8 w-8 sm:h-10 sm:w-10 object-cover rounded-lg"
-                  />
-                ) : (
+                <div className="flex items-center gap-3">
                   <div className="p-2 bg-accent rounded-lg">
                     <Scissors className="h-4 w-4 sm:h-6 sm:w-6 text-accent-foreground" />
                   </div>
-                )}
                 <div>
                   <h1 className="text-lg sm:text-xl font-bold text-primary">
-                    {salonSettings?.name || 'SalonPOS'}
+                    L'app du salon
                   </h1>
                   {!isMobile && (
                     <p className="text-sm text-muted-foreground">

@@ -15,8 +15,6 @@ import ProductManagement from './ProductManagement';
 
 const Settings = () => {
   const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
-  const [salonName, setSalonName] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
   const [statsPassword, setStatsPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,8 +33,6 @@ const Settings = () => {
 
   useEffect(() => {
     if (salonSettings) {
-      setSalonName(salonSettings.name || 'SalonPOS');
-      setLogoUrl(salonSettings.logo_url || '');
       setStatsPassword(salonSettings.stats_password || '');
     }
   }, [salonSettings]);
@@ -50,8 +46,7 @@ const Settings = () => {
       processedPassword = statsPassword;
 
       await saveSalonSettings({
-        name: salonName,
-        logo_url: logoUrl,
+        name: "L'app du salon",
         stats_password: processedPassword || null
       });
       
@@ -166,27 +161,6 @@ const Settings = () => {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="salonName">Nom du salon</Label>
-            <Input
-              id="salonName"
-              value={salonName}
-              onChange={(e) => setSalonName(e.target.value)}
-              placeholder="Nom de votre salon"
-              disabled={loading || isSaving}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="logoUrl">URL du logo (optionnel)</Label>
-            <Input
-              id="logoUrl"
-              value={logoUrl}
-              onChange={(e) => setLogoUrl(e.target.value)}
-              placeholder="https://example.com/logo.png"
-              disabled={loading || isSaving}
-            />
-          </div>
 
           <Button 
             onClick={handleSave}
