@@ -68,36 +68,6 @@ export const services: Service[] = [
     duration: 60,
     category: 'combo',
     appointmentBuffer: 20
-  },
-  
-  // Produits
-  {
-    id: '8',
-    name: 'Cire Coiffante',
-    price: 7.00,
-    duration: 2,
-    category: 'produit'
-  },
-  {
-    id: '9',
-    name: 'Peigne Coiffant',
-    price: 10.00,
-    duration: 2,
-    category: 'produit'
-  },
-  {
-    id: '10',
-    name: 'Huile de Barbe',
-    price: 12.00,
-    duration: 2,
-    category: 'produit'
-  },
-  {
-    id: '11',
-    name: 'After Shave',
-    price: 10.00,
-    duration: 2,
-    category: 'produit'
   }
 ];
 
@@ -106,5 +76,5 @@ export const getServicesByCategory = (category: Service['category']) => {
 };
 
 export const getAllCategories = () => {
-  return ['coupe', 'barbe', 'combo', 'produit'] as const;
+  return ['coupe', 'barbe', 'combo'] as const;
 };
