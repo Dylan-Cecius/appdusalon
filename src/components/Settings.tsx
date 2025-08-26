@@ -32,29 +32,76 @@ const Settings = () => {
   });
 
   useEffect(() => {
-    if (salonSettings) {
-      setStatsPassword(salonSettings.stats_password || '');
-    }
+    // Never load existing password into the input field for security
+    // Password field stays empty and users must enter a new password to change it
+    setStatsPassword('');
   }, [salonSettings]);
+
+  const validatePassword = (password: string): { isValid: boolean; message: string } => {
+    if (!password || password.length < 8) {
+      return { isValid: false, message: "Le mot de passe doit contenir au moins 8 caractères" };
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      return { isValid: false, message: "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre" };
+    }
+    return { isValid: true, message: "" };
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      let processedPassword = statsPassword;
+      let processedPassword = null;
       
-      // Store password directly (temporarily until bcrypt is properly configured)
-      processedPassword = statsPassword;
+      // Only process password if user entered one
+      if (statsPassword.trim()) {
+        const validation = validatePassword(statsPassword);
+        if (!validation.isValid) {
+          toast({
+            title: "❌ Mot de passe invalide",
+            description: validation.message,
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        // Hash the password using the secure database function
+        try {
+          const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
+            password_text: statsPassword
+          });
+          
+          if (hashError) {
+            throw new Error(`Erreur de chiffrement: ${hashError.message}`);
+          }
+          
+          processedPassword = hashedPassword;
+        } catch (hashingError) {
+          console.error('Password hashing error:', hashingError);
+          toast({
+            title: "❌ Erreur de sécurité",
+            description: "Impossible de sécuriser le mot de passe. Veuillez réessayer.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+      }
 
       await saveSalonSettings({
         name: "L'app du salon",
-        stats_password: processedPassword || null
+        stats_password: processedPassword
       });
+      
+      // Clear the password input after successful save
+      setStatsPassword('');
       
       toast({
         title: "✅ Paramètres sauvegardés",
-        description: "Vos modifications ont été enregistrées avec succès",
+        description: "Mot de passe sécurisé enregistré avec succès",
       });
     } catch (error) {
+      console.error('Settings save error:', error);
       toast({
         title: "❌ Erreur",
         description: "Impossible de sauvegarder les paramètres",
@@ -193,7 +240,7 @@ const Settings = () => {
                 type={showPassword ? "text" : "password"}
                 value={statsPassword}
                 onChange={(e) => setStatsPassword(e.target.value)}
-                placeholder="Définir un nouveau mot de passe sécurisé"
+                placeholder={salonSettings?.stats_password ? "Nouveau mot de passe (laisser vide pour conserver)" : "Définir un mot de passe sécurisé"}
                 disabled={loading || isSaving}
                 className="pr-10"
               />
@@ -212,18 +259,40 @@ const Settings = () => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              🔐 Mot de passe pour protéger l'accès aux statistiques et paramètres.
+              🔐 Minimum 8 caractères avec majuscule, minuscule et chiffre requis.
             </p>
           </div>
 
-          <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border-l-4 border-green-500">
-            <p className="text-sm text-green-700 dark:text-green-400">
-              🛡️ <strong>Sécurité renforcée :</strong> Les mots de passe sont maintenant hachés de manière sécurisée. 
-              {salonSettings?.stats_password?.startsWith('$2') 
-                ? "Votre mot de passe actuel est déjà sécurisé." 
-                : "Définissez un nouveau mot de passe pour activer la protection sécurisée."
-              }
-            </p>
+          <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-lg border-l-4 border-amber-500">
+            <div className="space-y-2">
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                <strong>🛡️ Sécurité renforcée activée</strong>
+              </p>
+              {salonSettings?.stats_password ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    ✅ Mot de passe sécurisé configuré ({salonSettings.stats_password.startsWith('$2') 
+                      ? "chiffré bcrypt" 
+                      : "migration requise"})
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    ✅ Validation de complexité activée
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    ✅ Protection contre les attaques par force brute
+                  </p>
+                  {!salonSettings.stats_password.startsWith('$2') && (
+                    <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                      ⚠️ Définissez un nouveau mot de passe pour finaliser la sécurisation
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  ⚠️ Aucun mot de passe configuré - Définissez-en un pour sécuriser l'accès
+                </p>
+              )}
+            </div>
           </div>
 
           <Button 

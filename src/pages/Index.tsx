@@ -98,67 +98,77 @@ const Index = () => {
   const verifyStatsPassword = async (inputPassword: string): Promise<boolean> => {
     if (!salonSettings?.stats_password) {
       toast({
-        title: "Configuration manquante",
-        description: "Aucun mot de passe n'est défini. Accès temporaire accordé pour configuration."
+        title: "❌ Aucun mot de passe configuré",
+        description: "Définissez un mot de passe sécurisé dans les paramètres.",
+        variant: "destructive",
       });
-      return true; // Temporary access when no password is set
+      return false; // No access without password
     }
 
-    // Check if password is already hashed (starts with $2)
-    if (salonSettings.stats_password.startsWith('$2')) {
-      try {
-        const {
-          data,
-          error
-        } = await supabase.rpc('verify_password', {
-          password_text: inputPassword,
-          password_hash: salonSettings.stats_password
-        });
-        if (error) {
-          console.error('Password verification error:', error);
-          return false;
-        }
-        return data === true;
-      } catch (error) {
+    // Only allow hashed passwords - no plain text fallback for security
+    if (!salonSettings.stats_password.startsWith('$2')) {
+      toast({
+        title: "🔒 Mot de passe non sécurisé détecté",
+        description: "Veuillez définir un nouveau mot de passe sécurisé dans les paramètres.",
+        variant: "destructive",
+      });
+      return false; // Force password reset for plain text passwords
+    }
+
+    try {
+      const {
+        data,
+        error
+      } = await supabase.rpc('verify_password', {
+        password_text: inputPassword,
+        password_hash: salonSettings.stats_password
+      });
+      if (error) {
         console.error('Password verification error:', error);
         return false;
       }
-    } else {
-      // Legacy plain text password - direct comparison for migration
-      return inputPassword === salonSettings.stats_password;
+      return data === true;
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
     }
   };
   const verifySettingsPassword = async (inputPassword: string): Promise<boolean> => {
     if (!salonSettings?.stats_password) {
       toast({
-        title: "Accès temporaire accordé",
-        description: "Configurez un mot de passe sécurisé dans les paramètres."
+        title: "❌ Aucun mot de passe configuré",
+        description: "Définissez un mot de passe sécurisé dans les paramètres.",
+        variant: "destructive",
       });
-      return true; // Temporary access when no password is set
+      return false; // No access without password
     }
 
-    // Check if password is already hashed (starts with $2)
-    if (salonSettings.stats_password.startsWith('$2')) {
-      try {
-        const {
-          data,
-          error
-        } = await supabase.rpc('verify_password', {
-          password_text: inputPassword,
-          password_hash: salonSettings.stats_password
-        });
-        if (error) {
-          console.error('Password verification error:', error);
-          return false;
-        }
-        return data === true;
-      } catch (error) {
+    // Only allow hashed passwords - no plain text fallback for security
+    if (!salonSettings.stats_password.startsWith('$2')) {
+      toast({
+        title: "🔒 Mot de passe non sécurisé détecté", 
+        description: "Veuillez définir un nouveau mot de passe sécurisé dans les paramètres.",
+        variant: "destructive",
+      });
+      return false; // Force password reset for plain text passwords
+    }
+
+    try {
+      const {
+        data,
+        error
+      } = await supabase.rpc('verify_password', {
+        password_text: inputPassword,
+        password_hash: salonSettings.stats_password
+      });
+      if (error) {
         console.error('Password verification error:', error);
         return false;
       }
-    } else {
-      // Legacy plain text password - direct comparison for migration
-      return inputPassword === salonSettings.stats_password;
+      return data === true;
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
     }
   };
   const handleViewChange = (view: string) => {
