@@ -400,12 +400,12 @@ const BlockCalendar = () => {
                           setIsBlockModalOpen(true);
                         }}
                       >
-                        {!isWorking ? (
-                          <div className="text-center">
-                            <span className="text-xs text-gray-400">
-                              {!isWorkingThisDay ? '📅' : '🔒'}
-                            </span>
-                          </div>
+                         {!isWorking ? (
+                           <div className="text-center">
+                             <span className="text-xs text-gray-400">
+                               Congé
+                             </span>
+                           </div>
                         ) : isLunchTimeSlot ? (
                           <div className="text-center">
                             <div className="flex items-center gap-1 text-orange-600">
