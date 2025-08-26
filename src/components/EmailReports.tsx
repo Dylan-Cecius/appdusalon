@@ -50,7 +50,6 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
   const generateReport = () => {
     const currentDate = new Date(selectedDate);
@@ -137,19 +136,8 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
     return { subject, content: reportContent };
   };
 
-  const addDebugLog = (message: string) => {
-    const timestamp = format(new Date(), 'HH:mm:ss');
-    setDebugLogs(prev => [...prev, `[${timestamp}] ${message}`]);
-  };
-
   const handleSendReport = async () => {
-    setDebugLogs([]); // Clear previous logs
-    addDebugLog('🔍 Démarrage de l\'envoi...');
-    addDebugLog(`📧 Email: ${email}`);
-    addDebugLog(`📊 Type de rapport: ${reportType}`);
-
     if (!email) {
-      addDebugLog('❌ Aucun email fourni');
       toast({
         title: "Erreur",
         description: "Veuillez saisir une adresse email",
@@ -160,7 +148,6 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      addDebugLog('❌ Format email invalide');
       toast({
         title: "Erreur",
         description: "Veuillez saisir une adresse email valide",
@@ -169,24 +156,10 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       return;
     }
 
-    addDebugLog('✅ Email valide, vérification authentification...');
-    
-    // Check authentication status
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    addDebugLog(`👤 Utilisateur: ${user ? user.email : 'Non connecté'}`);
-    
-    if (authError) {
-      addDebugLog(`❌ Erreur auth: ${authError.message}`);
-    }
-
     setIsLoading(true);
 
     try {
       const { subject, content } = generateReport();
-      addDebugLog(`📝 Rapport généré - Sujet: ${subject.substring(0, 50)}...`);
-      addDebugLog(`📄 Taille contenu: ${content.length} caractères`);
-      
-      addDebugLog('🚀 Appel fonction Supabase...');
       
       const { data, error } = await supabase.functions.invoke('send-report-email', {
         body: {
@@ -197,19 +170,14 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         }
       });
 
-      addDebugLog(`📨 Réponse reçue - Succès: ${data?.success}`);
       if (error) {
-        addDebugLog(`📨 Erreur fonction: ${JSON.stringify(error)}`);
-        addDebugLog(`❌ Erreur Supabase: ${error.message}`);
         throw new Error(error.message || 'Erreur lors de l\'envoi');
       }
 
       if (!data?.success) {
-        addDebugLog(`❌ Échec fonction: ${data?.error || 'Raison inconnue'}`);
         throw new Error(data?.error || data?.details || 'Erreur lors de l\'envoi');
       }
 
-      addDebugLog('✅ Email envoyé avec succès!');
       toast({
         title: "✅ Email envoyé !",
         description: `Le rapport ${reportType} a été envoyé avec succès à ${email}`,
@@ -220,9 +188,6 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       setMessage('');
       
     } catch (error: any) {
-      addDebugLog(`❌ Erreur envoi: ${error.message}`);
-      addDebugLog(`❌ Détails: ${JSON.stringify(error)}`);
-      
       let errorMessage = "Impossible d'envoyer le rapport par email";
       if (error.message?.includes("domain")) {
         errorMessage = "Domaine email non validé. Veuillez configurer votre domaine sur Resend.";
@@ -230,13 +195,11 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         errorMessage = "Configuration email incorrecte. Veuillez vérifier la clé API Resend.";
       } else if (error.message?.includes("rate limit")) {
         errorMessage = "Limite d'envoi atteinte. Veuillez réessayer dans quelques minutes.";
-      } else if (error.message?.includes("JWT")) {
-        errorMessage = "Problème d'authentification. Veuillez vous reconnecter.";
       }
 
       toast({
         title: "❌ Erreur d'envoi",
-        description: `${errorMessage} (${error.message})`,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -324,46 +287,6 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             <Send className="h-4 w-4 mr-2" />
             {isLoading ? 'Envoi en cours...' : 'Envoyer le rapport'}
           </Button>
-          
-          {/* Test button to verify debug panel works */}
-          <Button 
-            onClick={() => {
-              setDebugLogs([]);
-              addDebugLog('🧪 Test du panneau diagnostic');
-              addDebugLog('✅ Si vous voyez ceci, le panneau fonctionne !');
-              addDebugLog('📧 Maintenant testez avec un vrai email');
-            }}
-            variant="outline"
-            className="w-full mt-2"
-          >
-            🧪 Test Diagnostic
-          </Button>
-          
-          {/* Debug Panel Mobile - Show right after buttons on mobile */}
-          {debugLogs.length > 0 && (
-            <div className="mt-6 lg:hidden">
-              <h4 className="text-lg font-semibold mb-4 text-destructive flex items-center gap-2">
-                🔍 Diagnostic Mobile
-              </h4>
-              <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-lg max-h-64 overflow-y-auto">
-                <div className="space-y-1">
-                  {debugLogs.map((log, index) => (
-                    <div key={index} className="text-sm font-mono text-destructive">
-                      {log}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setDebugLogs([])}
-                className="mt-2"
-              >
-                Effacer les logs
-              </Button>
-            </div>
-          )}
         </div>
       </Card>
 
@@ -379,32 +302,6 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             {previewContent}
           </pre>
         </div>
-        
-        {/* Debug Panel Desktop - Only show if there are logs */}
-        {debugLogs.length > 0 && (
-          <div className="mt-6 hidden lg:block">
-            <h4 className="text-lg font-semibold mb-4 text-destructive flex items-center gap-2">
-              🔍 Diagnostic Desktop
-            </h4>
-            <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-lg max-h-64 overflow-y-auto">
-              <div className="space-y-1">
-                {debugLogs.map((log, index) => (
-                  <div key={index} className="text-sm font-mono text-destructive">
-                    {log}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setDebugLogs([])}
-              className="mt-2"
-            >
-              Effacer les logs
-            </Button>
-          </div>
-        )}
       </Card>
     </div>
   );
