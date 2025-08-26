@@ -65,12 +65,16 @@ const Settings = () => {
     saveSalonSettings(localSalonSettings);
   };
 
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Simulate file upload - in a real app, you'd upload to your storage
+      // Create temporary URL for immediate display
       const logoUrl = URL.createObjectURL(file);
-      setLocalSalonSettings({...localSalonSettings, logo_url: logoUrl});
+      const newSettings = {...localSalonSettings, logo_url: logoUrl};
+      setLocalSalonSettings(newSettings);
+      
+      // Save immediately to database
+      await saveSalonSettings(newSettings);
       
       toast({
         title: "Logo téléchargé",
