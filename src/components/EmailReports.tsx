@@ -9,6 +9,7 @@ import { Mail, Send, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StatsData {
   todayRevenue: number;
@@ -145,29 +146,68 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir une adresse email valide",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Simulation d'envoi d'email
-      const { content } = generateReport();
+      const { subject, content } = generateReport();
       
-      // Copier le contenu dans le presse-papiers
-      await navigator.clipboard.writeText(content);
+      console.log('Sending report email...');
       
-      setTimeout(() => {
-        toast({
-          title: "Rapport préparé",
-          description: `Le rapport ${reportType} a été copié dans le presse-papiers pour envoi à ${email}`,
-        });
-        setIsLoading(false);
-      }, 1500);
-      
-    } catch (error) {
+      const { data, error } = await supabase.functions.invoke('send-report-email', {
+        body: {
+          to: email,
+          subject: subject,
+          content: content,
+          reportType: reportType
+        }
+      });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Erreur lors de l\'envoi');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de l\'envoi');
+      }
+
       toast({
-        title: "Erreur",
-        description: "Impossible de préparer le rapport",
+        title: "✅ Email envoyé !",
+        description: `Le rapport ${reportType} a été envoyé avec succès à ${email}`,
+      });
+
+      // Reset form
+      setEmail('');
+      setMessage('');
+      
+    } catch (error: any) {
+      console.error('Error sending report:', error);
+      
+      let errorMessage = "Impossible d'envoyer le rapport par email";
+      if (error.message?.includes("domain")) {
+        errorMessage = "Domaine email non validé. Veuillez configurer votre domaine sur Resend.";
+      } else if (error.message?.includes("API key")) {
+        errorMessage = "Configuration email incorrecte. Veuillez vérifier la clé API Resend.";
+      } else if (error.message?.includes("rate limit")) {
+        errorMessage = "Limite d'envoi atteinte. Veuillez réessayer dans quelques minutes.";
+      }
+
+      toast({
+        title: "❌ Erreur d'envoi",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -250,7 +290,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
           >
             <Send className="h-4 w-4 mr-2" />
-            {isLoading ? 'Préparation...' : 'Préparer le rapport'}
+            {isLoading ? 'Envoi en cours...' : 'Envoyer le rapport'}
           </Button>
         </div>
       </Card>
