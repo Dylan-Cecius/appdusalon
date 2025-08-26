@@ -338,6 +338,32 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
           >
             🧪 Test Diagnostic
           </Button>
+          
+          {/* Debug Panel Mobile - Show right after buttons on mobile */}
+          {debugLogs.length > 0 && (
+            <div className="mt-6 lg:hidden">
+              <h4 className="text-lg font-semibold mb-4 text-destructive flex items-center gap-2">
+                🔍 Diagnostic Mobile
+              </h4>
+              <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-lg max-h-64 overflow-y-auto">
+                <div className="space-y-1">
+                  {debugLogs.map((log, index) => (
+                    <div key={index} className="text-sm font-mono text-destructive">
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setDebugLogs([])}
+                className="mt-2"
+              >
+                Effacer les logs
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -354,11 +380,11 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
           </pre>
         </div>
         
-        {/* Debug Panel - Only show if there are logs */}
+        {/* Debug Panel Desktop - Only show if there are logs */}
         {debugLogs.length > 0 && (
-          <div className="mt-6">
+          <div className="mt-6 hidden lg:block">
             <h4 className="text-lg font-semibold mb-4 text-destructive flex items-center gap-2">
-              🔍 Diagnostic
+              🔍 Diagnostic Desktop
             </h4>
             <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-lg max-h-64 overflow-y-auto">
               <div className="space-y-1">
