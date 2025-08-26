@@ -211,7 +211,7 @@ const Index = () => {
           <TabsList className="grid w-full grid-cols-6 max-w-4xl bg-card">
             <TabsTrigger value="pos" className="flex items-center gap-2">
               <Scissors className="h-4 w-4" />
-              Services et produits
+              Services
             </TabsTrigger>
             <TabsTrigger value="agenda" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
