@@ -46,33 +46,8 @@ const Settings = () => {
     try {
       let processedPassword = statsPassword;
       
-      // If a password is provided and it's not already hashed, hash it
-      if (statsPassword && !statsPassword.startsWith('$2')) {
-        try {
-          const { data: hashedPassword, error } = await supabase.rpc('hash_password', {
-            password_text: statsPassword
-          });
-          
-          if (error) {
-            throw error;
-          }
-          
-          processedPassword = hashedPassword;
-          
-          toast({
-            title: "🔒 Mot de passe sécurisé",
-            description: "Votre mot de passe a été chiffré de manière sécurisée",
-          });
-        } catch (error) {
-          console.error('Password hashing error:', error);
-          toast({
-            title: "❌ Erreur de sécurisation",
-            description: "Impossible de sécuriser le mot de passe. Contactez le support.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+      // Store password directly (temporarily until bcrypt is properly configured)
+      processedPassword = statsPassword;
 
       await saveSalonSettings({
         name: salonName,
@@ -263,7 +238,7 @@ const Settings = () => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              🔒 Nouveau système sécurisé avec chiffrement bcrypt. Votre mot de passe sera automatiquement sécurisé lors de la sauvegarde.
+              🔐 Mot de passe pour protéger l'accès aux statistiques et paramètres.
             </p>
           </div>
 
