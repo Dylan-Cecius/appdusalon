@@ -96,7 +96,15 @@ const Index = () => {
 
   // Secure password verification functions
   const verifyStatsPassword = async (inputPassword: string): Promise<boolean> => {
+    console.log('verifyStatsPassword called with:', { 
+      inputPassword: inputPassword?.length > 0 ? '[PASSWORD PROVIDED]' : '[NO PASSWORD]',
+      salonSettings: salonSettings ? 'LOADED' : 'NOT LOADED',
+      hasStatsPassword: !!salonSettings?.stats_password,
+      statsPasswordType: salonSettings?.stats_password?.startsWith('$2') ? 'HASHED' : 'PLAIN_TEXT'
+    });
+
     if (!salonSettings?.stats_password) {
+      console.log('No stats password configured');
       toast({
         title: "❌ Aucun mot de passe configuré",
         description: "Définissez un mot de passe sécurisé dans les paramètres.",
@@ -107,6 +115,7 @@ const Index = () => {
 
     // Only allow hashed passwords - no plain text fallback for security
     if (!salonSettings.stats_password.startsWith('$2')) {
+      console.log('Non-secure password detected for stats');
       toast({
         title: "🔒 Mot de passe non sécurisé détecté",
         description: "Veuillez définir un nouveau mot de passe sécurisé dans les paramètres.",
@@ -116,6 +125,7 @@ const Index = () => {
     }
 
     try {
+      console.log('Calling verify_password RPC');
       const {
         data,
         error
@@ -123,6 +133,9 @@ const Index = () => {
         password_text: inputPassword,
         password_hash: salonSettings.stats_password
       });
+      
+      console.log('RPC result:', { data, error });
+      
       if (error) {
         console.error('Password verification error:', error);
         return false;
@@ -134,7 +147,15 @@ const Index = () => {
     }
   };
   const verifySettingsPassword = async (inputPassword: string): Promise<boolean> => {
+    console.log('verifySettingsPassword called with:', { 
+      inputPassword: inputPassword?.length > 0 ? '[PASSWORD PROVIDED]' : '[NO PASSWORD]',
+      salonSettings: salonSettings ? 'LOADED' : 'NOT LOADED',
+      hasStatsPassword: !!salonSettings?.stats_password,
+      statsPasswordType: salonSettings?.stats_password?.startsWith('$2') ? 'HASHED' : 'PLAIN_TEXT'
+    });
+
     if (!salonSettings?.stats_password) {
+      console.log('No password configured for settings');
       toast({
         title: "❌ Aucun mot de passe configuré",
         description: "Définissez un mot de passe sécurisé dans les paramètres.",
@@ -145,8 +166,10 @@ const Index = () => {
 
     // Pour les paramètres, permettre l'accès avec ancien mot de passe pour migration
     if (!salonSettings.stats_password.startsWith('$2')) {
+      console.log('Plain text password detected, checking direct match');
       // Vérification simple pour ancien mot de passe en texte brut
       if (inputPassword === salonSettings.stats_password) {
+        console.log('Plain text password match - granting temporary access');
         toast({
           title: "⚠️ Accès temporaire accordé",
           description: "Veuillez définir un nouveau mot de passe sécurisé immédiatement.",
@@ -154,6 +177,7 @@ const Index = () => {
         });
         return true; // Accès temporaire pour migration
       } else {
+        console.log('Plain text password mismatch');
         toast({
           title: "❌ Mot de passe incorrect",
           description: "Mot de passe invalide.",
@@ -164,6 +188,7 @@ const Index = () => {
     }
 
     try {
+      console.log('Calling verify_password RPC for settings');
       const {
         data,
         error
@@ -171,6 +196,9 @@ const Index = () => {
         password_text: inputPassword,
         password_hash: salonSettings.stats_password
       });
+      
+      console.log('Settings RPC result:', { data, error });
+      
       if (error) {
         console.error('Password verification error:', error);
         return false;
