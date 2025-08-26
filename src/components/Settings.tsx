@@ -85,17 +85,24 @@ const Settings = () => {
         }
       }
 
-      await saveSalonSettings({
-        name: "L'app du salon",
-        stats_password: processedPassword
-      });
+      // Construire l'objet settings sans écraser le mot de passe existant
+      const settingsToSave: any = {
+        name: "L'app du salon"
+      };
+      
+      // N'inclure stats_password que si un nouveau mot de passe a été saisi
+      if (processedPassword) {
+        settingsToSave.stats_password = processedPassword;
+      }
+
+      await saveSalonSettings(settingsToSave);
       
       // Clear the password input after successful save
       setStatsPassword('');
       
       toast({
         title: "✅ Paramètres sauvegardés",
-        description: "Mot de passe sécurisé enregistré avec succès",
+        description: processedPassword ? "Mot de passe sécurisé mis à jour avec succès" : "Paramètres sauvegardés avec succès",
       });
     } catch (error) {
       console.error('Settings save error:', error);
