@@ -81,14 +81,12 @@ const Index = () => {
   const stats = getStats();
 
   const handleViewChange = (view: string) => {
-    // Vérifier si un mot de passe est configuré et si l'utilisateur n'est pas déjà débloqué
-    const hasPassword = salonSettings?.stats_password && salonSettings.stats_password.trim() !== '';
-    
-    if (view === 'stats' && hasPassword && !isStatsUnlocked) {
+    // Toujours demander le mot de passe pour les stats et paramètres
+    if (view === 'stats' && !isStatsUnlocked) {
       setShowStatsPasswordModal(true);
       return;
     }
-    if (view === 'settings' && hasPassword && !isSettingsUnlocked) {
+    if (view === 'settings' && !isSettingsUnlocked) {
       setShowSettingsPasswordModal(true);
       return;
     }
@@ -454,14 +452,14 @@ const Index = () => {
           isOpen={showStatsPasswordModal}
           onClose={() => setShowStatsPasswordModal(false)}
           onSuccess={handleStatsPasswordSuccess}
-          expectedPassword={salonSettings?.stats_password || ''}
+          expectedPassword="admin123admin"
         />
 
         <StatsPasswordModal
           isOpen={showSettingsPasswordModal}
           onClose={() => setShowSettingsPasswordModal(false)}
           onSuccess={handleSettingsPasswordSuccess}
-          expectedPassword={salonSettings?.stats_password || ''}
+          expectedPassword="admin123admin"
         />
       </div>
 
