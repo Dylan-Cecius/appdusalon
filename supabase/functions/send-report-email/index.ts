@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${reportType} report email to: ${to}`);
 
     const emailResponse = await resend.emails.send({
-      from: "SalonPOS <noreply@appdusalon.com>",
+      from: "SalonPOS <support@appdusalon.com>",
       to: [to],
       subject: subject,
       html: fullHtmlContent,
