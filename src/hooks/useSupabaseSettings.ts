@@ -17,6 +17,7 @@ export interface Barber {
   is_active: boolean;
   color: string;
   user_id?: string;
+  working_days?: string[];
 }
 
 export const useSupabaseSettings = () => {
@@ -78,7 +79,10 @@ export const useSupabaseSettings = () => {
       }
 
       if (data) {
-        setBarbers(data);
+        setBarbers(data.map(barber => ({
+          ...barber,
+          working_days: barber.working_days || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        })));
       }
     } catch (error) {
       console.error('Error:', error);

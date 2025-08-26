@@ -14,6 +14,7 @@ const Settings = () => {
   const [newBarberName, setNewBarberName] = useState('');
   const [newBarberStart, setNewBarberStart] = useState('10:00');
   const [newBarberEnd, setNewBarberEnd] = useState('19:00');
+  const [newBarberWorkingDays, setNewBarberWorkingDays] = useState<string[]>(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']);
   const [localSalonSettings, setLocalSalonSettings] = useState(salonSettings);
   
   // Sync local settings with props when salonSettings changes
@@ -46,11 +47,13 @@ const Settings = () => {
       start_time: newBarberStart,
       end_time: newBarberEnd,
       is_active: true,
-      color: `bg-${['blue', 'purple', 'green', 'red', 'yellow', 'pink'][Math.floor(Math.random() * 6)]}-600`
+      color: `bg-${['blue', 'purple', 'green', 'red', 'yellow', 'pink'][Math.floor(Math.random() * 6)]}-600`,
+      working_days: newBarberWorkingDays
     };
 
     addBarber(newBarber);
     setNewBarberName('');
+    setNewBarberWorkingDays(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']);
   };
 
   const handleUpdateBarber = (id: string, updates: any) => {
@@ -200,7 +203,7 @@ const Settings = () => {
             <div key={barber.id} className="flex items-center gap-4 p-4 border rounded-lg">
               <div className={`w-4 h-4 rounded ${barber.color}`}></div>
               
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Nom</Label>
                   <Input 
@@ -229,6 +232,36 @@ const Settings = () => {
                     className="mt-1"
                   />
                 </div>
+
+                <div>
+                  <Label className="text-xs text-muted-foreground">Jours de travail</Label>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, index) => {
+                      const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                      const isSelected = barber.working_days?.includes(dayNames[index]);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            const currentDays = barber.working_days || [];
+                            const newDays = isSelected 
+                              ? currentDays.filter(d => d !== dayNames[index])
+                              : [...currentDays, dayNames[index]];
+                            handleUpdateBarber(barber.id, { working_days: newDays });
+                          }}
+                          className={`px-2 py-1 text-xs rounded ${
+                            isSelected 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               <Button 
@@ -249,43 +282,83 @@ const Settings = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Ajouter un nouveau coiffeur</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="newName">Nom</Label>
+                <Input 
+                  id="newName"
+                  value={newBarberName}
+                  onChange={(e) => setNewBarberName(e.target.value)}
+                  placeholder="Nom du coiffeur"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="newStart">Heure de début</Label>
+                <Input 
+                  id="newStart"
+                  type="time"
+                  value={newBarberStart}
+                  onChange={(e) => setNewBarberStart(e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="newEnd">Heure de fin</Label>
+                <Input 
+                  id="newEnd"
+                  type="time"
+                  value={newBarberEnd}
+                  onChange={(e) => setNewBarberEnd(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="newName">Nom</Label>
-              <Input 
-                id="newName"
-                value={newBarberName}
-                onChange={(e) => setNewBarberName(e.target.value)}
-                placeholder="Nom du coiffeur"
-              />
+              <Label>Jours de travail</Label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[
+                  { short: 'Lun', full: 'Monday' },
+                  { short: 'Mar', full: 'Tuesday' },
+                  { short: 'Mer', full: 'Wednesday' },
+                  { short: 'Jeu', full: 'Thursday' },
+                  { short: 'Ven', full: 'Friday' },
+                  { short: 'Sam', full: 'Saturday' },
+                  { short: 'Dim', full: 'Sunday' }
+                ].map((day) => {
+                  const isSelected = newBarberWorkingDays.includes(day.full);
+                  return (
+                    <button
+                      key={day.full}
+                      type="button"
+                      onClick={() => {
+                        setNewBarberWorkingDays(prev => 
+                          isSelected 
+                            ? prev.filter(d => d !== day.full)
+                            : [...prev, day.full]
+                        );
+                      }}
+                      className={`px-3 py-2 text-sm rounded ${
+                        isSelected 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                    >
+                      {day.short}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Sélectionnez les jours où ce coiffeur travaille
+              </p>
             </div>
-            
-            <div>
-              <Label htmlFor="newStart">Heure de début</Label>
-              <Input 
-                id="newStart"
-                type="time"
-                value={newBarberStart}
-                onChange={(e) => setNewBarberStart(e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="newEnd">Heure de fin</Label>
-              <Input 
-                id="newEnd"
-                type="time"
-                value={newBarberEnd}
-                onChange={(e) => setNewBarberEnd(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex items-end">
-              <Button onClick={handleAddBarber} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </Button>
-            </div>
+
+            <Button onClick={handleAddBarber} className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter
+            </Button>
           </div>
         </div>
       </Card>

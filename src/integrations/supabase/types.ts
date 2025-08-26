@@ -76,6 +76,7 @@ export type Database = {
           start_time: string
           updated_at: string
           user_id: string | null
+          working_days: string[] | null
         }
         Insert: {
           color?: string
@@ -87,6 +88,7 @@ export type Database = {
           start_time?: string
           updated_at?: string
           user_id?: string | null
+          working_days?: string[] | null
         }
         Update: {
           color?: string
@@ -98,6 +100,7 @@ export type Database = {
           start_time?: string
           updated_at?: string
           user_id?: string | null
+          working_days?: string[] | null
         }
         Relationships: []
       }
