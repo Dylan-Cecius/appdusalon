@@ -466,8 +466,8 @@ const Index = () => {
               </div>
               
               <div className="flex items-center gap-2 sm:gap-3">
-                {currentView === "pos" && isMobile && <Button variant="outline" size="sm" onClick={() => setIsCartOpen(true)} className="flex items-center gap-2">
-                    <ShoppingCart className="h-4 w-4" />
+                {currentView === "pos" && isMobile && <Button variant="outline" size="sm" onClick={() => setIsCartOpen(true)} className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+                    <ShoppingCart className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                     <span className="text-xs">{cartItems.length}</span>
                   </Button>}
                 {!isMobile && <div className="text-right">
@@ -475,8 +475,8 @@ const Index = () => {
                     <p className="text-sm font-medium">{user.email}</p>
                   </div>}
                 <ThemeToggle />
-                <Button variant="outline" size="sm" onClick={signOut} className="flex items-center gap-2">
-                  <LogOut className="h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={signOut} className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+                  <LogOut className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                   {!isMobile && "Déconnexion"}
                 </Button>
               </div>
@@ -487,29 +487,29 @@ const Index = () => {
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Tabs value={currentView} onValueChange={handleViewChange} className="space-y-4 sm:space-y-6">
           <TabsList className={cn("grid w-full bg-card", isMobile ? "grid-cols-3 max-w-full" : "grid-cols-6 max-w-4xl")}>
-            <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2">
-              <Scissors className="h-4 w-4" />
+            <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+              <Scissors className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
               {isMobile ? "Encaissement" : "Encaissement"}
             </TabsTrigger>
-            <TabsTrigger value="agenda" className="flex items-center gap-1 sm:gap-2">
-              <Calendar className="h-4 w-4" />
+            <TabsTrigger value="agenda" className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+              <Calendar className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
               Agenda
             </TabsTrigger>
-            <TabsTrigger value="stats" className="flex items-center gap-1 sm:gap-2">
-              <BarChart3 className="h-4 w-4" />
+            <TabsTrigger value="stats" className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+              <BarChart3 className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
               Stats
             </TabsTrigger>
             {!isMobile && <>
-                <TabsTrigger value="todo" className="flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4" />
+                <TabsTrigger value="todo" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+                  <CheckSquare className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                   To-Do List
                 </TabsTrigger>
-                <TabsTrigger value="reports" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
+                <TabsTrigger value="reports" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+                  <Mail className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                   Rapports
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center gap-2">
-                  <SettingsIcon className="h-4 w-4" />
+                <TabsTrigger value="settings" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+                  <SettingsIcon className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                   Paramètres
                 </TabsTrigger>
               </>}
@@ -517,16 +517,16 @@ const Index = () => {
           
           {/* Menu mobile pour les onglets supplémentaires */}
           {isMobile && <div className="flex gap-2 overflow-x-auto pb-2">
-              <Button variant={currentView === "todo" ? "default" : "outline"} size="sm" onClick={() => handleViewChange("todo")} className="flex items-center gap-2 min-w-fit">
-                <CheckSquare className="h-4 w-4" />
+              <Button variant={currentView === "todo" ? "default" : "outline"} size="sm" onClick={() => handleViewChange("todo")} className="flex items-center gap-2 min-w-fit hover:scale-105 active:scale-95 transition-all duration-200">
+                <CheckSquare className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                 To-Do
               </Button>
-              <Button variant={currentView === "reports" ? "default" : "outline"} size="sm" onClick={() => handleViewChange("reports")} className="flex items-center gap-2 min-w-fit">
-                <Mail className="h-4 w-4" />
+              <Button variant={currentView === "reports" ? "default" : "outline"} size="sm" onClick={() => handleViewChange("reports")} className="flex items-center gap-2 min-w-fit hover:scale-105 active:scale-95 transition-all duration-200">
+                <Mail className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                 Rapports
               </Button>
-              <Button variant={currentView === "settings" ? "default" : "outline"} size="sm" onClick={() => handleViewChange("settings")} className="flex items-center gap-2 min-w-fit">
-                <SettingsIcon className="h-4 w-4" />
+              <Button variant={currentView === "settings" ? "default" : "outline"} size="sm" onClick={() => handleViewChange("settings")} className="flex items-center gap-2 min-w-fit hover:scale-105 active:scale-95 transition-all duration-200">
+                <SettingsIcon className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                 Paramètres
               </Button>
             </div>}
@@ -588,8 +588,8 @@ const Index = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Statistiques & Analyses</h2>
-                <Button onClick={() => setIsTransactionsManagerOpen(true)} variant="outline" className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
+                <Button onClick={() => setIsTransactionsManagerOpen(true)} variant="outline" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+                  <DollarSign className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                   Gérer les encaissements
                 </Button>
               </div>
