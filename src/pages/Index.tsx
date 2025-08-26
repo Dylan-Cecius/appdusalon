@@ -210,21 +210,15 @@ const Index = () => {
     }
   };
   const handleViewChange = (view: string) => {
-    console.log('handleViewChange called with view:', view);
-    console.log('Current unlocked states:', { isStatsUnlocked, isSettingsUnlocked });
-    
-    // Toujours demander le mot de passe pour les stats et paramètres
-    if (view === 'stats' && !isStatsUnlocked) {
-      console.log('Showing stats password modal');
+    // Ne demander le mot de passe que si un mot de passe est configuré
+    if (view === 'stats' && !isStatsUnlocked && salonSettings?.stats_password) {
       setShowStatsPasswordModal(true);
       return;
     }
-    if (view === 'settings' && !isSettingsUnlocked) {
-      console.log('Showing settings password modal');
+    if (view === 'settings' && !isSettingsUnlocked && salonSettings?.stats_password) {
       setShowSettingsPasswordModal(true);
       return;
     }
-    console.log('Setting current view to:', view);
     setCurrentView(view);
   };
   const handleStatsPasswordSuccess = () => {
