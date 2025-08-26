@@ -143,14 +143,24 @@ const Index = () => {
       return false; // No access without password
     }
 
-    // Only allow hashed passwords - no plain text fallback for security
+    // Pour les paramètres, permettre l'accès avec ancien mot de passe pour migration
     if (!salonSettings.stats_password.startsWith('$2')) {
-      toast({
-        title: "🔒 Mot de passe non sécurisé détecté", 
-        description: "Veuillez définir un nouveau mot de passe sécurisé dans les paramètres.",
-        variant: "destructive",
-      });
-      return false; // Force password reset for plain text passwords
+      // Vérification simple pour ancien mot de passe en texte brut
+      if (inputPassword === salonSettings.stats_password) {
+        toast({
+          title: "⚠️ Accès temporaire accordé",
+          description: "Veuillez définir un nouveau mot de passe sécurisé immédiatement.",
+          variant: "destructive",
+        });
+        return true; // Accès temporaire pour migration
+      } else {
+        toast({
+          title: "❌ Mot de passe incorrect",
+          description: "Mot de passe invalide.",
+          variant: "destructive",
+        });
+        return false;
+      }
     }
 
     try {
