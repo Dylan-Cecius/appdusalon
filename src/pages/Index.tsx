@@ -25,6 +25,7 @@ import EmailReports from '@/components/EmailReports';
 import Settings from '@/components/Settings';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
 import TransactionsManager from '@/components/TransactionsManager';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface CartItem {
   id: string;
@@ -385,6 +386,7 @@ const Index = () => {
                     <p className="text-sm text-muted-foreground">Connecté en tant que:</p>
                     <p className="text-sm font-medium">{user.email}</p>
                   </div>}
+                <ThemeToggle />
                 <Button variant="outline" size="sm" onClick={signOut} className="flex items-center gap-2">
                   <LogOut className="h-4 w-4" />
                   {!isMobile && "Déconnexion"}
