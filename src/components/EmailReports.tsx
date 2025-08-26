@@ -137,7 +137,12 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
   };
 
   const handleSendReport = async () => {
+    console.log('🔍 Starting handleSendReport...');
+    console.log('📧 Email:', email);
+    console.log('📊 Report type:', reportType);
+
     if (!email) {
+      console.log('❌ No email provided');
       toast({
         title: "Erreur",
         description: "Veuillez saisir une adresse email",
@@ -148,9 +153,24 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log('❌ Invalid email format');
       toast({
         title: "Erreur",
         description: "Veuillez saisir une adresse email valide",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check authentication status
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('👤 Current user:', user ? user.email : 'Not authenticated');
+    
+    if (authError || !user) {
+      console.log('❌ Authentication error:', authError);
+      toast({
+        title: "Erreur d'authentification",
+        description: "Vous devez être connecté pour envoyer des rapports",
         variant: "destructive",
       });
       return;
@@ -160,8 +180,10 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
     try {
       const { subject, content } = generateReport();
+      console.log('📝 Generated report - Subject:', subject);
+      console.log('📄 Content length:', content.length);
       
-      console.log('Sending report email...');
+      console.log('🚀 Invoking supabase function send-report-email...');
       
       const { data, error } = await supabase.functions.invoke('send-report-email', {
         body: {
@@ -172,15 +194,20 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         }
       });
 
+      console.log('📨 Function response - Data:', data);
+      console.log('📨 Function response - Error:', error);
+
       if (error) {
-        console.error('Supabase function error:', error);
+        console.error('❌ Supabase function error:', error);
         throw new Error(error.message || 'Erreur lors de l\'envoi');
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Erreur lors de l\'envoi');
+      if (!data?.success) {
+        console.error('❌ Function returned failure:', data);
+        throw new Error(data?.error || data?.details || 'Erreur lors de l\'envoi');
       }
 
+      console.log('✅ Email sent successfully!');
       toast({
         title: "✅ Email envoyé !",
         description: `Le rapport ${reportType} a été envoyé avec succès à ${email}`,
@@ -191,7 +218,8 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       setMessage('');
       
     } catch (error: any) {
-      console.error('Error sending report:', error);
+      console.error('❌ Error sending report:', error);
+      console.error('❌ Error details:', error.message);
       
       let errorMessage = "Impossible d'envoyer le rapport par email";
       if (error.message?.includes("domain")) {
@@ -200,11 +228,13 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         errorMessage = "Configuration email incorrecte. Veuillez vérifier la clé API Resend.";
       } else if (error.message?.includes("rate limit")) {
         errorMessage = "Limite d'envoi atteinte. Veuillez réessayer dans quelques minutes.";
+      } else if (error.message?.includes("JWT")) {
+        errorMessage = "Problème d'authentification. Veuillez vous reconnecter.";
       }
 
       toast({
         title: "❌ Erreur d'envoi",
-        description: errorMessage,
+        description: `${errorMessage} (${error.message})`,
         variant: "destructive",
       });
     } finally {
