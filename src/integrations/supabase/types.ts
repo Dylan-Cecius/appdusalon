@@ -228,6 +228,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          stats_password: string | null
           updated_at: string
           user_id: string | null
         }
@@ -236,6 +237,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          stats_password?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -244,6 +246,49 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          stats_password?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          appointment_buffer: number | null
+          category: string
+          created_at: string
+          display_order: number | null
+          duration: number
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          appointment_buffer?: number | null
+          category?: string
+          created_at?: string
+          display_order?: number | null
+          duration: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          appointment_buffer?: number | null
+          category?: string
+          created_at?: string
+          display_order?: number | null
+          duration?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
           updated_at?: string
           user_id?: string | null
         }

@@ -1,27 +1,30 @@
-import { useState, useEffect } from "react";
-import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign, CheckSquare, LogOut, Menu } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { cn } from "@/lib/utils";
-import ServiceCard from "@/components/ServiceCard";
-import CartSidebar from "@/components/CartSidebar";
-import StatsOverview from "@/components/StatsOverview";
-import PaymentMethodStats from "@/components/PaymentMethodStats";
-import TransactionsManager from "@/components/TransactionsManager";
-import CustomDateRangeStats from "@/components/CustomDateRangeStats";
-import BlockCalendar from "@/components/BlockCalendar";
-import Settings from "@/components/Settings";
-import EmailReports from "@/components/EmailReports";
-import TodoList from "@/components/TodoList";
-import { services, getAllCategories } from "@/data/services";
-import { toast } from "@/hooks/use-toast";
-import { useSupabaseTransactions } from "@/hooks/useSupabaseTransactions";
-import { useSupabaseSettings } from "@/hooks/useSupabaseSettings";
-import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, DollarSign, Mail } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { useSupabaseServices } from '@/hooks/useSupabaseServices';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import ServiceCard from '@/components/ServiceCard';
+import CartSidebar from '@/components/CartSidebar';
+import BlockCalendar from '@/components/BlockCalendar';
+import TodoList from '@/components/TodoList';
+import StatsOverview from '@/components/StatsOverview';
+import PaymentMethodStats from '@/components/PaymentMethodStats';
+import CustomDateRangeStats from '@/components/CustomDateRangeStats';
+import EmailReports from '@/components/EmailReports';
+import Settings from '@/components/Settings';
+import StatsPasswordModal from '@/components/StatsPasswordModal';
+import TransactionsManager from '@/components/TransactionsManager';
 
 interface CartItem {
   id: string;
@@ -34,13 +37,17 @@ interface CartItem {
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState("pos");
+  const [showStatsPassword, setShowStatsPassword] = useState(false);
+  const [statsUnlocked, setStatsUnlocked] = useState(false);
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const { toast } = useToast();
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { salonSettings } = useSupabaseSettings();
+  const { services, loading: servicesLoading, categories } = useSupabaseServices();
   const { addTransaction, getStats } = useSupabaseTransactions();
+  const isMobile = useIsMobile();
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -71,12 +78,8 @@ const Index = () => {
   // Get real stats from transactions
   const stats = getStats();
 
-  const categories = getAllCategories();
-
-  const categoryDisplayName = {
-    coupe: 'Coupes',
-    barbe: 'Barbe',
-    combo: 'Combos'
+  const handleStatsTabChange = (value: string) => {
+    setActiveTab(value);
   };
 
   const addToCart = (service: any) => {
@@ -233,7 +236,7 @@ const Index = () => {
       </header>
 
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <Tabs value={activeTab} onValueChange={handleStatsTabChange} className="space-y-4 sm:space-y-6">{/* */}
           <TabsList className={cn(
             "grid w-full bg-card",
             isMobile ? "grid-cols-3 max-w-full" : "grid-cols-6 max-w-4xl"
@@ -308,33 +311,55 @@ const Index = () => {
             )}>
               {/* Services Section */}
               <div className={cn(isMobile ? "space-y-4" : "xl:col-span-2 space-y-6")}>
-                {categories.map((category) => {
-                  const categoryServices = services.filter(s => s.category === category);
-                  if (categoryServices.length === 0) return null;
-                  
-                  return (
-                    <div key={category} className="space-y-3 sm:space-y-4">
-                       <h2 className="text-lg sm:text-xl font-semibold text-primary capitalize flex items-center gap-2">
-                         {category === 'coupe' && <Scissors className="h-5 w-5" />}
-                         {category === 'barbe' && <div className="h-5 w-5 bg-accent rounded" />}
-                         {category === 'combo' && <div className="h-5 w-5 bg-pos-card rounded-lg" />}
-                         {categoryDisplayName[category]}
-                       </h2>
-                      <div className={cn(
-                        "grid gap-3 sm:gap-4",
-                        isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
-                      )}>
-                        {categoryServices.map((service) => (
-                          <ServiceCard 
-                            key={service.id} 
-                            service={service} 
-                            onAdd={addToCart}
-                          />
-                        ))}
+                {servicesLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-6 bg-muted rounded w-1/4 mb-4"></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {[...Array(3)].map((_, j) => (
+                            <div key={j} className="h-32 bg-muted rounded"></div>
+                          ))}
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  categories.map((category) => {
+                    const categoryServices = services.filter(service => service.category === category.id);
+                    if (categoryServices.length === 0) return null;
+                    
+                    return (
+                      <div key={category.id}>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-primary">{category.name}</h3>
+                          <Badge variant="secondary" className="bg-accent/10 text-accent-foreground">
+                            {categoryServices.length} service{categoryServices.length > 1 ? 's' : ''}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {categoryServices.map((service) => (
+                          <ServiceCard 
+                            key={service.id}
+                            service={service as any}
+                            onAddToCart={addToCart}
+                          />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                
+                {!servicesLoading && services.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="text-muted-foreground">
+                      <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Aucun service configuré</p>
+                      <p className="text-sm">Ajoutez vos services dans l'onglet Paramètres</p>
                     </div>
-                  );
-                })}
+                  </div>
+                )}
               </div>
 
               {/* Cart Sidebar - Desktop and Tablet */}
@@ -396,10 +421,20 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="settings">
-            <Settings />
-          </TabsContent>
-        </Tabs>
-      </div>
+          <Settings />
+        </TabsContent>
+      </Tabs>
+
+      {/* Stats Password Modal - Temporarily disabled until hook is fixed */}
+      {/*
+      <StatsPasswordModal
+        isOpen={showStatsPassword}
+        onClose={() => setShowStatsPassword(false)}
+        onSuccess={() => {}}
+        expectedPassword=""
+      />
+      */}
+    </div>
 
       <TransactionsManager 
         isOpen={isTransactionsManagerOpen}
