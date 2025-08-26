@@ -85,55 +85,65 @@ const Index = () => {
     if (!salonSettings?.stats_password) {
       toast({
         title: "Configuration manquante",
-        description: "Aucun mot de passe n'est défini pour l'accès aux statistiques. Configurez-le dans les paramètres.",
-        variant: "destructive",
+        description: "Aucun mot de passe n'est défini. Accès temporaire accordé pour configuration.",
       });
-      return false;
+      return true; // Temporary access when no password is set
     }
 
-    try {
-      const { data, error } = await supabase.rpc('verify_password', {
-        password_text: inputPassword,
-        password_hash: salonSettings.stats_password
-      });
+    // Check if password is already hashed (starts with $2)
+    if (salonSettings.stats_password.startsWith('$2')) {
+      try {
+        const { data, error } = await supabase.rpc('verify_password', {
+          password_text: inputPassword,
+          password_hash: salonSettings.stats_password
+        });
 
-      if (error) {
+        if (error) {
+          console.error('Password verification error:', error);
+          return false;
+        }
+
+        return data === true;
+      } catch (error) {
         console.error('Password verification error:', error);
         return false;
       }
-
-      return data === true;
-    } catch (error) {
-      console.error('Password verification error:', error);
-      return false;
+    } else {
+      // Legacy plain text password - direct comparison for migration
+      return inputPassword === salonSettings.stats_password;
     }
   };
 
   const verifySettingsPassword = async (inputPassword: string): Promise<boolean> => {
     if (!salonSettings?.stats_password) {
       toast({
-        title: "Configuration manquante", 
-        description: "Aucun mot de passe n'est défini pour l'accès aux paramètres. Configurez-le dans les paramètres.",
-        variant: "destructive",
+        title: "Accès temporaire accordé",
+        description: "Configurez un mot de passe sécurisé dans les paramètres.",
       });
-      return false;
+      return true; // Temporary access when no password is set
     }
 
-    try {
-      const { data, error } = await supabase.rpc('verify_password', {
-        password_text: inputPassword,
-        password_hash: salonSettings.stats_password
-      });
+    // Check if password is already hashed (starts with $2)
+    if (salonSettings.stats_password.startsWith('$2')) {
+      try {
+        const { data, error } = await supabase.rpc('verify_password', {
+          password_text: inputPassword,
+          password_hash: salonSettings.stats_password
+        });
 
-      if (error) {
+        if (error) {
+          console.error('Password verification error:', error);
+          return false;
+        }
+
+        return data === true;
+      } catch (error) {
         console.error('Password verification error:', error);
         return false;
       }
-
-      return data === true;
-    } catch (error) {
-      console.error('Password verification error:', error);
-      return false;
+    } else {
+      // Legacy plain text password - direct comparison for migration
+      return inputPassword === salonSettings.stats_password;
     }
   };
   const handleViewChange = (view: string) => {

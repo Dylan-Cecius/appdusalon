@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, Plus, Edit, Trash2, Clock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseSettings, type Barber } from '@/hooks/useSupabaseSettings';
+import { supabase } from '@/integrations/supabase/client';
 import ServiceManagement from './ServiceManagement';
 import ProductManagement from './ProductManagement';
 
@@ -43,10 +44,40 @@ const Settings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      let processedPassword = statsPassword;
+      
+      // If a password is provided and it's not already hashed, hash it
+      if (statsPassword && !statsPassword.startsWith('$2')) {
+        try {
+          const { data: hashedPassword, error } = await supabase.rpc('hash_password', {
+            password_text: statsPassword
+          });
+          
+          if (error) {
+            throw error;
+          }
+          
+          processedPassword = hashedPassword;
+          
+          toast({
+            title: "🔒 Mot de passe sécurisé",
+            description: "Votre mot de passe a été chiffré de manière sécurisée",
+          });
+        } catch (error) {
+          console.error('Password hashing error:', error);
+          toast({
+            title: "❌ Erreur de sécurisation",
+            description: "Impossible de sécuriser le mot de passe. Contactez le support.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       await saveSalonSettings({
         name: salonName,
         logo_url: logoUrl,
-        stats_password: statsPassword || null
+        stats_password: processedPassword || null
       });
       
       toast({
@@ -213,7 +244,7 @@ const Settings = () => {
                 type={showPassword ? "text" : "password"}
                 value={statsPassword}
                 onChange={(e) => setStatsPassword(e.target.value)}
-                placeholder="Définir un mot de passe (optionnel)"
+                placeholder="Définir un nouveau mot de passe sécurisé"
                 disabled={loading || isSaving}
                 className="pr-10"
               />
@@ -232,14 +263,17 @@ const Settings = () => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              🔒 Si défini, ce mot de passe sera demandé pour accéder aux statistiques et empêchera vos employés de voir le chiffre d'affaires
+              🔒 Nouveau système sécurisé avec chiffrement bcrypt. Votre mot de passe sera automatiquement sécurisé lors de la sauvegarde.
             </p>
           </div>
 
-          <div className="bg-muted/30 p-4 rounded-lg border-l-4 border-destructive">
-            <p className="text-sm text-muted-foreground">
-              ℹ️ <strong>Protection activée :</strong> Ce mot de passe protégera l'accès aux statistiques et aux paramètres de votre salon. 
-              Laissez vide pour désactiver la protection.
+          <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border-l-4 border-green-500">
+            <p className="text-sm text-green-700 dark:text-green-400">
+              🛡️ <strong>Sécurité renforcée :</strong> Les mots de passe sont maintenant hachés de manière sécurisée. 
+              {salonSettings?.stats_password?.startsWith('$2') 
+                ? "Votre mot de passe actuel est déjà sécurisé." 
+                : "Définissez un nouveau mot de passe pour activer la protection sécurisée."
+              }
             </p>
           </div>
 
