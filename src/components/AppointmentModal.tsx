@@ -166,7 +166,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       <div>
         <Label>Services disponibles</Label>
         <div className={`grid gap-3 mt-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
-          {services.map((service) => (
+          {services.filter(service => service.category !== 'produit').map((service) => (
             <Card 
               key={service.id}
               className="p-3 cursor-pointer hover:bg-accent/10 transition-colors"
