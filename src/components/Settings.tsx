@@ -254,44 +254,47 @@ const Settings = () => {
       </Card>
 
       {/* Gestion des coiffeurs */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <Users className="h-6 w-6 text-primary" />
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-primary">Gestion des coiffeurs</h3>
-              <p className="text-sm text-muted-foreground">Ajoutez et gérez vos coiffeurs</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-primary">Gestion des coiffeurs</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Ajoutez et gérez vos coiffeurs</p>
             </div>
           </div>
           <Button 
             onClick={() => setShowAddBarber(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
+            size="sm"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Ajouter un coiffeur
+            <span className="hidden sm:inline">Ajouter un coiffeur</span>
+            <span className="sm:hidden">Ajouter</span>
           </Button>
         </div>
 
         {/* Liste des coiffeurs */}
         <div className="space-y-4">
           {barbers.map((barber) => (
-            <div key={barber.id} className="p-4 border rounded-lg">
+            <div key={barber.id} className="p-3 sm:p-4 border rounded-lg">
               {editingBarber?.id === barber.id ? (
                 // Mode édition
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label>Nom</Label>
+                      <Label className="text-sm">Nom</Label>
                       <Input
                         value={editingBarber.name}
                         onChange={(e) => setEditingBarber({ ...editingBarber, name: e.target.value })}
+                        className="mt-1"
                       />
                     </div>
                     <div>
-                      <Label>Couleur</Label>
-                      <div className="flex gap-2 mt-1">
+                      <Label className="text-sm">Couleur</Label>
+                      <div className="grid grid-cols-4 sm:flex gap-2 mt-1">
                         {colors.map(color => (
                           <button
                             key={color}
@@ -303,28 +306,30 @@ const Settings = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label>Heure de début</Label>
+                      <Label className="text-sm">Heure de début</Label>
                       <Input
                         type="time"
                         value={editingBarber.start_time}
                         onChange={(e) => setEditingBarber({ ...editingBarber, start_time: e.target.value })}
+                        className="mt-1"
                       />
                     </div>
                     <div>
-                      <Label>Heure de fin</Label>
+                      <Label className="text-sm">Heure de fin</Label>
                       <Input
                         type="time"
                         value={editingBarber.end_time}
                         onChange={(e) => setEditingBarber({ ...editingBarber, end_time: e.target.value })}
+                        className="mt-1"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <Label>Jours de travail</Label>
-                    <div className="flex flex-wrap gap-2 mt-1">
+                    <Label className="text-sm">Jours de travail</Label>
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-2">
                       {daysOfWeek.map(day => (
                         <div key={day} className="flex items-center space-x-2">
                           <Checkbox
@@ -332,7 +337,7 @@ const Settings = () => {
                             checked={editingBarber.working_days?.includes(day) || false}
                             onCheckedChange={() => toggleWorkingDay(day, true)}
                           />
-                          <Label htmlFor={`edit-${day}`} className="text-sm">{daysLabels[day]}</Label>
+                          <Label htmlFor={`edit-${day}`} className="text-xs sm:text-sm">{daysLabels[day]}</Label>
                         </div>
                       ))}
                     </div>
@@ -344,50 +349,51 @@ const Settings = () => {
                       checked={editingBarber.is_active}
                       onCheckedChange={(checked) => setEditingBarber({ ...editingBarber, is_active: !!checked })}
                     />
-                    <Label htmlFor={`edit-active-${barber.id}`}>Coiffeur actif</Label>
+                    <Label htmlFor={`edit-active-${barber.id}`} className="text-sm">Coiffeur actif</Label>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleUpdateBarber(editingBarber)} className="bg-green-600 hover:bg-green-700 text-white">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={() => handleUpdateBarber(editingBarber)} className="bg-green-600 hover:bg-green-700 text-white" size="sm">
                       Sauvegarder
                     </Button>
-                    <Button onClick={() => setEditingBarber(null)} variant="outline">
+                    <Button onClick={() => setEditingBarber(null)} variant="outline" size="sm">
                       Annuler
                     </Button>
                   </div>
                 </div>
               ) : (
                 // Mode affichage
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-4 h-4 rounded ${barber.color}`}></div>
-                    <div>
-                      <h4 className="font-medium">{barber.name}</h4>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <div className={`w-4 h-4 rounded ${barber.color} flex-shrink-0 mt-0.5 sm:mt-0`}></div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-medium text-sm sm:text-base">{barber.name}</h4>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {barber.start_time} - {barber.end_time}
+                          <Clock className="h-3 w-3 flex-shrink-0" />
+                          <span className="whitespace-nowrap">{barber.start_time} - {barber.end_time}</span>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap gap-1">
                           {barber.working_days?.map(day => (
-                            <Badge key={day} variant="secondary" className="text-xs">
+                            <Badge key={day} variant="secondary" className="text-xs px-1.5 py-0.5">
                               {daysLabels[day]}
                             </Badge>
                           ))}
                         </div>
                         {!barber.is_active && (
-                          <Badge variant="destructive" className="text-xs">Inactif</Badge>
+                          <Badge variant="destructive" className="text-xs w-fit">Inactif</Badge>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 self-end sm:self-auto">
                     <Button 
                       size="sm" 
                       variant="outline"
                       onClick={() => setEditingBarber(barber)}
                     >
                       <Edit className="h-4 w-4" />
+                      <span className="sr-only">Modifier</span>
                     </Button>
                     <Button 
                       size="sm" 
@@ -395,6 +401,7 @@ const Settings = () => {
                       onClick={() => handleDeleteBarber(barber.id)}
                     >
                       <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Supprimer</span>
                     </Button>
                   </div>
                 </div>
@@ -404,21 +411,22 @@ const Settings = () => {
 
           {/* Formulaire d'ajout */}
           {showAddBarber && (
-            <div className="p-4 border-2 border-dashed border-primary/20 rounded-lg bg-primary/5">
-              <h4 className="font-medium mb-4">Nouveau coiffeur</h4>
+            <div className="p-3 sm:p-4 border-2 border-dashed border-primary/20 rounded-lg bg-primary/5">
+              <h4 className="font-medium mb-4 text-sm sm:text-base">Nouveau coiffeur</h4>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label>Nom *</Label>
+                    <Label className="text-sm">Nom *</Label>
                     <Input
                       value={newBarber.name}
                       onChange={(e) => setNewBarber({ ...newBarber, name: e.target.value })}
                       placeholder="Nom du coiffeur"
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label>Couleur</Label>
-                    <div className="flex gap-2 mt-1">
+                    <Label className="text-sm">Couleur</Label>
+                    <div className="grid grid-cols-4 sm:flex gap-2 mt-1">
                       {colors.map(color => (
                         <button
                           key={color}
@@ -430,28 +438,30 @@ const Settings = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label>Heure de début</Label>
+                    <Label className="text-sm">Heure de début</Label>
                     <Input
                       type="time"
                       value={newBarber.start_time}
                       onChange={(e) => setNewBarber({ ...newBarber, start_time: e.target.value })}
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label>Heure de fin</Label>
+                    <Label className="text-sm">Heure de fin</Label>
                     <Input
                       type="time"
                       value={newBarber.end_time}
                       onChange={(e) => setNewBarber({ ...newBarber, end_time: e.target.value })}
+                      className="mt-1"
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <Label>Jours de travail</Label>
-                  <div className="flex flex-wrap gap-2 mt-1">
+                  <Label className="text-sm">Jours de travail</Label>
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-2">
                     {daysOfWeek.map(day => (
                       <div key={day} className="flex items-center space-x-2">
                         <Checkbox
@@ -459,18 +469,18 @@ const Settings = () => {
                           checked={newBarber.working_days.includes(day)}
                           onCheckedChange={() => toggleWorkingDay(day)}
                         />
-                        <Label htmlFor={`new-${day}`} className="text-sm">{daysLabels[day]}</Label>
+                        <Label htmlFor={`new-${day}`} className="text-xs sm:text-sm">{daysLabels[day]}</Label>
                       </div>
                     ))}
                   </div>
                 </div>
                 
-                <div className="flex gap-2">
-                  <Button onClick={handleAddBarber} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={handleAddBarber} className="bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Ajouter
                   </Button>
-                  <Button onClick={() => setShowAddBarber(false)} variant="outline">
+                  <Button onClick={() => setShowAddBarber(false)} variant="outline" size="sm">
                     Annuler
                   </Button>
                 </div>
@@ -479,13 +489,14 @@ const Settings = () => {
           )}
 
           {barbers.length === 0 && !showAddBarber && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucun coiffeur configuré</p>
+            <div className="text-center py-6 sm:py-8 text-muted-foreground">
+              <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-sm sm:text-base mb-3">Aucun coiffeur configuré</p>
               <Button 
                 onClick={() => setShowAddBarber(true)}
                 variant="outline" 
-                className="mt-2"
+                size="sm"
+                className="w-full sm:w-auto"
               >
                 Ajouter le premier coiffeur
               </Button>
