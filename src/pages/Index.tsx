@@ -304,10 +304,10 @@ const Index = () => {
           <TabsContent value="pos">
             <div className={cn(
               "gap-4 sm:gap-6",
-              isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-3"
+              isMobile ? "space-y-6" : "grid grid-cols-1 xl:grid-cols-3"
             )}>
               {/* Services Section */}
-              <div className={cn(isMobile ? "space-y-4" : "lg:col-span-2 space-y-6")}>
+              <div className={cn(isMobile ? "space-y-4" : "xl:col-span-2 space-y-6")}>
                 {categories.map((category) => {
                   const categoryServices = services.filter(s => s.category === category);
                   if (categoryServices.length === 0) return null;
@@ -337,9 +337,9 @@ const Index = () => {
                 })}
               </div>
 
-              {/* Cart Sidebar - Desktop only */}
+              {/* Cart Sidebar - Desktop and Tablet */}
               {!isMobile && (
-                <div className="lg:col-span-1">
+                <div className="xl:col-span-1">
                   <div className="sticky top-24">
                     <CartSidebar
                       items={cartItems}
