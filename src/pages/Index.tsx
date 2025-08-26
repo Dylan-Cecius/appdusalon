@@ -127,7 +127,7 @@ const Index = () => {
     });
     
     toast({
-      title: "Service ajouté",
+      title: service.category === 'produit' ? "Produit ajouté" : "Service ajouté",
       description: `${service.name} ajouté au panier`,
     });
   };
@@ -358,9 +358,9 @@ const Index = () => {
                       <div key={category.id}>
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-lg font-semibold text-primary">{category.name}</h3>
-                          <Badge variant="secondary" className="bg-accent/10 text-accent-foreground">
-                            {categoryServices.length} service{categoryServices.length > 1 ? 's' : ''}
-                          </Badge>
+                           <Badge variant="secondary" className="bg-accent/10 text-accent-foreground">
+                             {categoryServices.length} {category.id === 'produit' ? 'produit' : 'service'}{categoryServices.length > 1 ? 's' : ''}
+                           </Badge>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {categoryServices.map((service) => (
