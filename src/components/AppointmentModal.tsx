@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -153,7 +153,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     onClose();
   };
 
-  const ModalContent = ({ className }: { className?: string }) => (
+  const ModalContent = useCallback(({ className }: { className?: string }) => (
     <form onSubmit={handleSubmit} className={`space-y-4 sm:space-y-6 ${className}`}>
       {/* Appointment Type Selection */}
       <div>
@@ -186,6 +186,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
             onChange={(e) => setClientName(e.target.value)}
             placeholder="Jean Dupont"
             required
+            autoComplete="off"
           />
         </div>
         <div>
@@ -196,6 +197,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
             value={clientPhone}
             onChange={(e) => setClientPhone(e.target.value)}
             placeholder="0123456789 (optionnel)"
+            autoComplete="off"
           />
         </div>
       </div>
@@ -210,6 +212,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
             placeholder="Description personnalisée..."
+            autoComplete="off"
           />
         </div>
       )}
@@ -305,7 +308,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
         </Button>
       </div>
     </form>
-  );
+  ), [appointmentType, clientName, clientPhone, startTime, selectedServices, notes, totalDuration, totalPrice, services, isMobile, handleSubmit, onClose, addService, removeService]);
 
   return (
     <>
