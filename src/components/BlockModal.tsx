@@ -192,7 +192,7 @@ const BlockModal = ({ isOpen, onClose, selectedDate, selectedTime, barberId, onS
                 <div className="p-2 bg-accent/10 rounded">
                   <div className="flex justify-between items-center text-sm">
                     <span>Durée: {blockData.selectedServices.reduce((total, service) => 
-                      total + service.duration + (service.appointmentBuffer || 0), 0
+                      total + service.duration, 0
                     )} minutes</span>
                     <span className="font-medium">{(blockData.totalPrice || 0).toFixed(2)}€</span>
                   </div>
@@ -213,27 +213,29 @@ const BlockModal = ({ isOpen, onClose, selectedDate, selectedTime, barberId, onS
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="startTime">Heure de début</Label>
-              <Input 
-                id="startTime"
-                type="time"
-                value={blockData.startTime}
-                onChange={(e) => setBlockData({...blockData, startTime: e.target.value})}
-              />
+          {blockData.type !== 'appointment' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="startTime">Heure de début</Label>
+                <Input 
+                  id="startTime"
+                  type="time"
+                  value={blockData.startTime}
+                  onChange={(e) => setBlockData({...blockData, startTime: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="endTime">Heure de fin</Label>
+                <Input 
+                  id="endTime"
+                  type="time"
+                  value={blockData.endTime}
+                  onChange={(e) => setBlockData({...blockData, endTime: e.target.value})}
+                />
+              </div>
             </div>
-            
-            <div>
-              <Label htmlFor="endTime">Heure de fin</Label>
-              <Input 
-                id="endTime"
-                type="time"
-                value={blockData.endTime}
-                onChange={(e) => setBlockData({...blockData, endTime: e.target.value})}
-              />
-            </div>
-          </div>
+          )}
 
           <div>
             <Label htmlFor="notes">Notes (optionnel)</Label>

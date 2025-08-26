@@ -28,7 +28,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
   const { addAppointment } = useSupabaseAppointments();
 
   const totalDuration = selectedServices.reduce((total, service) => 
-    total + service.duration + (service.appointmentBuffer || 0), 0
+    total + service.duration, 0
   );
 
   const totalPrice = selectedServices.reduce((total, service) => total + service.price, 0);
@@ -60,7 +60,11 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
     appointmentStart.setHours(hours, minutes, 0, 0);
     
     const appointmentEnd = new Date(appointmentStart);
-    appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDuration);
+    // Use service duration + buffer for calculating end time, but don't display buffer to user
+    const totalDurationWithBuffer = selectedServices.reduce((total, service) => 
+      total + service.duration + (service.appointmentBuffer || 0), 0
+    );
+    appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDurationWithBuffer);
 
     addAppointment({
       clientName,
