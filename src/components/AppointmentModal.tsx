@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,15 +18,30 @@ interface AppointmentModalProps {
   onClose: () => void;
   selectedDate: Date;
   barberId?: string;
+  selectedTimeSlot?: string;
 }
 
-const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId }: AppointmentModalProps) => {
+const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTimeSlot }: AppointmentModalProps) => {
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
   const { addAppointment } = useSupabaseAppointments();
+
+  // Pre-fill time when selectedTimeSlot is provided
+  useEffect(() => {
+    if (selectedTimeSlot && isOpen) {
+      setStartTime(selectedTimeSlot);
+    } else if (!isOpen) {
+      // Reset form when modal closes
+      setStartTime('');
+      setClientName('');
+      setClientPhone('');
+      setSelectedServices([]);
+      setNotes('');
+    }
+  }, [selectedTimeSlot, isOpen]);
 
   const totalDuration = selectedServices.reduce((total, service) => 
     total + service.duration, 0

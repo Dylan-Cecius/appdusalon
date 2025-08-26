@@ -394,13 +394,13 @@ const BlockCalendar = () => {
                           "p-2 min-h-[70px] flex items-center justify-center cursor-pointer transition-colors border-r border-gray-300 last:border-r-0",
                           isWorking ? (isLunchTimeSlot ? "bg-orange-100 hover:bg-orange-200" : "bg-white hover:bg-gray-50") : "bg-gray-50"
                         )}
-                        onClick={() => {
-                          if (!isWorking || isLunchTimeSlot) return;
-                          setSelectedDate(date);
-                          setSelectedTimeSlot(timeSlot);
-                          setSelectedCustomBlock(null);
-                          setIsBlockModalOpen(true);
-                        }}
+                         onClick={() => {
+                           if (!isWorking || isLunchTimeSlot) return;
+                           setSelectedDate(date);
+                           setSelectedTimeSlot(timeSlot);
+                           setSelectedCustomBlock(null);
+                           setIsModalOpen(true);
+                         }}
                       >
                          {!isWorking ? (
                            <div className="text-center">
@@ -496,6 +496,7 @@ const BlockCalendar = () => {
         onClose={() => setIsModalOpen(false)}
         selectedDate={selectedDate}
         barberId={selectedBarber}
+        selectedTimeSlot={selectedTimeSlot}
       />
       
       <BlockModal
