@@ -108,8 +108,30 @@ const BlockCalendar = () => {
     return slots;
   };
 
-  const navigateDay = (direction: 'prev' | 'next') => {
-    setSelectedDate(direction === 'next' ? addDays(selectedDate, 1) : subDays(selectedDate, 1));
+  // Get start of week (Monday) based on selected date
+  const getWeekDates = (date: Date) => {
+    const dates = [];
+    const startOfWeek = new Date(date);
+    const dayOfWeek = startOfWeek.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Handle Sunday (0)
+    startOfWeek.setDate(startOfWeek.getDate() - daysFromMonday);
+    
+    // Get Tuesday to Saturday (5 days)
+    for (let i = 1; i <= 5; i++) {
+      const weekDate = new Date(startOfWeek);
+      weekDate.setDate(startOfWeek.getDate() + i);
+      dates.push(weekDate);
+    }
+    
+    return dates;
+  };
+
+  const weekDates = getWeekDates(selectedDate);
+  const dayNames = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+  // Navigate week instead of day
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setSelectedDate(direction === 'next' ? addWeeks(selectedDate, 1) : subWeeks(selectedDate, 1));
   };
 
   // Get appointments for a specific date and barber
@@ -139,9 +161,10 @@ const BlockCalendar = () => {
   };
 
   // Check if barber is working at this time slot
-  const isBarberWorking = (barber: any, timeSlot: string) => {
+  const isBarberWorking = (barber: any, timeSlot: string, date?: Date) => {
     // First check if barber works on this day
-    if (!isWorkingDay(barber, selectedDate)) {
+    const checkDate = date || selectedDate;
+    if (!isWorkingDay(barber, checkDate)) {
       return false;
     }
     
@@ -256,12 +279,12 @@ const BlockCalendar = () => {
           )}
         </div>
 
-        {/* Navigation avec sélecteur de date */}
+        {/* Navigation avec sélecteur de semaine */}
         <div className="flex items-center justify-between">
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigateDay('prev')}
+            onClick={() => navigateWeek('prev')}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -271,7 +294,7 @@ const BlockCalendar = () => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="min-w-[200px] justify-start text-left font-normal">
                   <CalendarDays className="mr-2 h-4 w-4" />
-                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                  Semaine du {format(weekDates[0], 'dd/MM')} au {format(weekDates[4], 'dd/MM yyyy')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="center">
@@ -300,162 +323,159 @@ const BlockCalendar = () => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigateDay('next')}
+            onClick={() => navigateWeek('next')}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </Card>
 
-      {/* Individual Barber Calendar */}
+      {/* Weekly Calendar */}
       {currentBarber && (
         <Card className="p-4">
           <div className="border-2 border-black rounded-lg overflow-hidden">
             {/* Header */}
-            <div className="grid gap-0 bg-gray-100" style={{ gridTemplateColumns: '80px 1fr' }}>
+            <div className="grid gap-0 bg-gray-100" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
               <div className="text-xs font-medium text-center p-2 bg-gray-300 text-gray-700 border-r-2 border-black">
                 Horaires
               </div>
-              <div className="text-sm font-bold text-center p-3 bg-gray-100">
-                <div className={cn("inline-block px-3 py-1 rounded", currentBarber.color)}>
-                  <span className="text-white">{currentBarber.name}</span>
-                </div>
-                <div className="text-xs text-gray-600 mt-1">
-                  {currentBarber.start_time} - {currentBarber.end_time}
-                </div>
-              </div>
+              {weekDates.map((date, index) => {
+                const isWorkingThisDay = isWorkingDay(currentBarber, date);
+                return (
+                  <div key={date.toISOString()} className={cn(
+                    "text-sm font-bold text-center p-3 border-r border-gray-300 last:border-r-0",
+                    isWorkingThisDay ? "bg-gray-100" : "bg-gray-200"
+                  )}>
+                    <div className="text-xs text-gray-600 mb-1">
+                      {dayNames[index]}
+                    </div>
+                    <div className={cn(
+                      "text-sm font-medium",
+                      isWorkingThisDay ? "text-gray-900" : "text-gray-400"
+                    )}>
+                      {format(date, 'dd/MM')}
+                    </div>
+                    {!isWorkingThisDay && (
+                      <div className="text-xs text-red-500 mt-1">
+                        Fermé
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Time slots */}
-            {timeSlots.map((timeSlot, index) => {
-              const isWorking = isBarberWorking(currentBarber, timeSlot);
-              const isLunchTimeSlot = isLunchTime(currentBarber.id, timeSlot);
-              const slotAppointments = getAppointmentsForSlot(selectedDate, timeSlot, currentBarber.id);
-              const customBlocksForSlot = getCustomBlocksForTimeSlot(selectedDate, timeSlot, currentBarber.id);
-              
+            {timeSlots.map((timeSlot, timeIndex) => {
               return (
                 <div key={timeSlot} className={cn(
                   "grid gap-0",
-                  index < timeSlots.length - 1 && "border-b border-gray-300"
-                )} style={{ gridTemplateColumns: '80px 1fr' }}>
-                  {/* Time column - plus petite et couleur douce */}
+                  timeIndex < timeSlots.length - 1 && "border-b border-gray-300"
+                )} style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
+                  {/* Time column */}
                   <div className="flex items-center justify-center text-xs font-medium text-gray-600 bg-gray-100 border-r-2 border-gray-300 p-2 min-h-[70px]">
                     {timeSlot}
                   </div>
                   
-                  {/* Appointment column */}
-                  <div 
-                    className={cn(
-                      "p-3 min-h-[70px] flex items-center justify-center cursor-pointer transition-colors",
-                      isWorking ? (isLunchTimeSlot ? "bg-orange-100 hover:bg-orange-200" : "bg-white hover:bg-gray-50") : "bg-gray-50"
-                    )}
-                    onClick={() => handleTimeSlotClick(timeSlot)}
-                  >
-                    {!isWorking ? (
-                      <div className="text-center">
-                        <span className="text-sm text-gray-400">
-                          {!isWorkingDay(currentBarber, selectedDate) ? '📅 Jour non travaillé' : '🔒 Fermé'}
-                        </span>
-                      </div>
-                    ) : isLunchTimeSlot ? (
-                      <div className="text-center">
-                        <div className="flex items-center gap-2 text-orange-600">
-                          <Coffee className="h-4 w-4" />
-                          <span className="text-sm font-medium">Pause déjeuner</span>
-                        </div>
-                      </div>
-                    ) : slotAppointments.length === 0 && customBlocksForSlot.length === 0 ? (
-                      <div className="text-center">
-                        <span className="text-sm text-green-600 font-medium">✓ Disponible - Cliquer pour ajouter</span>
-                      </div>
-                    ) : (
-                      <div className="w-full space-y-2">
-                        {/* Rendez-vous clients */}
-                        {slotAppointments.map((appointment) => (
-                          <div
-                            key={appointment.id}
-                            className={cn(
-                              "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-lg border border-gray-400",
-                              getServiceColor(appointment.services),
-                              appointment.isPaid && "opacity-60"
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditAppointment(appointment);
-                            }}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="font-bold truncate">
-                                👤 {appointment.clientName}
-                              </div>
-                              {appointment.isPaid && (
-                                <span className="text-xs bg-green-500 px-2 py-1 rounded">✓ Payé</span>
-                              )}
-                            </div>
-                            
-                            <div className="text-sm opacity-90 mb-1">
-                              ✂️ {appointment.services[0]?.name}
-                            </div>
-                            
-                            <div className="text-sm opacity-90 mb-2">
-                              ⏰ {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-bold">
-                                💰 {appointment.totalPrice.toFixed(2)}€
-                              </div>
-                              
-                              <div className="text-xs bg-black bg-opacity-20 px-2 py-1 rounded">
-                                Cliquer pour éditer
-                              </div>
+                  {/* Day columns */}
+                  {weekDates.map((date, dayIndex) => {
+                    const isWorkingThisDay = isWorkingDay(currentBarber, date);
+                    const isWorking = isBarberWorking(currentBarber, timeSlot, date);
+                    const isLunchTimeSlot = isLunchTime(currentBarber.id, timeSlot);
+                    const slotAppointments = getAppointmentsForSlot(date, timeSlot, currentBarber.id);
+                    const customBlocksForSlot = getCustomBlocksForTimeSlot(date, timeSlot, currentBarber.id);
+                    
+                    return (
+                      <div 
+                        key={`${date.toISOString()}-${timeSlot}`}
+                        className={cn(
+                          "p-2 min-h-[70px] flex items-center justify-center cursor-pointer transition-colors border-r border-gray-300 last:border-r-0",
+                          isWorking ? (isLunchTimeSlot ? "bg-orange-100 hover:bg-orange-200" : "bg-white hover:bg-gray-50") : "bg-gray-50"
+                        )}
+                        onClick={() => {
+                          if (!isWorking || isLunchTimeSlot) return;
+                          setSelectedDate(date);
+                          setSelectedTimeSlot(timeSlot);
+                          setSelectedCustomBlock(null);
+                          setIsBlockModalOpen(true);
+                        }}
+                      >
+                        {!isWorking ? (
+                          <div className="text-center">
+                            <span className="text-xs text-gray-400">
+                              {!isWorkingThisDay ? '📅' : '🔒'}
+                            </span>
+                          </div>
+                        ) : isLunchTimeSlot ? (
+                          <div className="text-center">
+                            <div className="flex items-center gap-1 text-orange-600">
+                              <Coffee className="h-3 w-3" />
+                              <span className="text-xs">Pause</span>
                             </div>
                           </div>
-                        ))}
-                        
-                        {/* Blocs personnalisés (non disponible, rdv médecin, etc.) */}
-                        {customBlocksForSlot.map((block) => (
-                          <div
-                            key={`block-${block.id}`}
-                            className={cn(
-                              "rounded-lg p-3 text-white cursor-pointer transition-all hover:shadow-lg border border-gray-400",
-                              block.type === 'break' ? 'bg-orange-500' :
-                              block.type === 'unavailable' ? 'bg-gray-500' :
-                              block.type === 'rdv-comptable' ? 'bg-purple-500' :
-                              block.type === 'rdv-medecin' ? 'bg-red-500' :
-                              block.type === 'formation' ? 'bg-green-500' :
-                              block.type === 'conge' ? 'bg-yellow-500' :
-                              'bg-blue-500'
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCustomBlockClick(block);
-                            }}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="font-bold truncate">
-                                📅 {block.title}
-                              </div>
-                            </div>
-                            
-                            <div className="text-sm opacity-90 mb-2">
-                              ⏰ {block.startTime} - {block.endTime}
-                            </div>
-                            
-                            {block.notes && (
-                              <div className="text-sm opacity-75">
-                                📝 {block.notes}
-                              </div>
-                            )}
-                            
-                            <div className="text-xs bg-black bg-opacity-20 px-2 py-1 rounded mt-2">
-                              Cliquer pour modifier/supprimer
-                            </div>
+                        ) : slotAppointments.length === 0 && customBlocksForSlot.length === 0 ? (
+                          <div className="text-center">
+                            <span className="text-xs text-green-600">✓</span>
                           </div>
-                        ))}
+                        ) : (
+                          <div className="w-full space-y-1">
+                            {/* Rendez-vous clients */}
+                            {slotAppointments.map((appointment) => (
+                              <div
+                                key={appointment.id}
+                                className={cn(
+                                  "rounded p-1 text-white cursor-pointer transition-all hover:shadow-lg text-xs",
+                                  getServiceColor(appointment.services),
+                                  appointment.isPaid && "opacity-60"
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDate(date);
+                                  handleEditAppointment(appointment);
+                                }}
+                              >
+                                <div className="font-bold truncate text-xs">
+                                  👤 {appointment.clientName}
+                                </div>
+                                <div className="text-xs opacity-90">
+                                  {appointment.totalPrice.toFixed(0)}€
+                                </div>
+                                {appointment.isPaid && (
+                                  <div className="text-xs bg-green-500 px-1 rounded">✓</div>
+                                )}
+                              </div>
+                            ))}
+                            
+                            {/* Blocs personnalisés */}
+                            {customBlocksForSlot.map((block) => (
+                              <div
+                                key={`block-${block.id}`}
+                                className={cn(
+                                  "rounded p-1 text-white cursor-pointer transition-all hover:shadow-lg text-xs",
+                                  block.type === 'break' ? 'bg-orange-500' :
+                                  block.type === 'unavailable' ? 'bg-gray-500' :
+                                  block.type === 'rdv-comptable' ? 'bg-purple-500' :
+                                  block.type === 'rdv-medecin' ? 'bg-red-500' :
+                                  block.type === 'formation' ? 'bg-green-500' :
+                                  block.type === 'conge' ? 'bg-yellow-500' :
+                                  'bg-blue-500'
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDate(date);
+                                  handleCustomBlockClick(block);
+                                }}
+                              >
+                                <div className="font-bold truncate text-xs">
+                                  {block.title}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
               );
             })}
