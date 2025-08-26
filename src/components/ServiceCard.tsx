@@ -52,7 +52,7 @@ const ServiceCard = ({ service, onAdd }: ServiceCardProps) => {
         <Button 
           onClick={() => onAdd(service)}
           size="sm"
-          className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+          className="bg-yellow-500 hover:bg-yellow-600 text-yellow-950 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
         >
           <Plus className="h-4 w-4 mr-1 transition-transform duration-200 group-hover:rotate-90" />
           Ajouter
