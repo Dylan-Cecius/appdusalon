@@ -20,6 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				'bukhari': ['Bukhari Script', 'cursive'],
+				'dancing': ['Dancing Script', 'cursive'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

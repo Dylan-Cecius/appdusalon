@@ -269,7 +269,7 @@ const Index = () => {
                 <div className="flex items-center gap-3">
                   
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-primary font-bukhari">
+                  <h1 className="text-lg sm:text-xl font-semibold text-primary font-dancing">
                     L'app du salon
                   </h1>
                   {!isMobile && <p className="text-sm text-muted-foreground">
