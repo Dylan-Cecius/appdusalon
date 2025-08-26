@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign, CheckSquare, LogOut } from "lucide-react";
+import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign, CheckSquare, LogOut, Menu } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { cn } from "@/lib/utils";
 import ServiceCard from "@/components/ServiceCard";
 import CartSidebar from "@/components/CartSidebar";
 import StatsOverview from "@/components/StatsOverview";
@@ -32,6 +35,8 @@ const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState("pos");
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const isMobile = useIsMobile();
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { salonSettings } = useSupabaseSettings();
@@ -164,40 +169,55 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-6 py-4">
+          <div className="container mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {salonSettings?.logo_url ? (
                   <img 
                     src={salonSettings.logo_url} 
                     alt="Logo du salon" 
-                    className="h-10 w-10 object-cover rounded-lg"
+                    className="h-8 w-8 sm:h-10 sm:w-10 object-cover rounded-lg"
                   />
                 ) : (
                   <div className="p-2 bg-accent rounded-lg">
-                    <Scissors className="h-6 w-6 text-accent-foreground" />
+                    <Scissors className="h-4 w-4 sm:h-6 sm:w-6 text-accent-foreground" />
                   </div>
                 )}
                 <div>
-                  <h1 className="text-xl font-bold text-primary">
+                  <h1 className="text-lg sm:text-xl font-bold text-primary">
                     {salonSettings?.name || 'SalonPOS'}
                   </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date().toLocaleDateString('fr-FR', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
+                  {!isMobile && (
+                    <p className="text-sm text-muted-foreground">
+                      {new Date().toLocaleDateString('fr-FR', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Connecté en tant que:</p>
-                  <p className="text-sm font-medium">{user.email}</p>
-                </div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                {activeTab === "pos" && isMobile && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsCartOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    <span className="text-xs">{cartItems.length}</span>
+                  </Button>
+                )}
+                {!isMobile && (
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Connecté en tant que:</p>
+                    <p className="text-sm font-medium">{user.email}</p>
+                  </div>
+                )}
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -205,59 +225,105 @@ const Index = () => {
                   className="flex items-center gap-2"
                 >
                   <LogOut className="h-4 w-4" />
-                  Déconnexion
+                  {!isMobile && "Déconnexion"}
                 </Button>
               </div>
             </div>
           </div>
       </header>
 
-      <div className="container mx-auto px-6 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 max-w-4xl bg-card">
-            <TabsTrigger value="pos" className="flex items-center gap-2">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <TabsList className={cn(
+            "grid w-full bg-card",
+            isMobile ? "grid-cols-3 max-w-full" : "grid-cols-6 max-w-4xl"
+          )}>
+            <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2">
               <Scissors className="h-4 w-4" />
-              Services
+              {isMobile ? "POS" : "Services"}
             </TabsTrigger>
-            <TabsTrigger value="agenda" className="flex items-center gap-2">
+            <TabsTrigger value="agenda" className="flex items-center gap-1 sm:gap-2">
               <Calendar className="h-4 w-4" />
               Agenda
             </TabsTrigger>
-            <TabsTrigger value="todo" className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
-              To-Do List
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="flex items-center gap-2">
+            <TabsTrigger value="stats" className="flex items-center gap-1 sm:gap-2">
               <BarChart3 className="h-4 w-4" />
               Stats
             </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Rapports
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <SettingsIcon className="h-4 w-4" />
-              Paramètres
-            </TabsTrigger>
+            {!isMobile && (
+              <>
+                <TabsTrigger value="todo" className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  To-Do List
+                </TabsTrigger>
+                <TabsTrigger value="reports" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Rapports
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center gap-2">
+                  <SettingsIcon className="h-4 w-4" />
+                  Paramètres
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
+          
+          {/* Menu mobile pour les onglets supplémentaires */}
+          {isMobile && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <Button
+                variant={activeTab === "todo" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab("todo")}
+                className="flex items-center gap-2 min-w-fit"
+              >
+                <CheckSquare className="h-4 w-4" />
+                To-Do
+              </Button>
+              <Button
+                variant={activeTab === "reports" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab("reports")}
+                className="flex items-center gap-2 min-w-fit"
+              >
+                <Mail className="h-4 w-4" />
+                Rapports
+              </Button>
+              <Button
+                variant={activeTab === "settings" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab("settings")}
+                className="flex items-center gap-2 min-w-fit"
+              >
+                <SettingsIcon className="h-4 w-4" />
+                Paramètres
+              </Button>
+            </div>
+          )}
 
           <TabsContent value="pos">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={cn(
+              "gap-4 sm:gap-6",
+              isMobile ? "space-y-6" : "grid grid-cols-1 lg:grid-cols-3"
+            )}>
               {/* Services Section */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className={cn(isMobile ? "space-y-4" : "lg:col-span-2 space-y-6")}>
                 {categories.map((category) => {
                   const categoryServices = services.filter(s => s.category === category);
                   if (categoryServices.length === 0) return null;
                   
                   return (
-                    <div key={category} className="space-y-4">
-                       <h2 className="text-xl font-semibold text-primary capitalize flex items-center gap-2">
+                    <div key={category} className="space-y-3 sm:space-y-4">
+                       <h2 className="text-lg sm:text-xl font-semibold text-primary capitalize flex items-center gap-2">
                          {category === 'coupe' && <Scissors className="h-5 w-5" />}
                          {category === 'barbe' && <div className="h-5 w-5 bg-accent rounded" />}
                          {category === 'combo' && <div className="h-5 w-5 bg-pos-card rounded-lg" />}
                          {categoryDisplayName[category]}
                        </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className={cn(
+                        "grid gap-3 sm:gap-4",
+                        isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+                      )}>
                         {categoryServices.map((service) => (
                           <ServiceCard 
                             key={service.id} 
@@ -271,17 +337,19 @@ const Index = () => {
                 })}
               </div>
 
-              {/* Cart Sidebar */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-24">
-                  <CartSidebar
-                    items={cartItems}
-                    onUpdateQuantity={updateQuantity}
-                    onRemoveItem={removeFromCart}
-                    onCheckout={handleCheckout}
-                  />
+              {/* Cart Sidebar - Desktop only */}
+              {!isMobile && (
+                <div className="lg:col-span-1">
+                  <div className="sticky top-24">
+                    <CartSidebar
+                      items={cartItems}
+                      onUpdateQuantity={updateQuantity}
+                      onRemoveItem={removeFromCart}
+                      onCheckout={handleCheckout}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </TabsContent>
 
@@ -337,6 +405,28 @@ const Index = () => {
         isOpen={isTransactionsManagerOpen}
         onClose={() => setIsTransactionsManagerOpen(false)}
       />
+
+      {/* Mobile Cart Drawer */}
+      {isMobile && (
+        <Drawer open={isCartOpen} onOpenChange={setIsCartOpen}>
+          <DrawerContent className="max-h-[80vh]">
+            <DrawerHeader>
+              <DrawerTitle>Panier</DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-4">
+              <CartSidebar
+                items={cartItems}
+                onUpdateQuantity={updateQuantity}
+                onRemoveItem={removeFromCart}
+                onCheckout={(method) => {
+                  handleCheckout(method);
+                  setIsCartOpen(false);
+                }}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 };

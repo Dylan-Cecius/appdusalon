@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -22,6 +23,7 @@ import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 const BlockCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [isLunchBreakModalOpen, setIsLunchBreakModalOpen] = useState(false);
@@ -133,19 +135,14 @@ const BlockCalendar = () => {
   const navigateWeek = (direction: 'prev' | 'next') => {
     setSelectedDate(direction === 'next' ? addWeeks(selectedDate, 1) : subWeeks(selectedDate, 1));
   };
-
-  console.log('Current appointments in calendar:', appointments.length);
-  console.log('Selected barber:', selectedBarber, 'Current barber:', currentBarber?.name);
   
   // Get appointments for a specific date and barber
   const getAppointmentsForDateAndBarber = (date: Date, barberId: string) => {
     const filteredAppts = appointments.filter(apt => {
       const dateMatch = apt.startTime.toDateString() === date.toDateString();
       const barberMatch = apt.barberId === barberId;
-      console.log('Filtering appointment:', apt.clientName, 'Date:', apt.startTime.toDateString(), '=== target:', date.toDateString(), dateMatch, 'Barber:', apt.barberId, '=== target:', barberId, barberMatch);
       return dateMatch && barberMatch;
     });
-    console.log('Filtered appointments for', date.toDateString(), 'barber', barberId, ':', filteredAppts.length);
     return filteredAppts;
   };
 
@@ -246,10 +243,12 @@ const BlockCalendar = () => {
 
     <div className="space-y-4">
       {/* Header */}
-      <Card className="p-4">
+      <Card className="p-3 sm:p-4">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <h3 className="text-lg font-semibold">Planning des coiffeurs</h3>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <h3 className="text-base sm:text-lg font-semibold">
+              {isMobile ? "Planning" : "Planning des coiffeurs"}
+            </h3>
           </div>
           
           <Button 
@@ -259,25 +258,29 @@ const BlockCalendar = () => {
               setIsModalOpen(true);
             }}
             className="bg-green-500 hover:bg-green-600 text-white"
+            size={isMobile ? "sm" : "default"}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau RDV
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+            {isMobile ? "RDV" : "Nouveau RDV"}
           </Button>
         </div>
 
         {/* Barber Selection Tabs */}
-        <div className="flex gap-2 mb-4 overflow-x-auto">
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           {activeBarbers.map((barber) => (
             <Button
               key={barber.id}
               variant={selectedBarber === barber.id ? 'default' : 'outline'}
               onClick={() => setSelectedBarber(barber.id)}
-              className="min-w-fit whitespace-nowrap"
+              className="min-w-fit whitespace-nowrap text-xs sm:text-sm"
+              size={isMobile ? "sm" : "default"}
             >
               {barber.name}
-              <span className="ml-2 text-xs opacity-75">
-                ({barber.start_time}-{barber.end_time})
-              </span>
+              {!isMobile && (
+                <span className="ml-2 text-xs opacity-75">
+                  ({barber.start_time}-{barber.end_time})
+                </span>
+              )}
             </Button>
           ))}
           
@@ -287,10 +290,10 @@ const BlockCalendar = () => {
               variant="outline"
               size="sm"
               onClick={() => setIsLunchBreakModalOpen(true)}
-              className="ml-4 text-orange-600 border-orange-600 hover:bg-orange-50"
+              className="ml-2 sm:ml-4 text-orange-600 border-orange-600 hover:bg-orange-50 min-w-fit"
             >
-              <Coffee className="h-4 w-4 mr-2" />
-              Temps de midi
+              <Coffee className="h-4 w-4 mr-1 sm:mr-2" />
+              {isMobile ? "Pause" : "Temps de midi"}
             </Button>
           )}
         </div>
@@ -305,12 +308,18 @@ const BlockCalendar = () => {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="min-w-[200px] justify-start text-left font-normal">
-                  <CalendarDays className="mr-2 h-4 w-4" />
-                  Semaine du {format(weekDates[0], 'dd/MM')} au {format(weekDates[4], 'dd/MM yyyy')}
+                <Button variant="outline" className={cn(
+                  "justify-start text-left font-normal",
+                  isMobile ? "text-xs px-2" : "min-w-[200px]"
+                )}>
+                  <CalendarDays className="mr-1 sm:mr-2 h-4 w-4" />
+                  {isMobile ? 
+                    `${format(weekDates[0], 'dd/MM')} - ${format(weekDates[4], 'dd/MM')}` :
+                    `Semaine du ${format(weekDates[0], 'dd/MM')} au ${format(weekDates[4], 'dd/MM yyyy')}`
+                  }
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="center">
@@ -329,7 +338,7 @@ const BlockCalendar = () => {
               </PopoverContent>
             </Popover>
             
-            {currentBarber && (
+            {currentBarber && !isMobile && (
               <span className="text-base font-normal text-muted-foreground">
                 - Planning de {currentBarber.name}
               </span>
@@ -348,155 +357,251 @@ const BlockCalendar = () => {
 
       {/* Weekly Calendar */}
       {currentBarber && (
-        <Card className="p-4">
+        <Card className="p-2 sm:p-4">
           <div className="border-2 border-black rounded-lg overflow-hidden">
-            {/* Header */}
-            <div className="grid gap-0 bg-gray-100" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
-              <div className="text-xs font-medium text-center p-2 bg-gray-300 text-gray-700 border-r-2 border-black">
-                Horaires
-              </div>
-              {weekDates.map((date, index) => {
-                const isWorkingThisDay = isWorkingDay(currentBarber, date);
-                return (
-                  <div key={date.toISOString()} className={cn(
-                    "text-sm font-bold text-center p-3 border-r border-gray-300 last:border-r-0",
-                    isWorkingThisDay ? "bg-gray-100" : "bg-gray-200"
-                  )}>
-                     <div className="text-xs text-gray-600 mb-1">
-                       {dayNames[index]}
-                     </div>
-                     <div className={cn(
-                       "text-sm font-medium",
-                       isWorkingThisDay ? "text-gray-900" : "text-gray-400"
-                     )}>
-                       {format(date, 'dd/MM')}
-                     </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Time slots */}
-            {timeSlots.map((timeSlot, timeIndex) => {
-              return (
-                <div key={timeSlot} className={cn(
-                  "grid gap-0",
-                  timeIndex < timeSlots.length - 1 && "border-b border-gray-300"
-                )} style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
-                  {/* Time column */}
-                  <div className="flex items-center justify-center text-xs font-medium text-gray-600 bg-gray-100 border-r-2 border-gray-300 p-2 min-h-[70px]">
-                    {timeSlot}
-                  </div>
+            {isMobile ? (
+              /* Mobile: Day-by-day view */
+              <div className="space-y-4">
+                {weekDates.map((date, dayIndex) => {
+                  const isWorkingThisDay = isWorkingDay(currentBarber, date);
+                  if (!isWorkingThisDay) return null;
                   
-                  {/* Day columns */}
-                  {weekDates.map((date, dayIndex) => {
-                    const isWorkingThisDay = isWorkingDay(currentBarber, date);
-                    const isWorking = isBarberWorking(currentBarber, timeSlot, date);
-                    const isLunchTimeSlot = isLunchTime(currentBarber.id, timeSlot);
-                    const slotAppointments = getAppointmentsForSlot(date, timeSlot, currentBarber.id);
-                    const customBlocksForSlot = getCustomBlocksForTimeSlot(date, timeSlot, currentBarber.id);
-                    
-                    return (
-                      <div 
-                        key={`${date.toISOString()}-${timeSlot}`}
-                        className={cn(
-                          "p-2 min-h-[70px] flex items-center justify-center cursor-pointer transition-colors border-r border-gray-300 last:border-r-0",
-                          isWorking ? (isLunchTimeSlot ? "bg-orange-100 hover:bg-orange-200" : "bg-white hover:bg-gray-50") : "bg-gray-50"
-                        )}
-                         onClick={() => {
-                           if (!isWorking || isLunchTimeSlot) return;
-                           console.log('Calendar click - Date:', date.toISOString(), 'TimeSlot:', timeSlot);
-                           setSelectedDate(date);
-                           setSelectedTimeSlot(timeSlot);
-                           setSelectedCustomBlock(null);
-                           setIsModalOpen(true);
-                         }}
-                      >
-                         {!isWorking ? (
-                           <div className="text-center">
-                             <span className="text-xs text-red-500 font-medium">
-                               Non disponible
-                             </span>
-                           </div>
-                        ) : isLunchTimeSlot ? (
-                          <div className="text-center">
-                            <div className="flex items-center gap-1 text-orange-600">
-                              <Coffee className="h-3 w-3" />
-                              <span className="text-xs">Pause</span>
-                            </div>
-                          </div>
-                        ) : slotAppointments.length === 0 && customBlocksForSlot.length === 0 ? (
-                          <div className="text-center">
-                            <span className="text-xs text-green-600 font-medium">Disponible</span>
-                          </div>
-                        ) : (
-                          <div className="w-full space-y-1">
-                            {/* Rendez-vous clients */}
-                            {slotAppointments.map((appointment) => (
-                              <div
-                                key={appointment.id}
-                                className={cn(
-                                  "rounded p-1 text-white cursor-pointer transition-all hover:shadow-lg text-xs",
-                                  getServiceColor(appointment.services),
-                                  appointment.isPaid && "opacity-60"
-                                )}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedDate(date);
-                                  handleEditAppointment(appointment);
-                                }}
-                                >
-                                  <div className="font-bold truncate text-xs">
-                                    👤 {appointment.clientName}
-                                  </div>
-                                  <div className="text-xs opacity-90 truncate">
-                                    ✂️ {appointment.services?.[0]?.name || 'Service'}
-                                  </div>
-                                  <div className="text-xs opacity-90">
-                                    ⏰ {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
-                                  </div>
-                                  <div className="text-xs opacity-90">
-                                    💰 {appointment.totalPrice.toFixed(0)}€
-                                  </div>
-                                  {appointment.isPaid && (
-                                    <div className="text-xs bg-green-500 px-1 rounded">✓</div>
-                                  )}
-                                </div>
-                            ))}
-                            
-                            {/* Blocs personnalisés */}
-                            {customBlocksForSlot.map((block) => (
-                              <div
-                                key={`block-${block.id}`}
-                                className={cn(
-                                  "rounded p-1 text-white cursor-pointer transition-all hover:shadow-lg text-xs",
-                                  block.type === 'break' ? 'bg-orange-500' :
-                                  block.type === 'unavailable' ? 'bg-gray-500' :
-                                  block.type === 'rdv-comptable' ? 'bg-purple-500' :
-                                  block.type === 'rdv-medecin' ? 'bg-red-500' :
-                                  block.type === 'formation' ? 'bg-green-500' :
-                                  block.type === 'conge' ? 'bg-yellow-500' :
-                                  'bg-blue-500'
-                                )}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedDate(date);
-                                  handleCustomBlockClick(block);
-                                }}
-                              >
-                                <div className="font-bold truncate text-xs">
-                                  {block.title}
-                                </div>
+                  return (
+                    <div key={date.toISOString()}>
+                      <div className="bg-gray-100 p-3 border-b-2 border-gray-300">
+                        <div className="text-sm font-bold text-center">
+                          {dayNames[dayIndex]} {format(date, 'dd/MM')}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1">
+                        {timeSlots.slice(0, -1).map((timeSlot) => {
+                          const isWorking = isBarberWorking(currentBarber, timeSlot, date);
+                          const isLunchTimeSlot = isLunchTime(currentBarber.id, timeSlot);
+                          const slotAppointments = getAppointmentsForSlot(date, timeSlot, currentBarber.id);
+                          const customBlocksForSlot = getCustomBlocksForTimeSlot(date, timeSlot, currentBarber.id);
+                          
+                          return (
+                            <div
+                              key={`${date.toISOString()}-${timeSlot}`}
+                              className={cn(
+                                "p-2 min-h-[60px] flex flex-col items-center justify-center cursor-pointer transition-colors border border-gray-200",
+                                isWorking ? (isLunchTimeSlot ? "bg-orange-100 hover:bg-orange-200" : "bg-white hover:bg-gray-50") : "bg-gray-50"
+                              )}
+                              onClick={() => {
+                                if (!isWorking || isLunchTimeSlot) return;
+                                setSelectedDate(date);
+                                setSelectedTimeSlot(timeSlot);
+                                setSelectedCustomBlock(null);
+                                setIsModalOpen(true);
+                              }}
+                            >
+                              <div className="text-xs font-medium text-gray-600 mb-1">
+                                {timeSlot}
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              {!isWorking ? (
+                                <span className="text-xs text-red-500 font-medium text-center">
+                                  Fermé
+                                </span>
+                              ) : isLunchTimeSlot ? (
+                                <div className="flex items-center gap-1 text-orange-600">
+                                  <Coffee className="h-3 w-3" />
+                                  <span className="text-xs">Pause</span>
+                                </div>
+                              ) : slotAppointments.length === 0 && customBlocksForSlot.length === 0 ? (
+                                <span className="text-xs text-green-600 font-medium text-center">
+                                  Libre
+                                </span>
+                              ) : (
+                                <div className="w-full space-y-1">
+                                  {slotAppointments.map((apt) => (
+                                    <div
+                                      key={apt.id}
+                                      className={cn(
+                                        "text-xs p-1 rounded text-white cursor-pointer truncate",
+                                        getServiceColor(apt.services),
+                                        apt.isPaid && "ring-2 ring-green-400"
+                                      )}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditAppointment(apt);
+                                      }}
+                                    >
+                                      {apt.clientName}
+                                    </div>
+                                  ))}
+                                  {customBlocksForSlot.map((block) => (
+                                    <div
+                                      key={block.id}
+                                      className="text-xs p-1 rounded bg-yellow-500 text-white cursor-pointer truncate"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCustomBlockClick(block);
+                                      }}
+                                    >
+                                      {block.title}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Desktop: Table view */
+              <>
+                {/* Header */}
+                <div className="grid gap-0 bg-gray-100" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
+                  <div className="text-xs font-medium text-center p-2 bg-gray-300 text-gray-700 border-r-2 border-black">
+                    Horaires
+                  </div>
+                  {weekDates.map((date, index) => {
+                    const isWorkingThisDay = isWorkingDay(currentBarber, date);
+                    return (
+                      <div key={date.toISOString()} className={cn(
+                        "text-sm font-bold text-center p-3 border-r border-gray-300 last:border-r-0",
+                        isWorkingThisDay ? "bg-gray-100" : "bg-gray-200"
+                      )}>
+                         <div className="text-xs text-gray-600 mb-1">
+                           {dayNames[index]}
+                         </div>
+                         <div className={cn(
+                           "text-sm font-medium",
+                           isWorkingThisDay ? "text-gray-900" : "text-gray-400"
+                         )}>
+                           {format(date, 'dd/MM')}
+                         </div>
                       </div>
                     );
                   })}
                 </div>
-              );
-            })}
+
+                {/* Time slots */}
+                {timeSlots.map((timeSlot, timeIndex) => {
+                  return (
+                    <div key={timeSlot} className={cn(
+                      "grid gap-0",
+                      timeIndex < timeSlots.length - 1 && "border-b border-gray-300"
+                    )} style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
+                      {/* Time column */}
+                      <div className="flex items-center justify-center text-xs font-medium text-gray-600 bg-gray-100 border-r-2 border-gray-300 p-2 min-h-[70px]">
+                        {timeSlot}
+                      </div>
+                      
+                      {/* Day columns */}
+                      {weekDates.map((date, dayIndex) => {
+                        const isWorkingThisDay = isWorkingDay(currentBarber, date);
+                        const isWorking = isBarberWorking(currentBarber, timeSlot, date);
+                        const isLunchTimeSlot = isLunchTime(currentBarber.id, timeSlot);
+                        const slotAppointments = getAppointmentsForSlot(date, timeSlot, currentBarber.id);
+                        const customBlocksForSlot = getCustomBlocksForTimeSlot(date, timeSlot, currentBarber.id);
+                        
+                        return (
+                          <div 
+                            key={`${date.toISOString()}-${timeSlot}`}
+                            className={cn(
+                              "p-2 min-h-[70px] flex items-center justify-center cursor-pointer transition-colors border-r border-gray-300 last:border-r-0",
+                              isWorking ? (isLunchTimeSlot ? "bg-orange-100 hover:bg-orange-200" : "bg-white hover:bg-gray-50") : "bg-gray-50"
+                            )}
+                             onClick={() => {
+                               if (!isWorking || isLunchTimeSlot) return;
+                               setSelectedDate(date);
+                               setSelectedTimeSlot(timeSlot);
+                               setSelectedCustomBlock(null);
+                               setIsModalOpen(true);
+                             }}
+                          >
+                             {!isWorking ? (
+                               <div className="text-center">
+                                 <span className="text-xs text-red-500 font-medium">
+                                   Non disponible
+                                 </span>
+                               </div>
+                            ) : isLunchTimeSlot ? (
+                              <div className="text-center">
+                                <div className="flex items-center gap-1 text-orange-600">
+                                  <Coffee className="h-3 w-3" />
+                                  <span className="text-xs">Pause</span>
+                                </div>
+                              </div>
+                            ) : slotAppointments.length === 0 && customBlocksForSlot.length === 0 ? (
+                              <div className="text-center">
+                                <span className="text-xs text-green-600 font-medium">Disponible</span>
+                              </div>
+                            ) : (
+                              <div className="w-full space-y-1">
+                                {/* Rendez-vous clients */}
+                                {slotAppointments.map((appointment) => (
+                                  <div
+                                    key={appointment.id}
+                                    className={cn(
+                                      "rounded p-1 text-white cursor-pointer transition-all hover:shadow-lg text-xs",
+                                      getServiceColor(appointment.services),
+                                      appointment.isPaid && "opacity-60"
+                                    )}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedDate(date);
+                                      handleEditAppointment(appointment);
+                                    }}
+                                    >
+                                      <div className="font-bold truncate text-xs">
+                                        👤 {appointment.clientName}
+                                      </div>
+                                      <div className="text-xs opacity-90 truncate">
+                                        ✂️ {appointment.services?.[0]?.name || 'Service'}
+                                      </div>
+                                      <div className="text-xs opacity-90">
+                                        ⏰ {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
+                                      </div>
+                                      <div className="text-xs opacity-90">
+                                        💰 {appointment.totalPrice.toFixed(0)}€
+                                      </div>
+                                      {appointment.isPaid && (
+                                        <div className="text-xs bg-green-500 px-1 rounded">✓</div>
+                                      )}
+                                    </div>
+                                ))}
+                                
+                                {/* Blocs personnalisés */}
+                                {customBlocksForSlot.map((block) => (
+                                  <div
+                                    key={`block-${block.id}`}
+                                    className={cn(
+                                      "rounded p-1 text-white cursor-pointer transition-all hover:shadow-lg text-xs",
+                                      block.type === 'break' ? 'bg-orange-500' :
+                                      block.type === 'unavailable' ? 'bg-gray-500' :
+                                      block.type === 'rdv-comptable' ? 'bg-purple-500' :
+                                      block.type === 'rdv-medecin' ? 'bg-red-500' :
+                                      block.type === 'formation' ? 'bg-green-500' :
+                                      block.type === 'conge' ? 'bg-yellow-500' :
+                                      'bg-blue-500'
+                                    )}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedDate(date);
+                                      handleCustomBlockClick(block);
+                                    }}
+                                  >
+                                    <div className="font-bold truncate text-xs">
+                                      {block.title}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         </Card>
       )}
