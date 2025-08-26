@@ -189,7 +189,11 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       
     } catch (error: any) {
       let errorMessage = "Impossible d'envoyer le rapport par email";
-      if (error.message?.includes("domain")) {
+      
+      // Gestion spécifique de l'erreur Resend 403
+      if (error.message?.includes("You can only send testing emails to your own email address")) {
+        errorMessage = "Mode test Resend : Vous ne pouvez envoyer des emails qu'à votre propre adresse (dylan.cecius@gmail.com). Pour envoyer à d'autres destinataires, veuillez vérifier un domaine sur resend.com/domains";
+      } else if (error.message?.includes("domain")) {
         errorMessage = "Domaine email non validé. Veuillez configurer votre domaine sur Resend.";
       } else if (error.message?.includes("API key")) {
         errorMessage = "Configuration email incorrecte. Veuillez vérifier la clé API Resend.";

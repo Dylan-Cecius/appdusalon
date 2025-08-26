@@ -156,7 +156,7 @@ export const useSupabaseSettings = () => {
           description: "Vous devez être connecté",
           variant: "destructive"
         });
-        return;
+        return null;
       }
 
       const { data, error } = await supabase
@@ -175,7 +175,7 @@ export const useSupabaseSettings = () => {
           description: "Impossible d'ajouter le coiffeur",
           variant: "destructive"
         });
-        return;
+        return null;
       }
 
       setBarbers(prev => [...prev, data]);
@@ -183,8 +183,11 @@ export const useSupabaseSettings = () => {
         title: "Succès",
         description: `Coiffeur ${data.name} ajouté avec succès`
       });
+      
+      return data;
     } catch (error) {
       console.error('Error adding barber:', error);
+      return null;
     }
   };
 

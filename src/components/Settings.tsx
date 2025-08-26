@@ -122,7 +122,13 @@ const Settings = () => {
       return;
     }
 
-    await addBarber(newBarber);
+    const addedBarber = await addBarber(newBarber);
+    
+    // Créer automatiquement les créneaux indisponibles pour les heures hors service
+    if (addedBarber) {
+      await createUnavailableSlots(addedBarber.id, newBarber.start_time, newBarber.end_time, newBarber.working_days);
+    }
+    
     setNewBarber({
       name: '',
       start_time: '09:00',
@@ -132,6 +138,114 @@ const Settings = () => {
       is_active: true
     });
     setShowAddBarber(false);
+  };
+
+  const createUnavailableSlots = async (barberId: string, startTime: string, endTime: string, workingDays: string[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Créer des blocs pour les heures avant et après le service
+      const salonStart = '08:00';
+      const salonEnd = '20:00';
+      
+      const blocksToCreate = [];
+      
+      // Bloc avant l'heure de début (si nécessaire)
+      if (startTime > salonStart) {
+        blocksToCreate.push({
+          barber_id: barberId,
+          start_time: salonStart,
+          end_time: startTime,
+          title: 'Indisponible',
+          block_type: 'unavailable',
+          notes: 'Créé automatiquement - hors horaires de service',
+          user_id: user.id
+        });
+      }
+      
+      // Bloc après l'heure de fin (si nécessaire)
+      if (endTime < salonEnd) {
+        blocksToCreate.push({
+          barber_id: barberId,
+          start_time: endTime,
+          end_time: salonEnd,
+          title: 'Indisponible',
+          block_type: 'unavailable',
+          notes: 'Créé automatiquement - hors horaires de service',
+          user_id: user.id
+        });
+      }
+
+      // Créer des blocs pour les jours non travaillés
+      const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const nonWorkingDays = allDays.filter(day => !workingDays.includes(day));
+      
+      if (nonWorkingDays.length > 0) {
+        blocksToCreate.push({
+          barber_id: barberId,
+          start_time: salonStart,
+          end_time: salonEnd,
+          title: 'Jour de repos',
+          block_type: 'unavailable',
+          notes: `Créé automatiquement - jours non travaillés: ${nonWorkingDays.map(day => {
+            const labels: { [key: string]: string } = {
+              'Monday': 'Lun', 'Tuesday': 'Mar', 'Wednesday': 'Mer',
+              'Thursday': 'Jeu', 'Friday': 'Ven', 'Saturday': 'Sam', 'Sunday': 'Dim'
+            };
+            return labels[day];
+          }).join(', ')}`,
+          user_id: user.id
+        });
+      }
+
+      if (blocksToCreate.length > 0) {
+        // Insérer tous les blocs pour une semaine type (on peut étendre plus tard)
+        const today = new Date();
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(today);
+          date.setDate(today.getDate() + i);
+          
+          for (const block of blocksToCreate) {
+            // Pour les jours de repos, ne créer que pour les jours non travaillés
+            if (block.title === 'Jour de repos') {
+              const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
+              if (!workingDays.includes(dayName)) {
+                await supabase
+                  .from('custom_blocks')
+                  .insert({
+                    ...block,
+                    block_date: date.toISOString().split('T')[0]
+                  });
+              }
+            } else {
+              // Pour les créneaux avant/après, créer tous les jours travaillés
+              const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
+              if (workingDays.includes(dayName)) {
+                await supabase
+                  .from('custom_blocks')
+                  .insert({
+                    ...block,
+                    block_date: date.toISOString().split('T')[0]
+                  });
+              }
+            }
+          }
+        }
+        
+        toast({
+          title: "✅ Créneaux configurés",
+          description: "Les créneaux indisponibles ont été créés automatiquement",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating unavailable slots:', error);
+      toast({
+        title: "⚠️ Attention",
+        description: "Coiffeur ajouté, mais impossible de créer les créneaux automatiques",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleUpdateBarber = async (barber: Barber) => {

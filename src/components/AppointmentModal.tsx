@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { X, Plus } from 'lucide-react';
-import { services, Service } from '@/data/services';
+import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -26,10 +26,11 @@ interface AppointmentModalProps {
 const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTimeSlot }: AppointmentModalProps) => {
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
-  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
   const { addAppointment } = useSupabaseAppointments();
+  const { services } = useSupabaseServices();
   const isMobile = useIsMobile();
 
   // Pre-fill time when selectedTimeSlot is provided
@@ -52,7 +53,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
 
   const totalPrice = selectedServices.reduce((total, service) => total + service.price, 0);
 
-  const addService = (service: Service) => {
+  const addService = (service: any) => {
     if (!selectedServices.find(s => s.id === service.id)) {
       setSelectedServices(prev => [...prev, service]);
     }
@@ -81,7 +82,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     const appointmentEnd = new Date(appointmentStart);
     // Use service duration + buffer for calculating end time, but don't display buffer to user
     const totalDurationWithBuffer = selectedServices.reduce((total, service) => 
-      total + service.duration + (service.appointmentBuffer || 0), 0
+      total + service.duration + (service.appointment_buffer || 0), 0
     );
     appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDurationWithBuffer);
 

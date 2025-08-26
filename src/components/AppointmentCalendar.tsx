@@ -11,7 +11,11 @@ import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import AppointmentModal from './AppointmentModal';
 import { toast } from '@/hooks/use-toast';
 
-const AppointmentCalendar = () => {
+interface AppointmentCalendarProps {
+  barberId?: string;
+}
+
+const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { appointments, markAsPaid, getAppointmentsForDate, loading } = useSupabaseAppointments();
@@ -119,6 +123,8 @@ const AppointmentCalendar = () => {
           <Button 
             onClick={() => setIsModalOpen(true)}
             className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            disabled={!barberId}
+            title={!barberId ? "Veuillez d'abord sélectionner un coiffeur dans les paramètres" : ""}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nouveau RDV
@@ -251,6 +257,7 @@ const AppointmentCalendar = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedDate={selectedDate}
+        barberId={barberId}
       />
     </div>
   );
