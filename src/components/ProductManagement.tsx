@@ -93,7 +93,10 @@ const ProductManagement = () => {
   };
 
   const handleDelete = async (product: Service) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${product.name}" ?`)) {
+    const confirmMessage = `⚠️ ATTENTION ⚠️\n\nÊtes-vous absolument sûr de vouloir supprimer "${product.name}" ?\n\nCette action masquera le produit de votre catalogue.\n\nTapez "SUPPRIMER" pour confirmer :`;
+    const userInput = prompt(confirmMessage);
+    
+    if (userInput !== "SUPPRIMER") {
       return;
     }
 
