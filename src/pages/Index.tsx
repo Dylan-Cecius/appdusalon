@@ -240,7 +240,7 @@ const Index = () => {
           )}>
             <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2">
               <Scissors className="h-4 w-4" />
-              {isMobile ? "POS" : "Services"}
+              {isMobile ? "Encaissement" : "Encaissement"}
             </TabsTrigger>
             <TabsTrigger value="agenda" className="flex items-center gap-1 sm:gap-2">
               <Calendar className="h-4 w-4" />
