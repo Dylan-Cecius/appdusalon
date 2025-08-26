@@ -480,7 +480,7 @@ const Settings = () => {
               {isSaving ? 'Sauvegarde...' : 'Sauvegarder la sécurité'}
             </Button>
             
-            {salonSettings?.stats_password && (
+            {salonSettings && salonSettings.stats_password && (
               <Button 
                 onClick={handleDisablePassword}
                 disabled={loading || isSaving}
