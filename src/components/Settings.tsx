@@ -7,6 +7,7 @@ import { Settings as SettingsIcon, Shield, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import ServiceManagement from './ServiceManagement';
+import ProductManagement from './ProductManagement';
 
 const Settings = () => {
   const { salonSettings, loading, saveSalonSettings } = useSupabaseSettings();
@@ -174,6 +175,9 @@ const Settings = () => {
 
       {/* Gestion des services */}
       <ServiceManagement />
+      
+      {/* Gestion des produits */}
+      <ProductManagement />
     </div>
   );
 };
