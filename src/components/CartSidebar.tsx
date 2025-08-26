@@ -7,6 +7,7 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  duration: number;
   quantity: number;
 }
 
@@ -19,6 +20,7 @@ interface CartSidebarProps {
 
 const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: CartSidebarProps) => {
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalDuration = items.reduce((sum, item) => sum + (item.duration * item.quantity), 0);
 
   if (items.length === 0) {
     return (
@@ -86,9 +88,15 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
       <Separator className="my-4" />
       
       <div className="space-y-4">
-        <div className="flex justify-between items-center text-xl font-bold">
-          <span>Total:</span>
-          <span className="text-primary">{total.toFixed(2)}€</span>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Total:</span>
+            <span className="font-medium">{totalDuration} minutes</span>
+          </div>
+          <div className="flex justify-between items-center text-xl font-bold">
+            <span>Prix:</span>
+            <span className="text-primary">{total.toFixed(2)}€</span>
+          </div>
         </div>
         
         <div className="grid grid-cols-2 gap-3">

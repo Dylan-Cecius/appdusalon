@@ -22,6 +22,7 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  duration: number;
   quantity: number;
 }
 
@@ -47,7 +48,13 @@ const Index = () => {
             : item
         );
       }
-      return [...prev, { ...service, quantity: 1 }];
+      return [...prev, { 
+        id: service.id,
+        name: service.name,
+        price: service.price,
+        duration: service.duration,
+        quantity: 1 
+      }];
     });
     
     toast({
