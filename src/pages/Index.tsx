@@ -81,17 +81,20 @@ const Index = () => {
   const stats = getStats();
 
   const handleViewChange = (view: string) => {
-    // Vérifier si un mot de passe est configuré et si l'utilisateur n'est pas déjà débloqué
+    // Vérifier si un mot de passe est configuré
     const hasPassword = salonSettings?.stats_password && salonSettings.stats_password.trim() !== '';
     
-    if (view === 'stats' && hasPassword && !isStatsUnlocked) {
-      setShowStatsPasswordModal(true);
-      return;
+    if (hasPassword) {
+      if (view === 'stats' && !isStatsUnlocked) {
+        setShowStatsPasswordModal(true);
+        return;
+      }
+      if (view === 'settings' && !isSettingsUnlocked) {
+        setShowSettingsPasswordModal(true);
+        return;
+      }
     }
-    if (view === 'settings' && hasPassword && !isSettingsUnlocked) {
-      setShowSettingsPasswordModal(true);
-      return;
-    }
+    
     setCurrentView(view);
   };
 
@@ -412,33 +415,54 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="stats">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Statistiques & Analyses</h2>
-                <Button 
-                  onClick={() => setIsTransactionsManagerOpen(true)}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <DollarSign className="h-4 w-4" />
-                  Gérer les encaissements
-                </Button>
-              </div>
+            {(() => {
+              const hasPassword = salonSettings?.stats_password && salonSettings.stats_password.trim() !== '';
+              if (hasPassword && !isStatsUnlocked) {
+                return (
+                  <div className="text-center py-12">
+                    <div className="p-6 bg-card rounded-lg border max-w-md mx-auto">
+                      <div className="p-3 bg-destructive/10 rounded-lg mb-4 inline-block">
+                        <div className="h-12 w-12 text-destructive">🔒</div>
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">Accès protégé</h3>
+                      <p className="text-muted-foreground">
+                        Cette section est protégée par mot de passe. Cliquez sur l'onglet Stats pour vous authentifier.
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
               
-              <StatsOverview stats={stats} />
-              
-              <PaymentMethodStats paymentStats={stats.paymentStats} />
-              
-              <CustomDateRangeStats />
-              
-              <Card className="p-6 bg-gradient-to-br from-card to-background">
-                <div className="text-center text-muted-foreground py-8">
-                  <Calendar className="h-12 w-12 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Graphiques détaillés bientôt disponibles</h3>
-                  <p>Analytics avancées en cours de développement</p>
+              return (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold">Statistiques & Analyses</h2>
+                    <Button 
+                      onClick={() => setIsTransactionsManagerOpen(true)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <DollarSign className="h-4 w-4" />
+                      Gérer les encaissements
+                    </Button>
+                  </div>
+                  
+                  <StatsOverview stats={stats} />
+                  
+                  <PaymentMethodStats paymentStats={stats.paymentStats} />
+                  
+                  <CustomDateRangeStats />
+                  
+                  <Card className="p-6 bg-gradient-to-br from-card to-background">
+                    <div className="text-center text-muted-foreground py-8">
+                      <Calendar className="h-12 w-12 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Graphiques détaillés bientôt disponibles</h3>
+                      <p>Analytics avancées en cours de développement</p>
+                    </div>
+                  </Card>
                 </div>
-              </Card>
-            </div>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="reports">
@@ -446,7 +470,26 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="settings">
-            <Settings />
+            {(() => {
+              const hasPassword = salonSettings?.stats_password && salonSettings.stats_password.trim() !== '';
+              if (hasPassword && !isSettingsUnlocked) {
+                return (
+                  <div className="text-center py-12">
+                    <div className="p-6 bg-card rounded-lg border max-w-md mx-auto">
+                      <div className="p-3 bg-destructive/10 rounded-lg mb-4 inline-block">
+                        <div className="h-12 w-12 text-destructive">🔒</div>
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">Accès protégé</h3>
+                      <p className="text-muted-foreground">
+                        Cette section est protégée par mot de passe. Cliquez sur l'onglet Paramètres pour vous authentifier.
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+              
+              return <Settings />;
+            })()}
           </TabsContent>
         </Tabs>
 
