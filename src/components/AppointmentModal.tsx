@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Plus } from 'lucide-react';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
@@ -23,7 +24,18 @@ interface AppointmentModalProps {
   selectedTimeSlot?: string;
 }
 
+const appointmentTypes = [
+  { value: 'client', label: 'Rendez-vous client', color: 'bg-blue-500' },
+  { value: 'rdv-medecin', label: 'RDV Médecin', color: 'bg-red-500' },
+  { value: 'rdv-comptable', label: 'RDV Comptable', color: 'bg-purple-500' },
+  { value: 'pas-la', label: 'Pas là', color: 'bg-gray-500' },
+  { value: 'formation', label: 'Formation', color: 'bg-green-500' },
+  { value: 'conge', label: 'Congé', color: 'bg-yellow-500' },
+  { value: 'autre', label: 'Autre', color: 'bg-orange-500' }
+];
+
 const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTimeSlot }: AppointmentModalProps) => {
+  const [appointmentType, setAppointmentType] = useState('client');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
@@ -39,6 +51,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       setStartTime(selectedTimeSlot);
     } else if (!isOpen) {
       // Reset form when modal closes
+      setAppointmentType('client');
       setStartTime('');
       setClientName('');
       setClientPhone('');
@@ -66,13 +79,25 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!clientName || !startTime || selectedServices.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive",
-      });
-      return;
+    // Validation depends on appointment type
+    if (appointmentType === 'client') {
+      if (!clientName || !startTime || selectedServices.length === 0) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez remplir tous les champs obligatoires",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      if (!startTime) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez sélectionner une heure",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     const [hours, minutes] = startTime.split(':').map(Number);
@@ -97,14 +122,17 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       return;
     }
 
+    // For non-client appointments, use the appointment type as clientName
+    const finalClientName = appointmentType === 'client' ? clientName : appointmentTypes.find(t => t.value === appointmentType)?.label || clientName;
+    
     addAppointment({
-      clientName,
-      clientPhone,
-      services: selectedServices,
+      clientName: finalClientName,
+      clientPhone: appointmentType === 'client' ? clientPhone : undefined,
+      services: appointmentType === 'client' ? selectedServices : [],
       startTime: appointmentStart,
       endTime: appointmentEnd,
       status: 'scheduled',
-      totalPrice,
+      totalPrice: appointmentType === 'client' ? totalPrice : 0,
       notes: notes || undefined,
       isPaid: false,
       barberId: barberId
@@ -112,10 +140,11 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
 
     toast({
       title: "Rendez-vous créé",
-      description: `RDV pour ${clientName} le ${format(appointmentStart, 'dd/MM à HH:mm')}`,
+      description: `RDV pour ${finalClientName} le ${format(appointmentStart, 'dd/MM à HH:mm')}`,
     });
 
     // Reset form
+    setAppointmentType('client');
     setClientName('');
     setClientPhone('');
     setSelectedServices([]);
@@ -126,8 +155,29 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
 
   const ModalContent = ({ className }: { className?: string }) => (
     <form onSubmit={handleSubmit} className={`space-y-4 sm:space-y-6 ${className}`}>
-      {/* Client Info */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Appointment Type Selection */}
+      <div>
+        <Label htmlFor="appointmentType">Type de rendez-vous *</Label>
+        <Select value={appointmentType} onValueChange={setAppointmentType}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-background border z-50">
+            {appointmentTypes.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded ${type.color}`}></div>
+                  {type.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Client Info - Only show for client appointments */}
+      {appointmentType === 'client' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="clientName">Nom du client *</Label>
           <Input
@@ -149,6 +199,20 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
           />
         </div>
       </div>
+      )}
+
+      {/* Custom title for non-client appointments */}
+      {appointmentType !== 'client' && (
+        <div>
+          <Label htmlFor="customTitle">Description (optionnel)</Label>
+          <Input
+            id="customTitle"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            placeholder="Description personnalisée..."
+          />
+        </div>
+      )}
 
       {/* Time */}
       <div>
@@ -162,27 +226,29 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
         />
       </div>
 
-      {/* Services Selection */}
-      <div>
-        <Label>Services disponibles</Label>
-        <div className={`grid gap-3 mt-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
-          {services.filter(service => service.category !== 'produit').map((service) => (
-            <Card 
-              key={service.id}
-              className="p-3 cursor-pointer hover:bg-accent/10 transition-colors"
-              onClick={() => addService(service)}
-            >
-              <div className="text-sm font-medium">{service.name}</div>
-              <div className="text-xs text-muted-foreground">
-                {service.price.toFixed(2)}€ • {service.duration}min
-              </div>
-            </Card>
-          ))}
+      {/* Services Selection - Only show for client appointments */}
+      {appointmentType === 'client' && (
+        <div>
+          <Label>Services disponibles</Label>
+          <div className={`grid gap-3 mt-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
+            {services.filter(service => service.category !== 'produit').map((service) => (
+              <Card 
+                key={service.id}
+                className="p-3 cursor-pointer hover:bg-accent/10 transition-colors"
+                onClick={() => addService(service)}
+              >
+                <div className="text-sm font-medium">{service.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {service.price.toFixed(2)}€ • {service.duration}min
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Selected Services */}
-      {selectedServices.length > 0 && (
+      {appointmentType === 'client' && selectedServices.length > 0 && (
         <div>
           <Label>Services sélectionnés</Label>
           <div className="space-y-2 mt-2">
