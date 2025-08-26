@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,19 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Trash2, Plus, User, Mail, Clock, Save, Upload, Building, Image } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { defaultBarbers, Barber } from '@/data/barbers';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 
 const Settings = () => {
-  const [barbers, setBarbers] = useState<Barber[]>(defaultBarbers);
+  const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
   const [newBarberName, setNewBarberName] = useState('');
   const [newBarberStart, setNewBarberStart] = useState('10:00');
   const [newBarberEnd, setNewBarberEnd] = useState('19:00');
+  const [localSalonSettings, setLocalSalonSettings] = useState(salonSettings);
   
-  // Salon settings
-  const [salonSettings, setSalonSettings] = useState({
-    name: 'SalonPOS',
-    logo: '', // URL du logo
-  });
+  // Sync local settings with props when salonSettings changes
+  useEffect(() => {
+    if (salonSettings) {
+      setLocalSalonSettings(salonSettings);
+    }
+  }, [salonSettings]);
   
   // Email reports settings
   const [emailSettings, setEmailSettings] = useState({
@@ -29,7 +31,7 @@ const Settings = () => {
     enabled: false
   });
 
-  const addBarber = () => {
+  const handleAddBarber = () => {
     if (!newBarberName.trim()) {
       toast({
         title: "Erreur",
@@ -39,51 +41,28 @@ const Settings = () => {
       return;
     }
 
-    const newBarber: Barber = {
-      id: Date.now().toString(),
+    const newBarber = {
       name: newBarberName.trim(),
-      startTime: newBarberStart,
-      endTime: newBarberEnd,
-      isActive: true,
+      start_time: newBarberStart,
+      end_time: newBarberEnd,
+      is_active: true,
       color: `bg-${['blue', 'purple', 'green', 'red', 'yellow', 'pink'][Math.floor(Math.random() * 6)]}-600`
     };
 
-    setBarbers([...barbers, newBarber]);
+    addBarber(newBarber);
     setNewBarberName('');
-    
-    toast({
-      title: "Succès",
-      description: `Coiffeur ${newBarber.name} ajouté avec succès`
-    });
   };
 
-  const updateBarber = (id: string, updates: Partial<Barber>) => {
-    setBarbers(barbers.map(barber => 
-      barber.id === id ? { ...barber, ...updates } : barber
-    ));
-    
-    toast({
-      title: "Succès",
-      description: "Coiffeur mis à jour avec succès"
-    });
+  const handleUpdateBarber = (id: string, updates: any) => {
+    updateBarber(id, updates);
   };
 
-  const deleteBarber = (id: string) => {
-    const barber = barbers.find(b => b.id === id);
-    setBarbers(barbers.filter(b => b.id !== id));
-    
-    toast({
-      title: "Succès",
-      description: `Coiffeur ${barber?.name} supprimé avec succès`
-    });
+  const handleDeleteBarber = (id: string) => {
+    deleteBarber(id);
   };
 
-  const saveSalonSettings = () => {
-    // TODO: Save to database
-    toast({
-      title: "Succès",
-      description: "Paramètres du salon sauvegardés"
-    });
+  const handleSaveSalonSettings = () => {
+    saveSalonSettings(localSalonSettings);
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,7 +70,7 @@ const Settings = () => {
     if (file) {
       // Simulate file upload - in a real app, you'd upload to your storage
       const logoUrl = URL.createObjectURL(file);
-      setSalonSettings({...salonSettings, logo: logoUrl});
+      setLocalSalonSettings({...localSalonSettings, logo_url: logoUrl});
       
       toast({
         title: "Logo téléchargé",
@@ -140,16 +119,16 @@ const Settings = () => {
           <div>
             <Label htmlFor="logo">Logo du salon</Label>
             <div className="mt-2 flex items-center gap-4">
-              {salonSettings.logo ? (
+              {localSalonSettings.logo_url ? (
                 <div className="flex items-center gap-4">
                   <img 
-                    src={salonSettings.logo} 
+                    src={localSalonSettings.logo_url} 
                     alt="Logo du salon" 
                     className="w-16 h-16 object-cover rounded-lg border"
                   />
                   <Button 
                     variant="outline" 
-                    onClick={() => setSalonSettings({...salonSettings, logo: ''})}
+                    onClick={() => setLocalSalonSettings({...localSalonSettings, logo_url: ''})}
                   >
                     Supprimer
                   </Button>
@@ -188,14 +167,14 @@ const Settings = () => {
             <Label htmlFor="salonName">Nom du salon</Label>
             <Input 
               id="salonName"
-              value={salonSettings.name}
-              onChange={(e) => setSalonSettings({...salonSettings, name: e.target.value})}
+              value={localSalonSettings.name}
+              onChange={(e) => setLocalSalonSettings({...localSalonSettings, name: e.target.value})}
               placeholder="Nom de votre salon"
               className="max-w-md"
             />
           </div>
 
-          <Button onClick={saveSalonSettings} className="w-full md:w-auto">
+          <Button onClick={handleSaveSalonSettings} className="w-full md:w-auto">
             <Save className="h-4 w-4 mr-2" />
             Sauvegarder les paramètres du salon
           </Button>
@@ -222,7 +201,7 @@ const Settings = () => {
                   <Label className="text-xs text-muted-foreground">Nom</Label>
                   <Input 
                     value={barber.name}
-                    onChange={(e) => updateBarber(barber.id, { name: e.target.value })}
+                    onChange={(e) => handleUpdateBarber(barber.id, { name: e.target.value })}
                     className="mt-1"
                   />
                 </div>
@@ -231,8 +210,8 @@ const Settings = () => {
                   <Label className="text-xs text-muted-foreground">Début</Label>
                   <Input 
                     type="time"
-                    value={barber.startTime}
-                    onChange={(e) => updateBarber(barber.id, { startTime: e.target.value })}
+                    value={barber.start_time}
+                    onChange={(e) => handleUpdateBarber(barber.id, { start_time: e.target.value })}
                     className="mt-1"
                   />
                 </div>
@@ -241,8 +220,8 @@ const Settings = () => {
                   <Label className="text-xs text-muted-foreground">Fin</Label>
                   <Input 
                     type="time"
-                    value={barber.endTime}
-                    onChange={(e) => updateBarber(barber.id, { endTime: e.target.value })}
+                    value={barber.end_time}
+                    onChange={(e) => handleUpdateBarber(barber.id, { end_time: e.target.value })}
                     className="mt-1"
                   />
                 </div>
@@ -251,7 +230,7 @@ const Settings = () => {
               <Button 
                 variant="destructive" 
                 size="sm"
-                onClick={() => deleteBarber(barber.id)}
+                onClick={() => handleDeleteBarber(barber.id)}
                 disabled={barbers.length <= 1}
               >
                 <Trash2 className="h-4 w-4" />
@@ -298,7 +277,7 @@ const Settings = () => {
             </div>
             
             <div className="flex items-end">
-              <Button onClick={addBarber} className="w-full">
+              <Button onClick={handleAddBarber} className="w-full">
                 <Plus className="h-4 w-4 mr-2" />
                 Ajouter
               </Button>

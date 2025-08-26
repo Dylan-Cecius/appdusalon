@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,9 +12,11 @@ import CustomDateRangeStats from "@/components/CustomDateRangeStats";
 import BlockCalendar from "@/components/BlockCalendar";
 import Settings from "@/components/Settings";
 import EmailReports from "@/components/EmailReports";
+import TodoList from "@/components/TodoList";
 import { services, getAllCategories } from "@/data/services";
 import { toast } from "@/hooks/use-toast";
 import { useSupabaseTransactions } from "@/hooks/useSupabaseTransactions";
+import { useSupabaseSettings } from "@/hooks/useSupabaseSettings";
 
 interface CartItem {
   id: string;
@@ -27,10 +29,7 @@ const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState("pos");
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
-  const [salonSettings, setSalonSettings] = useState({
-    name: 'SalonPOS',
-    logo: '', // URL du logo
-  });
+  const { salonSettings } = useSupabaseSettings();
   const { addTransaction, getStats } = useSupabaseTransactions();
   
   // Get real stats from transactions
@@ -125,9 +124,9 @@ const Index = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {salonSettings.logo ? (
+              {salonSettings?.logo_url ? (
                 <img 
-                  src={salonSettings.logo} 
+                  src={salonSettings.logo_url} 
                   alt="Logo du salon" 
                   className="h-10 w-10 object-cover rounded-lg"
                 />
@@ -137,7 +136,7 @@ const Index = () => {
                 </div>
               )}
               <div>
-                <h1 className="text-2xl font-bold text-primary">{salonSettings.name}</h1>
+                <h1 className="text-2xl font-bold text-primary">{salonSettings?.name || 'SalonPOS'}</h1>
                 <p className="text-sm text-muted-foreground">Coiffure & Barbier</p>
               </div>
             </div>
@@ -166,7 +165,7 @@ const Index = () => {
 
       <div className="container mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 max-w-3xl bg-card">
+          <TabsList className="grid w-full grid-cols-6 max-w-4xl bg-card">
             <TabsTrigger value="pos" className="flex items-center gap-2">
               <Scissors className="h-4 w-4" />
               Services et produits
@@ -174,6 +173,10 @@ const Index = () => {
             <TabsTrigger value="agenda" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Agenda
+            </TabsTrigger>
+            <TabsTrigger value="todo" className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4" />
+              To-Do List
             </TabsTrigger>
             <TabsTrigger value="stats" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -236,6 +239,10 @@ const Index = () => {
 
           <TabsContent value="agenda">
             <BlockCalendar />
+          </TabsContent>
+
+          <TabsContent value="todo">
+            <TodoList />
           </TabsContent>
 
           <TabsContent value="stats">
