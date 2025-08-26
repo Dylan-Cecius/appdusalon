@@ -324,6 +324,20 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             <Send className="h-4 w-4 mr-2" />
             {isLoading ? 'Envoi en cours...' : 'Envoyer le rapport'}
           </Button>
+          
+          {/* Test button to verify debug panel works */}
+          <Button 
+            onClick={() => {
+              setDebugLogs([]);
+              addDebugLog('🧪 Test du panneau diagnostic');
+              addDebugLog('✅ Si vous voyez ceci, le panneau fonctionne !');
+              addDebugLog('📧 Maintenant testez avec un vrai email');
+            }}
+            variant="outline"
+            className="w-full mt-2"
+          >
+            🧪 Test Diagnostic
+          </Button>
         </div>
       </Card>
 
