@@ -95,6 +95,94 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_blocks: {
+        Row: {
+          barber_id: string
+          block_date: string
+          block_type: string
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          barber_id: string
+          block_date: string
+          block_type?: string
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string
+          block_date?: string
+          block_type?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_blocks_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lunch_breaks: {
+        Row: {
+          barber_id: string
+          created_at: string
+          duration: number
+          end_time: string
+          id: string
+          is_active: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          duration?: number
+          end_time: string
+          id?: string
+          is_active?: boolean
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          duration?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunch_breaks_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: true
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salon_settings: {
         Row: {
           created_at: string
