@@ -137,26 +137,27 @@ const BlockCalendar = () => {
   // Get appointments for a specific date and barber
   const getAppointmentsForDateAndBarber = (date: Date, barberId: string) => {
     const filteredAppts = appointments.filter(apt => {
-      console.log('Filtering appointment:', apt.id, 'Date match:', apt.startTime.toDateString() === date.toDateString(), 'Barber match:', apt.barberId, '===', barberId, apt.barberId === barberId);
-      if (apt.startTime.toDateString() !== date.toDateString()) return false;
-      if (apt.barberId !== barberId) return false;
-      return true;
+      const dateMatch = apt.startTime.toDateString() === date.toDateString();
+      const barberMatch = apt.barberId === barberId;
+      return dateMatch && barberMatch;
     });
-    console.log('Filtered appointments for date', date.toDateString(), 'and barber', barberId, ':', filteredAppts);
     return filteredAppts;
   };
 
   // Get appointments for a specific time slot and barber
   const getAppointmentsForSlot = (date: Date, timeSlot: string, barberId: string) => {
-    const [hour, minute] = timeSlot.split(':').map(Number);
-    const appts = getAppointmentsForDateAndBarber(date, barberId).filter(apt => {
+    const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
+    const slotTimeInMinutes = slotHour * 60 + slotMinute;
+    const nextSlotTimeInMinutes = slotTimeInMinutes + 30;
+    
+    return getAppointmentsForDateAndBarber(date, barberId).filter(apt => {
       const aptHour = apt.startTime.getHours();
       const aptMinute = apt.startTime.getMinutes();
-      console.log('Time slot check:', timeSlot, 'vs appointment time:', `${aptHour}:${aptMinute}`, 'Match:', aptHour === hour && aptMinute === minute);
-      return aptHour === hour && aptMinute === minute;
+      const aptTimeInMinutes = aptHour * 60 + aptMinute;
+      
+      // Show appointment if it starts within this 30-minute slot
+      return aptTimeInMinutes >= slotTimeInMinutes && aptTimeInMinutes < nextSlotTimeInMinutes;
     });
-    console.log('Appointments for slot', timeSlot, 'on date', date.toDateString(), ':', appts);
-    return appts;
   };
 
   // Check if barber is working on this day
