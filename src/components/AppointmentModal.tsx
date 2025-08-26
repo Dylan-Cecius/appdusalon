@@ -80,11 +80,11 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     appointmentStart.setHours(hours, minutes, 0, 0);
     
     const appointmentEnd = new Date(appointmentStart);
-    // Use service duration + buffer for calculating end time, but don't display buffer to user
-    const totalDurationWithBuffer = selectedServices.reduce((total, service) => 
-      total + service.duration + (service.appointment_buffer || 0), 0
+    // Only use service duration for client display, not buffer
+    const displayDuration = selectedServices.reduce((total, service) => 
+      total + service.duration, 0
     );
-    appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDurationWithBuffer);
+    appointmentEnd.setMinutes(appointmentEnd.getMinutes() + displayDuration);
 
     console.log('Creating appointment with barberId:', barberId, 'selectedDate:', selectedDate);
     
