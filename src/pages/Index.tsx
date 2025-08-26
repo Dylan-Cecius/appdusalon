@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign, CheckSquare } from "lucide-react";
+import { BarChart3, ShoppingCart, Scissors, Calendar, Mail, Settings as SettingsIcon, DollarSign, CheckSquare, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,8 @@ import { services, getAllCategories } from "@/data/services";
 import { toast } from "@/hooks/use-toast";
 import { useSupabaseTransactions } from "@/hooks/useSupabaseTransactions";
 import { useSupabaseSettings } from "@/hooks/useSupabaseSettings";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface CartItem {
   id: string;
@@ -30,13 +32,47 @@ const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState("pos");
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const { salonSettings } = useSupabaseSettings();
   const { addTransaction, getStats } = useSupabaseTransactions();
+
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="p-3 bg-accent rounded-lg mb-4 inline-block">
+            <Scissors className="h-8 w-8 text-accent-foreground animate-spin" />
+          </div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
   
   // Get real stats from transactions
   const stats = getStats();
 
   const categories = getAllCategories();
+
+  const categoryDisplayName = {
+    coupe: 'Coupes',
+    barbe: 'Barbe',
+    combo: 'Combos'
+  };
 
   const addToCart = (service: any) => {
     setCartItems(prev => {
@@ -209,13 +245,12 @@ const Index = () => {
                   
                   return (
                     <div key={category} className="space-y-4">
-                      <h2 className="text-xl font-semibold text-primary capitalize flex items-center gap-2">
-                        {category === 'coupe' && <Scissors className="h-5 w-5" />}
-                        {category === 'barbe' && <div className="h-5 w-5 bg-accent rounded" />}
-                        {category === 'combo' && <div className="h-5 w-5 bg-pos-card rounded-lg" />}
-                        {category === 'produit' && <div className="h-5 w-5 bg-pos-success rounded-full" />}
-                        {category}s
-                      </h2>
+                       <h2 className="text-xl font-semibold text-primary capitalize flex items-center gap-2">
+                         {category === 'coupe' && <Scissors className="h-5 w-5" />}
+                         {category === 'barbe' && <div className="h-5 w-5 bg-accent rounded" />}
+                         {category === 'combo' && <div className="h-5 w-5 bg-pos-card rounded-lg" />}
+                         {categoryDisplayName[category]}
+                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {categoryServices.map((service) => (
                           <ServiceCard 

@@ -29,6 +29,7 @@ export type Database = {
           status: string
           total_price: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           barber_id?: string | null
@@ -44,6 +45,7 @@ export type Database = {
           status?: string
           total_price: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           barber_id?: string | null
@@ -59,6 +61,7 @@ export type Database = {
           status?: string
           total_price?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -72,6 +75,7 @@ export type Database = {
           name: string
           start_time: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           color?: string
@@ -82,6 +86,7 @@ export type Database = {
           name: string
           start_time?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           color?: string
@@ -92,6 +97,7 @@ export type Database = {
           name?: string
           start_time?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -107,6 +113,7 @@ export type Database = {
           start_time: string
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           barber_id: string
@@ -119,6 +126,7 @@ export type Database = {
           start_time: string
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           barber_id?: string
@@ -131,6 +139,7 @@ export type Database = {
           start_time?: string
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -152,6 +161,7 @@ export type Database = {
           is_active: boolean
           start_time: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           barber_id: string
@@ -162,6 +172,7 @@ export type Database = {
           is_active?: boolean
           start_time: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           barber_id?: string
@@ -172,6 +183,7 @@ export type Database = {
           is_active?: boolean
           start_time?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -183,6 +195,30 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          salon_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          logo_url?: string | null
+          salon_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          salon_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       salon_settings: {
         Row: {
           created_at: string
@@ -190,6 +226,7 @@ export type Database = {
           logo_url: string | null
           name: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -197,6 +234,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -204,6 +242,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -219,6 +258,7 @@ export type Database = {
           priority: string
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           barber_id: string
@@ -231,6 +271,7 @@ export type Database = {
           priority?: string
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           barber_id?: string
@@ -243,6 +284,7 @@ export type Database = {
           priority?: string
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -263,6 +305,7 @@ export type Database = {
           total_amount: number
           transaction_date: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -272,6 +315,7 @@ export type Database = {
           total_amount: number
           transaction_date?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -281,6 +325,7 @@ export type Database = {
           total_amount?: number
           transaction_date?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
