@@ -433,20 +433,23 @@ const BlockCalendar = () => {
                                   setSelectedDate(date);
                                   handleEditAppointment(appointment);
                                 }}
-                               >
-                                 <div className="font-bold truncate text-xs">
-                                   👤 {appointment.clientName}
-                                 </div>
-                                 <div className="text-xs opacity-90 truncate">
-                                   ✂️ {appointment.services?.[0]?.name || 'Service'}
-                                 </div>
-                                 <div className="text-xs opacity-90">
-                                   {appointment.totalPrice.toFixed(0)}€
-                                 </div>
-                                 {appointment.isPaid && (
-                                   <div className="text-xs bg-green-500 px-1 rounded">✓</div>
-                                 )}
-                               </div>
+                                >
+                                  <div className="font-bold truncate text-xs">
+                                    👤 {appointment.clientName}
+                                  </div>
+                                  <div className="text-xs opacity-90 truncate">
+                                    ✂️ {appointment.services?.[0]?.name || 'Service'}
+                                  </div>
+                                  <div className="text-xs opacity-90">
+                                    ⏰ {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
+                                  </div>
+                                  <div className="text-xs opacity-90">
+                                    💰 {appointment.totalPrice.toFixed(0)}€
+                                  </div>
+                                  {appointment.isPaid && (
+                                    <div className="text-xs bg-green-500 px-1 rounded">✓</div>
+                                  )}
+                                </div>
                             ))}
                             
                             {/* Blocs personnalisés */}
