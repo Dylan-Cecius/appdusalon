@@ -40,8 +40,10 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<string>('pos');
   const [showStatsPasswordModal, setShowStatsPasswordModal] = useState(false);
   const [showSettingsPasswordModal, setShowSettingsPasswordModal] = useState(false);
+  const [showReportsPasswordModal, setShowReportsPasswordModal] = useState(false);
   const [isStatsUnlocked, setIsStatsUnlocked] = useState(false);
   const [isSettingsUnlocked, setIsSettingsUnlocked] = useState(false);
+  const [isReportsUnlocked, setIsReportsUnlocked] = useState(false);
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -210,6 +212,72 @@ const Index = () => {
       return false;
     }
   };
+  
+  // Fonction de vérification de mot de passe pour les rapports (utilise le même mot de passe)
+  const verifyReportsPassword = async (inputPassword: string): Promise<boolean> => {
+    console.log('verifyReportsPassword called with:', { 
+      inputPassword: inputPassword?.length > 0 ? '[PASSWORD PROVIDED]' : '[NO PASSWORD]',
+      salonSettings: salonSettings ? 'LOADED' : 'NOT LOADED',
+      hasStatsPassword: !!salonSettings?.stats_password,
+      statsPasswordType: salonSettings?.stats_password?.startsWith('$2') ? 'HASHED' : 'PLAIN_TEXT'
+    });
+
+    if (!salonSettings?.stats_password) {
+      console.log('No password configured for reports');
+      toast({
+        title: "❌ Aucun mot de passe configuré",
+        description: "Définissez un mot de passe sécurisé dans les paramètres.",
+        variant: "destructive",
+      });
+      return false; // No access without password
+    }
+
+    // Pour les rapports, permettre l'accès avec ancien mot de passe pour migration
+    if (!salonSettings.stats_password.startsWith('$2')) {
+      console.log('Plain text password detected for reports, checking direct match');
+      // Vérification simple pour ancien mot de passe en texte brut
+      if (inputPassword === salonSettings.stats_password) {
+        console.log('Plain text password match - granting temporary access to reports');
+        toast({
+          title: "⚠️ Accès temporaire accordé",
+          description: "Veuillez définir un nouveau mot de passe sécurisé dans les paramètres.",
+          variant: "destructive",
+        });
+        return true; // Accès temporaire pour migration
+      } else {
+        console.log('Plain text password mismatch for reports');
+        toast({
+          title: "❌ Mot de passe incorrect",
+          description: "Mot de passe invalide.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    try {
+      console.log('Calling verify_password RPC for reports');
+      const {
+        data,
+        error
+      } = await supabase.rpc('verify_password', {
+        password_text: inputPassword,
+        password_hash: salonSettings.stats_password
+      });
+      
+      console.log('Reports RPC result:', { data, error });
+      
+      if (error) {
+        console.error('Password verification error:', error);
+        return false;
+      }
+      return data === true;
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
+    }
+  };
+
   const handleViewChange = (view: string) => {
     // Ne demander le mot de passe que si un mot de passe est configuré
     if (view === 'stats' && !isStatsUnlocked && salonSettings?.stats_password) {
@@ -218,6 +286,10 @@ const Index = () => {
     }
     if (view === 'settings' && !isSettingsUnlocked && salonSettings?.stats_password) {
       setShowSettingsPasswordModal(true);
+      return;
+    }
+    if (view === 'reports' && !isReportsUnlocked && salonSettings?.stats_password) {
+      setShowReportsPasswordModal(true);
       return;
     }
     setCurrentView(view);
@@ -231,6 +303,11 @@ const Index = () => {
     setIsSettingsUnlocked(true);
     setShowSettingsPasswordModal(false);
     setCurrentView('settings');
+  };
+  const handleReportsPasswordSuccess = () => {
+    setIsReportsUnlocked(true);
+    setShowReportsPasswordModal(false);
+    setCurrentView('reports');
   };
   const addToCart = (service: any) => {
     setCartItems(prev => {
@@ -534,6 +611,8 @@ const Index = () => {
         <StatsPasswordModal isOpen={showStatsPasswordModal} onClose={() => setShowStatsPasswordModal(false)} onSuccess={handleStatsPasswordSuccess} onVerifyPassword={verifyStatsPassword} />
 
         <StatsPasswordModal isOpen={showSettingsPasswordModal} onClose={() => setShowSettingsPasswordModal(false)} onSuccess={handleSettingsPasswordSuccess} onVerifyPassword={verifySettingsPassword} />
+
+        <StatsPasswordModal isOpen={showReportsPasswordModal} onClose={() => setShowReportsPasswordModal(false)} onSuccess={handleReportsPasswordSuccess} onVerifyPassword={verifyReportsPassword} />
       </div>
 
       <TransactionsManager isOpen={isTransactionsManagerOpen} onClose={() => setIsTransactionsManagerOpen(false)} />
