@@ -17,9 +17,10 @@ interface AppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date;
+  barberId?: string;
 }
 
-const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalProps) => {
+const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId }: AppointmentModalProps) => {
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
@@ -75,7 +76,8 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate }: AppointmentModalPro
       status: 'scheduled',
       totalPrice,
       notes: notes || undefined,
-      isPaid: false
+      isPaid: false,
+      barberId: barberId || ''
     });
 
     toast({

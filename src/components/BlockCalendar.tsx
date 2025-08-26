@@ -415,7 +415,7 @@ const BlockCalendar = () => {
                           </div>
                         ) : slotAppointments.length === 0 && customBlocksForSlot.length === 0 ? (
                           <div className="text-center">
-                            <span className="text-xs text-green-600">✓</span>
+                            <span className="text-xs text-green-600 font-medium">Disponible</span>
                           </div>
                         ) : (
                           <div className="w-full space-y-1">
@@ -487,6 +487,7 @@ const BlockCalendar = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedDate={selectedDate}
+        barberId={selectedBarber}
       />
       
       <BlockModal
