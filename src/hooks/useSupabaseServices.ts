@@ -158,8 +158,7 @@ export const useSupabaseServices = () => {
     { id: 'combo', name: 'Formules' },
     { id: 'soin', name: 'Soins' },
     { id: 'couleur', name: 'Couleurs' },
-    { id: 'produit', name: 'Produits' },
-    { id: 'general', name: 'Général' }
+    { id: 'produit', name: 'Produits' }
   ];
 
   return {
