@@ -131,8 +131,20 @@ const BlockCalendar = () => {
     });
   };
 
+  // Check if barber is working on this day
+  const isWorkingDay = (barber: any, date: Date) => {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[date.getDay()];
+    return barber.working_days?.includes(dayName) ?? true;
+  };
+
   // Check if barber is working at this time slot
   const isBarberWorking = (barber: any, timeSlot: string) => {
+    // First check if barber works on this day
+    if (!isWorkingDay(barber, selectedDate)) {
+      return false;
+    }
+    
     const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
     const [startHour, startMinute] = barber.start_time.split(':').map(Number);
     const [endHour, endMinute] = barber.end_time.split(':').map(Number);
@@ -341,7 +353,9 @@ const BlockCalendar = () => {
                   >
                     {!isWorking ? (
                       <div className="text-center">
-                        <span className="text-sm text-gray-400">🔒 Fermé</span>
+                        <span className="text-sm text-gray-400">
+                          {!isWorkingDay(currentBarber, selectedDate) ? '📅 Jour non travaillé' : '🔒 Fermé'}
+                        </span>
                       </div>
                     ) : isLunchTimeSlot ? (
                       <div className="text-center">
