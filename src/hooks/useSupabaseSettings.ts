@@ -23,7 +23,7 @@ export interface Barber {
 
 export const useSupabaseSettings = () => {
   const [salonSettings, setSalonSettings] = useState<SalonSettings>({
-    name: 'SalonPOS',
+    name: "L'app du salon",
     logo_url: '',
     stats_password: ''
   });

@@ -77,7 +77,7 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
 ---
-Rapport généré automatiquement par SalonPOS
+Rapport généré automatiquement par L&apos;app du salon
 ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         `;
         break;
@@ -102,7 +102,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
 ---
-Rapport généré automatiquement par SalonPOS
+Rapport généré automatiquement par L&apos;app du salon
 ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         `;
         break;
@@ -127,7 +127,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
 ---
-Rapport généré automatiquement par SalonPOS
+Rapport généré automatiquement par L&apos;app du salon
 ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         `;
         break;
