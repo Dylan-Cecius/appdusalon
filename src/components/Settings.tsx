@@ -38,11 +38,8 @@ const Settings = () => {
   }, [salonSettings]);
 
   const validatePassword = (password: string): { isValid: boolean; message: string } => {
-    if (!password || password.length < 8) {
-      return { isValid: false, message: "Le mot de passe doit contenir au moins 8 caractères" };
-    }
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      return { isValid: false, message: "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre" };
+    if (!password || password.length < 4) {
+      return { isValid: false, message: "Le mot de passe doit contenir au moins 4 caractères" };
     }
     return { isValid: true, message: "" };
   };
@@ -373,7 +370,7 @@ const Settings = () => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              🔐 Minimum 8 caractères avec majuscule, minuscule et chiffre requis.
+              🔐 Minimum 4 caractères requis.
             </p>
           </div>
 
