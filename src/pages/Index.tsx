@@ -25,6 +25,7 @@ import EmailReports from '@/components/EmailReports';
 import Settings from '@/components/Settings';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
 import TransactionsManager from '@/components/TransactionsManager';
+
 interface CartItem {
   id: string;
   name: string;
@@ -32,6 +33,7 @@ interface CartItem {
   duration: number;
   quantity: number;
 }
+
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [currentView, setCurrentView] = useState<string>('pos');
@@ -41,6 +43,7 @@ const Index = () => {
   const [isSettingsUnlocked, setIsSettingsUnlocked] = useState(false);
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
   const {
     toast
   } = useToast();
@@ -257,6 +260,7 @@ const Index = () => {
       });
     }
   };
+
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
@@ -265,7 +269,7 @@ const Index = () => {
                 <div className="flex items-center gap-3">
                   
                 <div>
-                  <h1 className="text-lg sm:text-xl font-bold text-primary">
+                  <h1 className="text-lg sm:text-xl font-bold text-primary font-benedict">
                     L'app du salon
                   </h1>
                   {!isMobile && <p className="text-sm text-muted-foreground">
@@ -455,4 +459,5 @@ const Index = () => {
         </Drawer>}
     </div>;
 };
+
 export default Index;
