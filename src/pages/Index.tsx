@@ -283,30 +283,24 @@ const Index = () => {
     const protectedSections = ['stats', 'settings', 'reports'];
     
     if (protectedSections.includes(view)) {
-      // Si aucun mot de passe configuré, empêcher l'accès
-      if (!salonSettings?.stats_password) {
-        toast({
-          title: "🔒 Accès restreint",
-          description: "Vous devez d'abord configurer un mot de passe sécurisé pour accéder à cette section.",
-          variant: "destructive",
-        });
-        return;
+      // Si un mot de passe est configuré, vérifier l'accès
+      if (salonSettings?.stats_password) {
+        // Vérifier si la section est déjà déverrouillée
+        const isUnlocked = {
+          'stats': isStatsUnlocked,
+          'settings': isSettingsUnlocked, 
+          'reports': isReportsUnlocked
+        }[view];
+        
+        if (!isUnlocked) {
+          // Afficher le modal de mot de passe approprié
+          if (view === 'stats') setShowStatsPasswordModal(true);
+          if (view === 'settings') setShowSettingsPasswordModal(true);
+          if (view === 'reports') setShowReportsPasswordModal(true);
+          return;
+        }
       }
-      
-      // Vérifier si la section est déjà déverrouillée
-      const isUnlocked = {
-        'stats': isStatsUnlocked,
-        'settings': isSettingsUnlocked, 
-        'reports': isReportsUnlocked
-      }[view];
-      
-      if (!isUnlocked) {
-        // Afficher le modal de mot de passe approprié
-        if (view === 'stats') setShowStatsPasswordModal(true);
-        if (view === 'settings') setShowSettingsPasswordModal(true);
-        if (view === 'reports') setShowReportsPasswordModal(true);
-        return;
-      }
+      // Si aucun mot de passe configuré, accès libre aux sections
     }
     
     setCurrentView(view);
