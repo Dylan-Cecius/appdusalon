@@ -426,7 +426,19 @@ const BlockCalendar = () => {
                                         handleEditAppointment(apt);
                                       }}
                                     >
-                                      {apt.clientName}
+                                      <div className="font-bold truncate">👤 {apt.clientName}</div>
+                                      <div className="text-xs opacity-90 truncate">
+                                        ✂️ {apt.services?.[0]?.name || 'Service'}
+                                      </div>
+                                      <div className="text-xs opacity-90">
+                                        ⏰ {format(apt.startTime, 'HH:mm')} - {format(apt.endTime, 'HH:mm')}
+                                      </div>
+                                      <div className="text-xs opacity-90">
+                                        💰 {apt.totalPrice.toFixed(0)}€
+                                      </div>
+                                      {apt.isPaid && (
+                                        <div className="text-xs bg-green-500 px-1 rounded">✓ Payé</div>
+                                      )}
                                     </div>
                                   ))}
                                   {customBlocksForSlot.map((block) => (

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +30,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
   const { addAppointment } = useSupabaseAppointments();
+  const isMobile = useIsMobile();
 
   // Pre-fill time when selectedTimeSlot is provided
   useEffect(() => {
@@ -120,130 +123,151 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     onClose();
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            Nouveau rendez-vous - {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
-          </DialogTitle>
-        </DialogHeader>
+  const ModalContent = ({ className }: { className?: string }) => (
+    <form onSubmit={handleSubmit} className={`space-y-4 sm:space-y-6 ${className}`}>
+      {/* Client Info */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="clientName">Nom du client *</Label>
+          <Input
+            id="clientName"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            placeholder="Jean Dupont"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="clientPhone">Téléphone</Label>
+          <Input
+            id="clientPhone"
+            type="tel"
+            value={clientPhone}
+            onChange={(e) => setClientPhone(e.target.value)}
+            placeholder="0123456789 (optionnel)"
+          />
+        </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Client Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="clientName">Nom du client *</Label>
-              <Input
-                id="clientName"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="Jean Dupont"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="clientPhone">Téléphone</Label>
-              <Input
-                id="clientPhone"
-                type="tel"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-                placeholder="0123456789 (optionnel)"
-              />
-            </div>
-          </div>
+      {/* Time */}
+      <div>
+        <Label htmlFor="startTime">Heure de début *</Label>
+        <Input
+          id="startTime"
+          type="time"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+          required
+        />
+      </div>
 
-          {/* Time */}
-          <div>
-            <Label htmlFor="startTime">Heure de début *</Label>
-            <Input
-              id="startTime"
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Services Selection */}
-          <div>
-            <Label>Services disponibles</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-              {services.map((service) => (
-                <Card 
-                  key={service.id}
-                  className="p-3 cursor-pointer hover:bg-accent/10 transition-colors"
-                  onClick={() => addService(service)}
-                >
-                  <div className="text-sm font-medium">{service.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {service.price.toFixed(2)}€ • {service.duration}min
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Selected Services */}
-          {selectedServices.length > 0 && (
-            <div>
-              <Label>Services sélectionnés</Label>
-              <div className="space-y-2 mt-2">
-                {selectedServices.map((service) => (
-                  <div key={service.id} className="flex items-center justify-between p-2 bg-muted/20 rounded">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{service.name}</span>
-                      <Badge variant="outline">
-                        {service.duration}min
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {service.price.toFixed(2)}€
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeService(service.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                
-                <div className="flex justify-between items-center p-2 bg-accent/10 rounded font-semibold">
-                  <span>Total: {totalDuration} minutes</span>
-                  <span>{totalPrice.toFixed(2)}€</span>
-                </div>
+      {/* Services Selection */}
+      <div>
+        <Label>Services disponibles</Label>
+        <div className={`grid gap-3 mt-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
+          {services.map((service) => (
+            <Card 
+              key={service.id}
+              className="p-3 cursor-pointer hover:bg-accent/10 transition-colors"
+              onClick={() => addService(service)}
+            >
+              <div className="text-sm font-medium">{service.name}</div>
+              <div className="text-xs text-muted-foreground">
+                {service.price.toFixed(2)}€ • {service.duration}min
               </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Selected Services */}
+      {selectedServices.length > 0 && (
+        <div>
+          <Label>Services sélectionnés</Label>
+          <div className="space-y-2 mt-2">
+            {selectedServices.map((service) => (
+              <div key={service.id} className="flex items-center justify-between p-2 bg-muted/20 rounded">
+                <div className={`flex items-center gap-2 ${isMobile ? 'flex-wrap' : ''}`}>
+                  <span className="font-medium">{service.name}</span>
+                  <Badge variant="outline">
+                    {service.duration}min
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {service.price.toFixed(2)}€
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeService(service.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            
+            <div className={`flex justify-between items-center p-2 bg-accent/10 rounded font-semibold ${isMobile ? 'text-sm' : ''}`}>
+              <span>Total: {totalDuration} minutes</span>
+              <span>{totalPrice.toFixed(2)}€</span>
             </div>
-          )}
-
-          {/* Notes */}
-          <div>
-            <Label htmlFor="notes">Notes (optionnel)</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Informations complémentaires..."
-            />
           </div>
+        </div>
+      )}
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Plus className="h-4 w-4 mr-2" />
-              Créer le rendez-vous
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      {/* Notes */}
+      <div>
+        <Label htmlFor="notes">Notes (optionnel)</Label>
+        <Textarea
+          id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Informations complémentaires..."
+          rows={isMobile ? 2 : 3}
+        />
+      </div>
+
+      {/* Actions */}
+      <div className={`flex gap-3 ${isMobile ? 'flex-col' : 'justify-end'}`}>
+        <Button type="button" variant="outline" onClick={onClose}>
+          Annuler
+        </Button>
+        <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+          <Plus className="h-4 w-4 mr-2" />
+          Créer le rendez-vous
+        </Button>
+      </div>
+    </form>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer open={isOpen} onOpenChange={onClose}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader>
+              <DrawerTitle>
+                Nouveau RDV - {format(selectedDate, 'dd/MM', { locale: fr })}
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-4 overflow-y-auto">
+              <ModalContent />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+          <DialogContent className="max-w-2xl lg:max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Nouveau rendez-vous - {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
+              </DialogTitle>
+            </DialogHeader>
+            <ModalContent />
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 };
 
