@@ -108,6 +108,24 @@ serve(async (req) => {
     }
 
     // Create the appointment
+    // For external bookings, we need to find the salon owner's user_id
+    // since RLS requires appointments to be linked to a user
+    const { data: salonOwner, error: ownerError } = await supabase
+      .from('barbers')
+      .select('user_id')
+      .eq('id', barber_id)
+      .single();
+
+    if (ownerError || !salonOwner?.user_id) {
+      return new Response(
+        JSON.stringify({ error: 'Unable to process booking - salon owner not found' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const { data: appointment, error: appointmentError } = await supabase
       .from('appointments')
       .insert({
@@ -121,7 +139,7 @@ serve(async (req) => {
         status: 'scheduled',
         is_paid: false,
         notes: notes || null,
-        user_id: null // External booking, no user_id
+        user_id: salonOwner.user_id // Link to salon owner for RLS compliance
       })
       .select()
       .single();

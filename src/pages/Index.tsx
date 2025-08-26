@@ -80,6 +80,62 @@ const Index = () => {
   // Get real stats from transactions
   const stats = getStats();
 
+  // Secure password verification functions
+  const verifyStatsPassword = async (inputPassword: string): Promise<boolean> => {
+    if (!salonSettings?.stats_password) {
+      toast({
+        title: "Configuration manquante",
+        description: "Aucun mot de passe n'est défini pour l'accès aux statistiques. Configurez-le dans les paramètres.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('verify_password', {
+        password_text: inputPassword,
+        password_hash: salonSettings.stats_password
+      });
+
+      if (error) {
+        console.error('Password verification error:', error);
+        return false;
+      }
+
+      return data === true;
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
+    }
+  };
+
+  const verifySettingsPassword = async (inputPassword: string): Promise<boolean> => {
+    if (!salonSettings?.stats_password) {
+      toast({
+        title: "Configuration manquante", 
+        description: "Aucun mot de passe n'est défini pour l'accès aux paramètres. Configurez-le dans les paramètres.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('verify_password', {
+        password_text: inputPassword,
+        password_hash: salonSettings.stats_password
+      });
+
+      if (error) {
+        console.error('Password verification error:', error);
+        return false;
+      }
+
+      return data === true;
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
+    }
+  };
   const handleViewChange = (view: string) => {
     // Toujours demander le mot de passe pour les stats et paramètres
     if (view === 'stats' && !isStatsUnlocked) {
@@ -452,14 +508,14 @@ const Index = () => {
           isOpen={showStatsPasswordModal}
           onClose={() => setShowStatsPasswordModal(false)}
           onSuccess={handleStatsPasswordSuccess}
-          expectedPassword="admin123admin"
+          onVerifyPassword={verifyStatsPassword}
         />
 
         <StatsPasswordModal
           isOpen={showSettingsPasswordModal}
           onClose={() => setShowSettingsPasswordModal(false)}
           onSuccess={handleSettingsPasswordSuccess}
-          expectedPassword="admin123admin"
+          onVerifyPassword={verifySettingsPassword}
         />
       </div>
 

@@ -10,53 +10,69 @@ interface StatsPasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  expectedPassword: string;
+  onVerifyPassword: (password: string) => Promise<boolean>;
 }
 
-const StatsPasswordModal = ({ isOpen, onClose, onSuccess, expectedPassword }: StatsPasswordModalProps) => {
+const StatsPasswordModal = ({ isOpen, onClose, onSuccess, onVerifyPassword }: StatsPasswordModalProps) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!expectedPassword || expectedPassword.trim() === '') {
+    if (!password.trim()) {
       toast({
-        title: "Configuration manquante",
-        description: "Aucun mot de passe n'est défini pour l'accès aux statistiques. Configurez-le dans les paramètres.",
+        title: "Erreur",
+        description: "Veuillez saisir un mot de passe",
         variant: "destructive",
       });
       return;
     }
 
-    if (password.trim() === expectedPassword.trim()) {
-      onSuccess();
-      setPassword('');
-      setAttempts(0);
-      toast({
-        title: "✅ Accès autorisé",
-        description: "Vous pouvez maintenant consulter les statistiques",
-      });
-    } else {
-      setAttempts(prev => prev + 1);
-      setPassword('');
+    setIsVerifying(true);
+
+    try {
+      const isValid = await onVerifyPassword(password.trim());
       
-      if (attempts >= 2) {
-        toast({
-          title: "❌ Trop de tentatives",
-          description: "Accès bloqué temporairement pour des raisons de sécurité",
-          variant: "destructive",
-        });
-        onClose();
+      if (isValid) {
+        onSuccess();
+        setPassword('');
         setAttempts(0);
-      } else {
         toast({
-          title: "❌ Mot de passe incorrect",
-          description: `Tentative ${attempts + 1}/3`,
-          variant: "destructive",
+          title: "✅ Accès autorisé",
+          description: "Vous pouvez maintenant consulter les statistiques",
         });
+      } else {
+        setAttempts(prev => prev + 1);
+        setPassword('');
+        
+        if (attempts >= 2) {
+          toast({
+            title: "❌ Trop de tentatives",
+            description: "Accès bloqué temporairement pour des raisons de sécurité",
+            variant: "destructive",
+          });
+          onClose();
+          setAttempts(0);
+        } else {
+          toast({
+            title: "❌ Mot de passe incorrect",
+            description: `Tentative ${attempts + 1}/3`,
+            variant: "destructive",
+          });
+        }
       }
+    } catch (error) {
+      console.error('Password verification error:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur de vérification du mot de passe",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -126,9 +142,9 @@ const StatsPasswordModal = ({ isOpen, onClose, onSuccess, expectedPassword }: St
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={!password.trim()}
+              disabled={!password.trim() || isVerifying}
             >
-              Accéder
+              {isVerifying ? 'Vérification...' : 'Accéder'}
             </Button>
           </div>
         </form>
