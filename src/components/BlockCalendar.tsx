@@ -346,20 +346,15 @@ const BlockCalendar = () => {
                     "text-sm font-bold text-center p-3 border-r border-gray-300 last:border-r-0",
                     isWorkingThisDay ? "bg-gray-100" : "bg-gray-200"
                   )}>
-                    <div className="text-xs text-gray-600 mb-1">
-                      {dayNames[index]}
-                    </div>
-                    <div className={cn(
-                      "text-sm font-medium",
-                      isWorkingThisDay ? "text-gray-900" : "text-gray-400"
-                    )}>
-                      {format(date, 'dd/MM')}
-                    </div>
-                    {!isWorkingThisDay && (
-                      <div className="text-xs text-red-500 mt-1">
-                        Fermé
-                      </div>
-                    )}
+                     <div className="text-xs text-gray-600 mb-1">
+                       {dayNames[index]}
+                     </div>
+                     <div className={cn(
+                       "text-sm font-medium",
+                       isWorkingThisDay ? "text-gray-900" : "text-gray-400"
+                     )}>
+                       {format(date, 'dd/MM')}
+                     </div>
                   </div>
                 );
               })}
@@ -402,7 +397,7 @@ const BlockCalendar = () => {
                       >
                          {!isWorking ? (
                            <div className="text-center">
-                             <span className="text-xs text-gray-400">
+                             <span className="text-xs text-red-500 font-medium">
                                Congé
                              </span>
                            </div>
