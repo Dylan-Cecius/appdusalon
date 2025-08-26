@@ -21,7 +21,7 @@ const StatsPasswordModal = ({ isOpen, onClose, onSuccess, expectedPassword }: St
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!expectedPassword) {
+    if (!expectedPassword || expectedPassword.trim() === '') {
       toast({
         title: "Configuration manquante",
         description: "Aucun mot de passe n'est défini pour l'accès aux statistiques. Configurez-le dans les paramètres.",
@@ -30,7 +30,7 @@ const StatsPasswordModal = ({ isOpen, onClose, onSuccess, expectedPassword }: St
       return;
     }
 
-    if (password === expectedPassword) {
+    if (password.trim() === expectedPassword.trim()) {
       onSuccess();
       setPassword('');
       setAttempts(0);

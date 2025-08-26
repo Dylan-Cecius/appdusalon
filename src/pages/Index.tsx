@@ -81,11 +81,14 @@ const Index = () => {
   const stats = getStats();
 
   const handleViewChange = (view: string) => {
-    if (view === 'stats' && salonSettings?.stats_password && !isStatsUnlocked) {
+    // Vérifier si un mot de passe est configuré et si l'utilisateur n'est pas déjà débloqué
+    const hasPassword = salonSettings?.stats_password && salonSettings.stats_password.trim() !== '';
+    
+    if (view === 'stats' && hasPassword && !isStatsUnlocked) {
       setShowStatsPasswordModal(true);
       return;
     }
-    if (view === 'settings' && salonSettings?.stats_password && !isSettingsUnlocked) {
+    if (view === 'settings' && hasPassword && !isSettingsUnlocked) {
       setShowSettingsPasswordModal(true);
       return;
     }
