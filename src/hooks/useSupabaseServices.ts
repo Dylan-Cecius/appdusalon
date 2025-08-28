@@ -124,12 +124,27 @@ export const useSupabaseServices = () => {
     if (!user) return;
 
     try {
+      // Vérifier d'abord que le service existe avant de le supprimer
+      const { data: existingService, error: fetchError } = await supabase
+        .from('services')
+        .select('id, name')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (fetchError || !existingService) {
+        console.error('Service not found or already inactive:', fetchError);
+        throw new Error('Service introuvable ou déjà supprimé');
+      }
+
       // Soft delete - mark as inactive instead of actual deletion
       const { error } = await supabase
         .from('services')
         .update({ is_active: false })
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('is_active', true); // Sécurité supplémentaire
 
       if (error) {
         console.error('Error deleting service:', error);
