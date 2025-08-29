@@ -75,65 +75,6 @@ const BlockCalendar = () => {
   };
 
   const handlePayAppointment = (appointmentId: string, method: 'cash' | 'card') => {
-    if (method === 'card') {
-      try {
-        // Deep link vers Belfius Mobile avec meilleure gestion d'erreur
-        const belfiusUrl = 'belfius://';
-        
-        // Créer un iframe invisible pour le deep link (plus fiable que window.open)
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = belfiusUrl;
-        document.body.appendChild(iframe);
-        
-        // Nettoyer l'iframe après utilisation
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 500);
-        
-        // Fallback vers l'app store si l'app n'est pas installée
-        let hasNavigated = false;
-        
-        const fallbackTimer = setTimeout(() => {
-          if (!hasNavigated) {
-            const isApple = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent);
-            const isAndroid = /Android/.test(navigator.userAgent);
-            
-            if (isApple) {
-              window.open('https://apps.apple.com/be/app/belfius-mobile/id516419482', '_blank');
-            } else if (isAndroid) {
-              window.open('https://play.google.com/store/apps/details?id=be.belfius.directmobile.android', '_blank');
-            } else {
-              // Pour desktop, ouvrir la version web de Belfius
-              window.open('https://www.belfius.be/retail/fr/services-numeriques/mobile-apps/belfius-mobile', '_blank');
-            }
-          }
-        }, 2500); // Délai plus long pour laisser le temps à l'app de s'ouvrir
-        
-        // Détecter si l'utilisateur revient sur la page (l'app s'est fermée)
-        const handleVisibilityChange = () => {
-          if (document.visibilityState === 'visible') {
-            hasNavigated = true;
-            clearTimeout(fallbackTimer);
-          }
-        };
-        
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        
-        // Nettoyer l'event listener après 5 secondes
-        setTimeout(() => {
-          document.removeEventListener('visibilitychange', handleVisibilityChange);
-        }, 5000);
-        
-      } catch (error) {
-        console.error('Erreur lors de l\'ouverture de Belfius Mobile:', error);
-        toast({
-          title: "Information",
-          description: "Veuillez ouvrir manuellement votre app Belfius Mobile pour effectuer le paiement",
-        });
-      }
-    }
-    
     markAsPaid(appointmentId);
     const appointment = appointments.find(apt => apt.id === appointmentId);
     
