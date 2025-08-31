@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useSubscription } from './useSubscription';
+import { useAuth } from './useAuth';
 
 // Définition des droits par type d'abonnement
 export interface SubscriptionRights {
@@ -153,8 +154,14 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
 
 export const useSubscriptionRights = () => {
   const { subscribed, subscription_tier } = useSubscription();
+  const { user } = useAuth();
 
   const rights = useMemo((): SubscriptionRights => {
+    // Si pas d'utilisateur connecté, retourner les droits "none"
+    if (!user) {
+      return SUBSCRIPTION_RIGHTS['none'];
+    }
+
     // Si pas d'abonnement actif
     if (!subscribed || !subscription_tier) {
       return SUBSCRIPTION_RIGHTS['none'];
@@ -162,7 +169,7 @@ export const useSubscriptionRights = () => {
 
     // Retourner les droits correspondant au tier d'abonnement
     return SUBSCRIPTION_RIGHTS[subscription_tier] || SUBSCRIPTION_RIGHTS['none'];
-  }, [subscribed, subscription_tier]);
+  }, [user, subscribed, subscription_tier]);
 
   // Fonctions utilitaires pour vérifier les droits
   const canAccess = (feature: keyof SubscriptionRights) => {
