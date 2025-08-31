@@ -7,29 +7,23 @@ export const useCombinedStats = () => {
   const { appointments } = useSupabaseAppointments();
   
   const stats = useMemo(() => {
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    // Use UTC dates to match Supabase timestamp format
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
     // Calculate week start (Monday)
-    const startOfWeek = new Date(today);
+    const startOfWeek = new Date(now);
     const dayOfWeek = startOfWeek.getDay();
     const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     startOfWeek.setDate(startOfWeek.getDate() + daysToMonday);
     startOfWeek.setHours(0, 0, 0, 0);
 
-    console.log('Date ranges:', {
-      today: startOfToday.toISOString(),
-      week: startOfWeek.toISOString(),
-      month: startOfMonth.toISOString(),
-      transactionsCount: transactions.length,
-      appointmentsCount: appointments.length
-    });
-
-    // Filter transactions by date - Convert string dates to Date objects for comparison
+    // Filter transactions by date
     const todayTransactions = transactions.filter(tx => {
       const txDate = new Date(tx.transactionDate);
-      return txDate >= startOfToday;
+      const txDateLocal = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+      return txDateLocal >= startOfToday;
     });
     const weekTransactions = transactions.filter(tx => {
       const txDate = new Date(tx.transactionDate);
@@ -40,10 +34,11 @@ export const useCombinedStats = () => {
       return txDate >= startOfMonth;
     });
 
-    // Filter appointments by date - Convert string dates to Date objects for comparison
+    // Filter appointments by date - Convert to local date for comparison
     const todayAppointments = appointments.filter(apt => {
       const aptDate = new Date(apt.startTime);
-      return aptDate >= startOfToday;
+      const aptDateLocal = new Date(aptDate.getFullYear(), aptDate.getMonth(), aptDate.getDate());
+      return aptDateLocal >= startOfToday;
     });
     const weekAppointments = appointments.filter(apt => {
       const aptDate = new Date(apt.startTime);
@@ -52,15 +47,6 @@ export const useCombinedStats = () => {
     const monthAppointments = appointments.filter(apt => {
       const aptDate = new Date(apt.startTime);
       return aptDate >= startOfMonth;
-    });
-
-    console.log('Filtered data:', {
-      todayTx: todayTransactions.length,
-      weekTx: weekTransactions.length,
-      monthTx: monthTransactions.length,
-      todayApt: todayAppointments.length,
-      weekApt: weekAppointments.length,
-      monthApt: monthAppointments.length
     });
 
     // Calculate combined revenue (transactions + appointments)
