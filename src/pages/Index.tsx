@@ -37,6 +37,7 @@ import SubscriptionManagement from '@/components/SubscriptionManagement';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
 import { SubscriptionRightsDisplay } from '@/components/SubscriptionRightsDisplay';
 import { FeatureGate } from '@/components/FeatureGate';
+import AutomatedReports from '@/components/AutomatedReports';
 import SecurityAlert from '@/components/SecurityAlert';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -693,7 +694,10 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="settings">
-            <Settings />
+            <div className="space-y-6">
+              <Settings />
+              <AutomatedReports />
+            </div>
           </TabsContent>
           
           <TabsContent value="subscription">

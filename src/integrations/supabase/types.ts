@@ -65,6 +65,57 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_reports: {
+        Row: {
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          frequency: string
+          id: string
+          is_active: boolean
+          last_sent_at: string | null
+          next_send_at: string | null
+          recipient_emails: string[]
+          report_name: string
+          report_types: string[]
+          time_of_day: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          frequency: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          recipient_emails?: string[]
+          report_name: string
+          report_types?: string[]
+          time_of_day?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          recipient_emails?: string[]
+          report_name?: string
+          report_types?: string[]
+          time_of_day?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       barbers: {
         Row: {
           color: string
@@ -471,6 +522,15 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_next_send_date: {
+        Args: {
+          day_of_month?: number
+          day_of_week?: number
+          frequency_type: string
+          time_of_day: string
+        }
+        Returns: string
+      }
       get_appointment_client_details: {
         Args: { appointment_id: string }
         Returns: {
