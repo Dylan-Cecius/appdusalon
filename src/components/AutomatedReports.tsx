@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useAutomatedReports, CreateAutomatedReportData, AutomatedReport } from "@/hooks/useAutomatedReports";
 import { useFeatureAccess } from "@/components/FeatureGate";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { fr } from "date-fns/locale";
 
 const REPORT_TYPES = [
@@ -281,10 +282,13 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
     if (!report.next_send_at) return 'Non planifié';
     
     try {
-      // Créer un objet Date et ajuster pour le fuseau horaire français
-      const date = new Date(report.next_send_at);
-      // Si la date est en UTC, l'afficher en heure locale française
-      return format(date, "dd MMMM yyyy 'à' HH:mm", { locale: fr });
+      // Utiliser formatInTimeZone pour afficher correctement en heure française
+      return formatInTimeZone(
+        new Date(report.next_send_at), 
+        'Europe/Paris', 
+        "dd MMMM yyyy 'à' HH:mm", 
+        { locale: fr }
+      );
     } catch {
       return 'Date invalide';
     }
