@@ -403,13 +403,25 @@ export const useAdvancedStats = () => {
         totalAvailableSlots += Math.max(0, availableSlots);
       });
       
-      // Compter UNIQUEMENT les transactions (encaissements) pour ce jour
+      // Compter les rendez-vous réels pour ce jour
+      const dayAppointments = appointments.filter(apt => 
+        isSameDay(apt.startTime, date)
+      );
+      
+      // Compter les transactions (encaissements) pour ce jour
       const dayTransactions = transactions.filter(tx => 
         isSameDay(new Date(tx.transactionDate), date)
       );
       
-      // Calculer les créneaux occupés UNIQUEMENT par les encaissements
+      // Calculer les créneaux occupés (rendez-vous + transactions)
       let bookedSlots = 0;
+      
+      // Créneaux des rendez-vous (en considérant la durée réelle)
+      dayAppointments.forEach(apt => {
+        const duration = apt.endTime.getTime() - apt.startTime.getTime();
+        const durationInMinutes = Math.ceil(duration / (1000 * 60));
+        bookedSlots += Math.ceil(durationInMinutes / 15); // Arrondir au créneau de 15min supérieur
+      });
       
       // Créneaux des transactions (estimer 30min par transaction en moyenne)
       dayTransactions.forEach(tx => {
@@ -430,7 +442,7 @@ export const useAdvancedStats = () => {
       // Fallback si pas de coiffeurs configurés
       if (totalAvailableSlots === 0) {
         totalAvailableSlots = 36; // 9h * 4 créneaux/heure comme avant
-        bookedSlots = dayTransactions.length;
+        bookedSlots = dayAppointments.length + dayTransactions.length;
       }
       
       const occupancyRate = totalAvailableSlots > 0 ? (bookedSlots / totalAvailableSlots) * 100 : 0;

@@ -22,7 +22,6 @@ import TodoList from '@/components/TodoList';
 import StatsOverview from '@/components/StatsOverview';
 import PaymentMethodStats from '@/components/PaymentMethodStats';
 import CustomDateRangeStats from '@/components/CustomDateRangeStats';
-import RevenueCustomDateRange from '@/components/RevenueCustomDateRange';
 import RevenueChart from '@/components/RevenueChart';
 import EmailReports from '@/components/EmailReports';
 import { ClientRetentionStats } from '@/components/stats/ClientRetentionStats';
@@ -643,10 +642,6 @@ const Index = () => {
                 >
                   <CancellationRateStats />
                 </FeatureGate>
-              </div>
-
-              <div id="revenue-custom-range">
-                <RevenueCustomDateRange />
               </div>
               
               <FeatureGate 
