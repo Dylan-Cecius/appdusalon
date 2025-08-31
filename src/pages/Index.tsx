@@ -699,9 +699,6 @@ const Index = () => {
           <TabsContent value="subscription">
             <div className="space-y-6">
               <SubscriptionManagement />
-              <SubscriptionRightsDisplay 
-                onUpgrade={() => setCurrentView('subscription')} 
-              />
             </div>
           </TabsContent>
         </Tabs>
