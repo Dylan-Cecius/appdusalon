@@ -175,69 +175,110 @@ export const useAdvancedStats = () => {
   }, [appointments]);
 
   const barberPerformanceStats = useMemo((): BarberPerformanceData[] => {
+    // Créer un map des coiffeurs depuis la base de données barbers avec leur nom réel
+    const barberNameMap = new Map<string, string>();
+    barbers.forEach(barber => {
+      if (barber.id && barber.name) {
+        barberNameMap.set(barber.id, barber.name);
+      }
+    });
+
     const barberMap = new Map<string, {
       appointmentCount: number;
       revenue: number;
       totalDuration: number;
+      realName: string;
     }>();
 
-    // Combiner données d'appointments et de transactions
-    const appointmentsByBarber = new Map<string, typeof appointments>();
+    // Traiter les rendez-vous - utiliser l'ID comme clé
     appointments.forEach(appointment => {
-      const barberName = appointment.barberId || 'Non assigné';
-      if (!appointmentsByBarber.has(barberName)) {
-        appointmentsByBarber.set(barberName, []);
-      }
-      appointmentsByBarber.get(barberName)!.push(appointment);
+      const barberId = appointment.barberId || 'non-assigne';
+      const barberName = barberNameMap.get(barberId) || appointment.barberId || 'Non assigné';
+      
+      const existing = barberMap.get(barberId) || {
+        appointmentCount: 0,
+        revenue: 0,
+        totalDuration: 0,
+        realName: barberName
+      };
+
+      const duration = appointment.endTime.getTime() - appointment.startTime.getTime();
+      const revenue = appointment.isPaid ? Number(appointment.totalPrice) : 0;
+
+      barberMap.set(barberId, {
+        appointmentCount: existing.appointmentCount + 1,
+        revenue: existing.revenue + revenue,
+        totalDuration: existing.totalDuration + duration,
+        realName: barberName
+      });
     });
 
-    // Calculer les revenus depuis les transactions
-    const revenueByBarber = new Map<string, number>();
+    // Traiter les transactions - essayer de les associer aux bons coiffeurs
     transactions.forEach(transaction => {
       if (transaction.items && Array.isArray(transaction.items)) {
         transaction.items.forEach((item: any) => {
-          const barberName = item.barberId || 'Non assigné';
-          const existing = revenueByBarber.get(barberName) || 0;
-          revenueByBarber.set(barberName, existing + (Number(transaction.totalAmount) / transaction.items.length));
+          let barberId = item.barberId;
+          
+          // Si pas de barberId dans l'item, essayer de deviner depuis le contexte
+          if (!barberId && transaction.items.length === 1) {
+            // Si une seule prestation, associer au coiffeur principal actif
+            const activeBarbers = Array.from(barberMap.keys()).filter(id => id !== 'non-assigne');
+            if (activeBarbers.length === 1) {
+              barberId = activeBarbers[0];
+            }
+          }
+          
+          barberId = barberId || 'non-assigne';
+          const barberName = barberNameMap.get(barberId) || 'Non assigné';
+          
+          const existing = barberMap.get(barberId) || {
+            appointmentCount: 0,
+            revenue: 0,
+            totalDuration: 0,
+            realName: barberName
+          };
+
+          // Calculer la part de revenus de cet item dans la transaction
+          const itemRevenue = (item.price || 0) * (item.quantity || 1);
+          
+          barberMap.set(barberId, {
+            ...existing,
+            revenue: existing.revenue + itemRevenue,
+            realName: barberName
+          });
+        });
+      } else {
+        // Transaction sans items détaillés - associer au coiffeur principal si possible
+        const activeBarbers = Array.from(barberMap.keys()).filter(id => id !== 'non-assigne');
+        const barberId = activeBarbers.length === 1 ? activeBarbers[0] : 'non-assigne';
+        const barberName = barberNameMap.get(barberId) || 'Non assigné';
+        
+        const existing = barberMap.get(barberId) || {
+          appointmentCount: 0,
+          revenue: 0,
+          totalDuration: 0,
+          realName: barberName
+        };
+
+        barberMap.set(barberId, {
+          ...existing,
+          revenue: existing.revenue + Number(transaction.totalAmount),
+          realName: barberName
         });
       }
     });
 
-    // Si pas de données de transactions avec barbers, utiliser les appointments
-    if (revenueByBarber.size === 0) {
-      appointments.forEach(appointment => {
-        const barberName = appointment.barberId || 'Non assigné';
-        const existing = revenueByBarber.get(barberName) || 0;
-        revenueByBarber.set(barberName, existing + Number(appointment.totalPrice));
-      });
-    }
-
-    // Fusionner les données
-    const allBarbers = new Set([...appointmentsByBarber.keys(), ...revenueByBarber.keys()]);
-    
-    Array.from(allBarbers).forEach(barberName => {
-      const barberAppointments = appointmentsByBarber.get(barberName) || [];
-      const revenue = revenueByBarber.get(barberName) || 0;
-      
-      const totalDuration = barberAppointments.reduce((sum, apt) => 
-        sum + (apt.endTime.getTime() - apt.startTime.getTime()), 0
-      );
-
-      barberMap.set(barberName, {
-        appointmentCount: barberAppointments.length,
-        revenue,
-        totalDuration
-      });
-    });
-
-    return Array.from(barberMap.entries()).map(([barberName, data]) => ({
-      barberName,
-      appointmentCount: data.appointmentCount,
-      revenue: data.revenue,
-      averageServiceTime: data.appointmentCount > 0 ? data.totalDuration / (data.appointmentCount * 60000) : 0, // en minutes
-      clientSatisfaction: 85 + Math.random() * 15 // Simulation pour l'instant
-    }));
-  }, [appointments, transactions]);
+    return Array.from(barberMap.entries())
+      .map(([barberId, data]) => ({
+        barberName: data.realName,
+        appointmentCount: data.appointmentCount,
+        revenue: data.revenue,
+        averageServiceTime: data.appointmentCount > 0 ? data.totalDuration / (data.appointmentCount * 60000) : 0, // en minutes
+        clientSatisfaction: 85 + Math.random() * 15 // Simulation pour l'instant
+      }))
+      .filter(barber => barber.appointmentCount > 0 || barber.revenue > 0) // Filtrer les coiffeurs sans activité
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [appointments, transactions, barbers]);
 
   const peakHoursStats = useMemo((): PeakHoursData[] => {
     const hourMap = new Map<number, { count: number; revenue: number }>();
