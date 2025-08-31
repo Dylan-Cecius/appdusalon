@@ -68,22 +68,51 @@ export const useAdvancedStats = () => {
       lastVisit: Date;
     }>();
 
-    appointments.forEach(appointment => {
-      const clientKey = `${appointment.clientName}-${appointment.clientPhone}`;
-      const existing = clientMap.get(clientKey) || {
-        appointmentCount: 0,
-        totalSpent: 0,
-        lastVisit: new Date(0)
-      };
+    // Utiliser les transactions pour les données financières réelles
+    transactions.forEach(transaction => {
+      if (transaction.items && Array.isArray(transaction.items)) {
+        transaction.items.forEach((item: any) => {
+          if (item.clientName && item.clientPhone) {
+            const clientKey = `${item.clientName}-${item.clientPhone}`;
+            const existing = clientMap.get(clientKey) || {
+              appointmentCount: 0,
+              totalSpent: 0,
+              lastVisit: new Date(0)
+            };
 
-      clientMap.set(clientKey, {
-        appointmentCount: existing.appointmentCount + 1,
-        totalSpent: existing.totalSpent + Number(appointment.totalPrice),
-        lastVisit: appointment.startTime > existing.lastVisit 
-          ? appointment.startTime 
-          : existing.lastVisit
-      });
+            const transactionDate = new Date(transaction.transactionDate);
+
+            clientMap.set(clientKey, {
+              appointmentCount: existing.appointmentCount + 1,
+              totalSpent: existing.totalSpent + Number(transaction.totalAmount),
+              lastVisit: transactionDate > existing.lastVisit 
+                ? transactionDate 
+                : existing.lastVisit
+            });
+          }
+        });
+      }
     });
+
+    // Si pas de données de transactions avec clients, fallback sur appointments
+    if (clientMap.size === 0) {
+      appointments.forEach(appointment => {
+        const clientKey = `${appointment.clientName}-${appointment.clientPhone}`;
+        const existing = clientMap.get(clientKey) || {
+          appointmentCount: 0,
+          totalSpent: 0,
+          lastVisit: new Date(0)
+        };
+
+        clientMap.set(clientKey, {
+          appointmentCount: existing.appointmentCount + 1,
+          totalSpent: existing.totalSpent + Number(appointment.totalPrice),
+          lastVisit: appointment.startTime > existing.lastVisit 
+            ? appointment.startTime 
+            : existing.lastVisit
+        });
+      });
+    }
 
     return Array.from(clientMap.entries())
       .map(([clientName, data]) => ({
@@ -95,7 +124,7 @@ export const useAdvancedStats = () => {
       }))
       .sort((a, b) => b.totalSpent - a.totalSpent)
       .slice(0, 10);
-  }, [appointments]);
+  }, [appointments, transactions]);
 
   const clientRetentionStats = useMemo((): ClientRetentionData[] => {
     const now = new Date();
@@ -146,20 +175,52 @@ export const useAdvancedStats = () => {
       totalDuration: number;
     }>();
 
+    // Combiner données d'appointments et de transactions
+    const appointmentsByBarber = new Map<string, typeof appointments>();
     appointments.forEach(appointment => {
       const barberName = appointment.barberId || 'Non assigné';
-      const existing = barberMap.get(barberName) || {
-        appointmentCount: 0,
-        revenue: 0,
-        totalDuration: 0
-      };
+      if (!appointmentsByBarber.has(barberName)) {
+        appointmentsByBarber.set(barberName, []);
+      }
+      appointmentsByBarber.get(barberName)!.push(appointment);
+    });
 
-      const duration = appointment.endTime.getTime() - appointment.startTime.getTime();
+    // Calculer les revenus depuis les transactions
+    const revenueByBarber = new Map<string, number>();
+    transactions.forEach(transaction => {
+      if (transaction.items && Array.isArray(transaction.items)) {
+        transaction.items.forEach((item: any) => {
+          const barberName = item.barberId || 'Non assigné';
+          const existing = revenueByBarber.get(barberName) || 0;
+          revenueByBarber.set(barberName, existing + (Number(transaction.totalAmount) / transaction.items.length));
+        });
+      }
+    });
+
+    // Si pas de données de transactions avec barbers, utiliser les appointments
+    if (revenueByBarber.size === 0) {
+      appointments.forEach(appointment => {
+        const barberName = appointment.barberId || 'Non assigné';
+        const existing = revenueByBarber.get(barberName) || 0;
+        revenueByBarber.set(barberName, existing + Number(appointment.totalPrice));
+      });
+    }
+
+    // Fusionner les données
+    const allBarbers = new Set([...appointmentsByBarber.keys(), ...revenueByBarber.keys()]);
+    
+    Array.from(allBarbers).forEach(barberName => {
+      const barberAppointments = appointmentsByBarber.get(barberName) || [];
+      const revenue = revenueByBarber.get(barberName) || 0;
       
+      const totalDuration = barberAppointments.reduce((sum, apt) => 
+        sum + (apt.endTime.getTime() - apt.startTime.getTime()), 0
+      );
+
       barberMap.set(barberName, {
-        appointmentCount: existing.appointmentCount + 1,
-        revenue: existing.revenue + Number(appointment.totalPrice),
-        totalDuration: existing.totalDuration + duration
+        appointmentCount: barberAppointments.length,
+        revenue,
+        totalDuration
       });
     });
 
@@ -167,23 +228,37 @@ export const useAdvancedStats = () => {
       barberName,
       appointmentCount: data.appointmentCount,
       revenue: data.revenue,
-      averageServiceTime: data.totalDuration / (data.appointmentCount * 60000), // en minutes
+      averageServiceTime: data.appointmentCount > 0 ? data.totalDuration / (data.appointmentCount * 60000) : 0, // en minutes
       clientSatisfaction: 85 + Math.random() * 15 // Simulation pour l'instant
     }));
-  }, [appointments]);
+  }, [appointments, transactions]);
 
   const peakHoursStats = useMemo((): PeakHoursData[] => {
     const hourMap = new Map<number, { count: number; revenue: number }>();
 
-    appointments.forEach(appointment => {
-      const hour = getHours(appointment.startTime);
+    // Utiliser les transactions pour les revenus réels
+    transactions.forEach(transaction => {
+      const hour = getHours(new Date(transaction.transactionDate));
       const existing = hourMap.get(hour) || { count: 0, revenue: 0 };
       
       hourMap.set(hour, {
         count: existing.count + 1,
-        revenue: existing.revenue + Number(appointment.totalPrice)
+        revenue: existing.revenue + Number(transaction.totalAmount)
       });
     });
+
+    // Si pas de transactions, fallback sur appointments
+    if (hourMap.size === 0) {
+      appointments.forEach(appointment => {
+        const hour = getHours(appointment.startTime);
+        const existing = hourMap.get(hour) || { count: 0, revenue: 0 };
+        
+        hourMap.set(hour, {
+          count: existing.count + 1,
+          revenue: existing.revenue + Number(appointment.totalPrice)
+        });
+      });
+    }
 
     return Array.from(hourMap.entries())
       .map(([hour, data]) => ({
@@ -192,7 +267,7 @@ export const useAdvancedStats = () => {
         revenue: data.revenue
       }))
       .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
-  }, [appointments]);
+  }, [appointments, transactions]);
 
   const cancellationStats = useMemo((): CancellationData[] => {
     const now = new Date();
@@ -223,30 +298,51 @@ export const useAdvancedStats = () => {
   const serviceProfitabilityStats = useMemo((): ServiceProfitabilityData[] => {
     const serviceMap = new Map<string, { count: number; revenue: number }>();
 
-    appointments.forEach(appointment => {
-      if (appointment.services && Array.isArray(appointment.services)) {
-        appointment.services.forEach((service: any) => {
-          const serviceName = service.name || 'Service inconnu';
+    // Utiliser les données des transactions pour les revenus réels
+    transactions.forEach(transaction => {
+      if (transaction.items && Array.isArray(transaction.items)) {
+        transaction.items.forEach((item: any) => {
+          const serviceName = item.name || 'Service inconnu';
           const existing = serviceMap.get(serviceName) || { count: 0, revenue: 0 };
           
+          // Calculer la part de revenus de cet item dans la transaction
+          const itemRevenue = (item.price || 0) * (item.quantity || 1);
+          
           serviceMap.set(serviceName, {
-            count: existing.count + 1,
-            revenue: existing.revenue + Number(service.price || 0)
+            count: existing.count + (item.quantity || 1),
+            revenue: existing.revenue + itemRevenue
           });
         });
       }
     });
+
+    // Si pas de transactions avec items détaillés, fallback sur appointments
+    if (serviceMap.size === 0) {
+      appointments.forEach(appointment => {
+        if (appointment.services && Array.isArray(appointment.services)) {
+          appointment.services.forEach((service: any) => {
+            const serviceName = service.name || 'Service inconnu';
+            const existing = serviceMap.get(serviceName) || { count: 0, revenue: 0 };
+            
+            serviceMap.set(serviceName, {
+              count: existing.count + 1,
+              revenue: existing.revenue + Number(service.price || 0)
+            });
+          });
+        }
+      });
+    }
 
     return Array.from(serviceMap.entries())
       .map(([serviceName, data]) => ({
         serviceName,
         appointmentCount: data.count,
         revenue: data.revenue,
-        averagePrice: data.revenue / data.count,
-        profitMargin: 60 + Math.random() * 30 // Simulation pour l'instant
+        averagePrice: data.count > 0 ? data.revenue / data.count : 0,
+        profitMargin: 60 + Math.random() * 30 // Simulation pour l'instant - pourrait être calculé depuis les coûts réels
       }))
       .sort((a, b) => b.revenue - a.revenue);
-  }, [appointments, services]);
+  }, [appointments, services, transactions]);
 
   const occupancyStats = useMemo((): OccupancyData[] => {
     const now = new Date();
