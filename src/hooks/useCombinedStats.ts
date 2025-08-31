@@ -18,27 +18,50 @@ export const useCombinedStats = () => {
     startOfWeek.setDate(startOfWeek.getDate() + daysToMonday);
     startOfWeek.setHours(0, 0, 0, 0);
 
-    // Filter transactions by date
-    const todayTransactions = transactions.filter(tx => 
-      tx.transactionDate >= startOfToday
-    );
-    const weekTransactions = transactions.filter(tx => 
-      tx.transactionDate >= startOfWeek
-    );
-    const monthTransactions = transactions.filter(tx => 
-      tx.transactionDate >= startOfMonth
-    );
+    console.log('Date ranges:', {
+      today: startOfToday.toISOString(),
+      week: startOfWeek.toISOString(),
+      month: startOfMonth.toISOString(),
+      transactionsCount: transactions.length,
+      appointmentsCount: appointments.length
+    });
 
-    // Filter appointments by date  
-    const todayAppointments = appointments.filter(apt => 
-      apt.startTime >= startOfToday
-    );
-    const weekAppointments = appointments.filter(apt => 
-      apt.startTime >= startOfWeek
-    );
-    const monthAppointments = appointments.filter(apt => 
-      apt.startTime >= startOfMonth
-    );
+    // Filter transactions by date - Convert string dates to Date objects for comparison
+    const todayTransactions = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return txDate >= startOfToday;
+    });
+    const weekTransactions = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return txDate >= startOfWeek;
+    });
+    const monthTransactions = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return txDate >= startOfMonth;
+    });
+
+    // Filter appointments by date - Convert string dates to Date objects for comparison
+    const todayAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      return aptDate >= startOfToday;
+    });
+    const weekAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      return aptDate >= startOfWeek;
+    });
+    const monthAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      return aptDate >= startOfMonth;
+    });
+
+    console.log('Filtered data:', {
+      todayTx: todayTransactions.length,
+      weekTx: weekTransactions.length,
+      monthTx: monthTransactions.length,
+      todayApt: todayAppointments.length,
+      weekApt: weekAppointments.length,
+      monthApt: monthAppointments.length
+    });
 
     // Calculate combined revenue (transactions + appointments)
     const todayTransactionRevenue = todayTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
