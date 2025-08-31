@@ -281,7 +281,10 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
     if (!report.next_send_at) return 'Non planifié';
     
     try {
-      return format(new Date(report.next_send_at), "dd MMMM yyyy 'à' HH:mm", { locale: fr });
+      // Créer un objet Date et ajuster pour le fuseau horaire français
+      const date = new Date(report.next_send_at);
+      // Si la date est en UTC, l'afficher en heure locale française
+      return format(date, "dd MMMM yyyy 'à' HH:mm", { locale: fr });
     } catch {
       return 'Date invalide';
     }

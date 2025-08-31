@@ -597,12 +597,19 @@ export type Database = {
     }
     Functions: {
       calculate_next_send_date: {
-        Args: {
-          day_of_month?: number
-          day_of_week?: number
-          frequency_type: string
-          time_of_day: string
-        }
+        Args:
+          | {
+              day_of_month?: number
+              day_of_week?: number
+              frequency_type: string
+              time_of_day: string
+            }
+          | {
+              day_of_month?: number
+              day_of_week?: number
+              frequency_type: string
+              time_of_day: string
+            }
         Returns: string
       }
       get_appointment_client_details: {
