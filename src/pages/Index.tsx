@@ -23,6 +23,13 @@ import PaymentMethodStats from '@/components/PaymentMethodStats';
 import CustomDateRangeStats from '@/components/CustomDateRangeStats';
 import RevenueChart from '@/components/RevenueChart';
 import EmailReports from '@/components/EmailReports';
+import { ClientLoyaltyStats } from '@/components/stats/ClientLoyaltyStats';
+import { ClientRetentionStats } from '@/components/stats/ClientRetentionStats';
+import { BarberPerformanceStats } from '@/components/stats/BarberPerformanceStats';
+import { PeakHoursStats } from '@/components/stats/PeakHoursStats';
+import { CancellationRateStats } from '@/components/stats/CancellationRateStats';
+import { ServiceProfitabilityStats } from '@/components/stats/ServiceProfitabilityStats';
+import { OccupancyRateStats } from '@/components/stats/OccupancyRateStats';
 import Settings from '@/components/Settings';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
 import TransactionsManager from '@/components/TransactionsManager';
@@ -555,11 +562,27 @@ const Index = () => {
               
               <StatsOverview stats={stats} />
               
-              <PaymentMethodStats paymentStats={stats.paymentStats} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <PaymentMethodStats paymentStats={stats.paymentStats} />
+                <ClientRetentionStats />
+              </div>
               
               <RevenueChart />
               
-              <CustomDateRangeStats />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <CustomDateRangeStats />
+                <CancellationRateStats />
+              </div>
+              
+              <ClientLoyaltyStats />
+              
+              <BarberPerformanceStats />
+              
+              <PeakHoursStats />
+              
+              <ServiceProfitabilityStats />
+              
+              <OccupancyRateStats />
             </div>
           </TabsContent>
 
