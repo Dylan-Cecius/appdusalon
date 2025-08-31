@@ -183,21 +183,32 @@ export const useAutomatedReports = () => {
 
   const testReport = async (reportId: string) => {
     try {
+      console.log('Sending test report for:', reportId);
+      toast({
+        title: "Envoi en cours...",
+        description: "Envoi du rapport de test",
+      });
+
       const { data, error } = await supabase.functions.invoke('send-automated-report', {
         body: { reportId, isTest: true }
       });
 
-      if (error) throw error;
+      console.log('Test report response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       toast({
         title: "Succès",
-        description: "Rapport de test envoyé avec succès",
+        description: data?.message || "Rapport de test envoyé avec succès",
       });
     } catch (error: any) {
       console.error('Error sending test report:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer le rapport de test",
+        description: error.message || "Impossible d'envoyer le rapport de test",
         variant: "destructive",
       });
     }
