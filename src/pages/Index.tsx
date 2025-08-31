@@ -21,6 +21,7 @@ import TodoList from '@/components/TodoList';
 import StatsOverview from '@/components/StatsOverview';
 import PaymentMethodStats from '@/components/PaymentMethodStats';
 import CustomDateRangeStats from '@/components/CustomDateRangeStats';
+import RevenueChart from '@/components/RevenueChart';
 import EmailReports from '@/components/EmailReports';
 import Settings from '@/components/Settings';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
@@ -556,15 +557,9 @@ const Index = () => {
               
               <PaymentMethodStats paymentStats={stats.paymentStats} />
               
-              <CustomDateRangeStats />
+              <RevenueChart />
               
-              <Card className="p-6 bg-gradient-to-br from-card to-background">
-                <div className="text-center text-muted-foreground py-8">
-                  <Calendar className="h-12 w-12 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Graphiques détaillés bientôt disponibles</h3>
-                  <p>Analytics avancées en cours de développement</p>
-                </div>
-              </Card>
+              <CustomDateRangeStats />
             </div>
           </TabsContent>
 
