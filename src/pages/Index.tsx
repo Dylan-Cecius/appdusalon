@@ -35,6 +35,7 @@ import StatsPasswordModal from '@/components/StatsPasswordModal';
 import TransactionsManager from '@/components/TransactionsManager';
 import SubscriptionManagement from '@/components/SubscriptionManagement';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
+import { SubscriptionRightsDisplay } from '@/components/SubscriptionRightsDisplay';
 import SecurityAlert from '@/components/SecurityAlert';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -660,7 +661,12 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="subscription">
-            <SubscriptionManagement />
+            <div className="space-y-6">
+              <SubscriptionManagement />
+              <SubscriptionRightsDisplay 
+                onUpgrade={() => setCurrentView('subscription')} 
+              />
+            </div>
           </TabsContent>
         </Tabs>
 
