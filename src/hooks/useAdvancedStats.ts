@@ -325,10 +325,6 @@ export const useAdvancedStats = () => {
   }, [appointments, services, transactions]);
 
   const occupancyStats = useMemo((): OccupancyData[] => {
-    console.log('Calculating occupancy stats...');
-    console.log('Lunch breaks:', lunchBreaks);
-    console.log('Custom blocks:', customBlocks);
-    
     const now = new Date();
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = addDays(now, -6 + i);
@@ -348,8 +344,6 @@ export const useAdvancedStats = () => {
         barber.working_days.includes(dayName)
       );
       
-      console.log(`Date ${format(date, 'dd/MM')}, Day: ${dayName}, Active barbers:`, activeBarbers.length);
-      
       activeBarbers.forEach(barber => {
         // Calculer les créneaux de 15 minutes entre start_time et end_time
         const [startHour, startMinute] = barber.start_time.split(':').map(Number);
@@ -360,15 +354,12 @@ export const useAdvancedStats = () => {
         const totalMinutes = endTime - startTime;
         let availableSlots = Math.floor(totalMinutes / 15); // Créneaux de 15 min
         
-        console.log(`Barber ${barber.name}: ${availableSlots} base slots (${startTime}-${endTime} minutes)`);
-        
         // Soustraire les créneaux de pause déjeuner
         const lunchBreak = lunchBreaks.find(lb => 
           lb.barberId === barber.id && lb.isActive
         );
         
         if (lunchBreak) {
-          console.log(`Found lunch break for ${barber.name}:`, lunchBreak);
           const [lunchStartHour, lunchStartMinute] = lunchBreak.startTime.split(':').map(Number);
           const [lunchEndHour, lunchEndMinute] = lunchBreak.endTime.split(':').map(Number);
           
@@ -378,24 +369,22 @@ export const useAdvancedStats = () => {
           // Si la pause déjeuner est dans les heures de travail
           if (lunchStartTime >= startTime && lunchEndTime <= endTime) {
             const lunchDuration = lunchEndTime - lunchStartTime;
-            const lunchSlots = Math.floor(lunchDuration / 15);
-            availableSlots -= lunchSlots;
-            console.log(`Removed ${lunchSlots} lunch slots for ${barber.name}`);
+            availableSlots -= Math.floor(lunchDuration / 15);
           }
-        } else {
-          console.log(`No active lunch break for ${barber.name}`);
         }
         
-        // Soustraire les créneaux bloqués personnalisés
+        // Soustraire les créneaux bloqués personnalisés valides uniquement
         const dayBlocks = customBlocks.filter(block => 
           block.barberId === barber.id &&
           isSameDay(block.blockDate, date) &&
-          block.type === 'unavailable'
+          block.type === 'unavailable' &&
+          block.startTime && 
+          block.endTime &&
+          block.startTime !== '' && 
+          block.endTime !== '' &&
+          !isNaN(parseInt(block.startTime.split(':')[0])) &&
+          !isNaN(parseInt(block.endTime.split(':')[0]))
         );
-        
-        if (dayBlocks.length > 0) {
-          console.log(`Found ${dayBlocks.length} custom blocks for ${barber.name} on ${format(date, 'dd/MM')}:`, dayBlocks);
-        }
         
         dayBlocks.forEach(block => {
           const [blockStartHour, blockStartMinute] = block.startTime.split(':').map(Number);
@@ -407,13 +396,10 @@ export const useAdvancedStats = () => {
           // Si le bloc est dans les heures de travail
           if (blockStartTime >= startTime && blockEndTime <= endTime) {
             const blockDuration = blockEndTime - blockStartTime;
-            const blockSlots = Math.floor(blockDuration / 15);
-            availableSlots -= blockSlots;
-            console.log(`Removed ${blockSlots} custom block slots for ${barber.name} (${block.startTime}-${block.endTime})`);
+            availableSlots -= Math.floor(blockDuration / 15);
           }
         });
         
-        console.log(`Final slots for ${barber.name}: ${availableSlots}`);
         totalAvailableSlots += Math.max(0, availableSlots);
       });
       
