@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, DollarSign, Mail } from 'lucide-react';
+import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, DollarSign, Mail, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,7 +25,10 @@ import EmailReports from '@/components/EmailReports';
 import Settings from '@/components/Settings';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
 import TransactionsManager from '@/components/TransactionsManager';
+import SubscriptionManagement from '@/components/SubscriptionManagement';
+import SubscriptionBadge from '@/components/SubscriptionBadge';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface CartItem {
   id: string;
@@ -68,6 +71,11 @@ const Index = () => {
     addTransaction,
     getStats
   } = useSupabaseTransactions();
+  const {
+    subscribed,
+    subscription_tier,
+    loading: subscriptionLoading
+  } = useSubscription();
   const isMobile = useIsMobile();
 
   // Redirect to auth if not authenticated
@@ -407,6 +415,7 @@ const Index = () => {
               </div>
               
               <div className="flex items-center gap-2 sm:gap-3">
+                <SubscriptionBadge onUpgrade={() => setCurrentView('subscription')} />
                 {currentView === "pos" && isMobile && <Button variant="outline" size="sm" onClick={() => setIsCartOpen(true)} className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
                     <ShoppingCart className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                     <span className="text-xs">{cartItems.length}</span>
@@ -427,10 +436,10 @@ const Index = () => {
 
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Tabs value={currentView} onValueChange={handleViewChange} className="space-y-4 sm:space-y-6">
-          <TabsList className={cn("grid w-full bg-card", isMobile ? "grid-cols-3 max-w-full" : "grid-cols-6 max-w-4xl")}>
+          <TabsList className={cn("grid w-full bg-card", isMobile ? "grid-cols-4 max-w-full" : "grid-cols-7 max-w-5xl")}>
             <TabsTrigger value="pos" className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
               <Scissors className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-              {isMobile ? "Encaissement" : "Encaissement"}
+              {isMobile ? "POS" : "Encaissement"}
             </TabsTrigger>
             <TabsTrigger value="agenda" className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
               <Calendar className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
@@ -439,6 +448,10 @@ const Index = () => {
             <TabsTrigger value="stats" className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
               <BarChart3 className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
               Stats
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+              <Crown className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
+              {isMobile ? "Pro" : "Abonnement"}
             </TabsTrigger>
             {!isMobile && <>
                 <TabsTrigger value="todo" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
@@ -557,6 +570,10 @@ const Index = () => {
           
           <TabsContent value="settings">
             <Settings />
+          </TabsContent>
+          
+          <TabsContent value="subscription">
+            <SubscriptionManagement />
           </TabsContent>
         </Tabs>
 
