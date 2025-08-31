@@ -418,9 +418,66 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      appointments_secure: {
+        Row: {
+          barber_id: string | null
+          client_name_masked: string | null
+          client_phone_masked: string | null
+          created_at: string | null
+          end_time: string | null
+          id: string | null
+          is_paid: boolean | null
+          notes: string | null
+          services: Json | null
+          start_time: string | null
+          status: string | null
+          total_price: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          barber_id?: string | null
+          client_name_masked?: never
+          client_phone_masked?: never
+          created_at?: string | null
+          end_time?: string | null
+          id?: string | null
+          is_paid?: boolean | null
+          notes?: string | null
+          services?: Json | null
+          start_time?: string | null
+          status?: string | null
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          barber_id?: string | null
+          client_name_masked?: never
+          client_phone_masked?: never
+          created_at?: string | null
+          end_time?: string | null
+          id?: string | null
+          is_paid?: boolean | null
+          notes?: string | null
+          services?: Json | null
+          start_time?: string | null
+          status?: string | null
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_appointment_client_details: {
+        Args: { appointment_id: string }
+        Returns: {
+          client_name: string
+          client_phone: string
+        }[]
+      }
       get_barber_owner: {
         Args: { target_barber_id: string }
         Returns: string

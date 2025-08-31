@@ -24,9 +24,23 @@ export const useSupabaseAppointments = () => {
         return;
       }
 
+      // SECURITY: Use selective columns instead of select('*')
+      // Only get non-sensitive data by default
       const { data, error } = await supabase
         .from('appointments' as any)
-        .select('*')
+        .select(`
+          id,
+          barber_id,
+          start_time,
+          end_time,
+          services,
+          total_price,
+          status,
+          is_paid,
+          notes,
+          created_at,
+          updated_at
+        `)
         .eq('user_id', user.id)
         .order('start_time', { ascending: true });
 
@@ -34,8 +48,9 @@ export const useSupabaseAppointments = () => {
 
       const formattedAppointments = data?.map((apt: any) => ({
         id: apt.id,
-        clientName: apt.client_name,
-        clientPhone: apt.client_phone,
+        // SECURITY: Don't include sensitive client data by default
+        clientName: 'Client', // Generic placeholder
+        clientPhone: '***-***-****', // Masked placeholder
         services: apt.services as any,
         startTime: new Date(apt.start_time),
         endTime: new Date(apt.end_time),
@@ -53,6 +68,35 @@ export const useSupabaseAppointments = () => {
       setAppointments(mockAppointments);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // SECURITY: New function to get sensitive client details only when needed
+  const getClientDetails = async (appointmentId: string) => {
+    try {
+      if (!isSupabaseConfigured) {
+        const appointment = mockAppointments.find(apt => apt.id === appointmentId);
+        return {
+          clientName: appointment?.clientName || 'Client',
+          clientPhone: appointment?.clientPhone || '***-***-****'
+        };
+      }
+
+      const { data, error } = await supabase
+        .rpc('get_appointment_client_details', { appointment_id: appointmentId });
+
+      if (error) throw error;
+
+      return {
+        clientName: data?.[0]?.client_name || 'Client',
+        clientPhone: data?.[0]?.client_phone || '***-***-****'
+      };
+    } catch (error) {
+      console.error('Error fetching client details:', error);
+      return {
+        clientName: 'Client',
+        clientPhone: '***-***-****'
+      };
     }
   };
 
@@ -83,6 +127,7 @@ export const useSupabaseAppointments = () => {
         return;
       }
 
+      // SECURITY: Use selective columns instead of select('*')
       const { data, error } = await supabase
         .from('appointments' as any)
         .insert({
@@ -98,15 +143,26 @@ export const useSupabaseAppointments = () => {
           barber_id: appointment.barberId,
           user_id: user.id
         })
-        .select()
+        .select(`
+          id,
+          barber_id,
+          start_time,
+          end_time,
+          services,
+          total_price,
+          status,
+          is_paid,
+          notes
+        `)
         .single();
 
       if (error) throw error;
 
       const newAppointment: Appointment = {
         id: (data as any).id,
-        clientName: (data as any).client_name,
-        clientPhone: (data as any).client_phone,
+        // SECURITY: Don't expose sensitive data in the response
+        clientName: 'Client', // Generic placeholder
+        clientPhone: '***-***-****', // Masked placeholder
         services: (data as any).services as any,
         startTime: new Date((data as any).start_time),
         endTime: new Date((data as any).end_time),
@@ -241,6 +297,7 @@ export const useSupabaseAppointments = () => {
     deleteAppointment,
     markAsPaid,
     getAppointmentsForDate,
+    getClientDetails, // SECURITY: New secure function to get sensitive data only when needed
     refreshAppointments: fetchAppointments
   };
 };

@@ -10,15 +10,16 @@ import { format, addDays, subDays, addWeeks, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
+import { useSupabaseCustomBlocks } from '@/hooks/useSupabaseCustomBlocks';
+import { useSupabaseLunchBreaks } from '@/hooks/useSupabaseLunchBreaks';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import AppointmentModal from './AppointmentModal';
 import BlockModal, { BlockData } from './BlockModal';
 import LunchBreakModal, { LunchBreakData } from './LunchBreakModal';
 import EditAppointmentModal from './EditAppointmentModal';
+import SecureClientData from './SecureClientData';
 import { toast } from '@/hooks/use-toast';
 import { defaultBarbers, Barber, getActiveBarbers } from '@/data/barbers';
-import { useSupabaseLunchBreaks } from '@/hooks/useSupabaseLunchBreaks';
-import { useSupabaseCustomBlocks } from '@/hooks/useSupabaseCustomBlocks';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 
 const BlockCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -415,8 +416,13 @@ const BlockCalendar = () => {
                                         e.stopPropagation();
                                         handleEditAppointment(apt);
                                       }}
-                                    >
-                                      <div className="font-bold truncate">👤 {apt.clientName}</div>
+                                      >
+                                        <div className="font-bold truncate">
+                                          <SecureClientData 
+                                            appointmentId={apt.id}
+                                            showToggle={false}
+                                          />
+                                        </div>
                                       <div className="text-xs opacity-90 truncate">
                                         ✂️ {apt.services?.[0]?.name || 'Service'}
                                       </div>
@@ -550,10 +556,13 @@ const BlockCalendar = () => {
                                       setSelectedDate(date);
                                       handleEditAppointment(appointment);
                                     }}
-                                    >
-                                      <div className="font-bold truncate text-xs">
-                                        👤 {appointment.clientName}
-                                      </div>
+                                      >
+                                        <div className="font-bold truncate text-xs">
+                                          <SecureClientData 
+                                            appointmentId={appointment.id}
+                                            showToggle={false}
+                                          />
+                                        </div>
                                       <div className="text-xs opacity-90 truncate">
                                         ✂️ {appointment.services?.[0]?.name || 'Service'}
                                       </div>

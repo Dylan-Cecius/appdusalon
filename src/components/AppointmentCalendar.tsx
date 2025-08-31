@@ -9,6 +9,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import AppointmentModal from './AppointmentModal';
+import SecureClientData from './SecureClientData';
 import { toast } from '@/hooks/use-toast';
 
 interface AppointmentCalendarProps {
@@ -178,10 +179,11 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-1 min-w-0">
                                 <User className="h-3 w-3 flex-shrink-0" />
-                                <div className="min-w-0">
-                                  <span className="font-medium text-sm truncate block">
-                                    {appointment.clientName}
-                                  </span>
+                                <div className="min-w-0 flex-1">
+                                  <SecureClientData 
+                                    appointmentId={appointment.id}
+                                    showToggle={false}
+                                  />
                                   <span className="text-xs opacity-75 truncate block">
                                     ({appointment.services[0]?.name})
                                   </span>
