@@ -563,8 +563,6 @@ const Index = () => {
                 </Button>
               </div>
 
-              <AutomatedReports />
-
               {/* Raccourcis de navigation */}
               <Card className="p-4">
                 <h3 className="font-semibold mb-3 text-sm text-muted-foreground">ACCÈS RAPIDE</h3>
@@ -692,7 +690,10 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="reports">
-            <EmailReports statsData={stats} />
+            <div className="space-y-6">
+              <AutomatedReports />
+              <EmailReports statsData={stats} />
+            </div>
           </TabsContent>
           
           <TabsContent value="settings">
