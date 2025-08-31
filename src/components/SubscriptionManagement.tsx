@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import PromoCodeManagement from './PromoCodeManagement';
 import PromoCodeRedemption from './PromoCodeRedemption';
+import { useAuth } from '@/hooks/useAuth';
 
 const SubscriptionManagement = () => {
   const { 
@@ -19,6 +20,9 @@ const SubscriptionManagement = () => {
     createCheckoutSession, 
     openCustomerPortal 
   } = useSubscription();
+  
+  const { user } = useAuth();
+  const canManagePromoCodes = user?.email === 'dylan.cecius@gmail.com';
 
   const plans = [
     {
@@ -84,9 +88,9 @@ const SubscriptionManagement = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="subscription" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${canManagePromoCodes ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="subscription">Abonnements</TabsTrigger>
-          <TabsTrigger value="promo-codes">Codes promo</TabsTrigger>
+          {canManagePromoCodes && <TabsTrigger value="promo-codes">Codes promo</TabsTrigger>}
           <TabsTrigger value="redeem">Utiliser un code</TabsTrigger>
         </TabsList>
 
@@ -227,9 +231,11 @@ const SubscriptionManagement = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="promo-codes">
-          <PromoCodeManagement />
-        </TabsContent>
+        {canManagePromoCodes && (
+          <TabsContent value="promo-codes">
+            <PromoCodeManagement />
+          </TabsContent>
+        )}
 
         <TabsContent value="redeem">
           <PromoCodeRedemption onSuccess={checkSubscription} />
