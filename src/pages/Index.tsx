@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
+import { useCombinedStats } from '@/hooks/useCombinedStats';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -80,9 +81,9 @@ const Index = () => {
     categories
   } = useSupabaseServices();
   const {
-    addTransaction,
-    getStats
+    addTransaction
   } = useSupabaseTransactions();
+  const { stats } = useCombinedStats();
   const {
     subscribed,
     subscription_tier,
@@ -114,8 +115,6 @@ const Index = () => {
     return null;
   }
 
-  // Get real stats from transactions
-  const stats = getStats();
 
   // Secure password verification functions
   const verifyStatsPassword = async (inputPassword: string): Promise<boolean> => {
