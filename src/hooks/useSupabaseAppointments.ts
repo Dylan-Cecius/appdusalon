@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { mockAppointments, Appointment } from '@/data/appointments';
+import { Appointment } from '@/data/appointments';
 
 export const useSupabaseAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -11,8 +11,8 @@ export const useSupabaseAppointments = () => {
   const fetchAppointments = async () => {
     try {
       if (!isSupabaseConfigured) {
-        // Use mock data when Supabase is not configured
-        setAppointments(mockAppointments);
+        // Use empty array when Supabase is not configured
+        setAppointments([]);
         setLoading(false);
         return;
       }
@@ -64,8 +64,8 @@ export const useSupabaseAppointments = () => {
       setAppointments(formattedAppointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      // Fallback to mock data
-      setAppointments(mockAppointments);
+      // Use empty array instead of mock data
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -75,10 +75,9 @@ export const useSupabaseAppointments = () => {
   const getClientDetails = async (appointmentId: string) => {
     try {
       if (!isSupabaseConfigured) {
-        const appointment = mockAppointments.find(apt => apt.id === appointmentId);
         return {
-          clientName: appointment?.clientName || 'Client',
-          clientPhone: appointment?.clientPhone || '***-***-****'
+          clientName: 'Client',
+          clientPhone: '***-***-****'
         };
       }
 
