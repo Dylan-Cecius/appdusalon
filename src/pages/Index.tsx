@@ -623,7 +623,10 @@ const Index = () => {
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <PaymentMethodStats paymentStats={stats.paymentStats} />
-                <FeatureGate requiredFeature="canAccessAdvancedStats">
+                <FeatureGate 
+                  requiredFeature="canAccessAdvancedStats"
+                  onUpgrade={() => setCurrentView('subscription')}
+                >
                   <ClientRetentionStats />
                 </FeatureGate>
               </div>
@@ -632,34 +635,52 @@ const Index = () => {
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <CustomDateRangeStats />
-                <FeatureGate requiredFeature="canAccessAdvancedStats">
+                <FeatureGate 
+                  requiredFeature="canAccessAdvancedStats"
+                  onUpgrade={() => setCurrentView('subscription')}
+                >
                   <CancellationRateStats />
                 </FeatureGate>
               </div>
               
-              <FeatureGate requiredFeature="canAccessAdvancedStats">
+              <FeatureGate 
+                requiredFeature="canAccessAdvancedStats"
+                onUpgrade={() => setCurrentView('subscription')}
+              >
                 <div id="client-loyalty">
                   <ClientLoyaltyStats />
                 </div>
               </FeatureGate>
               
-              <FeatureGate requiredFeature="canAccessAdvancedStats">
+              <FeatureGate 
+                requiredFeature="canAccessAdvancedStats"
+                onUpgrade={() => setCurrentView('subscription')}
+              >
                 <div id="barber-performance">
                   <BarberPerformanceStats />
                 </div>
               </FeatureGate>
               
-              <FeatureGate requiredFeature="canAccessAdvancedStats">
+              <FeatureGate 
+                requiredFeature="canAccessAdvancedStats"
+                onUpgrade={() => setCurrentView('subscription')}
+              >
                 <div id="peak-hours">
                   <PeakHoursStats />
                 </div>
               </FeatureGate>
               
-              <FeatureGate requiredFeature="canAccessAdvancedStats">
+              <FeatureGate 
+                requiredFeature="canAccessAdvancedStats"
+                onUpgrade={() => setCurrentView('subscription')}
+              >
                 <ServiceProfitabilityStats />
               </FeatureGate>
               
-              <FeatureGate requiredFeature="canAccessAdvancedStats">
+              <FeatureGate 
+                requiredFeature="canAccessAdvancedStats"
+                onUpgrade={() => setCurrentView('subscription')}
+              >
                 <div id="occupancy-rate">
                   <OccupancyRateStats />
                 </div>
