@@ -28,7 +28,6 @@ import { ClientRetentionStats } from '@/components/stats/ClientRetentionStats';
 import { BarberPerformanceStats } from '@/components/stats/BarberPerformanceStats';
 import { PeakHoursStats } from '@/components/stats/PeakHoursStats';
 import { CancellationRateStats } from '@/components/stats/CancellationRateStats';
-import { ServiceProfitabilityStats } from '@/components/stats/ServiceProfitabilityStats';
 import { OccupancyRateStats } from '@/components/stats/OccupancyRateStats';
 import Settings from '@/components/Settings';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
@@ -579,8 +578,6 @@ const Index = () => {
               <BarberPerformanceStats />
               
               <PeakHoursStats />
-              
-              <ServiceProfitabilityStats />
               
               <OccupancyRateStats />
             </div>
