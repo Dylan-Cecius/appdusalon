@@ -13,6 +13,7 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY: Use service role key but validate salon ownership
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -22,6 +23,8 @@ serve(async (req) => {
     const date = url.searchParams.get('date');
     const barberId = url.searchParams.get('barberId');
     const serviceDuration = parseInt(url.searchParams.get('serviceDuration') || '30');
+    // SECURITY: Require salon owner identification
+    const salonOwnerId = url.searchParams.get('salonOwnerId');
 
     if (!date) {
       return new Response(
@@ -33,14 +36,30 @@ serve(async (req) => {
       );
     }
 
+    if (!salonOwnerId) {
+      return new Response(
+        JSON.stringify({ error: 'Salon owner ID is required for security' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const targetDate = new Date(date);
     const dayName = targetDate.toLocaleDateString('en-US', { weekday: 'long' });
 
-    // Get barbers (filter by barberId if provided)
-    let barbersQuery = supabase.from('barbers').select('*').eq('is_active', true);
+    // SECURITY: Only get barbers owned by the specified salon owner
+    let barbersQuery = supabase
+      .from('barbers')
+      .select('*')
+      .eq('is_active', true)
+      .eq('user_id', salonOwnerId); // CRITICAL: Filter by salon owner
+    
     if (barberId) {
       barbersQuery = barbersQuery.eq('id', barberId);
     }
+    
     const { data: barbers, error: barbersError } = await barbersQuery;
 
     if (barbersError) {
@@ -68,26 +87,30 @@ serve(async (req) => {
       const endOfDay = new Date(targetDate);
       endOfDay.setHours(23, 59, 59, 999);
 
+      // SECURITY: Only get appointments for this barber from this specific salon
       const { data: appointments } = await supabase
         .from('appointments')
         .select('start_time, end_time')
         .eq('barber_id', barber.id)
+        .eq('user_id', salonOwnerId) // CRITICAL: Additional safety check
         .gte('start_time', startOfDay.toISOString())
         .lte('start_time', endOfDay.toISOString())
         .neq('status', 'cancelled');
 
-      // Get lunch breaks
+      // Get lunch breaks - already filtered by barber ownership
       const { data: lunchBreaks } = await supabase
         .from('lunch_breaks')
         .select('start_time, end_time')
         .eq('barber_id', barber.id)
+        .eq('user_id', salonOwnerId) // CRITICAL: Additional safety check
         .eq('is_active', true);
 
-      // Get custom blocks for this date
+      // Get custom blocks for this date - already filtered by barber ownership
       const { data: customBlocks } = await supabase
         .from('custom_blocks')
         .select('start_time, end_time')
         .eq('barber_id', barber.id)
+        .eq('user_id', salonOwnerId) // CRITICAL: Additional safety check
         .eq('block_date', targetDate.toISOString().split('T')[0]);
 
       // Generate time slots

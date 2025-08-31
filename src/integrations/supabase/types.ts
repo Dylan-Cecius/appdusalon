@@ -421,9 +421,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_barber_owner: {
+        Args: { target_barber_id: string }
+        Returns: string
+      }
       hash_password: {
         Args: { password_text: string }
         Returns: string
+      }
+      user_owns_barber: {
+        Args: { target_barber_id: string; target_user_id?: string }
+        Returns: boolean
       }
       verify_password: {
         Args: { password_hash: string; password_text: string }
