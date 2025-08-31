@@ -36,6 +36,7 @@ import TransactionsManager from '@/components/TransactionsManager';
 import SubscriptionManagement from '@/components/SubscriptionManagement';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
 import { SubscriptionRightsDisplay } from '@/components/SubscriptionRightsDisplay';
+import { FeatureGate } from '@/components/FeatureGate';
 import SecurityAlert from '@/components/SecurityAlert';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -622,33 +623,47 @@ const Index = () => {
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <PaymentMethodStats paymentStats={stats.paymentStats} />
-                <ClientRetentionStats />
+                <FeatureGate requiredFeature="canAccessAdvancedStats">
+                  <ClientRetentionStats />
+                </FeatureGate>
               </div>
               
               <RevenueChart />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <CustomDateRangeStats />
-                <CancellationRateStats />
+                <FeatureGate requiredFeature="canAccessAdvancedStats">
+                  <CancellationRateStats />
+                </FeatureGate>
               </div>
               
-              <div id="client-loyalty">
-                <ClientLoyaltyStats />
-              </div>
+              <FeatureGate requiredFeature="canAccessAdvancedStats">
+                <div id="client-loyalty">
+                  <ClientLoyaltyStats />
+                </div>
+              </FeatureGate>
               
-              <div id="barber-performance">
-                <BarberPerformanceStats />
-              </div>
+              <FeatureGate requiredFeature="canAccessAdvancedStats">
+                <div id="barber-performance">
+                  <BarberPerformanceStats />
+                </div>
+              </FeatureGate>
               
-              <div id="peak-hours">
-                <PeakHoursStats />
-              </div>
+              <FeatureGate requiredFeature="canAccessAdvancedStats">
+                <div id="peak-hours">
+                  <PeakHoursStats />
+                </div>
+              </FeatureGate>
               
-              <ServiceProfitabilityStats />
+              <FeatureGate requiredFeature="canAccessAdvancedStats">
+                <ServiceProfitabilityStats />
+              </FeatureGate>
               
-              <div id="occupancy-rate">
-                <OccupancyRateStats />
-              </div>
+              <FeatureGate requiredFeature="canAccessAdvancedStats">
+                <div id="occupancy-rate">
+                  <OccupancyRateStats />
+                </div>
+              </FeatureGate>
             </div>
           </TabsContent>
 
