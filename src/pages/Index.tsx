@@ -577,6 +577,14 @@ const Index = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
+                    onClick={() => document.getElementById('custom-date-range')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                  >
+                    CA période personnalisée
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
                     onClick={() => document.getElementById('client-loyalty')?.scrollIntoView({ behavior: 'smooth' })}
                     className="text-xs"
                   >
@@ -634,7 +642,9 @@ const Index = () => {
               <RevenueChart />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <CustomDateRangeStats />
+                <div id="custom-date-range">
+                  <CustomDateRangeStats />
+                </div>
                 <FeatureGate 
                   requiredFeature="canAccessAdvancedStats"
                   onUpgrade={() => setCurrentView('subscription')}
