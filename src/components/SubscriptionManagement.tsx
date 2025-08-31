@@ -48,8 +48,8 @@ const SubscriptionManagement = () => {
     },
     {
       id: 'enterprise',
-      name: 'Enterprise',
-      price: '79€',
+      name: 'Abonnement à vie',
+      price: '468€',
       icon: <Building2 className="h-6 w-6" />,
       features: [
         'Tout du Pro',
@@ -165,7 +165,9 @@ const SubscriptionManagement = () => {
                 <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                 <div className="text-3xl font-bold text-primary mb-1">
                   {plan.price}
-                  <span className="text-sm font-normal text-muted-foreground">/mois</span>
+                  {plan.id !== 'enterprise' && (
+                    <span className="text-sm font-normal text-muted-foreground">/mois</span>
+                  )}
                 </div>
               </div>
 
