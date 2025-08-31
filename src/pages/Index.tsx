@@ -24,7 +24,6 @@ import PaymentMethodStats from '@/components/PaymentMethodStats';
 import CustomDateRangeStats from '@/components/CustomDateRangeStats';
 import RevenueChart from '@/components/RevenueChart';
 import EmailReports from '@/components/EmailReports';
-import { ClientLoyaltyStats } from '@/components/stats/ClientLoyaltyStats';
 import { ClientRetentionStats } from '@/components/stats/ClientRetentionStats';
 import { BarberPerformanceStats } from '@/components/stats/BarberPerformanceStats';
 import { PeakHoursStats } from '@/components/stats/PeakHoursStats';
@@ -585,14 +584,6 @@ const Index = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => document.getElementById('client-loyalty')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="text-xs"
-                  >
-                    Fidélité clients
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
                     onClick={() => document.getElementById('barber-performance')?.scrollIntoView({ behavior: 'smooth' })}
                     className="text-xs"
                   >
@@ -652,15 +643,6 @@ const Index = () => {
                   <CancellationRateStats />
                 </FeatureGate>
               </div>
-              
-              <FeatureGate 
-                requiredFeature="canAccessAdvancedStats"
-                onUpgrade={() => setCurrentView('subscription')}
-              >
-                <div id="client-loyalty">
-                  <ClientLoyaltyStats />
-                </div>
-              </FeatureGate>
               
               <FeatureGate 
                 requiredFeature="canAccessAdvancedStats"

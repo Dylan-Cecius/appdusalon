@@ -8,14 +8,6 @@ import { useSupabaseSettings } from './useSupabaseSettings';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, endOfDay, format, parseISO, getHours, addDays, isSameDay, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-export interface ClientLoyaltyData {
-  clientName: string;
-  appointmentCount: number;
-  totalSpent: number;
-  lastVisit: Date;
-  averageSpending: number;
-}
-
 export interface ClientRetentionData {
   period: string;
   newClients: number;
@@ -66,71 +58,6 @@ export const useAdvancedStats = () => {
   const { lunchBreaks, isLunchBreakTime } = useSupabaseLunchBreaks();
   const { customBlocks } = useSupabaseCustomBlocks();
   const { barbers } = useSupabaseSettings();
-
-  const clientLoyaltyStats = useMemo((): ClientLoyaltyData[] => {
-    const clientMap = new Map<string, {
-      appointmentCount: number;
-      totalSpent: number;
-      lastVisit: Date;
-    }>();
-
-    // Utiliser les transactions pour les données financières réelles
-    transactions.forEach(transaction => {
-      if (transaction.items && Array.isArray(transaction.items)) {
-        transaction.items.forEach((item: any) => {
-          if (item.clientName && item.clientPhone) {
-            const clientKey = `${item.clientName}-${item.clientPhone}`;
-            const existing = clientMap.get(clientKey) || {
-              appointmentCount: 0,
-              totalSpent: 0,
-              lastVisit: new Date(0)
-            };
-
-            const transactionDate = new Date(transaction.transactionDate);
-
-            clientMap.set(clientKey, {
-              appointmentCount: existing.appointmentCount + 1,
-              totalSpent: existing.totalSpent + Number(transaction.totalAmount),
-              lastVisit: transactionDate > existing.lastVisit 
-                ? transactionDate 
-                : existing.lastVisit
-            });
-          }
-        });
-      }
-    });
-
-    // Si pas de données de transactions avec clients, fallback sur appointments
-    if (clientMap.size === 0) {
-      appointments.forEach(appointment => {
-        const clientKey = `${appointment.clientName}-${appointment.clientPhone}`;
-        const existing = clientMap.get(clientKey) || {
-          appointmentCount: 0,
-          totalSpent: 0,
-          lastVisit: new Date(0)
-        };
-
-        clientMap.set(clientKey, {
-          appointmentCount: existing.appointmentCount + 1,
-          totalSpent: existing.totalSpent + Number(appointment.totalPrice),
-          lastVisit: appointment.startTime > existing.lastVisit 
-            ? appointment.startTime 
-            : existing.lastVisit
-        });
-      });
-    }
-
-    return Array.from(clientMap.entries())
-      .map(([clientName, data]) => ({
-        clientName: clientName.split('-')[0],
-        appointmentCount: data.appointmentCount,
-        totalSpent: data.totalSpent,
-        lastVisit: data.lastVisit,
-        averageSpending: data.totalSpent / data.appointmentCount
-      }))
-      .sort((a, b) => b.totalSpent - a.totalSpent)
-      .slice(0, 10);
-  }, [appointments, transactions]);
 
   const clientRetentionStats = useMemo((): ClientRetentionData[] => {
     const now = new Date();
@@ -276,7 +203,10 @@ export const useAdvancedStats = () => {
         averageServiceTime: data.appointmentCount > 0 ? data.totalDuration / (data.appointmentCount * 60000) : 0, // en minutes
         clientSatisfaction: 85 + Math.random() * 15 // Simulation pour l'instant
       }))
-      .filter(barber => barber.appointmentCount > 0 || barber.revenue > 0) // Filtrer les coiffeurs sans activité
+      .filter(barber => 
+        (barber.appointmentCount > 0 || barber.revenue > 0) && 
+        barber.barberName !== 'Non assigné' // Filtrer "non assigné"
+      )
       .sort((a, b) => b.revenue - a.revenue);
   }, [appointments, transactions, barbers]);
 
@@ -521,7 +451,6 @@ export const useAdvancedStats = () => {
   }, [appointments, barbers, lunchBreaks, customBlocks, transactions]);
 
   return {
-    clientLoyaltyStats,
     clientRetentionStats,
     barberPerformanceStats,
     peakHoursStats,
