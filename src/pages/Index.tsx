@@ -28,6 +28,7 @@ import { ClientRetentionStats } from '@/components/stats/ClientRetentionStats';
 import { BarberPerformanceStats } from '@/components/stats/BarberPerformanceStats';
 import { PeakHoursStats } from '@/components/stats/PeakHoursStats';
 import { CancellationRateStats } from '@/components/stats/CancellationRateStats';
+import { ServiceProfitabilityStats } from '@/components/stats/ServiceProfitabilityStats';
 import { OccupancyRateStats } from '@/components/stats/OccupancyRateStats';
 import Settings from '@/components/Settings';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
@@ -558,8 +559,65 @@ const Index = () => {
                   Gérer les encaissements
                 </Button>
               </div>
+
+              {/* Raccourcis de navigation */}
+              <Card className="p-4">
+                <h3 className="font-semibold mb-3 text-sm text-muted-foreground">ACCÈS RAPIDE</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => document.getElementById('stats-overview')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-xs"
+                  >
+                    Vue d'ensemble
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => document.getElementById('client-loyalty')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-xs"
+                  >
+                    Fidélité clients
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => document.getElementById('barber-performance')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-xs"
+                  >
+                    Performance coiffeurs
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => document.getElementById('peak-hours')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-xs"
+                  >
+                    Heures de pointe
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => document.getElementById('service-profitability')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-xs"
+                  >
+                    Rentabilité services
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => document.getElementById('occupancy-rate')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-xs"
+                  >
+                    Taux d'occupation
+                  </Button>
+                </div>
+              </Card>
               
-              <StatsOverview stats={stats} />
+              <div id="stats-overview">
+                <StatsOverview stats={stats} />
+              </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <PaymentMethodStats paymentStats={stats.paymentStats} />
@@ -573,13 +631,23 @@ const Index = () => {
                 <CancellationRateStats />
               </div>
               
-              <ClientLoyaltyStats />
+              <div id="client-loyalty">
+                <ClientLoyaltyStats />
+              </div>
               
-              <BarberPerformanceStats />
+              <div id="barber-performance">
+                <BarberPerformanceStats />
+              </div>
               
-              <PeakHoursStats />
+              <div id="peak-hours">
+                <PeakHoursStats />
+              </div>
               
-              <OccupancyRateStats />
+              <ServiceProfitabilityStats />
+              
+              <div id="occupancy-rate">
+                <OccupancyRateStats />
+              </div>
             </div>
           </TabsContent>
 
