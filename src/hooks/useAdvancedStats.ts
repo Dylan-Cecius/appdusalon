@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { useSupabaseAppointments } from './useSupabaseAppointments';
 import { useSupabaseServices } from './useSupabaseServices';
 import { useSupabaseTransactions } from './useSupabaseTransactions';
-import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, endOfDay, format, parseISO, getHours, addDays, isSameDay } from 'date-fns';
+import { useSupabaseLunchBreaks } from './useSupabaseLunchBreaks';
+import { useSupabaseCustomBlocks } from './useSupabaseCustomBlocks';
+import { useSupabaseSettings } from './useSupabaseSettings';
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, endOfDay, format, parseISO, getHours, addDays, isSameDay, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export interface ClientLoyaltyData {
@@ -60,6 +63,9 @@ export const useAdvancedStats = () => {
   const { appointments } = useSupabaseAppointments();
   const { services } = useSupabaseServices();
   const { transactions } = useSupabaseTransactions();
+  const { lunchBreaks, isLunchBreakTime } = useSupabaseLunchBreaks();
+  const { customBlocks } = useSupabaseCustomBlocks();
+  const { barbers } = useSupabaseSettings();
 
   const clientLoyaltyStats = useMemo((): ClientLoyaltyData[] => {
     const clientMap = new Map<string, {
@@ -352,23 +358,100 @@ export const useAdvancedStats = () => {
     });
 
     return last7Days.map(date => {
+      const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][getDay(date)];
+      
+      // Calculer les créneaux disponibles réels pour ce jour
+      let totalAvailableSlots = 0;
+      
+      // Pour chaque coiffeur actif qui travaille ce jour
+      const activeBarbers = barbers.filter(barber => 
+        barber.is_active && 
+        barber.working_days && 
+        barber.working_days.includes(dayName)
+      );
+      
+      activeBarbers.forEach(barber => {
+        // Calculer les créneaux de 15 minutes entre start_time et end_time
+        const [startHour, startMinute] = barber.start_time.split(':').map(Number);
+        const [endHour, endMinute] = barber.end_time.split(':').map(Number);
+        
+        const startTime = startHour * 60 + startMinute;
+        const endTime = endHour * 60 + endMinute;
+        const totalMinutes = endTime - startTime;
+        let availableSlots = Math.floor(totalMinutes / 15); // Créneaux de 15 min
+        
+        // Soustraire les créneaux de pause déjeuner
+        const lunchBreak = lunchBreaks.find(lb => 
+          lb.barberId === barber.id && lb.isActive
+        );
+        
+        if (lunchBreak) {
+          const [lunchStartHour, lunchStartMinute] = lunchBreak.startTime.split(':').map(Number);
+          const [lunchEndHour, lunchEndMinute] = lunchBreak.endTime.split(':').map(Number);
+          
+          const lunchStartTime = lunchStartHour * 60 + lunchStartMinute;
+          const lunchEndTime = lunchEndHour * 60 + lunchEndMinute;
+          
+          // Si la pause déjeuner est dans les heures de travail
+          if (lunchStartTime >= startTime && lunchEndTime <= endTime) {
+            const lunchDuration = lunchEndTime - lunchStartTime;
+            availableSlots -= Math.floor(lunchDuration / 15);
+          }
+        }
+        
+        // Soustraire les créneaux bloqués personnalisés
+        const dayBlocks = customBlocks.filter(block => 
+          block.barberId === barber.id &&
+          isSameDay(block.blockDate, date) &&
+          block.type === 'unavailable'
+        );
+        
+        dayBlocks.forEach(block => {
+          const [blockStartHour, blockStartMinute] = block.startTime.split(':').map(Number);
+          const [blockEndHour, blockEndMinute] = block.endTime.split(':').map(Number);
+          
+          const blockStartTime = blockStartHour * 60 + blockStartMinute;
+          const blockEndTime = blockEndHour * 60 + blockEndMinute;
+          
+          // Si le bloc est dans les heures de travail
+          if (blockStartTime >= startTime && blockEndTime <= endTime) {
+            const blockDuration = blockEndTime - blockStartTime;
+            availableSlots -= Math.floor(blockDuration / 15);
+          }
+        });
+        
+        totalAvailableSlots += Math.max(0, availableSlots);
+      });
+      
+      // Compter les rendez-vous réels pour ce jour
       const dayAppointments = appointments.filter(apt => 
         isSameDay(apt.startTime, date)
       );
-
-      // Simulation de créneaux disponibles (10h-19h = 9h * 4 créneaux/heure = 36 créneaux par jour)
-      const totalSlots = 36;
-      const bookedSlots = dayAppointments.length;
-      const occupancyRate = totalSlots > 0 ? (bookedSlots / totalSlots) * 100 : 0;
+      
+      // Calculer les créneaux occupés (en considérant la durée réelle)
+      let bookedSlots = 0;
+      dayAppointments.forEach(apt => {
+        const duration = apt.endTime.getTime() - apt.startTime.getTime();
+        const durationInMinutes = Math.ceil(duration / (1000 * 60));
+        bookedSlots += Math.ceil(durationInMinutes / 15); // Arrondir au créneau de 15min supérieur
+      });
+      
+      // Fallback si pas de coiffeurs configurés
+      if (totalAvailableSlots === 0) {
+        totalAvailableSlots = 36; // 9h * 4 créneaux/heure comme avant
+        bookedSlots = dayAppointments.length;
+      }
+      
+      const occupancyRate = totalAvailableSlots > 0 ? (bookedSlots / totalAvailableSlots) * 100 : 0;
 
       return {
         date: format(date, 'dd/MM', { locale: fr }),
-        occupancyRate,
-        totalSlots,
+        occupancyRate: Math.min(occupancyRate, 100), // Cap à 100%
+        totalSlots: totalAvailableSlots,
         bookedSlots
       };
     });
-  }, [appointments]);
+  }, [appointments, barbers, lunchBreaks, customBlocks]);
 
   return {
     clientLoyaltyStats,
