@@ -58,7 +58,7 @@ const SubscriptionManagement = () => {
         'Support dédié',
         'Formation personnalisée'
       ],
-      color: 'from-gold-500 to-yellow-600'
+      color: 'from-slate-600 to-slate-800'
     }
   ];
 
@@ -140,7 +140,7 @@ const SubscriptionManagement = () => {
           return (
             <Card 
               key={plan.id} 
-              className={`relative p-6 ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}
+              className={`relative p-6 flex flex-col h-full ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -169,7 +169,7 @@ const SubscriptionManagement = () => {
                 </div>
               </div>
 
-              <ul className="space-y-3 mb-6">
+              <ul className="space-y-3 mb-6 flex-grow">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -181,7 +181,11 @@ const SubscriptionManagement = () => {
               <Button
                 onClick={() => createCheckoutSession(plan.id as 'starter' | 'pro' | 'enterprise')}
                 disabled={isCurrentPlan}
-                className={`w-full ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : ''} bg-gradient-to-r ${plan.color} hover:opacity-90`}
+                className={`w-full ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : ''} ${
+                  plan.id === 'enterprise' 
+                    ? 'bg-slate-700 hover:bg-slate-800 text-white' 
+                    : `bg-gradient-to-r ${plan.color} hover:opacity-90`
+                }`}
               >
                 {isCurrentPlan ? 'Plan Actuel' : `Choisir ${plan.name}`}
               </Button>
