@@ -472,18 +472,41 @@ export const useAdvancedStats = () => {
         isSameDay(apt.startTime, date)
       );
       
-      // Calculer les créneaux occupés (en considérant la durée réelle)
+      // Compter les transactions (encaissements) pour ce jour
+      const dayTransactions = transactions.filter(tx => 
+        isSameDay(new Date(tx.transactionDate), date)
+      );
+      
+      // Calculer les créneaux occupés (rendez-vous + transactions)
       let bookedSlots = 0;
+      
+      // Créneaux des rendez-vous (en considérant la durée réelle)
       dayAppointments.forEach(apt => {
         const duration = apt.endTime.getTime() - apt.startTime.getTime();
         const durationInMinutes = Math.ceil(duration / (1000 * 60));
         bookedSlots += Math.ceil(durationInMinutes / 15); // Arrondir au créneau de 15min supérieur
       });
       
+      // Créneaux des transactions (estimer 30min par transaction en moyenne)
+      dayTransactions.forEach(tx => {
+        // Estimer la durée selon le nombre d'items/services
+        let estimatedDuration = 30; // 30min par défaut
+        
+        if (tx.items && Array.isArray(tx.items)) {
+          // Calculer la durée selon les services dans la transaction
+          const serviceCount = tx.items.filter((item: any) => 
+            item.category !== 'product' && item.type !== 'product'
+          ).length;
+          estimatedDuration = Math.max(15, serviceCount * 20); // 20min par service, minimum 15min
+        }
+        
+        bookedSlots += Math.ceil(estimatedDuration / 15); // Convertir en créneaux de 15min
+      });
+      
       // Fallback si pas de coiffeurs configurés
       if (totalAvailableSlots === 0) {
         totalAvailableSlots = 36; // 9h * 4 créneaux/heure comme avant
-        bookedSlots = dayAppointments.length;
+        bookedSlots = dayAppointments.length + dayTransactions.length;
       }
       
       const occupancyRate = totalAvailableSlots > 0 ? (bookedSlots / totalAvailableSlots) * 100 : 0;
@@ -495,7 +518,7 @@ export const useAdvancedStats = () => {
         bookedSlots
       };
     });
-  }, [appointments, barbers, lunchBreaks, customBlocks]);
+  }, [appointments, barbers, lunchBreaks, customBlocks, transactions]);
 
   return {
     clientLoyaltyStats,

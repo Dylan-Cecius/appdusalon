@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Scissors, Euro, Clock, Star } from "lucide-react";
+import { Scissors, Euro, Clock } from "lucide-react";
 import { useAdvancedStats } from "@/hooks/useAdvancedStats";
 
 export const BarberPerformanceStats = () => {
@@ -29,13 +29,6 @@ export const BarberPerformanceStats = () => {
     if (avgRevenue >= 30) return { label: "Très bien", color: "bg-gradient-to-r from-blue-500 to-blue-600" };
     if (avgRevenue >= 20) return { label: "Bien", color: "bg-gradient-to-r from-orange-500 to-orange-600" };
     return { label: "En progression", color: "bg-gradient-to-r from-gray-500 to-gray-600" };
-  };
-
-  const getSatisfactionColor = (score: number) => {
-    if (score >= 90) return "text-green-600";
-    if (score >= 80) return "text-blue-600";
-    if (score >= 70) return "text-orange-600";
-    return "text-red-600";
   };
 
   return (
@@ -83,7 +76,7 @@ export const BarberPerformanceStats = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center gap-2">
                       <div className="p-2 rounded-lg bg-primary/10">
                         <Scissors className="h-4 w-4 text-primary" />
@@ -103,26 +96,6 @@ export const BarberPerformanceStats = () => {
                         <p className="text-xs text-muted-foreground">Temps moyen</p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-yellow-500/10">
-                        <Star className="h-4 w-4 text-yellow-600" />
-                      </div>
-                      <div>
-                        <p className={`text-lg font-semibold ${getSatisfactionColor(barber.clientSatisfaction)}`}>
-                          {barber.clientSatisfaction.toFixed(1)}%
-                        </p>
-                        <p className="text-xs text-muted-foreground">Satisfaction</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-3 pt-3 border-t border-border/50">
-                    <p className="text-sm text-muted-foreground">
-                      Moyenne par RDV: <span className="font-medium text-foreground">
-                        {formatCurrency(barber.revenue / Math.max(barber.appointmentCount, 1))}
-                      </span>
-                    </p>
                   </div>
                 </div>
               );
