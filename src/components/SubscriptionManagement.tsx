@@ -52,11 +52,12 @@ const SubscriptionManagement = () => {
       price: '468€',
       icon: <Building2 className="h-6 w-6" />,
       features: [
-        'Tout du Pro',
-        'API complète',
-        'Intégrations tierces',
-        'Support dédié',
-        'Formation personnalisée'
+        'Abonnement PRO à vie',
+        'Multi-salons',
+        'Rapports avancés',
+        'Email automatique',
+        'Gestion des stocks',
+        'Support prioritaire'
       ],
       color: 'from-slate-600 to-slate-800'
     }
