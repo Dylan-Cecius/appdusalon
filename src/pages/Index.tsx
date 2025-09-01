@@ -430,6 +430,12 @@ const Index = () => {
                     <ShoppingCart className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                     <span className="text-xs">{cartItems.length}</span>
                   </Button>}
+                {user?.email === 'dylan.cecius@gmail.com' && (
+                  <Button variant="outline" size="sm" onClick={() => navigate('/admin')} className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
+                    <User className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
+                    {!isMobile && "Admin"}
+                  </Button>
+                )}
                 {!isMobile && <div className="text-right">
                     <p className="text-sm text-muted-foreground">Connecté en tant que:</p>
                     <p className="text-sm font-medium">{user.email}</p>
