@@ -309,19 +309,84 @@ export const useSupabaseTransactions = () => {
   useEffect(() => {
     fetchTransactions();
 
-    // Subscribe to real-time changes
-    const subscription = supabase
-      .channel('transactions')
+    if (!isSupabaseConfigured) return;
+
+    // Subscribe to real-time changes with optimized handlers
+    const channel = supabase
+      .channel('transactions-realtime')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'transactions' },
-        () => {
-          fetchTransactions();
+        { event: 'INSERT', schema: 'public', table: 'transactions' },
+        (payload) => {
+          console.log('New transaction added:', payload);
+          const newRecord = payload.new as any;
+          const newTransaction: Transaction = {
+            id: newRecord.id,
+            items: newRecord.items,
+            totalAmount: newRecord.total_amount,
+            paymentMethod: newRecord.payment_method as 'cash' | 'card',
+            transactionDate: new Date(newRecord.transaction_date)
+          };
+          
+          // Only add if the transaction belongs to the current user
+          supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user && newRecord.user_id === user.id) {
+              setTransactions(prev => {
+                // Check if transaction already exists to avoid duplicates
+                if (prev.some(tx => tx.id === newTransaction.id)) {
+                  return prev;
+                }
+                return [newTransaction, ...prev];
+              });
+              
+              toast({
+                title: "Nouvelle transaction",
+                description: `Encaissement de ${newTransaction.totalAmount}€ enregistré`,
+              });
+            }
+          });
         }
       )
-      .subscribe();
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'transactions' },
+        (payload) => {
+          console.log('Transaction updated:', payload);
+          const updatedRecord = payload.new as any;
+          const updatedTransaction: Transaction = {
+            id: updatedRecord.id,
+            items: updatedRecord.items,
+            totalAmount: updatedRecord.total_amount,
+            paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
+            transactionDate: new Date(updatedRecord.transaction_date)
+          };
+          
+          supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user && updatedRecord.user_id === user.id) {
+              setTransactions(prev => 
+                prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
+              );
+            }
+          });
+        }
+      )
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'transactions' },
+        (payload) => {
+          console.log('Transaction deleted:', payload);
+          const deletedRecord = payload.old as any;
+          
+          supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user && deletedRecord.user_id === user.id) {
+              setTransactions(prev => prev.filter(tx => tx.id !== deletedRecord.id));
+            }
+          });
+        }
+      )
+      .subscribe((status) => {
+        console.log('Transactions realtime status:', status);
+      });
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 
