@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export interface Transaction {
   id: string;
@@ -49,7 +50,7 @@ export const useSupabaseTransactions = () => {
         items: tx.items as any,
         totalAmount: tx.total_amount,
         paymentMethod: tx.payment_method as 'cash' | 'card',
-        transactionDate: new Date(tx.transaction_date)
+        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Paris')
       })) || [];
 
       setTransactions(formattedTransactions);
@@ -70,7 +71,7 @@ export const useSupabaseTransactions = () => {
         const newTransaction: Transaction = {
           ...transaction,
           id: Date.now().toString(),
-          transactionDate: new Date()
+          transactionDate: toZonedTime(new Date(), 'Europe/Paris')
         };
         setTransactions(prev => [newTransaction, ...prev]);
         toast({
@@ -90,13 +91,17 @@ export const useSupabaseTransactions = () => {
         return;
       }
 
+      // Convert current time to UTC for database storage
+      const currentTimeUTC = fromZonedTime(new Date(), 'Europe/Paris');
+      
       const { data, error } = await supabase
         .from('transactions' as any)
         .insert({
           items: transaction.items as any,
           total_amount: transaction.totalAmount,
           payment_method: transaction.paymentMethod,
-          user_id: user.id
+          user_id: user.id,
+          transaction_date: currentTimeUTC.toISOString()
         })
         .select()
         .single();
@@ -108,7 +113,7 @@ export const useSupabaseTransactions = () => {
         items: (data as any).items as any,
         totalAmount: (data as any).total_amount,
         paymentMethod: (data as any).payment_method as 'cash' | 'card',
-        transactionDate: new Date((data as any).transaction_date)
+        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris')
       };
 
       setTransactions(prev => [newTransaction, ...prev]);
@@ -324,7 +329,7 @@ export const useSupabaseTransactions = () => {
             items: newRecord.items,
             totalAmount: newRecord.total_amount,
             paymentMethod: newRecord.payment_method as 'cash' | 'card',
-            transactionDate: new Date(newRecord.transaction_date)
+            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Paris')
           };
           
           // Only add if the transaction belongs to the current user
@@ -356,7 +361,7 @@ export const useSupabaseTransactions = () => {
             items: updatedRecord.items,
             totalAmount: updatedRecord.total_amount,
             paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
-            transactionDate: new Date(updatedRecord.transaction_date)
+            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Paris')
           };
           
           supabase.auth.getUser().then(({ data: { user } }) => {
