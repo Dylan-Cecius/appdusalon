@@ -1,8 +1,18 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useLocation, Link } from "react-router-dom";
+import { useEffect, lazy, Suspense } from "react";
 
 const NotFound = () => {
   const location = useLocation();
+
+  // Fallback: if a known route is hit before router picks it up, render it here
+  if (location.pathname === "/historique" || location.pathname === "/encaissements") {
+    const TransactionHistory = lazy(() => import("@/pages/TransactionHistory"));
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement…</div>}>
+        <TransactionHistory />
+      </Suspense>
+    );
+  }
 
   useEffect(() => {
     console.error(
@@ -16,9 +26,9 @@ const NotFound = () => {
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">404</h1>
         <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
+        <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
           Return to Home
-        </a>
+        </Link>
       </div>
     </div>
   );
