@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, DollarSign, Mail, Crown } from 'lucide-react';
+import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, DollarSign, Mail, Crown, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -430,6 +430,15 @@ const Index = () => {
                     <ShoppingCart className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                     <span className="text-xs">{cartItems.length}</span>
                   </Button>}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/historique')} 
+                  className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
+                >
+                  <History className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
+                  {!isMobile && "Historique"}
+                </Button>
                 {user?.email === 'dylan.cecius@gmail.com' && (
                   <Button variant="outline" size="sm" onClick={() => navigate('/admin')} className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200">
                     <User className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
