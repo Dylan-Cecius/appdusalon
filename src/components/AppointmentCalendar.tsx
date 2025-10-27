@@ -64,14 +64,17 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
     const endHour = appointment.endTime.getHours();
     const endMinute = appointment.endTime.getMinutes();
     
-    // Position relative à 10h, en créneaux de 15min
+    // Calculer en minutes totales pour plus de précision
+    const startTimeInMinutes = startHour * 60 + startMinute;
+    const endTimeInMinutes = endHour * 60 + endMinute;
+    const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
+    
+    // Position du début (relatif à 10h)
     const startSlot = (startHour - 10) * 4 + Math.floor(startMinute / 15);
-    const endSlot = (endHour - 10) * 4 + Math.ceil(endMinute / 15);
-    const duration = endSlot - startSlot;
     
     return { 
       top: startSlot * 20, // 20px par créneau de 15min
-      height: Math.max(duration * 20, 40) // Minimum 40px
+      height: Math.max((durationInMinutes / 15) * 20, 40) // Hauteur basée sur durée réelle en minutes
     };
   };
 
