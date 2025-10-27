@@ -58,11 +58,30 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
 
   const timeSlots = generateTimeSlots();
 
+  // Safeguard: derive endTime from services if stored endTime seems too short
+  const getDerivedEndTime = (appointment: any) => {
+    try {
+      const services = appointment.services || [];
+      const serviceDuration = services.reduce((sum: number, s: any) => sum + (Number(s?.duration) || 0), 0);
+      const storedDuration = (appointment.endTime.getTime() - appointment.startTime.getTime()) / 60000;
+      if (serviceDuration > 0 && storedDuration < serviceDuration - 1) {
+        const end = new Date(appointment.startTime);
+        end.setMinutes(end.getMinutes() + serviceDuration);
+        return end;
+      }
+      return appointment.endTime;
+    } catch (e) {
+      return appointment.endTime;
+    }
+  };
+
+
   const getAppointmentPosition = (appointment: any) => {
     const startHour = appointment.startTime.getHours();
     const startMinute = appointment.startTime.getMinutes();
-    const endHour = appointment.endTime.getHours();
-    const endMinute = appointment.endTime.getMinutes();
+    const derivedEnd = getDerivedEndTime(appointment);
+    const endHour = derivedEnd.getHours();
+    const endMinute = derivedEnd.getMinutes();
     
     // Calculer en minutes totales pour plus de précision
     const startTimeInMinutes = startHour * 60 + startMinute;
@@ -204,7 +223,7 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
                             
                             {/* Ligne 2: Horaire */}
                             <div className="text-sm font-medium mb-2">
-                              {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')}
+                              {format(appointment.startTime, 'HH:mm')} - {format(getDerivedEndTime(appointment), 'HH:mm')}
                             </div>
                             
                             {/* Ligne 3: Prix + Boutons */}
