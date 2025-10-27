@@ -90,12 +90,14 @@ const BlockCalendar = () => {
     setIsEditAppointmentModalOpen(true);
   };
 
-  // Get time slots for the day (10h-19h) with 30-minute intervals
+  // Get time slots for the day (10h-19h) with 15-minute intervals
   const getTimeSlots = () => {
     const slots = [];
     for (let hour = 10; hour < 19; hour++) {
       slots.push(`${hour}:00`);
+      slots.push(`${hour}:15`);
       slots.push(`${hour}:30`);
+      slots.push(`${hour}:45`);
     }
     slots.push('19:00'); // Fermeture
     return slots;
@@ -141,14 +143,14 @@ const BlockCalendar = () => {
   const getAppointmentsForSlot = (date: Date, timeSlot: string, barberId: string) => {
     const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
     const slotTimeInMinutes = slotHour * 60 + slotMinute;
-    const nextSlotTimeInMinutes = slotTimeInMinutes + 30;
+    const nextSlotTimeInMinutes = slotTimeInMinutes + 15;
     
     return getAppointmentsForDateAndBarber(date, barberId).filter(apt => {
       const aptHour = apt.startTime.getHours();
       const aptMinute = apt.startTime.getMinutes();
       const aptTimeInMinutes = aptHour * 60 + aptMinute;
       
-      // Show appointment if it starts within this 30-minute slot
+      // Show appointment if it starts within this 15-minute slot
       return aptTimeInMinutes >= slotTimeInMinutes && aptTimeInMinutes < nextSlotTimeInMinutes;
     });
   };

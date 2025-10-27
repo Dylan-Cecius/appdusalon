@@ -43,12 +43,14 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
     });
   };
 
-  // Generate time slots for the day (10h-19h) with half-hour intervals
+  // Generate time slots for the day (10h-19h) with 15-minute intervals
   const generateTimeSlots = () => {
     const slots = [];
     for (let hour = 10; hour < 19; hour++) {
       slots.push({ hour, minute: 0 }); // :00
+      slots.push({ hour, minute: 15 }); // :15
       slots.push({ hour, minute: 30 }); // :30
+      slots.push({ hour, minute: 45 }); // :45
     }
     slots.push({ hour: 19, minute: 0 }); // End at 19:00
     return slots;
@@ -62,14 +64,14 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
     const endHour = appointment.endTime.getHours();
     const endMinute = appointment.endTime.getMinutes();
     
-    // Position relative à 10h, en créneaux de 30min
-    const startSlot = (startHour - 10) * 2 + Math.floor(startMinute / 30);
-    const endSlot = (endHour - 10) * 2 + Math.floor(endMinute / 30);
+    // Position relative à 10h, en créneaux de 15min
+    const startSlot = (startHour - 10) * 4 + Math.floor(startMinute / 15);
+    const endSlot = (endHour - 10) * 4 + Math.ceil(endMinute / 15);
     const duration = endSlot - startSlot;
     
     return { 
-      top: startSlot * 40, // 40px par créneau de 30min
-      height: Math.max(duration * 40, 60) // Minimum 60px (plus grand)
+      top: startSlot * 20, // 20px par créneau de 15min
+      height: Math.max(duration * 20, 40) // Minimum 40px
     };
   };
 
@@ -136,11 +138,11 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
               {/* Time slots */}
               {timeSlots.map((slot, index) => (
                 <div key={`${slot.hour}-${slot.minute}`} className={cn(
-                  "grid grid-cols-12 border-b border-muted/20 min-h-[40px]",
+                  "grid grid-cols-12 border-b border-muted/20 min-h-[20px]",
                   slot.minute === 0 ? "border-b-2" : "border-b border-dashed"
                 )}>
-                  <div className="col-span-2 p-2 bg-muted/5 border-r border-muted/20">
-                    <div className="text-sm font-medium">
+                  <div className="col-span-2 p-1 bg-muted/5 border-r border-muted/20">
+                    <div className="text-xs font-medium">
                       {slot.hour.toString().padStart(2, '0')}:{slot.minute.toString().padStart(2, '0')}
                     </div>
                   </div>
