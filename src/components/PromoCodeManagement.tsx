@@ -46,10 +46,10 @@ const PromoCodeManagement = () => {
     if (!user) return;
     
     try {
+      // Seul Dylan peut voir tous les codes promo grâce aux RLS policies
       const { data, error } = await supabase
         .from('promo_codes')
         .select('*')
-        .eq('created_by', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
