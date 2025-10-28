@@ -79,16 +79,17 @@ const PromoCodeManagement = () => {
     if (!user || !newCode.code.trim()) return;
     
     try {
-      const { error } = await supabase
-        .from('promo_codes')
-        .insert({
+      const { data, error } = await supabase.functions.invoke('create-promo-code', {
+        body: {
           code: newCode.code.toUpperCase(),
           type: newCode.type,
           description: newCode.description,
           max_uses: newCode.max_uses || null,
           expires_at: newCode.expires_at || null,
-          created_by: user.id
-        });
+        },
+      });
+      if (error) throw error as any;
+      if ((data as any)?.error) throw new Error((data as any).error);
       
       if (error) throw error;
       
@@ -109,16 +110,24 @@ const PromoCodeManagement = () => {
       fetchPromoCodes();
     } catch (error: any) {
       console.error('Error creating promo code:', error);
+      const rawMsg = error?.message?.toString?.() || String(error);
+      let friendly = "Impossible de créer le code promo";
+
+      if (/row-level security|permission denied|not authorized|forbidden/i.test(rawMsg)) {
+        friendly = "Accès refusé: seul le compte autorisé peut créer des codes promo";
+      } else if (/duplicate key|unique/i.test(rawMsg)) {
+        friendly = "Ce code existe déjà";
+      } else if (/timestamp|date|invalid input/i.test(rawMsg)) {
+        friendly = "Format de date invalide. Choisissez une date valide";
+      }
+
       toast({
         title: "Erreur",
-        description: error.message.includes('unique') 
-          ? "Ce code existe déjà" 
-          : "Impossible de créer le code promo",
+        description: friendly,
         variant: "destructive",
       });
     }
   };
-
   const toggleCodeStatus = async (id: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
