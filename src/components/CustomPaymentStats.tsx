@@ -10,21 +10,21 @@ import { cn } from '@/lib/utils';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 
 const CustomPaymentStats = () => {
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const { transactions } = useSupabaseTransactions();
   
   const calculateStats = () => {
-    if (!startDate || !endDate) return null;
-
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    if (!selectedDates || selectedDates.length === 0) return null;
 
     const filteredTransactions = transactions.filter(tx => {
       const txDate = new Date(tx.transactionDate);
-      return txDate >= start && txDate <= end;
+      txDate.setHours(0, 0, 0, 0);
+      
+      return selectedDates.some(selectedDate => {
+        const compareDate = new Date(selectedDate);
+        compareDate.setHours(0, 0, 0, 0);
+        return txDate.getTime() === compareDate.getTime();
+      });
     });
 
     const cashTx = filteredTransactions.filter(tx => tx.paymentMethod === 'cash');
@@ -61,60 +61,33 @@ const CustomPaymentStats = () => {
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4 text-primary">📊 Statistiques de paiement personnalisées</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="text-sm font-medium mb-2 block">Date de début</label>
-          <Popover>
-            <PopoverTrigger asChild>
+      <div className="mb-6">
+        <label className="text-sm font-medium mb-2 block">Sélectionnez les jours</label>
+        <Card className="p-4">
+          <Calendar
+            mode="multiple"
+            selected={selectedDates}
+            onSelect={(dates) => setSelectedDates(dates || [])}
+            initialFocus
+            className="pointer-events-auto"
+            locale={fr}
+          />
+          {selectedDates.length > 0 && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-2">
+                {selectedDates.length} jour{selectedDates.length > 1 ? 's' : ''} sélectionné{selectedDates.length > 1 ? 's' : ''}
+              </p>
               <Button
                 variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !startDate && "text-muted-foreground"
-                )}
+                size="sm"
+                onClick={() => setSelectedDates([])}
+                className="w-full"
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, "PPP", { locale: fr }) : "Sélectionner"}
+                Effacer la sélection
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={setStartDate}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium mb-2 block">Date de fin</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !endDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate ? format(endDate, "PPP", { locale: fr }) : "Sélectionner"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={setEndDate}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+            </div>
+          )}
+        </Card>
       </div>
 
       {stats && (
@@ -198,15 +171,15 @@ const CustomPaymentStats = () => {
         </div>
       )}
 
-      {!stats && startDate && endDate && (
+      {!stats && selectedDates.length > 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          Aucune transaction trouvée pour cette période
+          Aucune transaction trouvée pour les jours sélectionnés
         </div>
       )}
 
-      {(!startDate || !endDate) && (
+      {selectedDates.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          Sélectionnez une période pour voir les statistiques
+          Sélectionnez un ou plusieurs jours pour voir les statistiques
         </div>
       )}
     </Card>
