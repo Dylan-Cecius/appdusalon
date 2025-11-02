@@ -21,6 +21,7 @@ import BlockCalendar from '@/components/BlockCalendar';
 import TodoList from '@/components/TodoList';
 import StatsOverview from '@/components/StatsOverview';
 import PaymentMethodStats from '@/components/PaymentMethodStats';
+import CustomPaymentStats from '@/components/CustomPaymentStats';
 import CustomDateRangeStats from '@/components/CustomDateRangeStats';
 import RevenueChart from '@/components/RevenueChart';
 import EmailReports from '@/components/EmailReports';
@@ -644,6 +645,8 @@ const Index = () => {
                   <ClientRetentionStats />
                 </FeatureGate>
               </div>
+              
+              <CustomPaymentStats />
               
               <RevenueChart />
               

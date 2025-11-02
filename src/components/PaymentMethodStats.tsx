@@ -5,18 +5,24 @@ interface PaymentStats {
   today: {
     cash: number;
     card: number;
+    cashAmount: number;
+    cardAmount: number;
     cashPercent: number;
     cardPercent: number;
   };
   weekly: {
     cash: number;
     card: number;
+    cashAmount: number;
+    cardAmount: number;
     cashPercent: number;
     cardPercent: number;
   };
   monthly: {
     cash: number;
     card: number;
+    cashAmount: number;
+    cardAmount: number;
     cashPercent: number;
     cardPercent: number;
   };
@@ -65,9 +71,9 @@ const PaymentMethodStats = ({ paymentStats }: PaymentMethodStatsProps) => {
                     <span className="text-sm font-medium">Espèces</span>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">{period.data.cash}</div>
+                    <div className="font-semibold text-green-600">{period.data.cashAmount.toFixed(2)}€</div>
                     <div className="text-xs text-muted-foreground">
-                      {period.data.cashPercent.toFixed(1)}%
+                      {period.data.cash} tx • {period.data.cashPercent.toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -89,9 +95,9 @@ const PaymentMethodStats = ({ paymentStats }: PaymentMethodStatsProps) => {
                     <span className="text-sm font-medium">Bancontact</span>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">{period.data.card}</div>
+                    <div className="font-semibold text-blue-600">{period.data.cardAmount.toFixed(2)}€</div>
                     <div className="text-xs text-muted-foreground">
-                      {period.data.cardPercent.toFixed(1)}%
+                      {period.data.card} tx • {period.data.cardPercent.toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -121,20 +127,20 @@ const PaymentMethodStats = ({ paymentStats }: PaymentMethodStatsProps) => {
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600 mb-1">
-              {paymentStats.monthly.cashPercent.toFixed(1)}%
+              {paymentStats.monthly.cashAmount.toFixed(2)}€
             </div>
-            <div className="text-sm text-muted-foreground">Espèces</div>
+            <div className="text-sm text-muted-foreground mb-1">Espèces</div>
             <div className="text-xs text-muted-foreground">
-              ({paymentStats.monthly.cash} transactions)
+              {paymentStats.monthly.cash} tx • {paymentStats.monthly.cashPercent.toFixed(1)}%
             </div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600 mb-1">
-              {paymentStats.monthly.cardPercent.toFixed(1)}%
+              {paymentStats.monthly.cardAmount.toFixed(2)}€
             </div>
-            <div className="text-sm text-muted-foreground">Bancontact</div>
+            <div className="text-sm text-muted-foreground mb-1">Bancontact</div>
             <div className="text-xs text-muted-foreground">
-              ({paymentStats.monthly.card} transactions)
+              {paymentStats.monthly.card} tx • {paymentStats.monthly.cardPercent.toFixed(1)}%
             </div>
           </div>
         </div>

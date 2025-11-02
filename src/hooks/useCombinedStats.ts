@@ -67,13 +67,29 @@ export const useCombinedStats = () => {
     const weeklyClients = weekTransactions.length + weekAppointments.length;
     const monthlyClients = monthTransactions.length + monthAppointments.length;
 
-    // Payment method stats (only from transactions - appointments don't have payment method data)
-    const todayCash = todayTransactions.filter(tx => tx.paymentMethod === 'cash').length;
-    const todayCard = todayTransactions.filter(tx => tx.paymentMethod === 'card').length;
-    const weeklyCash = weekTransactions.filter(tx => tx.paymentMethod === 'cash').length;
-    const weeklyCard = weekTransactions.filter(tx => tx.paymentMethod === 'card').length;
-    const monthlyCash = monthTransactions.filter(tx => tx.paymentMethod === 'cash').length;
-    const monthlyCard = monthTransactions.filter(tx => tx.paymentMethod === 'card').length;
+    // Payment method stats - count and amounts
+    const todayCashTx = todayTransactions.filter(tx => tx.paymentMethod === 'cash');
+    const todayCardTx = todayTransactions.filter(tx => tx.paymentMethod === 'card');
+    const weeklyCashTx = weekTransactions.filter(tx => tx.paymentMethod === 'cash');
+    const weeklyCardTx = weekTransactions.filter(tx => tx.paymentMethod === 'card');
+    const monthlyCashTx = monthTransactions.filter(tx => tx.paymentMethod === 'cash');
+    const monthlyCardTx = monthTransactions.filter(tx => tx.paymentMethod === 'card');
+
+    // Count
+    const todayCash = todayCashTx.length;
+    const todayCard = todayCardTx.length;
+    const weeklyCash = weeklyCashTx.length;
+    const weeklyCard = weeklyCardTx.length;
+    const monthlyCash = monthlyCashTx.length;
+    const monthlyCard = monthlyCardTx.length;
+
+    // Amounts
+    const todayCashAmount = todayCashTx.reduce((sum, tx) => sum + tx.totalAmount, 0);
+    const todayCardAmount = todayCardTx.reduce((sum, tx) => sum + tx.totalAmount, 0);
+    const weeklyCashAmount = weeklyCashTx.reduce((sum, tx) => sum + tx.totalAmount, 0);
+    const weeklyCardAmount = weeklyCardTx.reduce((sum, tx) => sum + tx.totalAmount, 0);
+    const monthlyCashAmount = monthlyCashTx.reduce((sum, tx) => sum + tx.totalAmount, 0);
+    const monthlyCardAmount = monthlyCardTx.reduce((sum, tx) => sum + tx.totalAmount, 0);
 
     // Add appointments as "paid" transactions for payment stats
     const todayAppointmentsPaid = todayAppointments.filter(apt => apt.isPaid).length;
@@ -110,6 +126,8 @@ export const useCombinedStats = () => {
           cash: todayCash,
           card: todayCard,
           appointments: todayAppointmentsPaid,
+          cashAmount: todayCashAmount,
+          cardAmount: todayCardAmount,
           cashPercent: todayCashPercent,
           cardPercent: todayCardPercent,
           appointmentPercent: todayAppointmentPercent
@@ -118,6 +136,8 @@ export const useCombinedStats = () => {
           cash: weeklyCash,
           card: weeklyCard,
           appointments: weeklyAppointmentsPaid,
+          cashAmount: weeklyCashAmount,
+          cardAmount: weeklyCardAmount,
           cashPercent: weeklyCashPercent,
           cardPercent: weeklyCardPercent,
           appointmentPercent: weeklyAppointmentPercent
@@ -126,6 +146,8 @@ export const useCombinedStats = () => {
           cash: monthlyCash,
           card: monthlyCard,
           appointments: monthlyAppointmentsPaid,
+          cashAmount: monthlyCashAmount,
+          cardAmount: monthlyCardAmount,
           cashPercent: monthlyCashPercent,
           cardPercent: monthlyCardPercent,
           appointmentPercent: monthlyAppointmentPercent
