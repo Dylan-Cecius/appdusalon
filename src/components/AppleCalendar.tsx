@@ -20,16 +20,25 @@ const AppleCalendar = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   
   const { appointments, markAsPaid, deleteAppointment } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
 
   const activeBarbers = barbers.filter(b => b.is_active);
 
-  // Get appointments for a specific date
+  // Set first barber as selected when barbers load
+  useEffect(() => {
+    if (activeBarbers.length > 0 && !selectedBarberId) {
+      setSelectedBarberId(activeBarbers[0].id);
+    }
+  }, [activeBarbers, selectedBarberId]);
+
+  // Get appointments for a specific date (filtered by selected barber)
   const getAppointmentsForDate = (date: Date) => {
     return appointments.filter(apt => 
-      isSameDay(new Date(apt.startTime), date)
+      isSameDay(new Date(apt.startTime), date) &&
+      (!selectedBarberId || apt.barberId === selectedBarberId)
     );
   };
 
@@ -293,84 +302,108 @@ const AppleCalendar = () => {
     <div className="space-y-4">
       {/* Header */}
       <Card className="p-4 bg-gradient-to-br from-background to-muted/20 border-none shadow-sm">
-        <div className="flex items-center justify-between">
-          {/* Left: Title and Navigation */}
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">
-              {viewMode === 'month' && format(selectedDate, 'MMMM yyyy', { locale: fr })}
-              {viewMode === 'week' && `Semaine du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })}`}
-              {viewMode === 'day' && format(selectedDate, 'd MMMM yyyy', { locale: fr })}
-            </h1>
-            
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={navigatePrev}
-                className="rounded-full"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Title and Navigation */}
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold">
+                {viewMode === 'month' && format(selectedDate, 'MMMM yyyy', { locale: fr })}
+                {viewMode === 'week' && `Semaine du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })}`}
+                {viewMode === 'day' && format(selectedDate, 'd MMMM yyyy', { locale: fr })}
+              </h1>
               
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={navigatePrev}
+                  className="rounded-full"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={goToToday}
+                  className="rounded-full px-4"
+                >
+                  Aujourd'hui
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={navigateNext}
+                  className="rounded-full"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Right: View mode and Add button */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
+                <Button
+                  variant={viewMode === 'day' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('day')}
+                  className="rounded-full"
+                >
+                  Jour
+                </Button>
+                <Button
+                  variant={viewMode === 'week' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('week')}
+                  className="rounded-full"
+                >
+                  Semaine
+                </Button>
+                <Button
+                  variant={viewMode === 'month' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('month')}
+                  className="rounded-full"
+                >
+                  Mois
+                </Button>
+              </div>
+
               <Button
-                variant="outline"
-                onClick={goToToday}
-                className="rounded-full px-4"
+                onClick={() => {
+                  setSelectedTimeSlot('');
+                  setIsModalOpen(true);
+                }}
+                className="rounded-full shadow-md"
               >
-                Aujourd'hui
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={navigateNext}
-                className="rounded-full"
-              >
-                <ChevronRight className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau RDV
               </Button>
             </div>
           </div>
 
-          {/* Right: View mode and Add button */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
-              <Button
-                variant={viewMode === 'day' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('day')}
-                className="rounded-full"
-              >
-                Jour
-              </Button>
-              <Button
-                variant={viewMode === 'week' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('week')}
-                className="rounded-full"
-              >
-                Semaine
-              </Button>
-              <Button
-                variant={viewMode === 'month' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('month')}
-                className="rounded-full"
-              >
-                Mois
-              </Button>
+          {/* Barber Selection Pills */}
+          {activeBarbers.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {activeBarbers.map((barber) => (
+                <Button
+                  key={barber.id}
+                  variant={selectedBarberId === barber.id ? 'default' : 'outline'}
+                  onClick={() => setSelectedBarberId(barber.id)}
+                  className={cn(
+                    "min-w-fit whitespace-nowrap rounded-full transition-all",
+                    selectedBarberId === barber.id 
+                      ? "shadow-md" 
+                      : "hover:bg-muted/50"
+                  )}
+                  size="sm"
+                >
+                  {barber.name}
+                </Button>
+              ))}
             </div>
-
-            <Button
-              onClick={() => {
-                setSelectedTimeSlot('');
-                setIsModalOpen(true);
-              }}
-              className="rounded-full shadow-md"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau RDV
-            </Button>
-          </div>
+          )}
         </div>
       </Card>
 
@@ -384,6 +417,7 @@ const AppleCalendar = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedDate={selectedDate}
+        barberId={selectedBarberId}
         selectedTimeSlot={selectedTimeSlot}
       />
 
