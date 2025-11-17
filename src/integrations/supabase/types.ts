@@ -596,22 +596,25 @@ export type Database = {
       }
     }
     Functions: {
-      calculate_next_send_date: {
-        Args:
-          | {
+      calculate_next_send_date:
+        | {
+            Args: {
               day_of_month?: number
               day_of_week?: number
               frequency_type: string
               time_of_day: string
             }
-          | {
+            Returns: string
+          }
+        | {
+            Args: {
               day_of_month?: number
               day_of_week?: number
               frequency_type: string
               time_of_day: string
             }
-        Returns: string
-      }
+            Returns: string
+          }
       get_appointment_client_details: {
         Args: { appointment_id: string }
         Returns: {
@@ -619,14 +622,8 @@ export type Database = {
           client_phone: string
         }[]
       }
-      get_barber_owner: {
-        Args: { target_barber_id: string }
-        Returns: string
-      }
-      hash_password: {
-        Args: { password_text: string }
-        Returns: string
-      }
+      get_barber_owner: { Args: { target_barber_id: string }; Returns: string }
+      hash_password: { Args: { password_text: string }; Returns: string }
       use_promo_code: {
         Args: { code_text: string; user_id_param: string }
         Returns: Json
