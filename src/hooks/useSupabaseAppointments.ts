@@ -24,13 +24,14 @@ export const useSupabaseAppointments = () => {
         return;
       }
 
-      // SECURITY: Use selective columns instead of select('*')
-      // Only get non-sensitive data by default
+      // Fetch appointments with client data (user is the owner)
       const { data, error } = await supabase
         .from('appointments' as any)
         .select(`
           id,
           barber_id,
+          client_name,
+          client_phone,
           start_time,
           end_time,
           services,
@@ -48,9 +49,8 @@ export const useSupabaseAppointments = () => {
 
       const formattedAppointments = data?.map((apt: any) => ({
         id: apt.id,
-        // SECURITY: Don't include sensitive client data by default
-        clientName: 'Client', // Generic placeholder
-        clientPhone: '***-***-****', // Masked placeholder
+        clientName: apt.client_name || 'Client',
+        clientPhone: apt.client_phone || '',
         services: apt.services as any,
         startTime: new Date(apt.start_time),
         endTime: new Date(apt.end_time),
