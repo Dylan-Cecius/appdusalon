@@ -149,7 +149,7 @@ const AppleCalendar = () => {
   const renderWeekView = () => {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-    const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8h-20h
+    const hours = Array.from({ length: 24 }, (_, i) => i); // 0h-23h
 
     return (
       <div className="bg-background rounded-2xl overflow-hidden border">
@@ -230,7 +230,7 @@ const AppleCalendar = () => {
 
   // Render Day View
   const renderDayView = () => {
-    const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8h-20h
+    const hours = Array.from({ length: 24 }, (_, i) => i); // 0h-23h
     const dayAppointments = getAppointmentsForDate(selectedDate);
 
     return (
