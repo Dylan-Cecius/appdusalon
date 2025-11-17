@@ -24,6 +24,34 @@ export const useAdminStats = () => {
 
   useEffect(() => {
     fetchAdminStats();
+
+    // Subscriptions temps réel
+    const profilesChannel = supabase
+      .channel('admin-profiles-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchAdminStats();
+      })
+      .subscribe();
+
+    const subscribersChannel = supabase
+      .channel('admin-subscribers-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscribers' }, () => {
+        fetchAdminStats();
+      })
+      .subscribe();
+
+    const promoUsageChannel = supabase
+      .channel('admin-promo-usage-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'promo_code_usage' }, () => {
+        fetchAdminStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(subscribersChannel);
+      supabase.removeChannel(promoUsageChannel);
+    };
   }, []);
 
   const fetchAdminStats = async () => {
