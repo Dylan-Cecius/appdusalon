@@ -49,17 +49,23 @@ export const useCombinedStats = () => {
       return aptDate >= startOfMonth;
     });
 
-    // Calculate combined revenue (transactions + appointments)
+    // Calculate combined revenue (transactions + PAID appointments only)
     const todayTransactionRevenue = todayTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const todayAppointmentRevenue = todayAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
+    const todayAppointmentRevenue = todayAppointments
+      .filter(apt => apt.isPaid)
+      .reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
     const todayRevenue = todayTransactionRevenue + todayAppointmentRevenue;
     
     const weeklyTransactionRevenue = weekTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const weeklyAppointmentRevenue = weekAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
+    const weeklyAppointmentRevenue = weekAppointments
+      .filter(apt => apt.isPaid)
+      .reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
     const weeklyRevenue = weeklyTransactionRevenue + weeklyAppointmentRevenue;
     
     const monthlyTransactionRevenue = monthTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const monthlyAppointmentRevenue = monthAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
+    const monthlyAppointmentRevenue = monthAppointments
+      .filter(apt => apt.isPaid)
+      .reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
     const monthlyRevenue = monthlyTransactionRevenue + monthlyAppointmentRevenue;
 
     // Calculate combined client count (transactions + appointments)

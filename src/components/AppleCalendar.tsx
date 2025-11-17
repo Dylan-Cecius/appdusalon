@@ -161,20 +161,43 @@ const AppleCalendar = () => {
                       <div
                         key={apt.id}
                         className={cn(
-                          "text-[10px] px-2 py-1 rounded-md font-semibold truncate hover:shadow-sm transition-shadow border border-white/20",
-                          colors.text
+                          "relative text-[10px] px-2 py-1 rounded-md font-semibold truncate hover:shadow-sm transition-shadow border border-white/20 group",
+                          colors.text,
+                          !apt.isPaid && "opacity-70"
                         )}
                         style={{
                           background: colors.gradient
                         }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAppointment(apt);
-                          setIsEditModalOpen(true);
-                        }}
                       >
-                        {format(new Date(apt.startTime), 'HH:mm')} - {apt.clientName}
-                        {serviceName && <div className="text-[9px] opacity-80 mt-0.5">{serviceName}</div>}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment(apt);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          {format(new Date(apt.startTime), 'HH:mm')} - {apt.clientName}
+                          {serviceName && <div className="text-[9px] opacity-80 mt-0.5">{serviceName}</div>}
+                          {!apt.isPaid && <div className="text-[8px] font-bold mt-0.5">NON PAYÉ</div>}
+                        </div>
+                        {!apt.isPaid && (
+                          <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5 p-0.5">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsPaid(apt.id);
+                                toast({
+                                  title: "Encaissé",
+                                  description: `${apt.totalPrice}€ encaissé`,
+                                });
+                              }}
+                              className="bg-white/90 hover:bg-white text-green-600 rounded px-1 text-[10px] font-bold"
+                              title="Encaisser"
+                            >
+                              €
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -276,8 +299,9 @@ const AppleCalendar = () => {
                           <div
                             key={apt.id}
                             className={cn(
-                              "absolute left-1 right-1 text-xs p-2 rounded-xl cursor-pointer shadow-md hover:shadow-lg overflow-hidden transition-shadow border border-white/20",
-                              colors.text
+                              "group absolute left-1 right-1 text-xs p-2 rounded-xl cursor-pointer shadow-md hover:shadow-lg overflow-hidden transition-shadow border border-white/20",
+                              colors.text,
+                              !apt.isPaid && "opacity-70"
                             )}
                             style={{
                               top: `${topPx}px`,
@@ -296,6 +320,23 @@ const AppleCalendar = () => {
                             <div className="opacity-90 text-[10px] font-medium">
                               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
                             </div>
+                            {!apt.isPaid && <div className="text-[8px] font-bold mt-1">NON PAYÉ</div>}
+                            {!apt.isPaid && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsPaid(apt.id);
+                                  toast({
+                                    title: "Encaissé",
+                                    description: `${apt.totalPrice}€ encaissé`,
+                                  });
+                                }}
+                                className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-green-600 rounded-md px-2 py-1 text-[10px] font-bold"
+                                title="Encaisser"
+                              >
+                                ✓ {apt.totalPrice}€
+                              </button>
+                            )}
                           </div>
                         );
                       })}
@@ -374,8 +415,9 @@ const AppleCalendar = () => {
                         <div
                           key={apt.id}
                           className={cn(
-                            "absolute left-3 right-3 p-4 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden border border-white/20",
-                            colors.text
+                            "group absolute left-3 right-3 p-4 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden border border-white/20",
+                            colors.text,
+                            !apt.isPaid && "opacity-70"
                           )}
                           style={{
                             top: `${topPx}px`,
@@ -397,6 +439,23 @@ const AppleCalendar = () => {
                           <div className="text-sm opacity-95 font-medium">
                             {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
                           </div>
+                          {!apt.isPaid && <div className="text-xs font-bold mt-2">NON PAYÉ</div>}
+                          {!apt.isPaid && heightPx > 60 && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsPaid(apt.id);
+                                toast({
+                                  title: "Encaissé",
+                                  description: `${apt.totalPrice}€ encaissé`,
+                                });
+                              }}
+                              className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-green-600 rounded-lg px-3 py-1.5 text-sm font-bold shadow-md"
+                              title="Encaisser"
+                            >
+                              ✓ Encaisser {apt.totalPrice}€
+                            </button>
+                          )}
                         </div>
                       );
                     })}
