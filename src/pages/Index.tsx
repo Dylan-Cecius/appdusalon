@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import ServiceCard from '@/components/ServiceCard';
 import CartSidebar from '@/components/CartSidebar';
-import BlockCalendar from '@/components/BlockCalendar';
+import AppleCalendar from '@/components/AppleCalendar';
 import TodoList from '@/components/TodoList';
 import StatsOverview from '@/components/StatsOverview';
 import PaymentMethodStats from '@/components/PaymentMethodStats';
@@ -560,7 +560,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="agenda">
-            <BlockCalendar />
+            <AppleCalendar />
           </TabsContent>
 
           <TabsContent value="todo">
