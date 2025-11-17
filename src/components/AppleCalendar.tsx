@@ -182,41 +182,60 @@ const AppleCalendar = () => {
           <div className="grid grid-cols-[60px_repeat(7,1fr)]">
             {hours.map((hour) => (
               <>
-                <div key={`hour-${hour}`} className="p-2 text-sm text-muted-foreground text-right border-b">
+                <div key={`hour-${hour}`} className="p-2 text-sm text-muted-foreground text-right border-b h-20">
                   {hour}:00
                 </div>
                 {weekDays.map((day) => {
-                  const dayAppointments = getAppointmentsForDate(day).filter(apt => {
-                    const aptHour = new Date(apt.startTime).getHours();
-                    return aptHour === hour;
-                  });
+                  const dayAppointments = getAppointmentsForDate(day);
 
                   return (
                     <div
                       key={`${day}-${hour}`}
-                      className="border-l border-b min-h-[60px] p-1 hover:bg-muted/30 cursor-pointer"
+                      className="border-l border-b h-20 hover:bg-muted/30 cursor-pointer relative"
                       onClick={() => {
                         setSelectedDate(day);
                         setSelectedTimeSlot(`${hour}:00`);
                         setIsModalOpen(true);
                       }}
                     >
-                      {dayAppointments.map((apt) => (
-                        <div
-                          key={apt.id}
-                          className="text-xs p-2 mb-1 rounded-lg bg-primary text-primary-foreground cursor-pointer shadow-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedAppointment(apt);
-                            setIsEditModalOpen(true);
-                          }}
-                        >
-                          <div className="font-semibold">{apt.clientName}</div>
-                          <div className="opacity-90">
-                            {format(new Date(apt.startTime), 'HH:mm')} - {format(new Date(apt.endTime), 'HH:mm')}
+                      {dayAppointments.map((apt) => {
+                        const startTime = new Date(apt.startTime);
+                        const endTime = new Date(apt.endTime);
+                        const aptHour = startTime.getHours();
+                        const aptMinutes = startTime.getMinutes();
+                        
+                        // Only render if this appointment starts in this hour slot
+                        if (aptHour !== hour) return null;
+                        
+                        // Calculate height based on duration (in minutes)
+                        const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+                        const heightPx = (durationMinutes / 60) * 80; // 80px = 1 hour
+                        
+                        // Calculate top position based on minutes
+                        const topPx = (aptMinutes / 60) * 80;
+
+                        return (
+                          <div
+                            key={apt.id}
+                            className="absolute left-1 right-1 text-xs p-2 rounded-lg bg-primary text-primary-foreground cursor-pointer shadow-sm overflow-hidden"
+                            style={{
+                              top: `${topPx}px`,
+                              height: `${heightPx}px`,
+                              minHeight: '20px'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAppointment(apt);
+                              setIsEditModalOpen(true);
+                            }}
+                          >
+                            <div className="font-semibold truncate">{apt.clientName}</div>
+                            <div className="opacity-90 text-[10px]">
+                              {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   );
                 })}
@@ -249,45 +268,64 @@ const AppleCalendar = () => {
         <div className="overflow-auto max-h-[600px]">
           <div className="grid grid-cols-[80px_1fr]">
             {hours.map((hour) => {
-              const hourAppointments = dayAppointments.filter(apt => {
-                const aptHour = new Date(apt.startTime).getHours();
-                return aptHour === hour;
-              });
-
               return (
                 <>
-                  <div key={`hour-${hour}`} className="p-4 text-sm text-muted-foreground text-right border-b">
+                  <div key={`hour-${hour}`} className="p-4 text-sm text-muted-foreground text-right border-b h-20">
                     {hour}:00
                   </div>
                   <div
-                    className="border-b min-h-[80px] p-2 hover:bg-muted/30 cursor-pointer"
+                    className="border-b h-20 hover:bg-muted/30 cursor-pointer relative"
                     onClick={() => {
                       setSelectedTimeSlot(`${hour}:00`);
                       setIsModalOpen(true);
                     }}
                   >
-                    {hourAppointments.map((apt) => (
-                      <div
-                        key={apt.id}
-                        className="p-3 mb-2 rounded-xl bg-primary text-primary-foreground cursor-pointer shadow-md hover:shadow-lg transition-shadow"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAppointment(apt);
-                          setIsEditModalOpen(true);
-                        }}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-semibold text-lg">{apt.clientName}</div>
-                          <div className="text-sm opacity-90">{apt.totalPrice}€</div>
+                    {dayAppointments.map((apt) => {
+                      const startTime = new Date(apt.startTime);
+                      const endTime = new Date(apt.endTime);
+                      const aptHour = startTime.getHours();
+                      const aptMinutes = startTime.getMinutes();
+                      
+                      // Only render if this appointment starts in this hour slot
+                      if (aptHour !== hour) return null;
+                      
+                      // Calculate height based on duration (in minutes)
+                      const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+                      const heightPx = (durationMinutes / 60) * 80; // 80px = 1 hour
+                      
+                      // Calculate top position based on minutes
+                      const topPx = (aptMinutes / 60) * 80;
+
+                      return (
+                        <div
+                          key={apt.id}
+                          className="absolute left-2 right-2 p-3 rounded-xl bg-primary text-primary-foreground cursor-pointer shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                          style={{
+                            top: `${topPx}px`,
+                            height: `${heightPx}px`,
+                            minHeight: '40px'
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment(apt);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="font-semibold text-base truncate">{apt.clientName}</div>
+                            <div className="text-sm opacity-90">{apt.totalPrice}€</div>
+                          </div>
+                          <div className="text-sm opacity-90">
+                            {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+                          </div>
+                          {heightPx > 60 && (
+                            <div className="text-xs opacity-75 mt-1 truncate">
+                              {apt.services?.map((s: any) => s.name).join(', ')}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-sm opacity-90">
-                          {format(new Date(apt.startTime), 'HH:mm')} - {format(new Date(apt.endTime), 'HH:mm')}
-                        </div>
-                        <div className="text-sm opacity-75 mt-1">
-                          {apt.services?.map((s: any) => s.name).join(', ')}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               );
