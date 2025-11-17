@@ -475,55 +475,69 @@ const AppleCalendar = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="p-6 bg-gradient-to-br from-background via-background/95 to-muted/30 border border-border/50 shadow-xl backdrop-blur-sm">
-        <div className="flex flex-col gap-5">
-          <div className="flex items-center justify-between">
-            {/* Left: Title and Navigation */}
-            <div className="flex items-center gap-5">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {viewMode === 'month' && format(selectedDate, 'MMMM yyyy', { locale: fr })}
-                {viewMode === 'week' && `Semaine du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })}`}
-                {viewMode === 'day' && format(selectedDate, 'd MMMM yyyy', { locale: fr })}
-              </h1>
+      <Card className="p-4 md:p-6 bg-gradient-to-br from-background via-background/95 to-muted/30 border border-border/50 shadow-xl backdrop-blur-sm">
+        <div className="flex flex-col gap-3 md:gap-5">
+          {/* Title - Full width on mobile */}
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-lg md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent truncate">
+              {viewMode === 'month' && format(selectedDate, 'MMMM yyyy', { locale: fr })}
+              {viewMode === 'week' && `Semaine du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })}`}
+              {viewMode === 'day' && format(selectedDate, 'd MMMM yyyy', { locale: fr })}
+            </h1>
+            
+            {/* Add button - Mobile only */}
+            <Button
+              onClick={() => {
+                setSelectedTimeSlot('');
+                setIsModalOpen(true);
+              }}
+              size="icon"
+              className="md:hidden rounded-full shadow-lg bg-gradient-to-r from-primary to-primary/90 flex-shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Controls row */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            {/* Navigation */}
+            <div className="flex items-center justify-between md:justify-start gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={navigatePrev}
+                className="rounded-full hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm flex-shrink-0 h-9 w-9"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
               
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={navigatePrev}
-                  className="rounded-full hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  onClick={goToToday}
-                  className="rounded-full px-5 font-semibold hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
-                >
-                  Aujourd'hui
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={navigateNext}
-                  className="rounded-full hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                onClick={goToToday}
+                className="rounded-full px-3 md:px-5 text-xs md:text-sm font-semibold hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm h-9"
+              >
+                Aujourd'hui
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={navigateNext}
+                className="rounded-full hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm flex-shrink-0 h-9 w-9"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
 
-            {/* Right: View mode and Add button */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1 shadow-inner border border-border/30">
+            {/* View mode and Add button */}
+            <div className="flex items-center justify-between md:justify-end gap-3">
+              <div className="flex items-center gap-0.5 md:gap-1 bg-muted/50 rounded-full p-0.5 md:p-1 shadow-inner border border-border/30">
                 <Button
                   variant={viewMode === 'day' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('day')}
                   className={cn(
-                    "rounded-full font-semibold transition-all",
+                    "rounded-full text-xs md:text-sm font-semibold transition-all h-8 px-2 md:px-3",
                     viewMode === 'day' && "shadow-md"
                   )}
                 >
@@ -534,7 +548,7 @@ const AppleCalendar = () => {
                   size="sm"
                   onClick={() => setViewMode('week')}
                   className={cn(
-                    "rounded-full font-semibold transition-all",
+                    "rounded-full text-xs md:text-sm font-semibold transition-all h-8 px-2 md:px-3",
                     viewMode === 'week' && "shadow-md"
                   )}
                 >
@@ -545,7 +559,7 @@ const AppleCalendar = () => {
                   size="sm"
                   onClick={() => setViewMode('month')}
                   className={cn(
-                    "rounded-full font-semibold transition-all",
+                    "rounded-full text-xs md:text-sm font-semibold transition-all h-8 px-2 md:px-3",
                     viewMode === 'month' && "shadow-md"
                   )}
                 >
@@ -553,12 +567,13 @@ const AppleCalendar = () => {
                 </Button>
               </div>
 
+              {/* Add button - Desktop only */}
               <Button
                 onClick={() => {
                   setSelectedTimeSlot('');
                   setIsModalOpen(true);
                 }}
-                className="rounded-full shadow-lg hover:shadow-xl transition-all font-semibold bg-gradient-to-r from-primary to-primary/90"
+                className="hidden md:flex rounded-full shadow-lg hover:shadow-xl transition-all font-semibold bg-gradient-to-r from-primary to-primary/90"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau RDV
