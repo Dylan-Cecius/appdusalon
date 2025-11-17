@@ -234,14 +234,22 @@ const BlockCalendar = () => {
 
   return (
 
-    <div className="space-y-4">
-      {/* Header */}
-      <Card className="p-3 sm:p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <h3 className="text-base sm:text-lg font-semibold">
-              {isMobile ? "Planning" : "Planning des coiffeurs"}
-            </h3>
+    <div className="space-y-6">
+      {/* Modern Header */}
+      <Card className="p-4 sm:p-6 bg-gradient-to-br from-background to-muted/20 border-none shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <CalendarDays className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-xl sm:text-2xl font-semibold tracking-tight">
+                {isMobile ? "Planning" : "Planning des coiffeurs"}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Gérez vos rendez-vous
+              </p>
+            </div>
           </div>
           
           <Button 
@@ -250,7 +258,7 @@ const BlockCalendar = () => {
               setSelectedTimeSlot('');
               setIsModalOpen(true);
             }}
-            className="bg-green-500 hover:bg-green-600 text-white"
+            className="bg-primary hover:bg-primary/90 shadow-sm rounded-xl"
             size={isMobile ? "sm" : "default"}
           >
             <Plus className="h-4 w-4 mr-1 sm:mr-2" />
@@ -258,32 +266,36 @@ const BlockCalendar = () => {
           </Button>
         </div>
 
-        {/* Barber Selection Tabs */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+        {/* Barber Selection - Modern Pills */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {activeBarbers.map((barber) => (
             <Button
               key={barber.id}
               variant={selectedBarber === barber.id ? 'default' : 'outline'}
               onClick={() => setSelectedBarber(barber.id)}
-              className="min-w-fit whitespace-nowrap text-xs sm:text-sm"
+              className={cn(
+                "min-w-fit whitespace-nowrap rounded-full transition-all",
+                selectedBarber === barber.id 
+                  ? "shadow-md" 
+                  : "hover:bg-muted/50"
+              )}
               size={isMobile ? "sm" : "default"}
             >
               {barber.name}
               {!isMobile && (
                 <span className="ml-2 text-xs opacity-75">
-                  ({barber.start_time}-{barber.end_time})
+                  {barber.start_time}-{barber.end_time}
                 </span>
               )}
             </Button>
           ))}
           
-          {/* Bouton Configuration Temps de midi */}
           {currentBarber && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsLunchBreakModalOpen(true)}
-              className="ml-2 sm:ml-4 text-orange-600 border-orange-600 hover:bg-orange-50 min-w-fit"
+              className="ml-2 sm:ml-4 rounded-full border-orange-200 text-orange-600 hover:bg-orange-50 min-w-fit"
             >
               <Coffee className="h-4 w-4 mr-1 sm:mr-2" />
               {isMobile ? "Pause" : "Temps de midi"}
@@ -291,27 +303,28 @@ const BlockCalendar = () => {
           )}
         </div>
 
-        {/* Navigation avec sélecteur de semaine */}
-        <div className="flex items-center justify-between">
+        {/* Modern Week Navigation */}
+        <div className="flex items-center justify-between gap-4">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm"
             onClick={() => navigateWeek('prev')}
+            className="rounded-full hover:bg-muted/50"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </Button>
           
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-center">
             <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" className={cn(
-                  "justify-start text-left font-normal",
-                  isMobile ? "text-xs px-2" : "min-w-[200px]"
+                  "justify-center text-center font-medium rounded-xl border-muted",
+                  isMobile ? "text-sm px-3" : "min-w-[240px]"
                 )}>
-                  <CalendarDays className="mr-1 sm:mr-2 h-4 w-4" />
+                  <CalendarDays className="mr-2 h-4 w-4" />
                   {isMobile ? 
-                    `${format(weekDates[0], 'dd/MM')} - ${format(weekDates[4], 'dd/MM')}` :
-                    `Semaine du ${format(weekDates[0], 'dd/MM')} au ${format(weekDates[4], 'dd/MM yyyy')}`
+                    format(selectedDate, 'd MMM', { locale: fr }) :
+                    format(selectedDate, 'd MMMM yyyy', { locale: fr })
                   }
                 </Button>
               </PopoverTrigger>
@@ -339,11 +352,12 @@ const BlockCalendar = () => {
           </div>
           
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm"
             onClick={() => navigateWeek('next')}
+            className="rounded-full hover:bg-muted/50"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
       </Card>
