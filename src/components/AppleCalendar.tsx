@@ -27,6 +27,42 @@ const AppleCalendar = () => {
 
   const activeBarbers = barbers.filter(b => b.is_active);
 
+  // Get color based on service category
+  const getServiceColor = (services: any[]) => {
+    if (!services || services.length === 0) return {
+      bg: 'from-primary via-primary to-primary/90',
+      text: 'text-primary-foreground'
+    };
+    
+    const mainService = services[0];
+    const category = mainService.category || 'general';
+    
+    const categoryColors: Record<string, { bg: string; text: string }> = {
+      'coupe': { 
+        bg: 'from-blue-500 via-blue-600 to-blue-700',
+        text: 'text-white'
+      },
+      'barbe': { 
+        bg: 'from-orange-500 via-orange-600 to-orange-700',
+        text: 'text-white'
+      },
+      'combo': { 
+        bg: 'from-purple-500 via-purple-600 to-purple-700',
+        text: 'text-white'
+      },
+      'produit': { 
+        bg: 'from-green-500 via-green-600 to-green-700',
+        text: 'text-white'
+      },
+      'general': { 
+        bg: 'from-primary via-primary to-primary/90',
+        text: 'text-primary-foreground'
+      }
+    };
+    
+    return categoryColors[category] || categoryColors['general'];
+  };
+
   // Set first barber as selected when barbers load
   useEffect(() => {
     if (activeBarbers.length > 0 && !selectedBarberId) {
@@ -118,19 +154,28 @@ const AppleCalendar = () => {
                 </div>
                 
                 <div className="space-y-1.5">
-                  {dayAppointments.slice(0, 3).map((apt) => (
-                    <div
-                      key={apt.id}
-                      className="text-[10px] px-2 py-1 rounded-md bg-gradient-to-r from-primary/20 via-primary/15 to-accent/20 text-foreground font-medium truncate hover:shadow-sm transition-shadow border border-primary/10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedAppointment(apt);
-                        setIsEditModalOpen(true);
-                      }}
-                    >
-                      {format(new Date(apt.startTime), 'HH:mm')} - {apt.clientName}
-                    </div>
-                  ))}
+                  {dayAppointments.slice(0, 3).map((apt) => {
+                    const colors = getServiceColor(apt.services);
+                    return (
+                      <div
+                        key={apt.id}
+                        className={cn(
+                          "text-[10px] px-2 py-1 rounded-md font-semibold truncate hover:shadow-sm transition-shadow border border-white/20",
+                          colors.text
+                        )}
+                        style={{
+                          background: `linear-gradient(to right, ${colors.bg.replace('from-', '').replace('via-', '').replace('to-', '')})`
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAppointment(apt);
+                          setIsEditModalOpen(true);
+                        }}
+                      >
+                        {format(new Date(apt.startTime), 'HH:mm')} - {apt.clientName}
+                      </div>
+                    );
+                  })}
                   {dayAppointments.length > 3 && (
                     <div className="text-[10px] text-muted-foreground font-medium pl-2">
                       +{dayAppointments.length - 3} de plus
@@ -214,14 +259,25 @@ const AppleCalendar = () => {
                         // Calculate top position based on minutes
                         const topPx = (aptMinutes / 60) * 80;
 
+                        const colors = getServiceColor(apt.services);
+
                         return (
                           <div
                             key={apt.id}
-                            className="absolute left-1 right-1 text-xs p-2 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground cursor-pointer shadow-md hover:shadow-lg overflow-hidden transition-shadow border border-primary/20"
+                            className={cn(
+                              "absolute left-1 right-1 text-xs p-2 rounded-xl cursor-pointer shadow-md hover:shadow-lg overflow-hidden transition-shadow border border-white/20",
+                              colors.text
+                            )}
                             style={{
                               top: `${topPx}px`,
                               height: `${heightPx}px`,
-                              minHeight: '20px'
+                              minHeight: '20px',
+                              backgroundImage: `linear-gradient(135deg, ${colors.bg.split(' ').map((c: string) => {
+                                if (c.startsWith('from-')) return `var(--${c.replace('from-', '')})`;
+                                if (c.startsWith('via-')) return `var(--${c.replace('via-', '')})`;
+                                if (c.startsWith('to-')) return `var(--${c.replace('to-', '')})`;
+                                return c;
+                              }).join(', ')})`
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -296,14 +352,25 @@ const AppleCalendar = () => {
                       // Calculate top position based on minutes
                       const topPx = (aptMinutes / 60) * 80;
 
+                      const colors = getServiceColor(apt.services);
+
                       return (
                         <div
                           key={apt.id}
-                          className="absolute left-3 right-3 p-4 rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden border border-primary/20"
+                          className={cn(
+                            "absolute left-3 right-3 p-4 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden border border-white/20",
+                            colors.text
+                          )}
                           style={{
                             top: `${topPx}px`,
                             height: `${heightPx}px`,
-                            minHeight: '40px'
+                            minHeight: '40px',
+                            backgroundImage: `linear-gradient(135deg, ${colors.bg.split(' ').map((c: string) => {
+                              if (c.startsWith('from-')) return `var(--${c.replace('from-', '')})`;
+                              if (c.startsWith('via-')) return `var(--${c.replace('via-', '')})`;
+                              if (c.startsWith('to-')) return `var(--${c.replace('to-', '')})`;
+                              return c;
+                            }).join(', ')})`
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -313,7 +380,7 @@ const AppleCalendar = () => {
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className="font-bold text-lg truncate">{apt.clientName}</div>
-                            <div className="text-sm font-semibold bg-primary-foreground/20 px-2 py-0.5 rounded-full">{apt.totalPrice}€</div>
+                            <div className="text-sm font-semibold bg-white/20 px-2 py-0.5 rounded-full">{apt.totalPrice}€</div>
                           </div>
                           <div className="text-sm opacity-95 font-medium">
                             {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
