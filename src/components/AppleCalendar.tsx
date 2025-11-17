@@ -78,11 +78,11 @@ const AppleCalendar = () => {
     const weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
     return (
-      <div className="bg-background rounded-2xl overflow-hidden border">
+      <div className="bg-gradient-to-br from-background via-background to-muted/20 rounded-3xl overflow-hidden border border-border/50 shadow-lg">
         {/* Week days header */}
-        <div className="grid grid-cols-7 border-b bg-muted/30">
+        <div className="grid grid-cols-7 border-b border-border/50 bg-gradient-to-r from-muted/30 via-muted/20 to-muted/30">
           {weekDays.map((day) => (
-            <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground">
+            <div key={day} className="p-3 text-center text-sm font-semibold text-foreground/70 tracking-wide">
               {day}
             </div>
           ))}
@@ -104,24 +104,24 @@ const AppleCalendar = () => {
                   setViewMode('day');
                 }}
                 className={cn(
-                  "min-h-[100px] p-2 border-b border-r cursor-pointer transition-colors hover:bg-muted/50",
-                  !isCurrentMonth && "bg-muted/20 text-muted-foreground",
-                  isToday && "bg-primary/5",
-                  isSelected && "ring-2 ring-primary ring-inset"
+                  "min-h-[110px] p-2.5 border-b border-r border-border/30 cursor-pointer transition-all duration-200 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 hover:shadow-inner",
+                  !isCurrentMonth && "bg-muted/10 text-muted-foreground/60",
+                  isToday && "bg-gradient-to-br from-primary/10 to-accent/10 ring-1 ring-primary/20 ring-inset",
+                  isSelected && "ring-2 ring-primary/50 ring-inset shadow-sm"
                 )}
               >
                 <div className={cn(
-                  "text-sm font-medium mb-1",
-                  isToday && "w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto"
+                  "text-sm font-semibold mb-2 transition-all",
+                  isToday && "w-7 h-7 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center mx-auto shadow-md ring-2 ring-primary/20"
                 )}>
                   {format(day, 'd')}
                 </div>
                 
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {dayAppointments.slice(0, 3).map((apt) => (
                     <div
                       key={apt.id}
-                      className="text-xs p-1 rounded bg-primary/10 text-primary truncate"
+                      className="text-[10px] px-2 py-1 rounded-md bg-gradient-to-r from-primary/20 via-primary/15 to-accent/20 text-foreground font-medium truncate hover:shadow-sm transition-shadow border border-primary/10"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedAppointment(apt);
@@ -132,7 +132,7 @@ const AppleCalendar = () => {
                     </div>
                   ))}
                   {dayAppointments.length > 3 && (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[10px] text-muted-foreground font-medium pl-2">
                       +{dayAppointments.length - 3} de plus
                     </div>
                   )}
@@ -152,23 +152,23 @@ const AppleCalendar = () => {
     const hours = Array.from({ length: 24 }, (_, i) => i); // 0h-23h
 
     return (
-      <div className="bg-background rounded-2xl overflow-hidden border">
+      <div className="bg-gradient-to-br from-background via-background to-muted/20 rounded-3xl overflow-hidden border border-border/50 shadow-lg">
         {/* Week header */}
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b bg-muted/30">
+        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/50 bg-gradient-to-r from-muted/30 via-muted/20 to-muted/30">
           <div className="p-3"></div>
           {weekDays.map((day) => {
             const isToday = isSameDay(day, new Date());
             return (
-              <div key={day.toString()} className="p-3 text-center border-l">
+              <div key={day.toString()} className="p-3 text-center border-l border-border/30">
                 <div className={cn(
-                  "text-xs text-muted-foreground uppercase tracking-wide",
-                  isToday && "text-primary font-semibold"
+                  "text-xs text-foreground/60 uppercase tracking-wider font-semibold",
+                  isToday && "text-primary font-bold"
                 )}>
                   {format(day, 'EEE', { locale: fr })}
                 </div>
                 <div className={cn(
-                  "text-2xl font-semibold mt-1",
-                  isToday && "w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto"
+                  "text-2xl font-bold mt-1.5 text-foreground",
+                  isToday && "w-11 h-11 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center mx-auto shadow-lg ring-2 ring-primary/30"
                 )}>
                   {format(day, 'd')}
                 </div>
@@ -182,7 +182,7 @@ const AppleCalendar = () => {
           <div className="grid grid-cols-[60px_repeat(7,1fr)]">
             {hours.map((hour) => (
               <>
-                <div key={`hour-${hour}`} className="p-2 text-sm text-muted-foreground text-right border-b h-20">
+                <div key={`hour-${hour}`} className="p-2 text-sm text-foreground/50 font-medium text-right border-b border-border/30 h-20 bg-muted/5">
                   {hour}:00
                 </div>
                 {weekDays.map((day) => {
@@ -191,7 +191,7 @@ const AppleCalendar = () => {
                   return (
                     <div
                       key={`${day}-${hour}`}
-                      className="border-l border-b h-20 hover:bg-muted/30 cursor-pointer relative"
+                      className="border-l border-b border-border/30 h-20 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 cursor-pointer relative transition-colors"
                       onClick={() => {
                         setSelectedDate(day);
                         setSelectedTimeSlot(`${hour}:00`);
@@ -217,7 +217,7 @@ const AppleCalendar = () => {
                         return (
                           <div
                             key={apt.id}
-                            className="absolute left-1 right-1 text-xs p-2 rounded-lg bg-primary text-primary-foreground cursor-pointer shadow-sm overflow-hidden"
+                            className="absolute left-1 right-1 text-xs p-2 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground cursor-pointer shadow-md hover:shadow-lg overflow-hidden transition-shadow border border-primary/20"
                             style={{
                               top: `${topPx}px`,
                               height: `${heightPx}px`,
@@ -229,8 +229,8 @@ const AppleCalendar = () => {
                               setIsEditModalOpen(true);
                             }}
                           >
-                            <div className="font-semibold truncate">{apt.clientName}</div>
-                            <div className="opacity-90 text-[10px]">
+                            <div className="font-bold truncate">{apt.clientName}</div>
+                            <div className="opacity-90 text-[10px] font-medium">
                               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
                             </div>
                           </div>
@@ -253,28 +253,28 @@ const AppleCalendar = () => {
     const dayAppointments = getAppointmentsForDate(selectedDate);
 
     return (
-      <div className="bg-background rounded-2xl overflow-hidden border">
+      <div className="bg-gradient-to-br from-background via-background to-muted/20 rounded-3xl overflow-hidden border border-border/50 shadow-lg">
         {/* Day header */}
-        <div className="p-6 border-b bg-muted/30">
-          <div className="text-sm text-muted-foreground uppercase tracking-wide">
+        <div className="p-8 border-b border-border/50 bg-gradient-to-r from-muted/30 via-muted/20 to-muted/30">
+          <div className="text-sm text-foreground/60 uppercase tracking-widest font-semibold">
             {format(selectedDate, 'EEEE', { locale: fr })}
           </div>
-          <div className="text-4xl font-bold mt-1">
+          <div className="text-5xl font-bold mt-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
             {format(selectedDate, 'd MMMM yyyy', { locale: fr })}
           </div>
         </div>
 
         {/* Day timeline */}
         <div className="overflow-auto max-h-[600px]">
-          <div className="grid grid-cols-[80px_1fr]">
+          <div className="grid grid-cols-[90px_1fr]">
             {hours.map((hour) => {
               return (
                 <>
-                  <div key={`hour-${hour}`} className="p-4 text-sm text-muted-foreground text-right border-b h-20">
+                  <div key={`hour-${hour}`} className="p-4 text-sm text-foreground/50 font-medium text-right border-b border-border/30 h-20 bg-muted/5">
                     {hour}:00
                   </div>
                   <div
-                    className="border-b h-20 hover:bg-muted/30 cursor-pointer relative"
+                    className="border-b border-border/30 h-20 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 cursor-pointer relative transition-colors"
                     onClick={() => {
                       setSelectedTimeSlot(`${hour}:00`);
                       setIsModalOpen(true);
@@ -299,7 +299,7 @@ const AppleCalendar = () => {
                       return (
                         <div
                           key={apt.id}
-                          className="absolute left-2 right-2 p-3 rounded-xl bg-primary text-primary-foreground cursor-pointer shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                          className="absolute left-3 right-3 p-4 rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden border border-primary/20"
                           style={{
                             top: `${topPx}px`,
                             height: `${heightPx}px`,
@@ -311,15 +311,15 @@ const AppleCalendar = () => {
                             setIsEditModalOpen(true);
                           }}
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="font-semibold text-base truncate">{apt.clientName}</div>
-                            <div className="text-sm opacity-90">{apt.totalPrice}€</div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-bold text-lg truncate">{apt.clientName}</div>
+                            <div className="text-sm font-semibold bg-primary-foreground/20 px-2 py-0.5 rounded-full">{apt.totalPrice}€</div>
                           </div>
-                          <div className="text-sm opacity-90">
+                          <div className="text-sm opacity-95 font-medium">
                             {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
                           </div>
                           {heightPx > 60 && (
-                            <div className="text-xs opacity-75 mt-1 truncate">
+                            <div className="text-xs opacity-80 mt-2 truncate">
                               {apt.services?.map((s: any) => s.name).join(', ')}
                             </div>
                           )}
@@ -339,12 +339,12 @@ const AppleCalendar = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="p-4 bg-gradient-to-br from-background to-muted/20 border-none shadow-sm">
-        <div className="flex flex-col gap-4">
+      <Card className="p-6 bg-gradient-to-br from-background via-background/95 to-muted/30 border border-border/50 shadow-xl backdrop-blur-sm">
+        <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between">
             {/* Left: Title and Navigation */}
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">
+            <div className="flex items-center gap-5">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 {viewMode === 'month' && format(selectedDate, 'MMMM yyyy', { locale: fr })}
                 {viewMode === 'week' && `Semaine du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })}`}
                 {viewMode === 'day' && format(selectedDate, 'd MMMM yyyy', { locale: fr })}
@@ -355,7 +355,7 @@ const AppleCalendar = () => {
                   variant="outline"
                   size="icon"
                   onClick={navigatePrev}
-                  className="rounded-full"
+                  className="rounded-full hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -363,7 +363,7 @@ const AppleCalendar = () => {
                 <Button
                   variant="outline"
                   onClick={goToToday}
-                  className="rounded-full px-4"
+                  className="rounded-full px-5 font-semibold hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
                 >
                   Aujourd'hui
                 </Button>
@@ -372,7 +372,7 @@ const AppleCalendar = () => {
                   variant="outline"
                   size="icon"
                   onClick={navigateNext}
-                  className="rounded-full"
+                  className="rounded-full hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -381,12 +381,15 @@ const AppleCalendar = () => {
 
             {/* Right: View mode and Add button */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
+              <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1 shadow-inner border border-border/30">
                 <Button
                   variant={viewMode === 'day' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('day')}
-                  className="rounded-full"
+                  className={cn(
+                    "rounded-full font-semibold transition-all",
+                    viewMode === 'day' && "shadow-md"
+                  )}
                 >
                   Jour
                 </Button>
@@ -394,7 +397,10 @@ const AppleCalendar = () => {
                   variant={viewMode === 'week' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('week')}
-                  className="rounded-full"
+                  className={cn(
+                    "rounded-full font-semibold transition-all",
+                    viewMode === 'week' && "shadow-md"
+                  )}
                 >
                   Semaine
                 </Button>
@@ -402,7 +408,10 @@ const AppleCalendar = () => {
                   variant={viewMode === 'month' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('month')}
-                  className="rounded-full"
+                  className={cn(
+                    "rounded-full font-semibold transition-all",
+                    viewMode === 'month' && "shadow-md"
+                  )}
                 >
                   Mois
                 </Button>
@@ -413,7 +422,7 @@ const AppleCalendar = () => {
                   setSelectedTimeSlot('');
                   setIsModalOpen(true);
                 }}
-                className="rounded-full shadow-md"
+                className="rounded-full shadow-lg hover:shadow-xl transition-all font-semibold bg-gradient-to-r from-primary to-primary/90"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau RDV
@@ -423,17 +432,17 @@ const AppleCalendar = () => {
 
           {/* Barber Selection Pills */}
           {activeBarbers.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
               {activeBarbers.map((barber) => (
                 <Button
                   key={barber.id}
                   variant={selectedBarberId === barber.id ? 'default' : 'outline'}
                   onClick={() => setSelectedBarberId(barber.id)}
                   className={cn(
-                    "min-w-fit whitespace-nowrap rounded-full transition-all",
+                    "min-w-fit whitespace-nowrap rounded-full transition-all font-semibold",
                     selectedBarberId === barber.id 
-                      ? "shadow-md" 
-                      : "hover:bg-muted/50"
+                      ? "shadow-lg bg-gradient-to-r from-primary to-primary/90" 
+                      : "hover:bg-muted/60 hover:border-primary/30 shadow-sm"
                   )}
                   size="sm"
                 >
