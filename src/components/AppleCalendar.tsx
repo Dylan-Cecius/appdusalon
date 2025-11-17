@@ -30,33 +30,33 @@ const AppleCalendar = () => {
   // Get color based on service category
   const getServiceColor = (services: any[]) => {
     if (!services || services.length === 0) return {
-      bg: 'from-primary via-primary to-primary/90',
-      text: 'text-primary-foreground'
+      gradient: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
+      text: 'text-white'
     };
     
     const mainService = services[0];
     const category = mainService.category || 'general';
     
-    const categoryColors: Record<string, { bg: string; text: string }> = {
+    const categoryColors: Record<string, { gradient: string; text: string }> = {
       'coupe': { 
-        bg: 'from-blue-500 via-blue-600 to-blue-700',
+        gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
         text: 'text-white'
       },
       'barbe': { 
-        bg: 'from-orange-500 via-orange-600 to-orange-700',
+        gradient: 'linear-gradient(135deg, #f97316, #c2410c)',
         text: 'text-white'
       },
       'combo': { 
-        bg: 'from-purple-500 via-purple-600 to-purple-700',
+        gradient: 'linear-gradient(135deg, #a855f7, #7e22ce)',
         text: 'text-white'
       },
       'produit': { 
-        bg: 'from-green-500 via-green-600 to-green-700',
+        gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
         text: 'text-white'
       },
       'general': { 
-        bg: 'from-primary via-primary to-primary/90',
-        text: 'text-primary-foreground'
+        gradient: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
+        text: 'text-white'
       }
     };
     
@@ -156,6 +156,7 @@ const AppleCalendar = () => {
                 <div className="space-y-1.5">
                   {dayAppointments.slice(0, 3).map((apt) => {
                     const colors = getServiceColor(apt.services);
+                    const serviceName = apt.services?.[0]?.name || '';
                     return (
                       <div
                         key={apt.id}
@@ -164,7 +165,7 @@ const AppleCalendar = () => {
                           colors.text
                         )}
                         style={{
-                          background: `linear-gradient(to right, ${colors.bg.replace('from-', '').replace('via-', '').replace('to-', '')})`
+                          background: colors.gradient
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -173,6 +174,7 @@ const AppleCalendar = () => {
                         }}
                       >
                         {format(new Date(apt.startTime), 'HH:mm')} - {apt.clientName}
+                        {serviceName && <div className="text-[9px] opacity-80 mt-0.5">{serviceName}</div>}
                       </div>
                     );
                   })}
@@ -223,7 +225,15 @@ const AppleCalendar = () => {
         </div>
 
         {/* Week grid */}
-        <div className="overflow-auto max-h-[600px]">
+        <div className="overflow-auto max-h-[600px]" ref={(el) => {
+          // Scroll to 10h on mount
+          if (el) {
+            setTimeout(() => {
+              const hourHeight = 80; // 80px per hour
+              el.scrollTop = hourHeight * 9; // Scroll to 9h to show 10h-19h
+            }, 100);
+          }
+        }}>
           <div className="grid grid-cols-[60px_repeat(7,1fr)]">
             {hours.map((hour) => (
               <>
@@ -260,6 +270,7 @@ const AppleCalendar = () => {
                         const topPx = (aptMinutes / 60) * 80;
 
                         const colors = getServiceColor(apt.services);
+                        const serviceName = apt.services?.[0]?.name || '';
 
                         return (
                           <div
@@ -272,12 +283,7 @@ const AppleCalendar = () => {
                               top: `${topPx}px`,
                               height: `${heightPx}px`,
                               minHeight: '20px',
-                              backgroundImage: `linear-gradient(135deg, ${colors.bg.split(' ').map((c: string) => {
-                                if (c.startsWith('from-')) return `var(--${c.replace('from-', '')})`;
-                                if (c.startsWith('via-')) return `var(--${c.replace('via-', '')})`;
-                                if (c.startsWith('to-')) return `var(--${c.replace('to-', '')})`;
-                                return c;
-                              }).join(', ')})`
+                              background: colors.gradient
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -286,6 +292,7 @@ const AppleCalendar = () => {
                             }}
                           >
                             <div className="font-bold truncate">{apt.clientName}</div>
+                            {serviceName && <div className="text-[9px] opacity-80">{serviceName}</div>}
                             <div className="opacity-90 text-[10px] font-medium">
                               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
                             </div>
@@ -321,7 +328,15 @@ const AppleCalendar = () => {
         </div>
 
         {/* Day timeline */}
-        <div className="overflow-auto max-h-[600px]">
+        <div className="overflow-auto max-h-[600px]" ref={(el) => {
+          // Scroll to 10h on mount
+          if (el) {
+            setTimeout(() => {
+              const hourHeight = 80; // 80px per hour
+              el.scrollTop = hourHeight * 9; // Scroll to 9h to show 10h-19h
+            }, 100);
+          }
+        }}>
           <div className="grid grid-cols-[90px_1fr]">
             {hours.map((hour) => {
               return (
@@ -353,6 +368,7 @@ const AppleCalendar = () => {
                       const topPx = (aptMinutes / 60) * 80;
 
                       const colors = getServiceColor(apt.services);
+                      const serviceName = apt.services?.[0]?.name || '';
 
                       return (
                         <div
@@ -365,12 +381,7 @@ const AppleCalendar = () => {
                             top: `${topPx}px`,
                             height: `${heightPx}px`,
                             minHeight: '40px',
-                            backgroundImage: `linear-gradient(135deg, ${colors.bg.split(' ').map((c: string) => {
-                              if (c.startsWith('from-')) return `var(--${c.replace('from-', '')})`;
-                              if (c.startsWith('via-')) return `var(--${c.replace('via-', '')})`;
-                              if (c.startsWith('to-')) return `var(--${c.replace('to-', '')})`;
-                              return c;
-                            }).join(', ')})`
+                            background: colors.gradient
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -382,14 +393,10 @@ const AppleCalendar = () => {
                             <div className="font-bold text-lg truncate">{apt.clientName}</div>
                             <div className="text-sm font-semibold bg-white/20 px-2 py-0.5 rounded-full">{apt.totalPrice}€</div>
                           </div>
+                          {serviceName && <div className="text-sm opacity-90 font-medium mb-1">{serviceName}</div>}
                           <div className="text-sm opacity-95 font-medium">
                             {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
                           </div>
-                          {heightPx > 60 && (
-                            <div className="text-xs opacity-80 mt-2 truncate">
-                              {apt.services?.map((s: any) => s.name).join(', ')}
-                            </div>
-                          )}
                         </div>
                       );
                     })}
