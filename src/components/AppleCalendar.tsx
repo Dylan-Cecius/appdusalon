@@ -22,7 +22,7 @@ const AppleCalendar = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   
-  const { appointments, markAsPaid, deleteAppointment } = useSupabaseAppointments();
+  const { appointments, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
 
   const activeBarbers = barbers.filter(b => b.is_active);
@@ -183,9 +183,10 @@ const AppleCalendar = () => {
                         {!apt.isPaid && (
                           <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5 p-0.5">
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                markAsPaid(apt.id);
+                                await markAsPaid(apt.id);
+                                await refreshAppointments();
                                 toast({
                                   title: "Encaissé",
                                   description: `${apt.totalPrice}€ encaissé`,
@@ -323,9 +324,10 @@ const AppleCalendar = () => {
                             {!apt.isPaid && <div className="text-[8px] font-bold mt-1">NON PAYÉ</div>}
                             {!apt.isPaid && (
                               <button
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                   e.stopPropagation();
-                                  markAsPaid(apt.id);
+                                  await markAsPaid(apt.id);
+                                  await refreshAppointments();
                                   toast({
                                     title: "Encaissé",
                                     description: `${apt.totalPrice}€ encaissé`,
@@ -442,9 +444,10 @@ const AppleCalendar = () => {
                           {!apt.isPaid && <div className="text-xs font-bold mt-2">NON PAYÉ</div>}
                           {!apt.isPaid && heightPx > 60 && (
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                markAsPaid(apt.id);
+                                await markAsPaid(apt.id);
+                                await refreshAppointments();
                                 toast({
                                   title: "Encaissé",
                                   description: `${apt.totalPrice}€ encaissé`,
