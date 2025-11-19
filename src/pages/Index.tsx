@@ -380,16 +380,8 @@ const Index = () => {
         paymentMethod: method
       });
 
-      
-      toast({
-        title: "Paiement confirmé",
-        description: `Paiement de ${total.toFixed(2)}€ par ${method === 'cash' ? 'espèces' : 'Bancontact'}`
-      });
-
       // Clear cart after successful payment
-      setTimeout(() => {
-        setCartItems([]);
-      }, 1500);
+      setCartItems([]);
     } catch (error) {
       toast({
         title: "Erreur",
