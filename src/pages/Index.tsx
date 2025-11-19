@@ -356,10 +356,6 @@ const Index = () => {
         quantity: 1
       }];
     });
-    toast({
-      title: service.category === 'produit' ? "Produit ajouté" : "Service ajouté",
-      description: `${service.name} ajouté au panier`
-    });
   };
   const updateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
