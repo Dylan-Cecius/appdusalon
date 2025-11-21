@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { fr } from 'date-fns/locale';
 
 export default function TransactionHistory() {
   const navigate = useNavigate();
-  const { transactions, loading } = useSupabaseTransactions();
+  const { transactions, loading } = useTransactions();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Filter transactions for selected date

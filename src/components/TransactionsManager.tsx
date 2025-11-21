@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Edit, Eye, EyeOff, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Transaction, useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
+import { Transaction } from '@/contexts/TransactionsContext';
+import { useTransactions } from '@/contexts/TransactionsContext';
 
 interface TransactionsManagerProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ interface EditTransactionData {
 }
 
 const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
-  const { transactions, updateTransaction, deleteTransaction, loading } = useSupabaseTransactions();
+  const { transactions, updateTransaction, deleteTransaction, loading } = useTransactions();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editData, setEditData] = useState<EditTransactionData>({
     totalAmount: '',
