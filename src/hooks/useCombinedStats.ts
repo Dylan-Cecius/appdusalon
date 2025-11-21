@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { useSupabaseTransactions } from './useSupabaseTransactions';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSupabaseAppointments } from './useSupabaseAppointments';
 
 export const useCombinedStats = () => {
-  const { transactions } = useSupabaseTransactions();
+  const { transactions } = useTransactions();
   const { appointments } = useSupabaseAppointments();
   
   const stats = useMemo(() => {

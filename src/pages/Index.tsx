@@ -8,7 +8,7 @@ import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as S
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useCombinedStats } from '@/hooks/useCombinedStats';
@@ -82,7 +82,7 @@ const Index = () => {
   } = useSupabaseServices();
   const {
     addTransaction
-  } = useSupabaseTransactions();
+  } = useTransactions();
   const { stats } = useCombinedStats();
   const {
     subscribed,
