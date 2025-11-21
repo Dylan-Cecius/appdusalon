@@ -14,6 +14,7 @@ const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
 import { AuthProvider } from '@/hooks/useAuth';
 import { TransactionsProvider } from '@/contexts/TransactionsContext';
 
+// Global state management with TransactionsProvider
 const queryClient = new QueryClient();
 
 const App = () => (
