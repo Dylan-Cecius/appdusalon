@@ -17,28 +17,30 @@ import { TransactionsProvider } from '@/contexts/TransactionsContext';
 // Global state management with TransactionsProvider
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TransactionsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/historique" element={<Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense>} />
-              <Route path="/encaissements" element={<Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </TransactionsProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TransactionsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/historique" element={<Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense>} />
+                <Route path="/encaissements" element={<Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </TransactionsProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
