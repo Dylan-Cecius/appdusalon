@@ -15,6 +15,7 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import StatsPage from "./pages/StatsPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import ClientsPage from "./pages/ClientsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
@@ -41,7 +42,7 @@ const App = () => {
                 <Route path="/admin" element={<Admin />} />
                 
                 {/* Routes principales */}
-                <Route path="/pos" element={<POSPage />} />
+                <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/agenda" element={<AgendaPage />} />
                 <Route path="/todo" element={<TodoPage />} />
                 <Route path="/abonnements" element={<SubscriptionPage />} />

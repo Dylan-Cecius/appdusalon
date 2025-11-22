@@ -14,6 +14,7 @@ export interface Transaction {
   totalAmount: number;
   paymentMethod: 'cash' | 'card';
   transactionDate: Date;
+  clientId?: string;
 }
 
 interface TransactionsContextType {
@@ -108,6 +109,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
           total_amount: transaction.totalAmount,
           payment_method: transaction.paymentMethod,
           user_id: user.id,
+          client_id: transaction.clientId || null,
           transaction_date: currentTimeUTC.toISOString()
         })
         .select()
