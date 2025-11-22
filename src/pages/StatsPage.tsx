@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DollarSign } from 'lucide-react';
@@ -27,6 +27,10 @@ const StatsPage = () => {
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
   const { stats } = useCombinedStats();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
 
   return (
     <MainLayout>
