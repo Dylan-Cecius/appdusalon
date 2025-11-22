@@ -15,6 +15,10 @@ import { PeakHoursStats } from '@/components/stats/PeakHoursStats';
 import { CancellationRateStats } from '@/components/stats/CancellationRateStats';
 import { ServiceProfitabilityStats } from '@/components/stats/ServiceProfitabilityStats';
 import { OccupancyRateStats } from '@/components/stats/OccupancyRateStats';
+import { AverageBasketStats } from '@/components/stats/AverageBasketStats';
+import { EmployeeRevenueStats } from '@/components/stats/EmployeeRevenueStats';
+import { AverageDailyClientsStats } from '@/components/stats/AverageDailyClientsStats';
+import { MonthlyComparisonChart } from '@/components/stats/MonthlyComparisonChart';
 import TransactionsManager from '@/components/TransactionsManager';
 import { FeatureGate } from '@/components/FeatureGate';
 import { useNavigate } from 'react-router-dom';
@@ -137,6 +141,15 @@ const StatsPage = () => {
         <CustomPaymentStats />
 
         <RevenueChart />
+
+        <MonthlyComparisonChart />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AverageBasketStats />
+          <AverageDailyClientsStats />
+        </div>
+
+        <EmployeeRevenueStats />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div id="custom-date-range">
