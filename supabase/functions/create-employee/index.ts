@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔍 [create-employee] Function invoked');
+    
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -25,7 +27,10 @@ serve(async (req) => {
 
     // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization');
+    console.log('🔍 [create-employee] Auth header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.error('🔍 [create-employee] No authorization header');
       throw new Error('No authorization header');
     }
 
@@ -41,28 +46,37 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    console.log('🔍 [create-employee] User:', user?.id, 'Error:', userError);
+    
     if (userError || !user) {
+      console.error('🔍 [create-employee] User error:', userError);
       throw new Error('Unauthorized');
     }
 
     // Check if user is admin in their salon
-    const { data: roleData } = await supabaseAdmin
+    const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role, salon_id')
       .eq('user_id', user.id)
       .single();
 
+    console.log('🔍 [create-employee] Role data:', roleData, 'Error:', roleError);
+
     if (!roleData || roleData.role !== 'admin') {
+      console.error('🔍 [create-employee] User is not admin or has no role');
       throw new Error('Only admins can create employees');
     }
 
     const salonId = roleData.salon_id;
+    console.log('🔍 [create-employee] Salon ID:', salonId);
 
     // Parse request body
     const { email, display_name, color, role } = await req.json();
+    console.log('🔍 [create-employee] Request data:', { email, display_name, color, role });
 
     // Validate input
     if (!email || !display_name || !color || !role) {
+      console.error('🔍 [create-employee] Missing required fields');
       throw new Error('Missing required fields');
     }
 

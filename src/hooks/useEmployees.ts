@@ -41,12 +41,25 @@ export const useEmployees = () => {
       color: string;
       role: 'admin' | 'employee';
     }) => {
+      console.log('🔍 Creating employee with data:', employeeData);
+      
       // Call edge function to create employee + auth account
       const { data, error } = await supabase.functions.invoke('create-employee', {
         body: employeeData,
       });
 
-      if (error) throw error;
+      console.log('🔍 Edge function response:', { data, error });
+
+      if (error) {
+        console.error('🔍 Edge function error:', error);
+        throw error;
+      }
+      
+      if (!data || !data.success) {
+        console.error('🔍 Edge function returned error:', data);
+        throw new Error(data?.error || 'Erreur lors de la création de l\'employé');
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -54,6 +67,7 @@ export const useEmployees = () => {
       toast.success('Employé créé avec succès');
     },
     onError: (error: any) => {
+      console.error('🔍 Create employee error:', error);
       toast.error(error.message || 'Erreur lors de la création de l\'employé');
     },
   });
