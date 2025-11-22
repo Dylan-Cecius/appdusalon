@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, Crown, History, Mail } from 'lucide-react';
+import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, Crown, History, Mail, LayoutDashboard, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -32,7 +32,9 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   }, [location.pathname]);
 
   const navItems = [
+    { path: '/dashboard', label: isMobile ? 'Home' : 'Dashboard', icon: LayoutDashboard },
     { path: '/pos', label: isMobile ? 'POS' : 'Encaissement', icon: Scissors },
+    { path: '/clients', label: 'Clients', icon: Users },
     { path: '/agenda', label: 'Agenda', icon: Calendar },
     { path: '/stats', label: 'Stats', icon: BarChart3 },
     { path: '/abonnements', label: isMobile ? 'Pro' : 'Abonnement', icon: Crown },

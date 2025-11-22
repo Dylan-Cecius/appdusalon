@@ -1,7 +1,10 @@
-import { Trash2, CreditCard, Banknote } from "lucide-react";
+import { useState } from "react";
+import { Trash2, CreditCard, Banknote, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useClients } from "@/hooks/useClients";
 
 interface CartItem {
   id: string;
@@ -15,10 +18,12 @@ interface CartSidebarProps {
   items: CartItem[];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemoveItem: (id: string) => void;
-  onCheckout: (method: 'cash' | 'card') => void;
+  onCheckout: (method: 'cash' | 'card', clientId?: string) => void;
 }
 
 const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: CartSidebarProps) => {
+  const { clients } = useClients();
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalDuration = items.reduce((sum, item) => sum + (item.duration * item.quantity), 0);
 
@@ -48,33 +53,38 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
                style={{ animationDelay: `${index * 0.1}s` }}>
             <div className="flex-1">
               <h3 className="font-medium group-hover:text-primary transition-colors duration-200">{item.name}</h3>
-              <p className="text-sm text-muted-foreground">{item.price.toFixed(2)}€</p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-sm text-muted-foreground">
+                  {item.price.toFixed(2)}€ × {item.quantity}
+                </p>
+                <span className="text-xs text-muted-foreground">•</span>
+                <p className="text-sm text-muted-foreground">
+                  {item.duration} min
+                </p>
+              </div>
             </div>
-            
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 bg-muted/50 rounded-lg">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                  disabled={item.quantity <= 1}
-                  className="h-8 w-8 p-0 hover:scale-110 active:scale-95 transition-transform duration-200"
+                  className="h-7 w-7 p-0 hover:bg-primary/10 hover:scale-110 active:scale-95 transition-all duration-200"
                 >
                   -
                 </Button>
-                <span className="w-8 text-center font-medium">{item.quantity}</span>
+                <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                  className="h-8 w-8 p-0 hover:scale-110 active:scale-95 transition-transform duration-200"
+                  className="h-7 w-7 p-0 hover:bg-primary/10 hover:scale-110 active:scale-95 transition-all duration-200"
                 >
                   +
                 </Button>
               </div>
-              
               <Button
-                variant="destructive"
+                variant="ghost"
                 size="sm"
                 onClick={() => onRemoveItem(item.id)}
                 className="h-8 w-8 p-0 hover:scale-110 active:scale-95 transition-all duration-200"
@@ -99,17 +109,37 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
             <span className="text-primary">{total.toFixed(2)}€</span>
           </div>
         </div>
+
+        <div className="mb-4">
+          <label className="text-sm font-medium mb-2 flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Client (optionnel)
+          </label>
+          <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un client" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sans client</SelectItem>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name} - {client.phone}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         
         <div className="grid grid-cols-2 gap-3">
           <Button 
-            onClick={() => onCheckout('cash')}
+            onClick={() => onCheckout('cash', selectedClientId === 'none' ? undefined : selectedClientId)}
             className="bg-pos-cash hover:bg-pos-cash/90 text-pos-success-foreground flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"
           >
             <Banknote className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
             Cash
           </Button>
           <Button 
-            onClick={() => onCheckout('card')}
+            onClick={() => onCheckout('card', selectedClientId === 'none' ? undefined : selectedClientId)}
             className="bg-pos-card hover:bg-pos-card/90 text-white flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"
           >
             <CreditCard className="h-4 w-4 transition-transform duration-200 hover:-rotate-12" />
