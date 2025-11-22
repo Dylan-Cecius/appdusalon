@@ -20,10 +20,12 @@ export type Database = {
           client_name: string
           client_phone: string
           created_at: string
+          employee_id: string | null
           end_time: string
           id: string
           is_paid: boolean
           notes: string | null
+          salon_id: string | null
           services: Json
           start_time: string
           status: string
@@ -36,10 +38,12 @@ export type Database = {
           client_name: string
           client_phone: string
           created_at?: string
+          employee_id?: string | null
           end_time: string
           id?: string
           is_paid?: boolean
           notes?: string | null
+          salon_id?: string | null
           services: Json
           start_time: string
           status?: string
@@ -52,10 +56,12 @@ export type Database = {
           client_name?: string
           client_phone?: string
           created_at?: string
+          employee_id?: string | null
           end_time?: string
           id?: string
           is_paid?: boolean
           notes?: string | null
+          salon_id?: string | null
           services?: Json
           start_time?: string
           status?: string
@@ -63,7 +69,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "appointments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       automated_reports: {
         Row: {
@@ -124,6 +145,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          salon_id: string | null
           start_time: string
           updated_at: string
           user_id: string | null
@@ -136,6 +158,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          salon_id?: string | null
           start_time?: string
           updated_at?: string
           user_id?: string | null
@@ -148,12 +171,21 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          salon_id?: string | null
           start_time?: string
           updated_at?: string
           user_id?: string | null
           working_days?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "barbers_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clients: {
         Row: {
@@ -163,6 +195,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string
+          salon_id: string | null
           updated_at: string
           user_id: string
         }
@@ -173,6 +206,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone: string
+          salon_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -183,10 +217,19 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string
+          salon_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_blocks: {
         Row: {
@@ -197,6 +240,7 @@ export type Database = {
           end_time: string
           id: string
           notes: string | null
+          salon_id: string | null
           start_time: string
           title: string
           updated_at: string
@@ -210,6 +254,7 @@ export type Database = {
           end_time: string
           id?: string
           notes?: string | null
+          salon_id?: string | null
           start_time: string
           title: string
           updated_at?: string
@@ -223,6 +268,7 @@ export type Database = {
           end_time?: string
           id?: string
           notes?: string | null
+          salon_id?: string | null
           start_time?: string
           title?: string
           updated_at?: string
@@ -236,6 +282,54 @@ export type Database = {
             referencedRelation: "barbers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "custom_blocks_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          color: string
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          salon_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          salon_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          salon_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lunch_breaks: {
@@ -246,6 +340,7 @@ export type Database = {
           end_time: string
           id: string
           is_active: boolean
+          salon_id: string | null
           start_time: string
           updated_at: string
           user_id: string | null
@@ -257,6 +352,7 @@ export type Database = {
           end_time: string
           id?: string
           is_active?: boolean
+          salon_id?: string | null
           start_time: string
           updated_at?: string
           user_id?: string | null
@@ -268,6 +364,7 @@ export type Database = {
           end_time?: string
           id?: string
           is_active?: boolean
+          salon_id?: string | null
           start_time?: string
           updated_at?: string
           user_id?: string | null
@@ -278,6 +375,13 @@ export type Database = {
             columns: ["barber_id"]
             isOneToOne: true
             referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lunch_breaks_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
             referencedColumns: ["id"]
           },
         ]
@@ -413,6 +517,30 @@ export type Database = {
         }
         Relationships: []
       }
+      salons: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           appointment_buffer: number | null
@@ -424,6 +552,7 @@ export type Database = {
           is_active: boolean
           name: string
           price: number
+          salon_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -437,6 +566,7 @@ export type Database = {
           is_active?: boolean
           name: string
           price: number
+          salon_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -450,10 +580,19 @@ export type Database = {
           is_active?: boolean
           name?: string
           price?: number
+          salon_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "services_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscribers: {
         Row: {
@@ -501,6 +640,7 @@ export type Database = {
           id: string
           is_completed: boolean
           priority: string
+          salon_id: string | null
           title: string
           updated_at: string
           user_id: string | null
@@ -514,6 +654,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           priority?: string
+          salon_id?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
@@ -527,6 +668,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           priority?: string
+          salon_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -539,15 +681,24 @@ export type Database = {
             referencedRelation: "barbers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "todo_items_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
         ]
       }
       transactions: {
         Row: {
           client_id: string | null
           created_at: string
+          employee_id: string | null
           id: string
           items: Json
           payment_method: string
+          salon_id: string | null
           total_amount: number
           transaction_date: string
           updated_at: string
@@ -556,9 +707,11 @@ export type Database = {
         Insert: {
           client_id?: string | null
           created_at?: string
+          employee_id?: string | null
           id?: string
           items: Json
           payment_method: string
+          salon_id?: string | null
           total_amount: number
           transaction_date?: string
           updated_at?: string
@@ -567,9 +720,11 @@ export type Database = {
         Update: {
           client_id?: string | null
           created_at?: string
+          employee_id?: string | null
           id?: string
           items?: Json
           payment_method?: string
+          salon_id?: string | null
           total_amount?: number
           transaction_date?: string
           updated_at?: string
@@ -581,6 +736,52 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          salon_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          salon_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          salon_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
             referencedColumns: ["id"]
           },
         ]
@@ -667,7 +868,18 @@ export type Database = {
         }[]
       }
       get_barber_owner: { Args: { target_barber_id: string }; Returns: string }
+      get_user_employee_id: { Args: { _user_id: string }; Returns: string }
+      get_user_salon_id: { Args: { _user_id: string }; Returns: string }
+      has_role_in_salon: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _salon_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       hash_password: { Args: { password_text: string }; Returns: string }
+      is_salon_admin: { Args: { _user_id: string }; Returns: boolean }
       use_promo_code: {
         Args: { code_text: string; user_id_param: string }
         Returns: Json
@@ -682,7 +894,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -809,6 +1021,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "employee"],
+    },
   },
 } as const

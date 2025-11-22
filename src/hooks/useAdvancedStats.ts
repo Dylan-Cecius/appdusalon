@@ -17,6 +17,7 @@ export interface ClientRetentionData {
 
 export interface BarberPerformanceData {
   barberName: string;
+  employeeId: string | null;
   appointmentCount: number;
   revenue: number;
   averageServiceTime: number;
@@ -115,6 +116,7 @@ export const useAdvancedStats = () => {
       revenue: number;
       totalDuration: number;
       realName: string;
+      employeeId: string | null;
     }>();
 
     // Traiter les rendez-vous - utiliser l'ID comme clé
@@ -126,7 +128,8 @@ export const useAdvancedStats = () => {
         appointmentCount: 0,
         revenue: 0,
         totalDuration: 0,
-        realName: barberName
+        realName: barberName,
+        employeeId: barberId !== 'non-assigne' ? barberId : null
       };
 
       const duration = appointment.endTime.getTime() - appointment.startTime.getTime();
@@ -136,7 +139,8 @@ export const useAdvancedStats = () => {
         appointmentCount: existing.appointmentCount + 1,
         revenue: existing.revenue + revenue,
         totalDuration: existing.totalDuration + duration,
-        realName: barberName
+        realName: barberName,
+        employeeId: existing.employeeId
       });
     });
 
@@ -162,7 +166,8 @@ export const useAdvancedStats = () => {
             appointmentCount: 0,
             revenue: 0,
             totalDuration: 0,
-            realName: barberName
+            realName: barberName,
+            employeeId: barberId !== 'non-assigne' ? barberId : null
           };
 
           // Calculer la part de revenus de cet item dans la transaction
@@ -184,7 +189,8 @@ export const useAdvancedStats = () => {
           appointmentCount: 0,
           revenue: 0,
           totalDuration: 0,
-          realName: barberName
+          realName: barberName,
+          employeeId: barberId !== 'non-assigne' ? barberId : null
         };
 
         barberMap.set(barberId, {
@@ -198,6 +204,7 @@ export const useAdvancedStats = () => {
     return Array.from(barberMap.entries())
       .map(([barberId, data]) => ({
         barberName: data.realName,
+        employeeId: data.employeeId,
         appointmentCount: data.appointmentCount,
         revenue: data.revenue,
         averageServiceTime: data.appointmentCount > 0 ? data.totalDuration / (data.appointmentCount * 60000) : 0, // en minutes
