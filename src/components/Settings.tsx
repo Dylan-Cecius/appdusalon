@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,12 +9,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, Plus, Edit, Trash2, Clock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseSettings, type Barber } from '@/hooks/useSupabaseSettings';
+import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import ServiceManagement from './ServiceManagement';
 import ProductManagement from './ProductManagement';
+import { EmployeeManagement } from './EmployeeManagement';
 
 const Settings = () => {
   const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
+  const { permissions } = usePermissions();
   const [statsPassword, setStatsPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -751,6 +754,9 @@ const Settings = () => {
       
       {/* Gestion des produits */}
       <ProductManagement />
+      
+      {/* Gestion des employés (admin only) */}
+      {permissions.isAdmin && <EmployeeManagement />}
     </div>
   );
 };
