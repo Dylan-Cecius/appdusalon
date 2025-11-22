@@ -94,6 +94,19 @@ export const useSupabaseTransactions = () => {
       // Convert current time to UTC for database storage
       const currentTimeUTC = fromZonedTime(new Date(), 'Europe/Paris');
       
+      // Get salon_id and employee_id for the current user
+      const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+      const { data: employeeIdData } = await supabase.rpc('get_user_employee_id', { _user_id: user.id });
+      
+      if (!salonIdData) {
+        toast({
+          title: "Erreur",
+          description: "Aucun salon associé à votre compte",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('transactions' as any)
         .insert({
@@ -101,6 +114,8 @@ export const useSupabaseTransactions = () => {
           total_amount: transaction.totalAmount,
           payment_method: transaction.paymentMethod,
           user_id: user.id,
+          salon_id: salonIdData,
+          employee_id: employeeIdData || null,
           transaction_date: currentTimeUTC.toISOString()
         })
         .select()
