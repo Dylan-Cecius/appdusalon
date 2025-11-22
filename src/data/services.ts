@@ -68,6 +68,16 @@ export const services: Service[] = [
     duration: 60,
     category: 'combo',
     appointmentBuffer: 20
+  },
+  
+  // Produits
+  {
+    id: '8',
+    name: 'Shampoing',
+    price: 2.00,
+    duration: 5,
+    category: 'produit',
+    appointmentBuffer: 0
   }
 ];
 
