@@ -390,22 +390,22 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
   const { content: previewContent } = generateReport();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       {/* Form */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-accent/10 rounded-lg">
             <Mail className="h-6 w-6 text-accent-foreground" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-primary">Envoi de rapports</h3>
-            <p className="text-sm text-muted-foreground">Générez et envoyez vos statistiques par email</p>
+            <h3 className="text-lg sm:text-xl font-semibold text-primary">Envoi de rapports</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">Générez et envoyez vos statistiques par email</p>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="email">Adresse email *</Label>
+            <Label htmlFor="email" className="text-sm sm:text-base">Adresse email *</Label>
             <Input
               id="email"
               type="email"
@@ -413,13 +413,14 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="votre@email.com"
               required
+              className="min-h-[44px] text-base"
             />
           </div>
 
           <div>
-            <Label htmlFor="reportType">Type de rapport</Label>
+            <Label htmlFor="reportType" className="text-sm sm:text-base">Type de rapport</Label>
             <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
-              <SelectTrigger>
+              <SelectTrigger className="min-h-[44px]">
                 <SelectValue placeholder="Sélectionner le type de rapport" />
               </SelectTrigger>
               <SelectContent className="bg-background border z-50">
@@ -433,7 +434,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
           {reportType === 'daily' && (
             <div>
-              <Label htmlFor="selectedDate" className="flex items-center gap-2">
+              <Label htmlFor="selectedDate" className="flex items-center gap-2 text-sm sm:text-base">
                 <Calendar className="h-4 w-4" />
                 Date du rapport journalier
               </Label>
@@ -442,8 +443,9 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                className="min-h-[44px]"
               />
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Sélectionnez la date pour laquelle générer le rapport journalier
               </p>
             </div>
@@ -451,9 +453,9 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
           {reportType === 'custom' && (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startDate" className="flex items-center gap-2">
+                  <Label htmlFor="startDate" className="flex items-center gap-2 text-sm sm:text-base">
                     <Calendar className="h-4 w-4" />
                     Date de début
                   </Label>
@@ -462,10 +464,11 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
+                    className="min-h-[44px]"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="endDate" className="flex items-center gap-2">
+                  <Label htmlFor="endDate" className="flex items-center gap-2 text-sm sm:text-base">
                     <Calendar className="h-4 w-4" />
                     Date de fin
                   </Label>
@@ -475,6 +478,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     min={startDate}
+                    className="min-h-[44px]"
                   />
                 </div>
               </div>
