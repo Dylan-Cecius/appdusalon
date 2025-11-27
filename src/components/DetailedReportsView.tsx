@@ -120,20 +120,20 @@ const DetailedReportsView = () => {
   }, [dailyBreakdown]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Filters Card */}
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-6">
+      <Card className="p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <TrendingUp className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Rapports Détaillés</h3>
+          <h3 className="text-base sm:text-lg font-semibold">Rapports Détaillés</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {/* Period Type */}
-          <div>
-            <Label htmlFor="periodType">Période</Label>
+          <div className="w-full">
+            <Label htmlFor="periodType" className="text-sm sm:text-base">Période</Label>
             <Select value={periodType} onValueChange={(value: PeriodType) => setPeriodType(value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full min-h-[44px]">
                 <SelectValue placeholder="Sélectionner..." />
               </SelectTrigger>
               <SelectContent className="bg-background border z-50">
@@ -147,8 +147,8 @@ const DetailedReportsView = () => {
 
           {/* Date Selector for daily/weekly/monthly */}
           {periodType !== 'custom' && (
-            <div>
-              <Label htmlFor="selectedDate" className="flex items-center gap-2">
+            <div className="w-full">
+              <Label htmlFor="selectedDate" className="flex items-center gap-2 text-sm sm:text-base">
                 <Calendar className="h-4 w-4" />
                 Date de référence
               </Label>
@@ -157,56 +157,59 @@ const DetailedReportsView = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full min-h-[44px]"
               />
             </div>
           )}
 
           {/* Custom Date Range */}
           {periodType === 'custom' && (
-            <>
-              <div>
-                <Label htmlFor="startDate">Date de début</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="w-full">
+                <Label htmlFor="startDate" className="text-sm sm:text-base">Date de début</Label>
                 <Input
                   id="startDate"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full min-h-[44px]"
                 />
               </div>
-              <div>
-                <Label htmlFor="endDate">Date de fin</Label>
+              <div className="w-full">
+                <Label htmlFor="endDate" className="text-sm sm:text-base">Date de fin</Label>
                 <Input
                   id="endDate"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={startDate}
+                  className="w-full min-h-[44px]"
                 />
               </div>
-            </>
+            </div>
           )}
 
           {/* Payment Filter */}
-          <div>
-            <Label className="mb-3 block">Moyen de paiement</Label>
+          <div className="w-full">
+            <Label className="mb-3 block text-sm sm:text-base">Moyen de paiement</Label>
             <RadioGroup 
               value={paymentFilter} 
               onValueChange={(value: PaymentFilter) => {
                 setPaymentFilter(value);
               }} 
-              className="flex gap-4"
+              className="flex flex-col sm:flex-row gap-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="all-detailed" />
-                <Label htmlFor="all-detailed" className="cursor-pointer">Tous</Label>
+                <RadioGroupItem value="all" id="all-detailed" className="min-h-[24px] min-w-[24px]" />
+                <Label htmlFor="all-detailed" className="cursor-pointer text-sm sm:text-base">Tous</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cash" id="cash-detailed" />
-                <Label htmlFor="cash-detailed" className="cursor-pointer">Cash</Label>
+                <RadioGroupItem value="cash" id="cash-detailed" className="min-h-[24px] min-w-[24px]" />
+                <Label htmlFor="cash-detailed" className="cursor-pointer text-sm sm:text-base">Cash</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="card" id="card-detailed" />
-                <Label htmlFor="card-detailed" className="cursor-pointer">Bancontact</Label>
+                <RadioGroupItem value="card" id="card-detailed" className="min-h-[24px] min-w-[24px]" />
+                <Label htmlFor="card-detailed" className="cursor-pointer text-sm sm:text-base">Bancontact</Label>
               </div>
             </RadioGroup>
           </div>
@@ -214,102 +217,102 @@ const DetailedReportsView = () => {
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <Card className="p-4 sm:p-6 text-center">
           <div className="flex justify-center mb-3">
             <div className="p-3 rounded-lg bg-accent/10 text-accent-foreground">
-              <Euro className="h-8 w-8" />
+              <Euro className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-primary mb-2">
+          <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">
             {totals.totalAmount.toFixed(2)}€
           </p>
-          <p className="text-sm text-muted-foreground">Chiffre d'Affaires Total</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Chiffre d'Affaires Total</p>
         </Card>
 
-        <Card className="p-6 text-center">
+        <Card className="p-4 sm:p-6 text-center">
           <div className="flex justify-center mb-3">
             <div className="p-3 rounded-lg bg-primary/10 text-primary">
-              <Users className="h-8 w-8" />
+              <Users className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-primary mb-2">
+          <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">
             {totals.transactions}
           </p>
-          <p className="text-sm text-muted-foreground">Total Transactions</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Total Transactions</p>
         </Card>
 
         {paymentFilter === 'all' && (
-          <Card className="p-6 text-center">
+          <Card className="p-4 sm:p-6 text-center sm:col-span-2 md:col-span-1">
             <div className="flex justify-center mb-3">
               <div className="p-3 rounded-lg bg-secondary/10 text-secondary-foreground">
-                <TrendingUp className="h-8 w-8" />
+                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8" />
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-lg font-semibold text-primary">
+              <p className="text-base sm:text-lg font-semibold text-primary">
                 Cash: {totals.cashAmount.toFixed(2)}€
               </p>
-              <p className="text-lg font-semibold text-primary">
+              <p className="text-base sm:text-lg font-semibold text-primary">
                 Bancontact: {totals.cardAmount.toFixed(2)}€
               </p>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">Répartition Paiements</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">Répartition Paiements</p>
           </Card>
         )}
       </div>
 
       {/* Daily Breakdown Table */}
-      <Card className="p-6">
-        <h4 className="text-lg font-semibold mb-4">
+      <Card className="p-4 sm:p-6">
+        <h4 className="text-base sm:text-lg font-semibold mb-4">
           Détail Jour par Jour
-          <span className="text-sm text-muted-foreground ml-2">
+          <span className="text-xs sm:text-sm text-muted-foreground block sm:inline sm:ml-2 mt-1 sm:mt-0">
             ({format(dateRange.start, 'dd/MM/yyyy', { locale: fr })} - {format(dateRange.end, 'dd/MM/yyyy', { locale: fr })})
           </span>
         </h4>
 
-        <div className="overflow-x-auto">
-          <Table>
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <Table className="min-w-[600px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-center">Transactions</TableHead>
+                <TableHead className="text-xs sm:text-sm">Date</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm">Trans.</TableHead>
                 {(paymentFilter === 'all' || paymentFilter === 'cash') && (
-                  <TableHead className="text-right">Détail Cash</TableHead>
+                  <TableHead className="text-right text-xs sm:text-sm">Cash</TableHead>
                 )}
                 {(paymentFilter === 'all' || paymentFilter === 'card') && (
-                  <TableHead className="text-right">Détail Bancontact</TableHead>
+                  <TableHead className="text-right text-xs sm:text-sm">Bancontact</TableHead>
                 )}
-                <TableHead className="text-right">Total Jour</TableHead>
+                <TableHead className="text-right text-xs sm:text-sm">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {dailyBreakdown.map((day, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium text-xs sm:text-sm">
                     {format(day.date, 'dd/MM/yyyy', { locale: fr })}
                   </TableCell>
-                  <TableCell className="text-center">{day.transactions}</TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm">{day.transactions}</TableCell>
                   {(paymentFilter === 'all' || paymentFilter === 'cash') && (
-                    <TableCell className="text-right">{day.cashAmount.toFixed(2)}€</TableCell>
+                    <TableCell className="text-right text-xs sm:text-sm">{day.cashAmount.toFixed(2)}€</TableCell>
                   )}
                   {(paymentFilter === 'all' || paymentFilter === 'card') && (
-                    <TableCell className="text-right">{day.cardAmount.toFixed(2)}€</TableCell>
+                    <TableCell className="text-right text-xs sm:text-sm">{day.cardAmount.toFixed(2)}€</TableCell>
                   )}
-                  <TableCell className="text-right font-semibold">{day.totalAmount.toFixed(2)}€</TableCell>
+                  <TableCell className="text-right font-semibold text-xs sm:text-sm">{day.totalAmount.toFixed(2)}€</TableCell>
                 </TableRow>
               ))}
               {/* Total Row */}
               <TableRow className="bg-primary/5 font-bold">
-                <TableCell>TOTAL</TableCell>
-                <TableCell className="text-center">{totals.transactions}</TableCell>
+                <TableCell className="text-xs sm:text-sm">TOTAL</TableCell>
+                <TableCell className="text-center text-xs sm:text-sm">{totals.transactions}</TableCell>
                 {(paymentFilter === 'all' || paymentFilter === 'cash') && (
-                  <TableCell className="text-right">{totals.cashAmount.toFixed(2)}€</TableCell>
+                  <TableCell className="text-right text-xs sm:text-sm">{totals.cashAmount.toFixed(2)}€</TableCell>
                 )}
                 {(paymentFilter === 'all' || paymentFilter === 'card') && (
-                  <TableCell className="text-right">{totals.cardAmount.toFixed(2)}€</TableCell>
+                  <TableCell className="text-right text-xs sm:text-sm">{totals.cardAmount.toFixed(2)}€</TableCell>
                 )}
-                <TableCell className="text-right">{totals.totalAmount.toFixed(2)}€</TableCell>
+                <TableCell className="text-right text-xs sm:text-sm">{totals.totalAmount.toFixed(2)}€</TableCell>
               </TableRow>
             </TableBody>
           </Table>
