@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Mail, Send, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
+import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 
 interface StatsData {
   todayRevenue: number;
@@ -45,11 +48,54 @@ interface EmailReportsProps {
 }
 
 const EmailReports = ({ statsData }: EmailReportsProps) => {
+  const { transactions } = useSupabaseTransactions();
+  const { appointments } = useSupabaseAppointments();
+  
   const [email, setEmail] = useState('');
-  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [paymentMethod, setPaymentMethod] = useState<'all' | 'cash' | 'card'>('all');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Calculate custom stats based on date range and payment method
+  const customStats = useMemo(() => {
+    if (reportType !== 'custom') return null;
+
+    const start = startOfDay(new Date(startDate));
+    const end = endOfDay(new Date(endDate));
+
+    // Filter transactions
+    const filteredTransactions = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      const matchesDate = txDate >= start && txDate <= end;
+      const matchesPayment = paymentMethod === 'all' || tx.paymentMethod === paymentMethod;
+      return matchesDate && matchesPayment;
+    });
+
+    // Filter appointments
+    const filteredAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      const matchesDate = aptDate >= start && aptDate <= end && apt.isPaid;
+      return matchesDate; // Appointments don't have payment method in the data
+    });
+
+    const cashCount = filteredTransactions.filter(tx => tx.paymentMethod === 'cash').length;
+    const cardCount = filteredTransactions.filter(tx => tx.paymentMethod === 'card').length;
+    const totalTransactions = filteredTransactions.length;
+
+    return {
+      revenue: filteredTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0) +
+               filteredAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0),
+      clients: filteredTransactions.length + filteredAppointments.length,
+      cash: cashCount,
+      card: cardCount,
+      cashPercent: totalTransactions > 0 ? (cashCount / totalTransactions) * 100 : 0,
+      cardPercent: totalTransactions > 0 ? (cardCount / totalTransactions) * 100 : 0,
+    };
+  }, [reportType, startDate, endDate, paymentMethod, transactions, appointments]);
 
   const generateReport = () => {
     const currentDate = new Date(selectedDate);
@@ -59,6 +105,35 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
     let subject = '';
 
     switch (reportType) {
+      case 'custom':
+        const startFormatted = format(new Date(startDate), 'dd MMMM yyyy', { locale: fr });
+        const endFormatted = format(new Date(endDate), 'dd MMMM yyyy', { locale: fr });
+        const paymentFilter = paymentMethod === 'all' ? 'Tous' : paymentMethod === 'cash' ? 'Espèces uniquement' : 'Bancontact uniquement';
+        
+        subject = `Rapport personnalisé - ${startFormatted} au ${endFormatted}`;
+        reportContent = `
+📊 RAPPORT PERSONNALISÉ - ${startFormatted.toUpperCase()} AU ${endFormatted.toUpperCase()}
+
+💳 FILTRE DE PAIEMENT : ${paymentFilter}
+
+💰 CHIFFRE D'AFFAIRES
+• Total de la période : ${customStats?.revenue.toFixed(2)}€
+
+👥 CLIENTS
+• Nombre de clients : ${customStats?.clients}
+
+💳 MÉTHODES DE PAIEMENT
+• Espèces : ${customStats?.cash} (${customStats?.cashPercent.toFixed(1)}%)
+• Bancontact : ${customStats?.card} (${customStats?.cardPercent.toFixed(1)}%)
+
+${message ? `\n📝 NOTES :\n${message}` : ''}
+
+---
+Rapport généré automatiquement par L'app du salon
+${format(new Date(), 'dd/MM/yyyy à HH:mm')}
+        `;
+        break;
+        
       case 'daily':
         subject = `Rapport journalier - ${formattedDate}`;
         reportContent = `
@@ -250,6 +325,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                 <SelectItem value="daily">Rapport journalier</SelectItem>
                 <SelectItem value="weekly">Rapport hebdomadaire</SelectItem>
                 <SelectItem value="monthly">Rapport mensuel</SelectItem>
+                <SelectItem value="custom">Période personnalisée</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -270,6 +346,56 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                 Sélectionnez la date pour laquelle générer le rapport journalier
               </p>
             </div>
+          )}
+
+          {reportType === 'custom' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startDate" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Date de début
+                  </Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endDate" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Date de fin
+                  </Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-3 block">Moyen de paiement</Label>
+                <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="all" id="all" />
+                    <Label htmlFor="all" className="cursor-pointer">Tous</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="cash" id="cash" />
+                    <Label htmlFor="cash" className="cursor-pointer">Espèces</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="card" id="card" />
+                    <Label htmlFor="card" className="cursor-pointer">Bancontact</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </>
           )}
 
           <div>
