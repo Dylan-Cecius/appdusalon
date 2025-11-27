@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Mail, Send, Calendar } from 'lucide-react';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,28 +103,140 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
     
     let reportContent = '';
     let subject = '';
+    
+    // Determine date range based on report type
+    let dateRange = { start: new Date(), end: new Date() };
+    
+    switch (reportType) {
+      case 'daily':
+        dateRange = {
+          start: startOfDay(currentDate),
+          end: endOfDay(currentDate)
+        };
+        break;
+      case 'weekly':
+        dateRange = {
+          start: startOfWeek(currentDate, { weekStartsOn: 1 }),
+          end: endOfWeek(currentDate, { weekStartsOn: 1 })
+        };
+        break;
+      case 'monthly':
+        dateRange = {
+          start: startOfMonth(currentDate),
+          end: endOfMonth(currentDate)
+        };
+        break;
+      case 'custom':
+        dateRange = {
+          start: startOfDay(new Date(startDate)),
+          end: endOfDay(new Date(endDate))
+        };
+        break;
+    }
+    
+    // Calculate daily breakdown for the table
+    const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+    const dailyData = days.map(day => {
+      const dayStart = startOfDay(day);
+      const dayEnd = endOfDay(day);
+      
+      const dayTransactions = transactions.filter(tx => {
+        const txDate = new Date(tx.transactionDate);
+        return txDate >= dayStart && txDate <= dayEnd;
+      });
+      
+      const dayAppointments = appointments.filter(apt => {
+        const aptDate = new Date(apt.startTime);
+        return aptDate >= dayStart && aptDate <= dayEnd && apt.isPaid;
+      });
+      
+      const filteredTransactions = paymentMethod === 'all' 
+        ? dayTransactions 
+        : dayTransactions.filter(tx => tx.paymentMethod === paymentMethod);
+      
+      const cashAmount = filteredTransactions
+        .filter(tx => tx.paymentMethod === 'cash')
+        .reduce((sum, tx) => sum + tx.totalAmount, 0);
+        
+      const cardAmount = filteredTransactions
+        .filter(tx => tx.paymentMethod === 'card')
+        .reduce((sum, tx) => sum + tx.totalAmount, 0);
+      
+      const appointmentAmount = paymentMethod === 'all' 
+        ? dayAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0)
+        : 0;
+      
+      return {
+        date: day,
+        transactions: filteredTransactions.length + (paymentMethod === 'all' ? dayAppointments.length : 0),
+        cashAmount,
+        cardAmount,
+        totalAmount: cashAmount + cardAmount + appointmentAmount
+      };
+    });
+    
+    // Calculate totals
+    const totals = dailyData.reduce((acc, day) => ({
+      transactions: acc.transactions + day.transactions,
+      cashAmount: acc.cashAmount + day.cashAmount,
+      cardAmount: acc.cardAmount + day.cardAmount,
+      totalAmount: acc.totalAmount + day.totalAmount
+    }), { transactions: 0, cashAmount: 0, cardAmount: 0, totalAmount: 0 });
+    
+    // Generate table in text format
+    const paymentFilter = paymentMethod === 'all' ? 'Tous' : paymentMethod === 'cash' ? 'Espèces uniquement' : 'Bancontact uniquement';
+    let tableContent = `\n📋 DÉTAIL JOUR PAR JOUR\n`;
+    tableContent += `Filtre de paiement : ${paymentFilter}\n\n`;
+    
+    // Table header
+    tableContent += `Date          | Transactions |`;
+    if (paymentMethod === 'all' || paymentMethod === 'cash') {
+      tableContent += ` Cash      |`;
+    }
+    if (paymentMethod === 'all' || paymentMethod === 'card') {
+      tableContent += ` Bancontact |`;
+    }
+    tableContent += ` Total Jour\n`;
+    tableContent += `-`.repeat(70) + `\n`;
+    
+    // Table rows
+    dailyData.forEach(day => {
+      tableContent += `${format(day.date, 'dd/MM/yyyy', { locale: fr }).padEnd(14)}| ${String(day.transactions).padEnd(13)}|`;
+      if (paymentMethod === 'all' || paymentMethod === 'cash') {
+        tableContent += ` ${day.cashAmount.toFixed(2)}€`.padEnd(11) + `|`;
+      }
+      if (paymentMethod === 'all' || paymentMethod === 'card') {
+        tableContent += ` ${day.cardAmount.toFixed(2)}€`.padEnd(12) + `|`;
+      }
+      tableContent += ` ${day.totalAmount.toFixed(2)}€\n`;
+    });
+    
+    // Total row
+    tableContent += `-`.repeat(70) + `\n`;
+    tableContent += `TOTAL         | ${String(totals.transactions).padEnd(13)}|`;
+    if (paymentMethod === 'all' || paymentMethod === 'cash') {
+      tableContent += ` ${totals.cashAmount.toFixed(2)}€`.padEnd(11) + `|`;
+    }
+    if (paymentMethod === 'all' || paymentMethod === 'card') {
+      tableContent += ` ${totals.cardAmount.toFixed(2)}€`.padEnd(12) + `|`;
+    }
+    tableContent += ` ${totals.totalAmount.toFixed(2)}€\n`;
 
     switch (reportType) {
       case 'custom':
         const startFormatted = format(new Date(startDate), 'dd MMMM yyyy', { locale: fr });
         const endFormatted = format(new Date(endDate), 'dd MMMM yyyy', { locale: fr });
-        const paymentFilter = paymentMethod === 'all' ? 'Tous' : paymentMethod === 'cash' ? 'Espèces uniquement' : 'Bancontact uniquement';
         
         subject = `Rapport personnalisé - ${startFormatted} au ${endFormatted}`;
         reportContent = `
 📊 RAPPORT PERSONNALISÉ - ${startFormatted.toUpperCase()} AU ${endFormatted.toUpperCase()}
 
-💳 FILTRE DE PAIEMENT : ${paymentFilter}
+💰 RÉSUMÉ
+• Total CA : ${totals.totalAmount.toFixed(2)}€
+• Total Transactions : ${totals.transactions}
+${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
 
-💰 CHIFFRE D'AFFAIRES
-• Total de la période : ${customStats?.revenue.toFixed(2)}€
-
-👥 CLIENTS
-• Nombre de clients : ${customStats?.clients}
-
-💳 MÉTHODES DE PAIEMENT
-• Espèces : ${customStats?.cash} (${customStats?.cashPercent.toFixed(1)}%)
-• Bancontact : ${customStats?.card} (${customStats?.cardPercent.toFixed(1)}%)
+${tableContent}
 
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
@@ -139,20 +251,17 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         reportContent = `
 📊 RAPPORT JOURNALIER - ${formattedDate.toUpperCase()}
 
-💰 CHIFFRE D'AFFAIRES
-• Total du jour : ${statsData.todayRevenue.toFixed(2)}€
+💰 RÉSUMÉ
+• Total CA : ${totals.totalAmount.toFixed(2)}€
+• Total Transactions : ${totals.transactions}
+${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
 
-👥 CLIENTS
-• Nombre de clients : ${statsData.todayClients}
-
-💳 MÉTHODES DE PAIEMENT
-• Espèces : ${statsData.paymentStats.today.cash} (${statsData.paymentStats.today.cashPercent.toFixed(1)}%)
-• Bancontact : ${statsData.paymentStats.today.card} (${statsData.paymentStats.today.cardPercent.toFixed(1)}%)
+${tableContent}
 
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
 ---
-Rapport généré automatiquement par L&apos;app du salon
+Rapport généré automatiquement par L'app du salon
 ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         `;
         break;
@@ -162,22 +271,18 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         reportContent = `
 📊 RAPPORT HEBDOMADAIRE - SEMAINE DU ${formattedDate.toUpperCase()}
 
-💰 CHIFFRE D'AFFAIRES
-• Total de la semaine : ${statsData.weeklyRevenue.toFixed(2)}€
-• Moyenne journalière : ${(statsData.weeklyRevenue / 7).toFixed(2)}€
+💰 RÉSUMÉ
+• Total CA : ${totals.totalAmount.toFixed(2)}€
+• Moyenne journalière : ${(totals.totalAmount / dailyData.length).toFixed(2)}€
+• Total Transactions : ${totals.transactions}
+${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
 
-👥 CLIENTS
-• Nombre de clients : ${statsData.weeklyClients}
-• Moyenne par jour : ${(statsData.weeklyClients / 7).toFixed(1)}
-
-💳 MÉTHODES DE PAIEMENT
-• Espèces : ${statsData.paymentStats.weekly.cash} (${statsData.paymentStats.weekly.cashPercent.toFixed(1)}%)
-• Bancontact : ${statsData.paymentStats.weekly.card} (${statsData.paymentStats.weekly.cardPercent.toFixed(1)}%)
+${tableContent}
 
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
 ---
-Rapport généré automatiquement par L&apos;app du salon
+Rapport généré automatiquement par L'app du salon
 ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         `;
         break;
@@ -187,22 +292,18 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         reportContent = `
 📊 RAPPORT MENSUEL - ${format(currentDate, 'MMMM yyyy', { locale: fr }).toUpperCase()}
 
-💰 CHIFFRE D'AFFAIRES
-• Total du mois : ${statsData.monthlyRevenue.toFixed(2)}€
-• Moyenne journalière : ${(statsData.monthlyRevenue / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()).toFixed(2)}€
+💰 RÉSUMÉ
+• Total CA : ${totals.totalAmount.toFixed(2)}€
+• Moyenne journalière : ${(totals.totalAmount / dailyData.length).toFixed(2)}€
+• Total Transactions : ${totals.transactions}
+${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
 
-👥 CLIENTS
-• Nombre de clients : ${statsData.monthlyClients}
-• Moyenne par jour : ${(statsData.monthlyClients / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()).toFixed(1)}
-
-💳 MÉTHODES DE PAIEMENT
-• Espèces : ${statsData.paymentStats.monthly.cash} (${statsData.paymentStats.monthly.cashPercent.toFixed(1)}%)
-• Bancontact : ${statsData.paymentStats.monthly.card} (${statsData.paymentStats.monthly.cardPercent.toFixed(1)}%)
+${tableContent}
 
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
 ---
-Rapport généré automatiquement par L&apos;app du salon
+Rapport généré automatiquement par L'app du salon
 ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         `;
         break;

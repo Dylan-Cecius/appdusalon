@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useCombinedStats } from '@/hooks/useCombinedStats';
 import MainLayout from '@/components/MainLayout';
 import AutomatedReports from '@/components/AutomatedReports';
