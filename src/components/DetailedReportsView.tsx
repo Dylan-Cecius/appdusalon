@@ -189,18 +189,24 @@ const DetailedReportsView = () => {
           {/* Payment Filter */}
           <div>
             <Label className="mb-3 block">Moyen de paiement</Label>
-            <RadioGroup value={paymentFilter} onValueChange={(value: PaymentFilter) => setPaymentFilter(value)} className="flex gap-4">
+            <RadioGroup 
+              value={paymentFilter} 
+              onValueChange={(value: PaymentFilter) => {
+                setPaymentFilter(value);
+              }} 
+              className="flex gap-4"
+            >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="all" />
-                <Label htmlFor="all" className="cursor-pointer">Tous</Label>
+                <RadioGroupItem value="all" id="all-detailed" />
+                <Label htmlFor="all-detailed" className="cursor-pointer">Tous</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cash" id="cash" />
-                <Label htmlFor="cash" className="cursor-pointer">Cash</Label>
+                <RadioGroupItem value="cash" id="cash-detailed" />
+                <Label htmlFor="cash-detailed" className="cursor-pointer">Cash</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="card" id="card" />
-                <Label htmlFor="card" className="cursor-pointer">Bancontact</Label>
+                <RadioGroupItem value="card" id="card-detailed" />
+                <Label htmlFor="card-detailed" className="cursor-pointer">Bancontact</Label>
               </div>
             </RadioGroup>
           </div>
