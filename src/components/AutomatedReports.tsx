@@ -225,7 +225,7 @@ const AutomatedReportForm = ({
       </div>
 
       <div className="space-y-3">
-        <Label>Destinataires</Label>
+        <Label className="text-sm sm:text-base">Destinataires</Label>
         <div className="flex gap-2">
           <Input
             value={emailInput}
@@ -238,8 +238,9 @@ const AutomatedReportForm = ({
                 handleAddEmail();
               }
             }}
+            className="min-h-[44px] text-base"
           />
-          <Button type="button" onClick={handleAddEmail} variant="outline">
+          <Button type="button" onClick={handleAddEmail} variant="outline" className="min-h-[44px] min-w-[44px]">
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -261,11 +262,11 @@ const AutomatedReportForm = ({
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onClose}>
+      <div className="flex flex-col sm:flex-row justify-end gap-3">
+        <Button type="button" variant="outline" onClick={onClose} className="min-h-[44px] w-full sm:w-auto">
           Annuler
         </Button>
-        <Button type="submit" disabled={!formData.report_name || formData.report_types.length === 0 || formData.recipient_emails.length === 0}>
+        <Button type="submit" disabled={!formData.report_name || formData.report_types.length === 0 || formData.recipient_emails.length === 0} className="min-h-[44px] w-full sm:w-auto">
           {editingReport ? 'Mettre à jour' : 'Créer le rapport'}
         </Button>
       </div>
@@ -299,11 +300,11 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
   };
 
   return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between mb-3">
+    <Card className="p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row items-start justify-between mb-3 gap-3 sm:gap-0">
         <div>
-          <h3 className="font-semibold">{report.report_name}</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-base sm:text-lg font-semibold">{report.report_name}</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {getFrequencyLabel(report.frequency)} • {report.time_of_day}
           </p>
         </div>
@@ -319,12 +320,12 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
       </div>
 
       <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
           <Clock className="h-4 w-4" />
           <span>Prochain envoi: {getNextSendDate(report)}</span>
         </div>
         
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
           <Mail className="h-4 w-4" />
           <span>{report.recipient_emails.length} destinataire(s)</span>
         </div>
@@ -341,11 +342,12 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-col sm:flex-row justify-end gap-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => testReport(report.id)}
+          className="min-h-[44px] w-full sm:w-auto"
         >
           <Play className="h-3 w-3 mr-1" />
           Test
@@ -353,7 +355,7 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
         
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="min-h-[44px] w-full sm:w-auto">
               <Edit className="h-3 w-3 mr-1" />
               Modifier
             </Button>
@@ -377,6 +379,7 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
           variant="destructive"
           size="sm"
           onClick={() => deleteReport(report.id)}
+          className="min-h-[44px] w-full sm:w-auto"
         >
           <Trash2 className="h-3 w-3" />
         </Button>
@@ -419,23 +422,23 @@ export const AutomatedReports = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Mail className="h-5 w-5" />
                 Rapports automatisés
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm">
                 Configurez l'envoi automatique de rapports par email
               </CardDescription>
             </div>
             
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="min-h-[44px] w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Nouveau rapport
                 </Button>
@@ -459,15 +462,15 @@ export const AutomatedReports = () => {
 
       {reports.length === 0 ? (
         <Card>
-          <CardContent className="p-6 text-center">
+          <CardContent className="p-4 sm:p-6 text-center">
             <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Aucun rapport configuré</h3>
-            <p className="text-muted-foreground mb-4">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Aucun rapport configuré</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4">
               Créez votre premier rapport automatisé pour recevoir des mises à jour régulières.
             </p>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="min-h-[44px]">
                   <Plus className="h-4 w-4 mr-2" />
                   Créer un rapport
                 </Button>
@@ -476,7 +479,7 @@ export const AutomatedReports = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 sm:gap-6">
           {reports.map(report => (
             <ReportCard key={report.id} report={report} />
           ))}

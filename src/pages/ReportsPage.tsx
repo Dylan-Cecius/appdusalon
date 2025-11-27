@@ -10,11 +10,11 @@ const ReportsPage = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <DetailedReportsView />
-        <div className="border-t pt-6">
-          <h2 className="text-2xl font-bold mb-6">Envoi et Automatisation</h2>
-          <div className="space-y-6">
+        <div className="border-t pt-4 sm:pt-6">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Envoi et Automatisation</h2>
+          <div className="space-y-4 sm:space-y-6">
             <EmailReports statsData={stats} />
             <AutomatedReports />
           </div>
