@@ -63,12 +63,12 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Pré-remplir l'email avec l'adresse de l'utilisateur connecté
+  // Pré-remplir l'email avec l'adresse de l'utilisateur connecté au chargement initial
   useEffect(() => {
-    if (user?.email && !email) {
+    if (user?.email) {
       setEmail(user.email);
     }
-  }, [user, email]);
+  }, [user]);
 
   // Calculate custom stats based on date range and payment method
   const customStats = useMemo(() => {
