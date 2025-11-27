@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,13 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Mail, Send, Calendar } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Mail, Send, Calendar, Info } from 'lucide-react';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
+import { useAuth } from '@/hooks/useAuth';
 
 interface StatsData {
   todayRevenue: number;
@@ -48,6 +50,7 @@ interface EmailReportsProps {
 }
 
 const EmailReports = ({ statsData }: EmailReportsProps) => {
+  const { user } = useAuth();
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
   
@@ -59,6 +62,13 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'all' | 'cash' | 'card'>('all');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Pré-remplir l'email avec l'adresse de l'utilisateur connecté
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [user, email]);
 
   // Calculate custom stats based on date range and payment method
   const customStats = useMemo(() => {
@@ -355,8 +365,8 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       }
 
       toast({
-        title: "✅ Email envoyé !",
-        description: `Le rapport ${reportType} a été envoyé avec succès à ${email}`,
+        title: "✅ Rapport envoyé !",
+        description: `Le rapport a été envoyé avec succès à ${email}`,
       });
 
       // Reset form
@@ -364,23 +374,33 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       setMessage('');
       
     } catch (error: any) {
+      console.error('Erreur d\'envoi email:', error);
       let errorMessage = "Impossible d'envoyer le rapport par email";
+      let errorTitle = "❌ Erreur d'envoi";
       
-      // Gestion spécifique de l'erreur Resend 403
-      if (error.message?.includes("You can only send testing emails to your own email address")) {
-        errorMessage = "Mode test Resend : Vous ne pouvez envoyer des emails qu'à votre propre adresse (dylan.cecius@gmail.com). Pour envoyer à d'autres destinataires, veuillez vérifier un domaine sur resend.com/domains";
+      // Gestion détaillée des erreurs Resend
+      if (error.message?.includes("You can only send testing emails to your own email address") || 
+          error.message?.includes("403")) {
+        errorTitle = "⚠️ Domaine non vérifié";
+        errorMessage = `Vous ne pouvez envoyer des emails qu'à votre propre adresse en mode test Resend.\n\nPour envoyer à d'autres destinataires (comptable, etc.), veuillez :\n1. Aller sur resend.com/domains\n2. Vérifier votre domaine d'envoi\n3. Réessayer l'envoi`;
       } else if (error.message?.includes("domain")) {
-        errorMessage = "Domaine email non validé. Veuillez configurer votre domaine sur Resend.";
-      } else if (error.message?.includes("API key")) {
-        errorMessage = "Configuration email incorrecte. Veuillez vérifier la clé API Resend.";
-      } else if (error.message?.includes("rate limit")) {
-        errorMessage = "Limite d'envoi atteinte. Veuillez réessayer dans quelques minutes.";
+        errorTitle = "⚠️ Configuration requise";
+        errorMessage = "Votre domaine email n'est pas validé sur Resend. Veuillez vérifier votre domaine sur resend.com/domains pour envoyer à des tiers.";
+      } else if (error.message?.includes("API key") || error.message?.includes("401")) {
+        errorTitle = "🔑 Clé API invalide";
+        errorMessage = "La clé API Resend est incorrecte ou manquante. Veuillez vérifier la configuration dans les paramètres de votre projet.";
+      } else if (error.message?.includes("rate limit") || error.message?.includes("429")) {
+        errorTitle = "⏱️ Limite atteinte";
+        errorMessage = "Vous avez atteint la limite d'envoi d'emails. Veuillez réessayer dans quelques minutes.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
       toast({
-        title: "❌ Erreur d'envoi",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
+        duration: 8000, // Affichage plus long pour les messages d'erreur détaillés
       });
     } finally {
       setIsLoading(false);
@@ -405,16 +425,28 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="email">Adresse email *</Label>
+            <Label htmlFor="email" className="text-sm sm:text-base">Adresse email du destinataire *</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="votre@email.com"
+              placeholder="destinataire@email.com"
               required
+              className="min-h-[44px] w-full"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Par défaut : votre adresse ({user?.email}). Modifiez pour envoyer à un comptable ou collaborateur.
+            </p>
           </div>
+
+          <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-xs sm:text-sm text-blue-800 dark:text-blue-200">
+              <strong>Note importante :</strong> Pour envoyer des rapports à d'autres adresses que la vôtre, 
+              votre domaine doit être vérifié sur Resend. Sinon, seuls les envois vers {user?.email} fonctionneront.
+            </AlertDescription>
+          </Alert>
 
           <div>
             <Label htmlFor="reportType">Type de rapport</Label>
