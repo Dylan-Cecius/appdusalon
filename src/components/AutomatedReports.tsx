@@ -116,27 +116,28 @@ const AutomatedReportForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="report_name">Nom du rapport</Label>
+        <Label htmlFor="report_name" className="text-sm sm:text-base">Nom du rapport</Label>
         <Input
           id="report_name"
           value={formData.report_name}
           onChange={(e) => setFormData(prev => ({ ...prev, report_name: e.target.value }))}
           placeholder="Ex: Rapport hebdomadaire"
           required
+          className="min-h-[44px] text-base"
         />
       </div>
 
       <div className="space-y-2">
-        <Label>Fréquence d'envoi</Label>
+        <Label className="text-sm sm:text-base">Fréquence d'envoi</Label>
         <Select 
           value={formData.frequency} 
           onValueChange={(value: 'daily' | 'weekly' | 'monthly') => 
             setFormData(prev => ({ ...prev, frequency: value }))
           }
         >
-          <SelectTrigger>
+          <SelectTrigger className="min-h-[44px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -150,26 +151,27 @@ const AutomatedReportForm = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="time_of_day">Heure d'envoi</Label>
+        <Label htmlFor="time_of_day" className="text-sm sm:text-base">Heure d'envoi</Label>
         <Input
           id="time_of_day"
           type="time"
           value={formData.time_of_day}
           onChange={(e) => setFormData(prev => ({ ...prev, time_of_day: e.target.value }))}
           required
+          className="min-h-[44px] text-base"
         />
       </div>
 
       {formData.frequency === 'weekly' && (
         <div className="space-y-2">
-          <Label>Jour de la semaine</Label>
+          <Label className="text-sm sm:text-base">Jour de la semaine</Label>
           <Select 
             value={formData.day_of_week?.toString()} 
             onValueChange={(value) => 
               setFormData(prev => ({ ...prev, day_of_week: parseInt(value) }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="min-h-[44px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -185,7 +187,7 @@ const AutomatedReportForm = ({
 
       {formData.frequency === 'monthly' && (
         <div className="space-y-2">
-          <Label htmlFor="day_of_month">Jour du mois (1-28)</Label>
+          <Label htmlFor="day_of_month" className="text-sm sm:text-base">Jour du mois (1-28)</Label>
           <Input
             id="day_of_month"
             type="number"
@@ -194,26 +196,28 @@ const AutomatedReportForm = ({
             value={formData.day_of_month || 1}
             onChange={(e) => setFormData(prev => ({ ...prev, day_of_month: parseInt(e.target.value) }))}
             required
+            className="min-h-[44px] text-base"
           />
         </div>
       )}
 
       <div className="space-y-3">
-        <Label>Types de rapports à inclure</Label>
+        <Label className="text-sm sm:text-base">Types de rapports à inclure</Label>
         <div className="grid grid-cols-1 gap-3">
           {REPORT_TYPES.map(reportType => {
             const IconComponent = reportType.icon;
             return (
-              <div key={reportType.id} className="flex items-center space-x-2">
+              <div key={reportType.id} className="flex items-center space-x-2 min-h-[44px]">
                 <Checkbox
                   id={reportType.id}
                   checked={formData.report_types.includes(reportType.id)}
                   onCheckedChange={(checked) => 
                     handleReportTypeChange(reportType.id, checked as boolean)
                   }
+                  className="h-5 w-5"
                 />
                 <IconComponent className="h-4 w-4" />
-                <Label htmlFor={reportType.id}>{reportType.label}</Label>
+                <Label htmlFor={reportType.id} className="text-sm sm:text-base cursor-pointer">{reportType.label}</Label>
               </div>
             );
           })}

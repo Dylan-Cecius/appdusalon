@@ -484,19 +484,19 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
               </div>
 
               <div>
-                <Label className="mb-3 block">Moyen de paiement</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="all" />
-                    <Label htmlFor="all" className="cursor-pointer">Tous</Label>
+                <Label className="mb-3 block text-sm sm:text-base">Moyen de paiement</Label>
+                <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)} className="space-y-3">
+                  <div className="flex items-center space-x-2 min-h-[44px]">
+                    <RadioGroupItem value="all" id="all" className="h-5 w-5" />
+                    <Label htmlFor="all" className="cursor-pointer text-sm sm:text-base">Tous</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cash" id="cash" />
-                    <Label htmlFor="cash" className="cursor-pointer">Espèces</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px]">
+                    <RadioGroupItem value="cash" id="cash" className="h-5 w-5" />
+                    <Label htmlFor="cash" className="cursor-pointer text-sm sm:text-base">Espèces</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="cursor-pointer">Bancontact</Label>
+                  <div className="flex items-center space-x-2 min-h-[44px]">
+                    <RadioGroupItem value="card" id="card" className="h-5 w-5" />
+                    <Label htmlFor="card" className="cursor-pointer text-sm sm:text-base">Bancontact</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -504,20 +504,21 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
           )}
 
           <div>
-            <Label htmlFor="message">Message personnalisé (optionnel)</Label>
+            <Label htmlFor="message" className="text-sm sm:text-base">Message personnalisé (optionnel)</Label>
             <Textarea
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Ajoutez des notes ou commentaires..."
               rows={3}
+              className="min-h-[88px] text-base"
             />
           </div>
 
           <Button 
             onClick={handleSendReport}
             disabled={isLoading || !email}
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+            className="w-full min-h-[44px] bg-accent hover:bg-accent/90 text-accent-foreground text-base"
           >
             <Send className="h-4 w-4 mr-2" />
             {isLoading ? 'Envoi en cours...' : 'Envoyer le rapport'}
@@ -526,14 +527,14 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       </Card>
 
       {/* Preview */}
-      <Card className="p-6">
-        <h4 className="text-lg font-semibold mb-4 text-primary flex items-center gap-2">
+      <Card className="p-4 sm:p-6">
+        <h4 className="text-base sm:text-lg font-semibold mb-4 text-primary flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Aperçu du rapport
         </h4>
         
-        <div className="bg-muted/20 p-4 rounded-lg max-h-96 overflow-y-auto">
-          <pre className="text-sm whitespace-pre-wrap font-mono">
+        <div className="bg-muted/20 p-3 sm:p-4 rounded-lg max-h-96 overflow-y-auto">
+          <pre className="text-xs sm:text-sm whitespace-pre-wrap font-mono">
             {previewContent}
           </pre>
         </div>
