@@ -189,36 +189,36 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
     tableContent += `Filtre de paiement : ${paymentFilter}\n\n`;
     
     // Table header
-    tableContent += `Date          | Transactions |`;
+    tableContent += `Date          | Trans. |`;
     if (paymentMethod === 'all' || paymentMethod === 'cash') {
-      tableContent += ` Cash      |`;
+      tableContent += ` Cash    |`;
     }
     if (paymentMethod === 'all' || paymentMethod === 'card') {
-      tableContent += ` Bancontact |`;
+      tableContent += ` Bancont. |`;
     }
-    tableContent += ` Total Jour\n`;
-    tableContent += `-`.repeat(70) + `\n`;
+    tableContent += ` Total\n`;
+    tableContent += `${'='.repeat(50)}\n`;
     
     // Table rows
     dailyData.forEach(day => {
-      tableContent += `${format(day.date, 'dd/MM/yyyy', { locale: fr }).padEnd(14)}| ${String(day.transactions).padEnd(13)}|`;
+      tableContent += `${format(day.date, 'dd/MM/yyyy')} | ${String(day.transactions).padStart(6)} |`;
       if (paymentMethod === 'all' || paymentMethod === 'cash') {
-        tableContent += ` ${day.cashAmount.toFixed(2)}€`.padEnd(11) + `|`;
+        tableContent += ` ${day.cashAmount.toFixed(2)}€ |`;
       }
       if (paymentMethod === 'all' || paymentMethod === 'card') {
-        tableContent += ` ${day.cardAmount.toFixed(2)}€`.padEnd(12) + `|`;
+        tableContent += ` ${day.cardAmount.toFixed(2)}€ |`;
       }
       tableContent += ` ${day.totalAmount.toFixed(2)}€\n`;
     });
     
     // Total row
-    tableContent += `-`.repeat(70) + `\n`;
-    tableContent += `TOTAL         | ${String(totals.transactions).padEnd(13)}|`;
+    tableContent += `${'='.repeat(50)}\n`;
+    tableContent += `TOTAL         | ${String(totals.transactions).padStart(6)} |`;
     if (paymentMethod === 'all' || paymentMethod === 'cash') {
-      tableContent += ` ${totals.cashAmount.toFixed(2)}€`.padEnd(11) + `|`;
+      tableContent += ` ${totals.cashAmount.toFixed(2)}€ |`;
     }
     if (paymentMethod === 'all' || paymentMethod === 'card') {
-      tableContent += ` ${totals.cardAmount.toFixed(2)}€`.padEnd(12) + `|`;
+      tableContent += ` ${totals.cardAmount.toFixed(2)}€ |`;
     }
     tableContent += ` ${totals.totalAmount.toFixed(2)}€\n`;
 
