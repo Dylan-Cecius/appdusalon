@@ -27,23 +27,23 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Tableau de bord</h1>
-            <p className="text-muted-foreground">Vue d'ensemble de votre activité</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tableau de bord</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Vue d'ensemble de votre activité</p>
           </div>
-          <div className="flex gap-3">
-            <Button asChild variant="outline">
-              <Link to="/stats">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button asChild variant="outline" className="w-full sm:w-auto min-h-[44px]">
+              <Link to="/stats" className="flex items-center justify-center">
                 <TrendingUp className="mr-2 h-4 w-4" />
-                Voir toutes les stats
+                <span className="text-sm sm:text-base">Stats</span>
               </Link>
             </Button>
-            <Button asChild>
-              <Link to="/pos">
+            <Button asChild className="w-full sm:w-auto min-h-[44px]">
+              <Link to="/pos" className="flex items-center justify-center">
                 <DollarSign className="mr-2 h-4 w-4" />
-                Aller vers Encaissement
+                <span className="text-sm sm:text-base">Encaissement</span>
               </Link>
             </Button>
           </div>
@@ -60,48 +60,48 @@ const Dashboard = () => {
           </Alert>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">CA du jour</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">CA du jour</CardTitle>
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.todayRevenue.toFixed(2)} €</div>
-              <p className="text-xs text-muted-foreground">Chiffre d'affaires aujourd'hui</p>
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{stats.todayRevenue.toFixed(2)} €</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">CA aujourd'hui</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">CA du mois</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">CA du mois</CardTitle>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.monthlyRevenue.toFixed(2)} €</div>
-              <p className="text-xs text-muted-foreground">Chiffre d'affaires mensuel</p>
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{stats.monthlyRevenue.toFixed(2)} €</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">CA mensuel</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clients du jour</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Clients</CardTitle>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.todayClients}</div>
-              <p className="text-xs text-muted-foreground">Nombre de clients aujourd'hui</p>
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{stats.todayClients}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Aujourd'hui</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Prochains RDV</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">RDV</CardTitle>
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{upcomingAppointments.length}</div>
-              <p className="text-xs text-muted-foreground">Rendez-vous à venir</p>
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{upcomingAppointments.length}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">À venir</p>
             </CardContent>
           </Card>
         </div>
@@ -118,23 +118,23 @@ const Dashboard = () => {
             {upcomingAppointments.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">Aucun rendez-vous à venir</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {upcomingAppointments.map((apt) => (
-                  <div key={apt.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                  <div key={apt.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 border rounded-lg hover:bg-accent/50 transition-colors min-h-[60px]">
                     <div className="flex-1">
-                      <p className="font-medium">{apt.clientName}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-sm sm:text-base">{apt.clientName}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {format(new Date(apt.startTime), 'EEEE dd MMMM yyyy • HH:mm', { locale: fr })}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-primary">{apt.totalPrice.toFixed(2)} €</p>
+                    <div className="text-left sm:text-right">
+                      <p className="font-semibold text-primary text-sm sm:text-base">{apt.totalPrice.toFixed(2)} €</p>
                       <p className="text-xs text-muted-foreground capitalize">{apt.status}</p>
                     </div>
                   </div>
                 ))}
-                <Button asChild variant="ghost" className="w-full">
-                  <Link to="/agenda">
+                <Button asChild variant="ghost" className="w-full min-h-[44px]">
+                  <Link to="/agenda" className="flex items-center justify-center">
                     Voir tous les rendez-vous
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
