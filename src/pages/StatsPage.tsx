@@ -34,22 +34,22 @@ const StatsPage = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Statistiques & Analyses</h2>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <h2 className="text-xl sm:text-2xl font-bold">Statistiques & Analyses</h2>
           <Button
             onClick={() => setIsTransactionsManagerOpen(true)}
             variant="outline"
-            className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
+            className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 w-full sm:w-auto min-h-[44px]"
           >
             <DollarSign className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-            Gérer les encaissements
+            <span className="text-sm sm:text-base">Gérer les encaissements</span>
           </Button>
         </div>
 
         {/* Raccourcis de navigation */}
-        <Card className="p-4">
-          <h3 className="font-semibold mb-3 text-sm text-muted-foreground">
+        <Card className="p-3 sm:p-4">
+          <h3 className="font-semibold mb-3 text-xs sm:text-sm text-muted-foreground">
             ACCÈS RAPIDE
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -61,7 +61,7 @@ const StatsPage = () => {
                   .getElementById('stats-overview')
                   ?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="text-xs"
+              className="text-xs min-h-[36px] px-3"
             >
               Vue d'ensemble
             </Button>
@@ -73,7 +73,7 @@ const StatsPage = () => {
                   .getElementById('custom-date-range')
                   ?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+              className="text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 min-h-[36px] px-3"
             >
               CA période personnalisée
             </Button>
@@ -85,7 +85,7 @@ const StatsPage = () => {
                   .getElementById('barber-performance')
                   ?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="text-xs"
+              className="text-xs min-h-[36px] px-3"
             >
               Performance coiffeurs
             </Button>
@@ -97,7 +97,7 @@ const StatsPage = () => {
                   .getElementById('peak-hours')
                   ?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="text-xs"
+              className="text-xs min-h-[36px] px-3"
             >
               Heures de pointe
             </Button>
@@ -109,7 +109,7 @@ const StatsPage = () => {
                   .getElementById('service-profitability')
                   ?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="text-xs"
+              className="text-xs min-h-[36px] px-3"
             >
               Rentabilité services
             </Button>
@@ -121,7 +121,7 @@ const StatsPage = () => {
                   .getElementById('occupancy-rate')
                   ?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="text-xs"
+              className="text-xs min-h-[36px] px-3"
             >
               Taux d'occupation
             </Button>
@@ -132,7 +132,7 @@ const StatsPage = () => {
           <StatsOverview stats={stats} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <PaymentMethodStats paymentStats={stats.paymentStats} />
           <FeatureGate
             requiredFeature="canAccessAdvancedStats"
@@ -148,14 +148,14 @@ const StatsPage = () => {
 
         <MonthlyComparisonChart />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <AverageBasketStats />
           <AverageDailyClientsStats />
         </div>
 
         <EmployeeRevenueStats />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div id="custom-date-range">
             <CustomDateRangeStats />
           </div>

@@ -38,15 +38,15 @@ const ClientsPage = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Gestion des Clients</h1>
-            <p className="text-muted-foreground">Gérez vos clients et leur historique</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gestion des Clients</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Gérez vos clients et leur historique</p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto min-h-[44px]">
                 <Plus className="mr-2 h-4 w-4" />
                 Nouveau Client
               </Button>
@@ -134,11 +134,11 @@ const ClientsPage = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredClients.map((client) => (
               <Card
                 key={client.id}
-                className="cursor-pointer hover:bg-accent/50 transition-colors"
+                className="cursor-pointer hover:bg-accent/50 transition-colors active:scale-98 min-h-[80px]"
                 onClick={() => setSelectedClient(client)}
               >
                 <CardHeader>
