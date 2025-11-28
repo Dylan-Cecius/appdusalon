@@ -1,16 +1,46 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useCombinedStats } from '@/hooks/useCombinedStats';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import MainLayout from '@/components/MainLayout';
-import { DollarSign, Users, Calendar, AlertTriangle, TrendingUp, ArrowRight } from 'lucide-react';
+import { DollarSign, Users, Calendar, AlertTriangle, TrendingUp, ArrowRight, Scissors } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const Dashboard = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  
+  // Rediriger vers la page de connexion si non authentifié
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  // Afficher un écran de chargement pendant la vérification
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="p-3 bg-accent rounded-lg mb-4 inline-block">
+            <Scissors className="h-8 w-8 text-accent-foreground animate-spin" />
+          </div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Ne rien afficher si non authentifié (redirection en cours)
+  if (!user) {
+    return null;
+  }
   const { stats } = useCombinedStats();
   const { appointments } = useSupabaseAppointments();
   const { subscription_end, subscribed } = useSubscription();
