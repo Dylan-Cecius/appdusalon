@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+  const authFormRef = useRef<HTMLFormElement>(null);
+  const forgotFormRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
@@ -56,7 +57,7 @@ const Auth = () => {
     }
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast({
@@ -140,7 +141,7 @@ const Auth = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: FormEvent) => {
     e.preventDefault();
     if (!email) {
       toast({
@@ -200,7 +201,7 @@ const Auth = () => {
         </div>
 
         {isForgotPassword ? (
-          <form onSubmit={handleForgotPassword} className="space-y-4">
+          <form ref={forgotFormRef} onSubmit={handleForgotPassword} className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
@@ -215,16 +216,21 @@ const Auth = () => {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full min-h-[48px] text-base touch-manipulation" 
+            <Button
+              type="submit"
+              className="w-full min-h-[48px] text-base touch-manipulation"
               disabled={loading}
+              onTouchEnd={(e) => {
+                // Workaround iOS/Capacitor: some WebViews drop the click on submit buttons.
+                e.preventDefault();
+                forgotFormRef.current?.requestSubmit();
+              }}
             >
               {loading ? 'Envoi en cours...' : 'Envoyer le lien de réinitialisation'}
             </Button>
           </form>
         ) : (
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form ref={authFormRef} onSubmit={handleAuth} className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
@@ -281,12 +287,17 @@ const Auth = () => {
               </div>
             )}
 
-            <Button 
-              type="submit" 
-              className="w-full min-h-[48px] text-base touch-manipulation" 
+            <Button
+              type="submit"
+              className="w-full min-h-[48px] text-base touch-manipulation"
               disabled={loading}
+              onTouchEnd={(e) => {
+                // Workaround iOS/Capacitor: ensure submit triggers reliably on tap.
+                e.preventDefault();
+                authFormRef.current?.requestSubmit();
+              }}
             >
-              {loading ? 'Chargement...' : isLogin ? 'Se connecter' : 'S\'inscrire'}
+              {loading ? 'Chargement...' : isLogin ? 'Se connecter' : "S'inscrire"}
             </Button>
           </form>
         )}
