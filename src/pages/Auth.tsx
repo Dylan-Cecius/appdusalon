@@ -57,8 +57,8 @@ const Auth = () => {
     }
   };
 
-  const handleAuth = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleAuth = async (e?: FormEvent) => {
+    e?.preventDefault();
     if (!email || !password) {
       toast({
         title: "Erreur",
@@ -141,8 +141,8 @@ const Auth = () => {
     }
   };
 
-  const handleForgotPassword = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleForgotPassword = async (e?: FormEvent) => {
+    e?.preventDefault();
     if (!email) {
       toast({
         title: "Erreur",
@@ -217,14 +217,10 @@ const Auth = () => {
             </div>
 
             <Button
-              type="submit"
+              type="button"
               className="w-full min-h-[48px] text-base touch-manipulation"
               disabled={loading}
-              onTouchEnd={(e) => {
-                // Workaround iOS/Capacitor: some WebViews drop the click on submit buttons.
-                e.preventDefault();
-                forgotFormRef.current?.requestSubmit();
-              }}
+              onClick={() => handleForgotPassword()}
             >
               {loading ? 'Envoi en cours...' : 'Envoyer le lien de réinitialisation'}
             </Button>
@@ -288,14 +284,10 @@ const Auth = () => {
             )}
 
             <Button
-              type="submit"
+              type="button"
               className="w-full min-h-[48px] text-base touch-manipulation"
               disabled={loading}
-              onTouchEnd={(e) => {
-                // Workaround iOS/Capacitor: ensure submit triggers reliably on tap.
-                e.preventDefault();
-                authFormRef.current?.requestSubmit();
-              }}
+              onClick={() => handleAuth()}
             >
               {loading ? 'Chargement...' : isLogin ? 'Se connecter' : "S'inscrire"}
             </Button>
