@@ -333,7 +333,7 @@ export const useSupabaseTransactions = () => {
 
     // Subscribe to real-time changes with optimized handlers
     const channel = supabase
-      .channel('transactions-realtime')
+      .channel('transactions-hook-realtime')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'transactions' },
         (payload) => {
