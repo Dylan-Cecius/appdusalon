@@ -14,11 +14,13 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const { salonSettings } = useSupabaseSettings();
+  const { salonSettings, loading: settingsLoading } = useSupabaseSettings();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (settingsLoading) return;
+    
     // Vérifier si un mot de passe est configuré
     if (!salonSettings?.stats_password) {
       // Pas de mot de passe configuré, accès libre
@@ -39,7 +41,7 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
       setShowPasswordModal(true);
       setIsChecking(false);
     }
-  }, [salonSettings, section]);
+  }, [salonSettings, section, settingsLoading]);
 
   const verifyPassword = async (inputPassword: string): Promise<boolean> => {
     if (!salonSettings?.stats_password) {
