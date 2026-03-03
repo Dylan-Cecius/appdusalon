@@ -117,8 +117,10 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={signOut} 
-                className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
+                type="button"
+                onClick={() => signOut()} 
+                onTouchEnd={(e) => { e.preventDefault(); signOut(); }}
+                className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 touch-manipulation"
               >
                 <LogOut className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                 {!isMobile && "Déconnexion"}
