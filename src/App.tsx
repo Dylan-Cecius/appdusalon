@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -20,8 +20,15 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
 
-import { AuthProvider } from '@/hooks/useAuth';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { TransactionsProvider } from '@/contexts/TransactionsContext';
+
+const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+};
 
 // Global state management with TransactionsProvider
 const queryClient = new QueryClient();
@@ -36,47 +43,54 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<Admin />} />
                 
+                <Route path="/" element={<AuthGuard><Dashboard /></AuthGuard>} />
+                <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+                
                 {/* Routes principales */}
-                <Route path="/pos" element={<POSPage />} />
-                <Route path="/clients" element={<ClientsPage />} />
-                <Route path="/agenda" element={<AgendaPage />} />
-                <Route path="/todo" element={<TodoPage />} />
-                <Route path="/abonnements" element={<SubscriptionPage />} />
+                <Route path="/pos" element={<AuthGuard><POSPage /></AuthGuard>} />
+                <Route path="/clients" element={<AuthGuard><ClientsPage /></AuthGuard>} />
+                <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
+                <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
+                <Route path="/abonnements" element={<AuthGuard><SubscriptionPage /></AuthGuard>} />
                 
                 {/* Routes protégées par mot de passe */}
                 <Route 
                   path="/stats" 
                   element={
-                    <ProtectedRoute section="stats">
-                      <StatsPage />
-                    </ProtectedRoute>
+                    <AuthGuard>
+                      <ProtectedRoute section="stats">
+                        <StatsPage />
+                      </ProtectedRoute>
+                    </AuthGuard>
                   } 
                 />
                 <Route 
                   path="/rapports" 
                   element={
-                    <ProtectedRoute section="reports">
-                      <ReportsPage />
-                    </ProtectedRoute>
+                    <AuthGuard>
+                      <ProtectedRoute section="reports">
+                        <ReportsPage />
+                      </ProtectedRoute>
+                    </AuthGuard>
                   } 
                 />
                 <Route 
                   path="/parametres" 
                   element={
-                    <ProtectedRoute section="settings">
-                      <SettingsPage />
-                    </ProtectedRoute>
+                    <AuthGuard>
+                      <ProtectedRoute section="settings">
+                        <SettingsPage />
+                      </ProtectedRoute>
+                    </AuthGuard>
                   } 
                 />
                 
                 {/* Routes historiques */}
-                <Route path="/historique" element={<Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense>} />
-                <Route path="/encaissements" element={<Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense>} />
+                <Route path="/historique" element={<AuthGuard><Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense></AuthGuard>} />
+                <Route path="/encaissements" element={<AuthGuard><Suspense fallback={<div className="p-8">Chargement…</div>}><TransactionHistory /></Suspense></AuthGuard>} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
