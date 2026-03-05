@@ -71,8 +71,8 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
     try {
       // Delete associated transactions first
       await supabase.from('transactions').delete().eq('client_id', client.id);
-      // Delete the client
       await deleteClient(client.id);
+      await logActivity('CLIENT_DELETED', { client_name: client.name });
       toast({
         title: "Données supprimées conformément au RGPD",
         description: `Toutes les données de ${client.name} ont été définitivement supprimées.`,
