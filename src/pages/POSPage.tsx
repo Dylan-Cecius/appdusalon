@@ -105,6 +105,37 @@ const POSPage = () => {
       cartItemsCount={cartItems.length} 
       onCartOpen={() => setIsCartOpen(true)}
     >
+      {/* Session Summary Bar */}
+      <div className="grid grid-cols-3 gap-3 mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+          <div className="p-2 rounded-lg bg-green-500/20 hidden sm:block">
+            <Euro className="h-4 w-4 text-green-600" />
+          </div>
+          <div>
+            <p className="text-base sm:text-xl font-bold text-green-600">{todayStats.totalAmount.toFixed(2)} €</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Encaissé</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
+          <div className="p-2 rounded-lg bg-primary/20 hidden sm:block">
+            <Receipt className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <p className="text-base sm:text-xl font-bold text-primary">{todayStats.txCount}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Transactions</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-accent/10 border border-accent/20">
+          <div className="p-2 rounded-lg bg-accent/20 hidden sm:block">
+            <Scissors className="h-4 w-4 text-accent-foreground" />
+          </div>
+          <div>
+            <p className="text-base sm:text-xl font-bold text-accent-foreground">{todayStats.servicesCount}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Services</p>
+          </div>
+        </div>
+      </div>
+
       <div className={cn("gap-4 sm:gap-6", isMobile ? "space-y-6" : "grid grid-cols-1 xl:grid-cols-3")}>
         {/* Services Section */}
         <div className={cn(isMobile ? "space-y-4" : "xl:col-span-2 space-y-6")}>
