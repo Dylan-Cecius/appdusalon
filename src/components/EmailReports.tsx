@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, Send, Calendar, Info } from 'lucide-react';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,12 +56,31 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
   
   const [email, setEmail] = useState('');
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily');
+  const [dateRangePreset, setDateRangePreset] = useState<'current_week' | 'current_month' | 'previous_month' | 'last_3_months' | 'custom'>('current_week');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentMethod, setPaymentMethod] = useState<'all' | 'cash' | 'card'>('all');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Apply date range preset
+  const getPresetDateRange = () => {
+    const now = new Date();
+    switch (dateRangePreset) {
+      case 'current_week':
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case 'current_month':
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case 'previous_month':
+        const prevMonth = subMonths(now, 1);
+        return { start: startOfMonth(prevMonth), end: endOfMonth(prevMonth) };
+      case 'last_3_months':
+        return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) };
+      case 'custom':
+        return { start: startOfDay(new Date(startDate)), end: endOfDay(new Date(endDate)) };
+    }
+  };
 
   // Pré-remplir l'email avec l'adresse de l'utilisateur connecté au chargement initial
   useEffect(() => {
@@ -72,10 +91,9 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
 
   // Calculate custom stats based on date range and payment method
   const customStats = useMemo(() => {
-    if (reportType !== 'custom') return null;
+    if (reportType === 'daily') return null;
 
-    const start = startOfDay(new Date(startDate));
-    const end = endOfDay(new Date(endDate));
+    const { start, end } = getPresetDateRange();
 
     // Filter transactions
     const filteredTransactions = transactions.filter(tx => {
@@ -105,7 +123,7 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
       cashPercent: totalTransactions > 0 ? (cashCount / totalTransactions) * 100 : 0,
       cardPercent: totalTransactions > 0 ? (cardCount / totalTransactions) * 100 : 0,
     };
-  }, [reportType, startDate, endDate, paymentMethod, transactions, appointments]);
+  }, [reportType, dateRangePreset, startDate, endDate, paymentMethod, transactions, appointments]);
 
   const generateReport = () => {
     const currentDate = new Date(selectedDate);
@@ -125,22 +143,9 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
         };
         break;
       case 'weekly':
-        dateRange = {
-          start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-          end: endOfWeek(currentDate, { weekStartsOn: 1 })
-        };
-        break;
       case 'monthly':
-        dateRange = {
-          start: startOfMonth(currentDate),
-          end: endOfMonth(currentDate)
-        };
-        break;
       case 'custom':
-        dateRange = {
-          start: startOfDay(new Date(startDate)),
-          end: endOfDay(new Date(endDate))
-        };
+        dateRange = getPresetDateRange();
         break;
     }
     
@@ -232,14 +237,15 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
     }
     tableContent += ` ${totals.totalAmount.toFixed(2)}€\n`;
 
+    const rangeStart = format(dateRange.start, 'dd MMMM yyyy', { locale: fr });
+    const rangeEnd = format(dateRange.end, 'dd MMMM yyyy', { locale: fr });
+    const rangePeriod = `${rangeStart} au ${rangeEnd}`;
+
     switch (reportType) {
       case 'custom':
-        const startFormatted = format(new Date(startDate), 'dd MMMM yyyy', { locale: fr });
-        const endFormatted = format(new Date(endDate), 'dd MMMM yyyy', { locale: fr });
-        
-        subject = `Rapport personnalisé - ${startFormatted} au ${endFormatted}`;
+        subject = `Rapport personnalisé - ${rangePeriod}`;
         reportContent = `
-📊 RAPPORT PERSONNALISÉ - ${startFormatted.toUpperCase()} AU ${endFormatted.toUpperCase()}
+📊 RAPPORT PERSONNALISÉ - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
 • Total CA : ${totals.totalAmount.toFixed(2)}€
@@ -277,9 +283,9 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         break;
         
       case 'weekly':
-        subject = `Rapport hebdomadaire - Semaine du ${formattedDate}`;
+        subject = `Rapport hebdomadaire - ${rangePeriod}`;
         reportContent = `
-📊 RAPPORT HEBDOMADAIRE - SEMAINE DU ${formattedDate.toUpperCase()}
+📊 RAPPORT HEBDOMADAIRE - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
 • Total CA : ${totals.totalAmount.toFixed(2)}€
@@ -298,9 +304,9 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         break;
         
       case 'monthly':
-        subject = `Rapport mensuel - ${format(currentDate, 'MMMM yyyy', { locale: fr })}`;
+        subject = `Rapport mensuel - ${rangePeriod}`;
         reportContent = `
-📊 RAPPORT MENSUEL - ${format(currentDate, 'MMMM yyyy', { locale: fr }).toUpperCase()}
+📊 RAPPORT MENSUEL - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
 • Total CA : ${totals.totalAmount.toFixed(2)}€
@@ -463,6 +469,32 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             </Select>
           </div>
 
+          {reportType !== 'daily' && (
+            <div>
+              <Label htmlFor="dateRangePreset" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Plage de dates
+              </Label>
+              <Select value={dateRangePreset} onValueChange={(value: any) => setDateRangePreset(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner la plage" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50">
+                  <SelectItem value="current_week">Semaine en cours</SelectItem>
+                  <SelectItem value="current_month">Mois en cours</SelectItem>
+                  <SelectItem value="previous_month">Mois précédent</SelectItem>
+                  <SelectItem value="last_3_months">3 derniers mois</SelectItem>
+                  <SelectItem value="custom">Personnalisé</SelectItem>
+                </SelectContent>
+              </Select>
+              {dateRangePreset !== 'custom' && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {format(getPresetDateRange().start, 'dd/MM/yyyy')} — {format(getPresetDateRange().end, 'dd/MM/yyyy')}
+                </p>
+              )}
+            </div>
+          )}
+
           {reportType === 'daily' && (
             <div>
               <Label htmlFor="selectedDate" className="flex items-center gap-2">
@@ -475,13 +507,10 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
-              <p className="text-sm text-muted-foreground mt-1">
-                Sélectionnez la date pour laquelle générer le rapport journalier
-              </p>
             </div>
           )}
 
-          {reportType === 'custom' && (
+          {reportType !== 'daily' && dateRangePreset === 'custom' && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
