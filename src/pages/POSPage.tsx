@@ -116,7 +116,7 @@ const POSPage = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground">Encaissé</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
+        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-primary/10 border border-primary/20">
           <div className="p-2 rounded-lg bg-primary/20 hidden sm:block">
             <Receipt className="h-4 w-4 text-primary" />
           </div>
