@@ -114,15 +114,17 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 </div>
               )}
               <ThemeToggle />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate('/abonnements')} 
-                className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
-              >
-                <Crown className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-                {!isMobile && "Abonnement"}
-              </Button>
+              {!isMobile && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/abonnements')} 
+                  className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
+                >
+                  <Crown className="h-4 w-4" />
+                  Abonnement
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
