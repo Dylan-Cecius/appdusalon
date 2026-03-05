@@ -135,26 +135,10 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                     <Edit2 className="h-4 w-4 mr-1" />
                     Modifier
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="destructive">
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Supprimer
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Supprimer ce client ?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Cette action est irréversible. Les transactions associées à ce client seront conservées mais ne seront plus liées à une fiche client.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button size="sm" variant="destructive" onClick={handleDelete}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Supprimer
+                  </Button>
                 </>
               )}
             </div>
