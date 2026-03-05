@@ -288,6 +288,61 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
             </div>
           </TabsContent>
         </Tabs>
+
+        {permissions.isAdmin && (
+          <>
+            <Separator className="my-4" />
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-destructive">
+                <ShieldAlert className="h-5 w-5" />
+                <span className="font-semibold text-sm">Droit à l'oubli — RGPD Article 17</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Suppression définitive et irréversible de toutes les données personnelles de ce client.
+              </p>
+              <AlertDialog open={rgpdDialogOpen} onOpenChange={setRgpdDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="w-full sm:w-auto">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer définitivement ce client
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                      <ShieldAlert className="h-5 w-5" />
+                      Suppression RGPD irréversible
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-3">
+                      <span className="block">
+                        Cette action est irréversible. Toutes les données personnelles de <strong>{client.name}</strong> seront supprimées définitivement : profil, historique de visites, transactions associées. Êtes-vous certain ?
+                      </span>
+                      <span className="block text-sm">
+                        Pour confirmer, tapez <strong>{client.name}</strong> ci-dessous :
+                      </span>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    placeholder={client.name}
+                    value={rgpdConfirmName}
+                    onChange={(e) => setRgpdConfirmName(e.target.value)}
+                    className="mt-2"
+                  />
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isRgpdDeleting}>Annuler</AlertDialogCancel>
+                    <Button
+                      variant="destructive"
+                      disabled={rgpdConfirmName !== client.name || isRgpdDeleting}
+                      onClick={handleRgpdDelete}
+                    >
+                      {isRgpdDeleting ? 'Suppression...' : 'Supprimer définitivement'}
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
