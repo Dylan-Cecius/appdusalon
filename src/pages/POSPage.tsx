@@ -24,8 +24,20 @@ const POSPage = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
   const { services, loading: servicesLoading, categories } = useSupabaseServices();
-  const { addTransaction } = useTransactions();
+  const { addTransaction, transactions } = useTransactions();
   const isMobile = useIsMobile();
+
+  const todayStats = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayTx = transactions.filter(tx => new Date(tx.transactionDate) >= startOfToday);
+    const totalAmount = todayTx.reduce((sum, tx) => sum + tx.totalAmount, 0);
+    const totalServices = todayTx.reduce((sum, tx) => {
+      const items = tx.items as any[];
+      return sum + (items?.reduce((s: number, i: any) => s + (i.quantity || 1), 0) || 0);
+    }, 0);
+    return { totalAmount, txCount: todayTx.length, servicesCount: totalServices };
+  }, [transactions]);
 
   const addToCart = (service: any) => {
     setCartItems(prev => {
