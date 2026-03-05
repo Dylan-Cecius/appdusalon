@@ -304,9 +304,9 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         break;
         
       case 'monthly':
-        subject = `Rapport mensuel - ${format(currentDate, 'MMMM yyyy', { locale: fr })}`;
+        subject = `Rapport mensuel - ${rangePeriod}`;
         reportContent = `
-📊 RAPPORT MENSUEL - ${format(currentDate, 'MMMM yyyy', { locale: fr }).toUpperCase()}
+📊 RAPPORT MENSUEL - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
 • Total CA : ${totals.totalAmount.toFixed(2)}€
