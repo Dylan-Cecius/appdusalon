@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
 import { Button } from '@/components/ui/button';
@@ -7,13 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, User, Phone, Mail, FileText } from 'lucide-react';
+import { Plus, Search, User, Phone, Mail, FileText, ArrowDownAZ, ArrowUpAZ, Clock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ClientDetailModal from '@/components/ClientDetailModal';
 import type { Client } from '@/hooks/useClients';
 
 const ClientsPage = () => {
   const { clients, loading, addClient } = useClients();
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newClient, setNewClient] = useState({
@@ -23,10 +25,21 @@ const ClientsPage = () => {
     notes: '',
   });
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone.includes(searchQuery)
-  );
+  const filteredAndSortedClients = useMemo(() => {
+    const filtered = clients.filter(client =>
+      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.phone.includes(searchQuery)
+    );
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc': return a.name.localeCompare(b.name);
+        case 'name-desc': return b.name.localeCompare(a.name);
+        case 'newest': return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        default: return 0;
+      }
+    });
+  }, [clients, searchQuery, sortBy]);
 
   const handleAddClient = async () => {
     if (!newClient.name || !newClient.phone) return;
@@ -110,21 +123,38 @@ const ClientsPage = () => {
           </Dialog>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-10"
-            placeholder="Rechercher un client par nom ou téléphone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-10"
+              placeholder="Rechercher un client par nom ou téléphone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Trier par" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Nom A-Z</SelectItem>
+              <SelectItem value="name-desc">Nom Z-A</SelectItem>
+              <SelectItem value="newest">Plus récent</SelectItem>
+              <SelectItem value="oldest">Plus ancien</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <p className="text-sm text-muted-foreground">
+          {clients.length} client{clients.length !== 1 ? 's' : ''} enregistré{clients.length !== 1 ? 's' : ''}
+        </p>
 
         {loading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Chargement des clients...</p>
           </div>
-        ) : filteredClients.length === 0 ? (
+        ) : filteredAndSortedClients.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -135,7 +165,7 @@ const ClientsPage = () => {
           </Card>
         ) : (
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredClients.map((client) => (
+            {filteredAndSortedClients.map((client) => (
               <Card
                 key={client.id}
                 className="cursor-pointer hover:bg-accent/50 transition-colors active:scale-98 min-h-[80px]"
