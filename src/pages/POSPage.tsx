@@ -121,7 +121,7 @@ const POSPage = () => {
             <Receipt className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-base sm:text-xl font-bold text-primary">{todayStats.txCount}</p>
+            <p className="text-sm sm:text-xl font-bold text-primary">{todayStats.txCount}</p>
             <p className="text-[10px] sm:text-xs text-muted-foreground">Transactions</p>
           </div>
         </div>
