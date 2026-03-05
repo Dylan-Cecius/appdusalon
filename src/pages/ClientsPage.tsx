@@ -3,6 +3,7 @@ import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ const ClientsPage = () => {
   const { clients, loading, addClient, getClientStats } = useClients();
   const { permissions } = usePermissions();
   const { salonSettings } = useSupabaseSettings();
+  const { logActivity } = useActivityLog();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -52,7 +54,10 @@ const ClientsPage = () => {
   const handleAddClient = async () => {
     if (!newClient.name || !newClient.phone) return;
     
-    await addClient(newClient);
+    const result = await addClient(newClient);
+    if (result) {
+      await logActivity('CLIENT_CREATED', { client_name: newClient.name });
+    }
     setNewClient({ name: '', phone: '', email: '', notes: '' });
     setIsAddDialogOpen(false);
   };
@@ -102,6 +107,7 @@ const ClientsPage = () => {
         const json = JSON.stringify(data, null, 2);
         downloadFile(json, `${filename}.json`, 'application/json');
       }
+      await logActivity('EXPORT_RGPD', { format: type.toUpperCase(), count: clients.length });
     } finally {
       setIsExporting(false);
       setExportConfirmType(null);

@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import ServiceManagement from './ServiceManagement';
 import ProductManagement from './ProductManagement';
 import { EmployeeManagement } from './EmployeeManagement';
+import ActivityLogViewer from './ActivityLogViewer';
 
 const Settings = () => {
   const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
@@ -757,6 +758,9 @@ const Settings = () => {
       
       {/* Gestion des employés (admin only) */}
       {permissions.isAdmin && <EmployeeManagement />}
+
+      {/* Journal d'activité (admin only) */}
+      {permissions.isAdmin && <ActivityLogViewer />}
     </div>
   );
 };

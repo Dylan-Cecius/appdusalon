@@ -12,6 +12,7 @@ import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Edit2, Save, X, DollarSign, Calendar, Clock, Trash2, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -29,6 +30,7 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const { appointments } = useSupabaseAppointments();
   const { permissions } = usePermissions();
   const { toast } = useToast();
+  const { logActivity } = useActivityLog();
   const [isEditing, setIsEditing] = useState(false);
   const [stats, setStats] = useState<ClientStats>({ totalSpent: 0, visitCount: 0, lastVisit: null });
   const [editedClient, setEditedClient] = useState(client);
@@ -69,8 +71,8 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
     try {
       // Delete associated transactions first
       await supabase.from('transactions').delete().eq('client_id', client.id);
-      // Delete the client
       await deleteClient(client.id);
+      await logActivity('CLIENT_DELETED', { client_name: client.name });
       toast({
         title: "Données supprimées conformément au RGPD",
         description: `Toutes les données de ${client.name} ont été définitivement supprimées.`,
