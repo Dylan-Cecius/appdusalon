@@ -70,6 +70,18 @@ export const useCombinedStats = () => {
       .reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
     const monthlyRevenue = monthlyTransactionRevenue + monthlyAppointmentRevenue;
 
+    // Previous month revenue
+    const prevMonthTransactions = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return txDate >= startOfPrevMonth && txDate <= endOfPrevMonth;
+    });
+    const prevMonthAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      return aptDate >= startOfPrevMonth && aptDate <= endOfPrevMonth;
+    });
+    const previousMonthRevenue = prevMonthTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0)
+      + prevMonthAppointments.filter(apt => apt.isPaid).reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
+
     // Calculate combined client count (transactions + appointments)
     const todayClients = todayTransactions.length + todayAppointments.length;
     const weeklyClients = weekTransactions.length + weekAppointments.length;
