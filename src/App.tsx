@@ -54,6 +54,7 @@ const App = () => {
                 <Route path="/clients" element={<AuthGuard><ClientsPage /></AuthGuard>} />
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
+                <Route path="/abonnement" element={<Navigate to="/abonnements" replace />} />
                 <Route path="/abonnements" element={<AuthGuard><SubscriptionPage /></AuthGuard>} />
                 
                 {/* Routes protégées par mot de passe */}
