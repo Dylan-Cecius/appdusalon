@@ -57,6 +57,67 @@ const ClientsPage = () => {
     setIsAddDialogOpen(false);
   };
 
+  const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+
+  const handleExport = useCallback(async (type: 'csv' | 'json') => {
+    setIsExporting(true);
+    try {
+      // Fetch stats for all clients
+      const clientsWithStats = await Promise.all(
+        clients.map(async (client) => {
+          const stats = await getClientStats(client.id);
+          return { ...client, ...stats };
+        })
+      );
+
+      const salonName = sanitizeName(salonSettings?.name || 'salon');
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      const filename = `clients-${salonName}-${dateStr}`;
+
+      if (type === 'csv') {
+        const header = 'Nom,Téléphone,Email,Date de création,Nombre de visites,Total dépensé (€),Notes';
+        const rows = clientsWithStats.map(c =>
+          [
+            `"${c.name}"`,
+            `"${c.phone}"`,
+            `"${c.email || ''}"`,
+            `"${format(new Date(c.created_at), 'dd/MM/yyyy')}"`,
+            c.visitCount,
+            c.totalSpent.toFixed(2),
+            `"${(c.notes || '').replace(/"/g, '""')}"`,
+          ].join(',')
+        );
+        const csv = [header, ...rows].join('\n');
+        downloadFile(csv, `${filename}.csv`, 'text/csv;charset=utf-8;');
+      } else {
+        const data = clientsWithStats.map(c => ({
+          nom: c.name,
+          telephone: c.phone,
+          email: c.email || null,
+          date_creation: format(new Date(c.created_at), 'dd/MM/yyyy'),
+          nombre_visites: c.visitCount,
+          total_depense: c.totalSpent,
+          notes: c.notes || null,
+        }));
+        const json = JSON.stringify(data, null, 2);
+        downloadFile(json, `${filename}.json`, 'application/json');
+      }
+    } finally {
+      setIsExporting(false);
+      setExportConfirmType(null);
+    }
+  }, [clients, getClientStats, salonSettings]);
+
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob(['\uFEFF' + content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
