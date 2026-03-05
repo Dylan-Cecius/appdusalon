@@ -30,6 +30,7 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const { appointments } = useSupabaseAppointments();
   const { permissions } = usePermissions();
   const { toast } = useToast();
+  const { logActivity } = useActivityLog();
   const [isEditing, setIsEditing] = useState(false);
   const [stats, setStats] = useState<ClientStats>({ totalSpent: 0, visitCount: 0, lastVisit: null });
   const [editedClient, setEditedClient] = useState(client);
