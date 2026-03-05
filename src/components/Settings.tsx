@@ -758,6 +758,9 @@ const Settings = () => {
       
       {/* Gestion des employés (admin only) */}
       {permissions.isAdmin && <EmployeeManagement />}
+
+      {/* Journal d'activité (admin only) */}
+      {permissions.isAdmin && <ActivityLogViewer />}
     </div>
   );
 };
