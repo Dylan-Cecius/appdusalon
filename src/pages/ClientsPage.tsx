@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
 import { Button } from '@/components/ui/button';
