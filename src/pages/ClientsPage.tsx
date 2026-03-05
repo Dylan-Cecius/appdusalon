@@ -202,7 +202,8 @@ const ClientsPage = () => {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
