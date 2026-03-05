@@ -91,10 +91,9 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
 
   // Calculate custom stats based on date range and payment method
   const customStats = useMemo(() => {
-    if (reportType !== 'custom') return null;
+    if (reportType === 'daily') return null;
 
-    const start = startOfDay(new Date(startDate));
-    const end = endOfDay(new Date(endDate));
+    const { start, end } = getPresetDateRange();
 
     // Filter transactions
     const filteredTransactions = transactions.filter(tx => {
