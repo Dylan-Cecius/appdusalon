@@ -283,7 +283,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         break;
         
       case 'weekly':
-        subject = `Rapport hebdomadaire - Semaine du ${formattedDate}`;
+        subject = `Rapport hebdomadaire - ${rangePeriod}`;
         reportContent = `
 📊 RAPPORT HEBDOMADAIRE - SEMAINE DU ${formattedDate.toUpperCase()}
 
