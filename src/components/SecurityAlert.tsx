@@ -9,12 +9,13 @@ interface SecurityAlertProps {
 }
 
 const SecurityAlert = ({ onDismiss }: SecurityAlertProps) => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(() => localStorage.getItem('banner-dismissed') !== '1');
   const [showDetails, setShowDetails] = useState(false);
 
   if (!isVisible) return null;
 
   const handleDismiss = () => {
+    localStorage.setItem('banner-dismissed', '1');
     setIsVisible(false);
     onDismiss?.();
   };
