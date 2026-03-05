@@ -142,6 +142,20 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
       // Mettre à jour immédiatement l'état local
       setTransactions(prev => [newTransaction, ...prev]);
+
+      // Log activity
+      try {
+        const clientName = transaction.items?.map(i => i.name).join(', ') || '';
+        await supabase.from('activity_logs' as any).insert({
+          salon_id: salonIdData,
+          user_id: user.id,
+          user_email: user.email || '',
+          action: 'TRANSACTION_CREATED',
+          details: { amount: transaction.totalAmount, items: clientName },
+        });
+      } catch (logError) {
+        console.error('Error logging transaction activity:', logError);
+      }
       
       toast({
         title: "Succès",
