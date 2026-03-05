@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, User, Phone, Mail, FileText } from 'lucide-react';
+import { Plus, Search, User, Phone, Mail, FileText, ArrowDownAZ, ArrowUpAZ, Clock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ClientDetailModal from '@/components/ClientDetailModal';
 import type { Client } from '@/hooks/useClients';
 
