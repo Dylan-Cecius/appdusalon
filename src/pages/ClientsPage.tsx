@@ -1,23 +1,31 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, User, Phone, Mail, FileText, ArrowDownAZ, ArrowUpAZ, Clock } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Plus, Search, User, Phone, Mail, FileText, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ClientDetailModal from '@/components/ClientDetailModal';
 import type { Client } from '@/hooks/useClients';
+import { format } from 'date-fns';
 
 const ClientsPage = () => {
-  const { clients, loading, addClient } = useClients();
+  const { clients, loading, addClient, getClientStats } = useClients();
+  const { permissions } = usePermissions();
+  const { salonSettings } = useSupabaseSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [exportConfirmType, setExportConfirmType] = useState<'csv' | 'json' | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [newClient, setNewClient] = useState({
     name: '',
     phone: '',
@@ -49,6 +57,67 @@ const ClientsPage = () => {
     setIsAddDialogOpen(false);
   };
 
+  const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+
+  const handleExport = useCallback(async (type: 'csv' | 'json') => {
+    setIsExporting(true);
+    try {
+      // Fetch stats for all clients
+      const clientsWithStats = await Promise.all(
+        clients.map(async (client) => {
+          const stats = await getClientStats(client.id);
+          return { ...client, ...stats };
+        })
+      );
+
+      const salonName = sanitizeName(salonSettings?.name || 'salon');
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      const filename = `clients-${salonName}-${dateStr}`;
+
+      if (type === 'csv') {
+        const header = 'Nom,Téléphone,Email,Date de création,Nombre de visites,Total dépensé (€),Notes';
+        const rows = clientsWithStats.map(c =>
+          [
+            `"${c.name}"`,
+            `"${c.phone}"`,
+            `"${c.email || ''}"`,
+            `"${format(new Date(c.created_at), 'dd/MM/yyyy')}"`,
+            c.visitCount,
+            c.totalSpent.toFixed(2),
+            `"${(c.notes || '').replace(/"/g, '""')}"`,
+          ].join(',')
+        );
+        const csv = [header, ...rows].join('\n');
+        downloadFile(csv, `${filename}.csv`, 'text/csv;charset=utf-8;');
+      } else {
+        const data = clientsWithStats.map(c => ({
+          nom: c.name,
+          telephone: c.phone,
+          email: c.email || null,
+          date_creation: format(new Date(c.created_at), 'dd/MM/yyyy'),
+          nombre_visites: c.visitCount,
+          total_depense: c.totalSpent,
+          notes: c.notes || null,
+        }));
+        const json = JSON.stringify(data, null, 2);
+        downloadFile(json, `${filename}.json`, 'application/json');
+      }
+    } finally {
+      setIsExporting(false);
+      setExportConfirmType(null);
+    }
+  }, [clients, getClientStats, salonSettings]);
+
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob(['\uFEFF' + content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
@@ -57,13 +126,26 @@ const ClientsPage = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gestion des Clients</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Gérez vos clients et leur historique</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto min-h-[44px]">
-                <Plus className="mr-2 h-4 w-4" />
-                Nouveau Client
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap gap-2">
+            {permissions.isAdmin && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter CSV (RGPD)
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter JSON
+                </Button>
+              </>
+            )}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto min-h-[44px]">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nouveau Client
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Ajouter un client</DialogTitle>
@@ -120,7 +202,8 @@ const ClientsPage = () => {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
@@ -209,6 +292,23 @@ const ClientsPage = () => {
             onClose={() => setSelectedClient(null)}
           />
         )}
+
+        <AlertDialog open={!!exportConfirmType} onOpenChange={(open) => !open && setExportConfirmType(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Export RGPD — Confirmation</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vous êtes sur le point de télécharger les données personnelles de vos clients. Assurez-vous de stocker ce fichier de manière sécurisée, conformément au RGPD.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isExporting}>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={() => exportConfirmType && handleExport(exportConfirmType)} disabled={isExporting}>
+                {isExporting ? 'Export en cours...' : 'Télécharger'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );
