@@ -285,7 +285,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       case 'weekly':
         subject = `Rapport hebdomadaire - ${rangePeriod}`;
         reportContent = `
-📊 RAPPORT HEBDOMADAIRE - SEMAINE DU ${formattedDate.toUpperCase()}
+📊 RAPPORT HEBDOMADAIRE - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
 • Total CA : ${totals.totalAmount.toFixed(2)}€
