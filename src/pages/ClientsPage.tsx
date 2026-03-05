@@ -292,6 +292,23 @@ const ClientsPage = () => {
             onClose={() => setSelectedClient(null)}
           />
         )}
+
+        <AlertDialog open={!!exportConfirmType} onOpenChange={(open) => !open && setExportConfirmType(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Export RGPD — Confirmation</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vous êtes sur le point de télécharger les données personnelles de vos clients. Assurez-vous de stocker ce fichier de manière sécurisée, conformément au RGPD.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isExporting}>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={() => exportConfirmType && handleExport(exportConfirmType)} disabled={isExporting}>
+                {isExporting ? 'Export en cours...' : 'Télécharger'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );
