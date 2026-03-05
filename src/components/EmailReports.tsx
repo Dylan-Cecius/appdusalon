@@ -237,14 +237,15 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
     }
     tableContent += ` ${totals.totalAmount.toFixed(2)}€\n`;
 
+    const rangeStart = format(dateRange.start, 'dd MMMM yyyy', { locale: fr });
+    const rangeEnd = format(dateRange.end, 'dd MMMM yyyy', { locale: fr });
+    const rangePeriod = `${rangeStart} au ${rangeEnd}`;
+
     switch (reportType) {
       case 'custom':
-        const startFormatted = format(new Date(startDate), 'dd MMMM yyyy', { locale: fr });
-        const endFormatted = format(new Date(endDate), 'dd MMMM yyyy', { locale: fr });
-        
-        subject = `Rapport personnalisé - ${startFormatted} au ${endFormatted}`;
+        subject = `Rapport personnalisé - ${rangePeriod}`;
         reportContent = `
-📊 RAPPORT PERSONNALISÉ - ${startFormatted.toUpperCase()} AU ${endFormatted.toUpperCase()}
+📊 RAPPORT PERSONNALISÉ - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
 • Total CA : ${totals.totalAmount.toFixed(2)}€
