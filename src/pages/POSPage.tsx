@@ -130,7 +130,7 @@ const POSPage = () => {
             <Scissors className="h-4 w-4 text-accent-foreground" />
           </div>
           <div>
-            <p className="text-base sm:text-xl font-bold text-accent-foreground">{todayStats.servicesCount}</p>
+            <p className="text-sm sm:text-xl font-bold text-accent-foreground">{todayStats.servicesCount}</p>
             <p className="text-[10px] sm:text-xs text-muted-foreground">Services</p>
           </div>
         </div>
