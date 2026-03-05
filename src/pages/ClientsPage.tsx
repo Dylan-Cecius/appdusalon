@@ -1,16 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, User, Phone, Mail, FileText, ArrowDownAZ, ArrowUpAZ, Clock } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Plus, Search, User, Phone, Mail, FileText, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ClientDetailModal from '@/components/ClientDetailModal';
 import type { Client } from '@/hooks/useClients';
+import { format } from 'date-fns';
 
 const ClientsPage = () => {
   const { clients, loading, addClient } = useClients();
