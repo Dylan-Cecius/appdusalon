@@ -469,6 +469,32 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             </Select>
           </div>
 
+          {reportType !== 'daily' && (
+            <div>
+              <Label htmlFor="dateRangePreset" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Plage de dates
+              </Label>
+              <Select value={dateRangePreset} onValueChange={(value: any) => setDateRangePreset(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner la plage" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50">
+                  <SelectItem value="current_week">Semaine en cours</SelectItem>
+                  <SelectItem value="current_month">Mois en cours</SelectItem>
+                  <SelectItem value="previous_month">Mois précédent</SelectItem>
+                  <SelectItem value="last_3_months">3 derniers mois</SelectItem>
+                  <SelectItem value="custom">Personnalisé</SelectItem>
+                </SelectContent>
+              </Select>
+              {dateRangePreset !== 'custom' && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {format(getPresetDateRange().start, 'dd/MM/yyyy')} — {format(getPresetDateRange().end, 'dd/MM/yyyy')}
+                </p>
+              )}
+            </div>
+          )}
+
           {reportType === 'daily' && (
             <div>
               <Label htmlFor="selectedDate" className="flex items-center gap-2">
@@ -481,13 +507,10 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
-              <p className="text-sm text-muted-foreground mt-1">
-                Sélectionnez la date pour laquelle générer le rapport journalier
-              </p>
             </div>
           )}
 
-          {reportType === 'custom' && (
+          {reportType !== 'daily' && dateRangePreset === 'custom' && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
