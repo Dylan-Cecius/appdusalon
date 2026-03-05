@@ -12,6 +12,7 @@ import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Edit2, Save, X, DollarSign, Calendar, Clock, Trash2, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
