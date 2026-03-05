@@ -46,7 +46,7 @@ const ServiceCard = ({ service, onAdd }: ServiceCardProps) => {
       </div>
       
       <div className="flex justify-between items-center">
-        <div className="text-2xl font-bold text-primary group-hover:scale-105 transition-transform duration-200">
+        <div className="text-xl sm:text-2xl font-bold text-primary group-hover:scale-105 transition-transform duration-200">
           {service.price.toFixed(2)}€
         </div>
         <Button 
