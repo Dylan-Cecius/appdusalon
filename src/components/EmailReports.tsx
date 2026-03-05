@@ -144,22 +144,9 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
         };
         break;
       case 'weekly':
-        dateRange = {
-          start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-          end: endOfWeek(currentDate, { weekStartsOn: 1 })
-        };
-        break;
       case 'monthly':
-        dateRange = {
-          start: startOfMonth(currentDate),
-          end: endOfMonth(currentDate)
-        };
-        break;
       case 'custom':
-        dateRange = {
-          start: startOfDay(new Date(startDate)),
-          end: endOfDay(new Date(endDate))
-        };
+        dateRange = getPresetDateRange();
         break;
     }
     
