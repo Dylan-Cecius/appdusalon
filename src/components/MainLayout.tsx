@@ -37,7 +37,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
     { path: '/clients', label: 'Clients', icon: Users },
     { path: '/agenda', label: 'Agenda', icon: Calendar },
     { path: '/stats', label: 'Stats', icon: BarChart3 },
-    { path: '/abonnements', label: isMobile ? 'Pro' : 'Abonnement', icon: Crown },
+    
   ];
 
   const mobileNavItems = [
