@@ -123,7 +123,7 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
       cashPercent: totalTransactions > 0 ? (cashCount / totalTransactions) * 100 : 0,
       cardPercent: totalTransactions > 0 ? (cardCount / totalTransactions) * 100 : 0,
     };
-  }, [reportType, startDate, endDate, paymentMethod, transactions, appointments]);
+  }, [reportType, dateRangePreset, startDate, endDate, paymentMethod, transactions, appointments]);
 
   const generateReport = () => {
     const currentDate = new Date(selectedDate);
