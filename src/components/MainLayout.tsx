@@ -131,10 +131,10 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 type="button"
                 onClick={() => signOut()} 
                 onTouchEnd={(e) => { e.preventDefault(); signOut(); }}
-                className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 touch-manipulation"
+                className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200 touch-manipulation px-2 sm:px-3"
               >
-                <LogOut className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-                {!isMobile && "Déconnexion"}
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Déconnexion</span>
               </Button>
             </div>
           </div>
