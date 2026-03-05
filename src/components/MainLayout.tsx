@@ -96,15 +96,15 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 <History className="h-4 w-4" />
                 <span className="hidden sm:inline">Historique</span>
               </Button>
-              {user?.email === 'dylan.cecius@gmail.com' && (
+              {user?.email === 'dylan.cecius@gmail.com' && !isMobile && (
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => navigate('/admin')} 
                   className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
                 >
-                  <User className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-                  {!isMobile && "Admin"}
+                  <User className="h-4 w-4" />
+                  Admin
                 </Button>
               )}
               {!isMobile && (
