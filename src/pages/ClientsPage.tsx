@@ -15,6 +15,7 @@ import type { Client } from '@/hooks/useClients';
 const ClientsPage = () => {
   const { clients, loading, addClient } = useClients();
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newClient, setNewClient] = useState({
@@ -24,10 +25,21 @@ const ClientsPage = () => {
     notes: '',
   });
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone.includes(searchQuery)
-  );
+  const filteredAndSortedClients = useMemo(() => {
+    const filtered = clients.filter(client =>
+      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.phone.includes(searchQuery)
+    );
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc': return a.name.localeCompare(b.name);
+        case 'name-desc': return b.name.localeCompare(a.name);
+        case 'newest': return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        default: return 0;
+      }
+    });
+  }, [clients, searchQuery, sortBy]);
 
   const handleAddClient = async () => {
     if (!newClient.name || !newClient.phone) return;
