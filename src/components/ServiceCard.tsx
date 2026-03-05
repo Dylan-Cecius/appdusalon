@@ -28,7 +28,7 @@ const ServiceCard = ({ service, onAdd }: ServiceCardProps) => {
   };
 
   return (
-    <Card className="p-4 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 bg-card border-2 hover:border-accent/50 group cursor-pointer">
+    <Card className="p-3 sm:p-4 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 bg-card border-2 hover:border-accent/50 group cursor-pointer">
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 transition-all duration-200 group-hover:scale-105 ${getCategoryColor(service.category)}`}>
