@@ -17,11 +17,15 @@ import type { Client } from '@/hooks/useClients';
 import { format } from 'date-fns';
 
 const ClientsPage = () => {
-  const { clients, loading, addClient } = useClients();
+  const { clients, loading, addClient, getClientStats } = useClients();
+  const { permissions } = usePermissions();
+  const { salonSettings } = useSupabaseSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [exportConfirmType, setExportConfirmType] = useState<'csv' | 'json' | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [newClient, setNewClient] = useState({
     name: '',
     phone: '',
