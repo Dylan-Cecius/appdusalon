@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import MainLayout from '@/components/MainLayout';
-import { DollarSign, Users, Calendar, AlertTriangle, TrendingUp, ArrowRight } from 'lucide-react';
+import { DollarSign, Users, Calendar, AlertTriangle, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
