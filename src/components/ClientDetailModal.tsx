@@ -27,9 +27,14 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const { updateClient, deleteClient, getClientStats } = useClients();
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
+  const { permissions } = usePermissions();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [stats, setStats] = useState<ClientStats>({ totalSpent: 0, visitCount: 0, lastVisit: null });
   const [editedClient, setEditedClient] = useState(client);
+  const [rgpdConfirmName, setRgpdConfirmName] = useState('');
+  const [isRgpdDeleting, setIsRgpdDeleting] = useState(false);
+  const [rgpdDialogOpen, setRgpdDialogOpen] = useState(false);
 
   useEffect(() => {
     if (open && client) {
@@ -37,6 +42,12 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
       loadStats();
     }
   }, [open, client]);
+
+  useEffect(() => {
+    if (!rgpdDialogOpen) {
+      setRgpdConfirmName('');
+    }
+  }, [rgpdDialogOpen]);
 
   const loadStats = async () => {
     const clientStats = await getClientStats(client.id);
@@ -51,6 +62,30 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const handleDelete = async () => {
     await deleteClient(client.id);
     onClose();
+  };
+
+  const handleRgpdDelete = async () => {
+    setIsRgpdDeleting(true);
+    try {
+      // Delete associated transactions first
+      await supabase.from('transactions').delete().eq('client_id', client.id);
+      // Delete the client
+      await deleteClient(client.id);
+      toast({
+        title: "Données supprimées conformément au RGPD",
+        description: `Toutes les données de ${client.name} ont été définitivement supprimées.`,
+      });
+      setRgpdDialogOpen(false);
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer les données",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRgpdDeleting(false);
+    }
   };
 
   const clientTransactions = transactions.filter(t => (t as any).client_id === client.id);
