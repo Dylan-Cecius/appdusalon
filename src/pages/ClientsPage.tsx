@@ -21,6 +21,7 @@ const ClientsPage = () => {
   const { clients, loading, addClient, getClientStats } = useClients();
   const { permissions } = usePermissions();
   const { salonSettings } = useSupabaseSettings();
+  const { logActivity } = useActivityLog();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
