@@ -11,6 +11,8 @@ export const useCombinedStats = () => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
     
     // Calculate week start (Monday)
     const startOfWeek = new Date(now);
@@ -67,6 +69,18 @@ export const useCombinedStats = () => {
       .filter(apt => apt.isPaid)
       .reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
     const monthlyRevenue = monthlyTransactionRevenue + monthlyAppointmentRevenue;
+
+    // Previous month revenue
+    const prevMonthTransactions = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return txDate >= startOfPrevMonth && txDate <= endOfPrevMonth;
+    });
+    const prevMonthAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      return aptDate >= startOfPrevMonth && aptDate <= endOfPrevMonth;
+    });
+    const previousMonthRevenue = prevMonthTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0)
+      + prevMonthAppointments.filter(apt => apt.isPaid).reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
 
     // Calculate combined client count (transactions + appointments)
     const todayClients = todayTransactions.length + todayAppointments.length;
@@ -125,6 +139,7 @@ export const useCombinedStats = () => {
       weeklyRevenue,
       weeklyClients,
       monthlyRevenue,
+      previousMonthRevenue,
       monthlyClients,
       // Payment method stats (enhanced with appointments)
       paymentStats: {
