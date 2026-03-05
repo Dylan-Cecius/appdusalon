@@ -112,7 +112,7 @@ const POSPage = () => {
             <Euro className="h-4 w-4 text-green-600" />
           </div>
           <div>
-            <p className="text-base sm:text-xl font-bold text-green-600">{todayStats.totalAmount.toFixed(2)} €</p>
+            <p className="text-sm sm:text-xl font-bold text-green-600">{todayStats.totalAmount.toFixed(0)}€</p>
             <p className="text-[10px] sm:text-xs text-muted-foreground">Encaissé</p>
           </div>
         </div>
