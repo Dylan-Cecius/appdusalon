@@ -56,12 +56,31 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
   
   const [email, setEmail] = useState('');
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily');
+  const [dateRangePreset, setDateRangePreset] = useState<'current_week' | 'current_month' | 'previous_month' | 'last_3_months' | 'custom'>('current_week');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentMethod, setPaymentMethod] = useState<'all' | 'cash' | 'card'>('all');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Apply date range preset
+  const getPresetDateRange = () => {
+    const now = new Date();
+    switch (dateRangePreset) {
+      case 'current_week':
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case 'current_month':
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case 'previous_month':
+        const prevMonth = subMonths(now, 1);
+        return { start: startOfMonth(prevMonth), end: endOfMonth(prevMonth) };
+      case 'last_3_months':
+        return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) };
+      case 'custom':
+        return { start: startOfDay(new Date(startDate)), end: endOfDay(new Date(endDate)) };
+    }
+  };
 
   // Pré-remplir l'email avec l'adresse de l'utilisateur connecté au chargement initial
   useEffect(() => {
