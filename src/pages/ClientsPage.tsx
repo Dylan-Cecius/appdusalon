@@ -126,13 +126,26 @@ const ClientsPage = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gestion des Clients</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Gérez vos clients et leur historique</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto min-h-[44px]">
-                <Plus className="mr-2 h-4 w-4" />
-                Nouveau Client
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap gap-2">
+            {permissions.isAdmin && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter CSV (RGPD)
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter JSON
+                </Button>
+              </>
+            )}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto min-h-[44px]">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nouveau Client
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Ajouter un client</DialogTitle>
