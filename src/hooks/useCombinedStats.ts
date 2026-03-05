@@ -139,6 +139,7 @@ export const useCombinedStats = () => {
       weeklyRevenue,
       weeklyClients,
       monthlyRevenue,
+      previousMonthRevenue,
       monthlyClients,
       // Payment method stats (enhanced with appointments)
       paymentStats: {

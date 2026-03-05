@@ -79,7 +79,22 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
               <div className="text-lg sm:text-2xl font-bold">{stats.monthlyRevenue.toFixed(2)} €</div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">CA mensuel</p>
+              {(() => {
+                const prev = stats.previousMonthRevenue;
+                if (prev === 0 && stats.monthlyRevenue === 0) {
+                  return <p className="text-[10px] sm:text-xs text-muted-foreground">CA mensuel</p>;
+                }
+                const change = prev > 0 
+                  ? ((stats.monthlyRevenue - prev) / prev) * 100 
+                  : stats.monthlyRevenue > 0 ? 100 : 0;
+                const isPositive = change >= 0;
+                return (
+                  <p className={`text-[10px] sm:text-xs flex items-center gap-0.5 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {isPositive ? '+' : ''}{change.toFixed(1)}% vs mois précédent
+                  </p>
+                );
+              })()}
             </CardContent>
           </Card>
 
