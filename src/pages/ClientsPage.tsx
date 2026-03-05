@@ -154,7 +154,7 @@ const ClientsPage = () => {
           <div className="text-center py-12">
             <p className="text-muted-foreground">Chargement des clients...</p>
           </div>
-        ) : filteredClients.length === 0 ? (
+        ) : filteredAndSortedClients.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -165,7 +165,7 @@ const ClientsPage = () => {
           </Card>
         ) : (
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredClients.map((client) => (
+            {filteredAndSortedClients.map((client) => (
               <Card
                 key={client.id}
                 className="cursor-pointer hover:bg-accent/50 transition-colors active:scale-98 min-h-[80px]"
