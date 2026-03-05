@@ -3,6 +3,7 @@ import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
