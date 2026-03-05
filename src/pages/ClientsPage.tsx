@@ -107,6 +107,7 @@ const ClientsPage = () => {
         const json = JSON.stringify(data, null, 2);
         downloadFile(json, `${filename}.json`, 'application/json');
       }
+      await logActivity('EXPORT_RGPD', { format: type.toUpperCase(), count: clients.length });
     } finally {
       setIsExporting(false);
       setExportConfirmType(null);
