@@ -125,7 +125,7 @@ const POSPage = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground">Transactions</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-accent/10 border border-accent/20">
+        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-accent/10 border border-accent/20">
           <div className="p-2 rounded-lg bg-accent/20 hidden sm:block">
             <Scissors className="h-4 w-4 text-accent-foreground" />
           </div>
