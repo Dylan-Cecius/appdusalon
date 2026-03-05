@@ -123,15 +123,32 @@ const ClientsPage = () => {
           </Dialog>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-10"
-            placeholder="Rechercher un client par nom ou téléphone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-10"
+              placeholder="Rechercher un client par nom ou téléphone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Trier par" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Nom A-Z</SelectItem>
+              <SelectItem value="name-desc">Nom Z-A</SelectItem>
+              <SelectItem value="newest">Plus récent</SelectItem>
+              <SelectItem value="oldest">Plus ancien</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <p className="text-sm text-muted-foreground">
+          {clients.length} client{clients.length !== 1 ? 's' : ''} enregistré{clients.length !== 1 ? 's' : ''}
+        </p>
 
         {loading ? (
           <div className="text-center py-12">
