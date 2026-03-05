@@ -6,14 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import { useClients, type Client, type ClientStats } from '@/hooks/useClients';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
-import { Edit2, Save, X, DollarSign, Calendar, Clock, Trash2 } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
+import { supabase } from '@/integrations/supabase/client';
+import { Edit2, Save, X, DollarSign, Calendar, Clock, Trash2, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 interface ClientDetailModalProps {
   client: Client;
   open: boolean;
@@ -24,9 +27,14 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const { updateClient, deleteClient, getClientStats } = useClients();
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
+  const { permissions } = usePermissions();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [stats, setStats] = useState<ClientStats>({ totalSpent: 0, visitCount: 0, lastVisit: null });
   const [editedClient, setEditedClient] = useState(client);
+  const [rgpdConfirmName, setRgpdConfirmName] = useState('');
+  const [isRgpdDeleting, setIsRgpdDeleting] = useState(false);
+  const [rgpdDialogOpen, setRgpdDialogOpen] = useState(false);
 
   useEffect(() => {
     if (open && client) {
@@ -34,6 +42,12 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
       loadStats();
     }
   }, [open, client]);
+
+  useEffect(() => {
+    if (!rgpdDialogOpen) {
+      setRgpdConfirmName('');
+    }
+  }, [rgpdDialogOpen]);
 
   const loadStats = async () => {
     const clientStats = await getClientStats(client.id);
@@ -48,6 +62,30 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const handleDelete = async () => {
     await deleteClient(client.id);
     onClose();
+  };
+
+  const handleRgpdDelete = async () => {
+    setIsRgpdDeleting(true);
+    try {
+      // Delete associated transactions first
+      await supabase.from('transactions').delete().eq('client_id', client.id);
+      // Delete the client
+      await deleteClient(client.id);
+      toast({
+        title: "Données supprimées conformément au RGPD",
+        description: `Toutes les données de ${client.name} ont été définitivement supprimées.`,
+      });
+      setRgpdDialogOpen(false);
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer les données",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRgpdDeleting(false);
+    }
   };
 
   const clientTransactions = transactions.filter(t => (t as any).client_id === client.id);
@@ -97,26 +135,10 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                     <Edit2 className="h-4 w-4 mr-1" />
                     Modifier
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="destructive">
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Supprimer
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Supprimer ce client ?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Cette action est irréversible. Les transactions associées à ce client seront conservées mais ne seront plus liées à une fiche client.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button size="sm" variant="destructive" onClick={handleDelete}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Supprimer
+                  </Button>
                 </>
               )}
             </div>
@@ -266,6 +288,61 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
             </div>
           </TabsContent>
         </Tabs>
+
+        {permissions.isAdmin && (
+          <>
+            <Separator className="my-4" />
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-destructive">
+                <ShieldAlert className="h-5 w-5" />
+                <span className="font-semibold text-sm">Droit à l'oubli — RGPD Article 17</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Suppression définitive et irréversible de toutes les données personnelles de ce client.
+              </p>
+              <AlertDialog open={rgpdDialogOpen} onOpenChange={setRgpdDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="w-full sm:w-auto">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer définitivement ce client
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                      <ShieldAlert className="h-5 w-5" />
+                      Suppression RGPD irréversible
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-3">
+                      <span className="block">
+                        Cette action est irréversible. Toutes les données personnelles de <strong>{client.name}</strong> seront supprimées définitivement : profil, historique de visites, transactions associées. Êtes-vous certain ?
+                      </span>
+                      <span className="block text-sm">
+                        Pour confirmer, tapez <strong>{client.name}</strong> ci-dessous :
+                      </span>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    placeholder={client.name}
+                    value={rgpdConfirmName}
+                    onChange={(e) => setRgpdConfirmName(e.target.value)}
+                    className="mt-2"
+                  />
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isRgpdDeleting}>Annuler</AlertDialogCancel>
+                    <Button
+                      variant="destructive"
+                      disabled={rgpdConfirmName !== client.name || isRgpdDeleting}
+                      onClick={handleRgpdDelete}
+                    >
+                      {isRgpdDeleting ? 'Suppression...' : 'Supprimer définitivement'}
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
