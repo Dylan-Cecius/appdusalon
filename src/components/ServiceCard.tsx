@@ -34,7 +34,7 @@ const ServiceCard = ({ service, onAdd }: ServiceCardProps) => {
           <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 transition-all duration-200 group-hover:scale-105 ${getCategoryColor(service.category)}`}>
             {service.category.toUpperCase()}
           </div>
-          <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors duration-200">
+          <h3 className="font-semibold text-sm sm:text-lg text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
             {service.name}
           </h3>
           {service.category !== 'produit' ? (
