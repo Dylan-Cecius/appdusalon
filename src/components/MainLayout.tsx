@@ -74,7 +74,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
               </div>
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               <SubscriptionBadge onUpgrade={() => navigate('/abonnements')} />
               {location.pathname === "/pos" && isMobile && onCartOpen && (
                 <Button 
@@ -91,20 +91,20 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 variant="outline" 
                 size="sm" 
                 onClick={() => navigate('/historique')} 
-                className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
+                className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200 px-2 sm:px-3"
               >
-                <History className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-                {!isMobile && "Historique"}
+                <History className="h-4 w-4" />
+                <span className="hidden sm:inline">Historique</span>
               </Button>
-              {user?.email === 'dylan.cecius@gmail.com' && (
+              {user?.email === 'dylan.cecius@gmail.com' && !isMobile && (
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => navigate('/admin')} 
                   className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
                 >
-                  <User className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-                  {!isMobile && "Admin"}
+                  <User className="h-4 w-4" />
+                  Admin
                 </Button>
               )}
               {!isMobile && (
@@ -114,25 +114,27 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 </div>
               )}
               <ThemeToggle />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate('/abonnements')} 
-                className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
-              >
-                <Crown className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-                {!isMobile && "Abonnement"}
-              </Button>
+              {!isMobile && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/abonnements')} 
+                  className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
+                >
+                  <Crown className="h-4 w-4" />
+                  Abonnement
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
                 type="button"
                 onClick={() => signOut()} 
                 onTouchEnd={(e) => { e.preventDefault(); signOut(); }}
-                className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 touch-manipulation"
+                className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200 touch-manipulation px-2 sm:px-3"
               >
-                <LogOut className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-                {!isMobile && "Déconnexion"}
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Déconnexion</span>
               </Button>
             </div>
           </div>
