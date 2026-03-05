@@ -54,7 +54,10 @@ const ClientsPage = () => {
   const handleAddClient = async () => {
     if (!newClient.name || !newClient.phone) return;
     
-    await addClient(newClient);
+    const result = await addClient(newClient);
+    if (result) {
+      await logActivity('CLIENT_CREATED', { client_name: newClient.name });
+    }
     setNewClient({ name: '', phone: '', email: '', notes: '' });
     setIsAddDialogOpen(false);
   };
