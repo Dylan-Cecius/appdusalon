@@ -60,7 +60,13 @@ const AppleCalendar = () => {
     // 2. Try category from the appointment's service JSON
     const cat = (svc?.category || '').toLowerCase();
     if (categoryColors[cat]) return categoryColors[cat];
-    // 3. Fallback
+    // 3. Keyword-based fallback (works even without DB)
+    if (name.includes('barbe')) return '#3B82F6';
+    if (name.includes('coupe')) return '#10B981';
+    if (name.includes('color') || name.includes('mèche') || name.includes('meche')) return '#8B5CF6';
+    if (name.includes('soin')) return '#EC4899';
+    if (name.includes('combo')) return '#F97316';
+    // 4. Final fallback
     return '#6B7280';
   };
 
