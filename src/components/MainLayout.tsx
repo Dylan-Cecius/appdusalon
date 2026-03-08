@@ -35,6 +35,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
     { path: '/dashboard', label: isMobile ? 'Home' : 'Dashboard', icon: LayoutDashboard },
     { path: '/pos', label: isMobile ? 'POS' : 'Encaissement', icon: Scissors },
     { path: '/clients', label: 'Clients', icon: Users },
+    { path: '/equipe', label: 'Équipe', icon: Scissors },
     { path: '/agenda', label: 'Agenda', icon: Calendar },
     { path: '/stats', label: 'Stats', icon: BarChart3 },
     

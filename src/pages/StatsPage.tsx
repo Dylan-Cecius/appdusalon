@@ -156,6 +156,8 @@ const StatsPage = () => {
 
         <EmployeeRevenueStats />
 
+        <StaffCommissionsStats />
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div id="custom-date-range">
             <CustomDateRangeStats />
