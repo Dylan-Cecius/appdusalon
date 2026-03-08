@@ -10,9 +10,9 @@ interface SubscriptionBadgeProps {
 
 const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
   const { subscribed, subscription_tier, loading } = useSubscription();
-  const { isDemo } = useSalonDemo();
+  const { isDemo, loading: demoLoading } = useSalonDemo();
 
-  if (loading) {
+  if (loading || demoLoading) {
     return (
       <div className="animate-pulse">
         <div className="h-6 bg-muted rounded w-20"></div>

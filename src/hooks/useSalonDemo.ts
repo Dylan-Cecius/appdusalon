@@ -5,10 +5,12 @@ import { useAuth } from './useAuth';
 export const useSalonDemo = () => {
   const { user } = useAuth();
   const [isDemo, setIsDemo] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setIsDemo(false);
+      setLoading(false);
       return;
     }
 
@@ -20,6 +22,7 @@ export const useSalonDemo = () => {
 
         if (!salonId) {
           setIsDemo(false);
+          setLoading(false);
           return;
         }
 
@@ -33,11 +36,13 @@ export const useSalonDemo = () => {
       } catch (error) {
         console.error('Error checking demo mode:', error);
         setIsDemo(false);
+      } finally {
+        setLoading(false);
       }
     };
 
     checkDemo();
   }, [user]);
 
-  return { isDemo };
+  return { isDemo, loading };
 };
