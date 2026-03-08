@@ -157,6 +157,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     setSelectedServices([]);
     setStartTime('');
     setNotes('');
+    setSelectedStaffId('');
     onClose();
   }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, barberId, totalPrice, addAppointment, onClose]);
 
