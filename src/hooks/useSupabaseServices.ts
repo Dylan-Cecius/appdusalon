@@ -47,7 +47,8 @@ export const useSupabaseServices = () => {
         category: service.category,
         appointmentBuffer: service.appointment_buffer || 0,
         isActive: service.is_active,
-        displayOrder: service.display_order || 0
+        displayOrder: service.display_order || 0,
+        color: (service as any).color || '#6B7280'
       })) || [];
 
       setServices(formattedServices);
