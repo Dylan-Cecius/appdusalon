@@ -25,43 +25,24 @@ const AppleCalendar = () => {
   
   const { appointments, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
+  const { services: dbServices } = useSupabaseServices();
 
   const activeBarbers = barbers.filter(b => b.is_active);
 
-  // Get color based on service category
-  const getServiceColor = (services: any[]) => {
-    if (!services || services.length === 0) return {
-      gradient: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
-      text: 'text-white'
-    };
-    
-    const mainService = services[0];
-    const category = mainService.category || 'general';
-    
-    const categoryColors: Record<string, { gradient: string; text: string }> = {
-      'coupe': { 
-        gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-        text: 'text-white'
-      },
-      'barbe': { 
-        gradient: 'linear-gradient(135deg, #f97316, #c2410c)',
-        text: 'text-white'
-      },
-      'combo': { 
-        gradient: 'linear-gradient(135deg, #a855f7, #7e22ce)',
-        text: 'text-white'
-      },
-      'produit': { 
-        gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
-        text: 'text-white'
-      },
-      'general': { 
-        gradient: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
-        text: 'text-white'
-      }
-    };
-    
-    return categoryColors[category] || categoryColors['general'];
+  // Build a map: service name → color from DB services
+  const serviceColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    dbServices.forEach(s => {
+      map[s.name.toLowerCase()] = s.color || '#6B7280';
+    });
+    return map;
+  }, [dbServices]);
+
+  // Get color for an appointment based on its first service name
+  const getAppointmentColor = (services: any[]): string => {
+    if (!services || services.length === 0) return '#6B7280';
+    const name = (services[0]?.name || '').toLowerCase();
+    return serviceColorMap[name] || '#6B7280';
   };
 
   // Set first barber as selected when barbers load
