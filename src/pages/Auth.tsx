@@ -198,20 +198,67 @@ const Auth = () => {
     }
   };
 
+  const handleMfaVerify = async () => {
+    if (mfaCode.length !== 6 || !mfaFactorId) return;
+
+    setMfaVerifying(true);
+    try {
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: mfaFactorId,
+      });
+      if (challengeError) throw challengeError;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challenge.id,
+        code: mfaCode,
+      });
+
+      if (verifyError) {
+        toast({
+          title: "Code invalide",
+          description: "Le code 2FA est incorrect. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        setMfaCode('');
+      } else {
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue !",
+        });
+        navigate('/');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur de vérification 2FA",
+        variant: "destructive",
+      });
+    } finally {
+      setMfaVerifying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <div className="p-3 bg-accent rounded-lg mb-4">
-            <Scissors className="h-8 w-8 text-accent-foreground" />
+            {mfaRequired ? (
+              <ShieldCheck className="h-8 w-8 text-accent-foreground" />
+            ) : (
+              <Scissors className="h-8 w-8 text-accent-foreground" />
+            )}
           </div>
           <h1 className="text-2xl font-bold text-center font-dancing">L&apos;app du salon</h1>
           <p className="text-muted-foreground text-center text-sm sm:text-base">
-            {isForgotPassword 
-              ? 'Réinitialisez votre mot de passe' 
-              : isLogin 
-                ? 'Connectez-vous à votre compte' 
-                : 'Créez votre compte salon'}
+            {mfaRequired
+              ? 'Vérification en deux étapes'
+              : isForgotPassword 
+                ? 'Réinitialisez votre mot de passe' 
+                : isLogin 
+                  ? 'Connectez-vous à votre compte' 
+                  : 'Créez votre compte salon'}
           </p>
         </div>
 
