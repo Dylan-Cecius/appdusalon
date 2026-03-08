@@ -156,20 +156,24 @@ export const useSubscriptionRights = () => {
   const { subscribed, subscription_tier } = useSubscription();
   const { user } = useAuth();
 
+  const isDemo = user?.email === 'demo@appdusalon.com';
+
   const rights = useMemo((): SubscriptionRights => {
-    // Si pas d'utilisateur connecté, retourner les droits "none"
     if (!user) {
       return SUBSCRIPTION_RIGHTS['none'];
     }
 
-    // Si pas d'abonnement actif
+    // En mode démo, débloquer toutes les fonctionnalités (Enterprise)
+    if (isDemo) {
+      return SUBSCRIPTION_RIGHTS['Enterprise'];
+    }
+
     if (!subscribed || !subscription_tier) {
       return SUBSCRIPTION_RIGHTS['none'];
     }
 
-    // Retourner les droits correspondant au tier d'abonnement
     return SUBSCRIPTION_RIGHTS[subscription_tier] || SUBSCRIPTION_RIGHTS['none'];
-  }, [user, subscribed, subscription_tier]);
+  }, [user, subscribed, subscription_tier, isDemo]);
 
   // Fonctions utilitaires pour vérifier les droits
   const canAccess = (feature: keyof SubscriptionRights) => {
