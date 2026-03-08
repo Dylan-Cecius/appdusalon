@@ -262,7 +262,7 @@ const ServiceManagement = () => {
 
             <div>
               <Label htmlFor="category">Catégorie</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value, color: formData.color === categoryDefaultColors[formData.category] ? (categoryDefaultColors[value] || '#6B7280') : formData.color })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une catégorie" />
                 </SelectTrigger>
@@ -274,6 +274,20 @@ const ServiceManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="color">Couleur</Label>
+              <div className="flex items-center gap-3 mt-1">
+                <input
+                  id="color"
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                />
+                <span className="text-sm text-muted-foreground">{formData.color}</span>
+              </div>
             </div>
 
             <div>

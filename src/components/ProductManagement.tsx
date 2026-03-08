@@ -61,11 +61,12 @@ const ProductManagement = () => {
     const productData = {
       name: formData.name.trim(),
       price: parseFloat(formData.price),
-      duration: 0, // Products don't have duration
+      duration: 0,
       category: 'produit',
-      appointmentBuffer: 0, // Products don't need buffer time
+      appointmentBuffer: 0,
       isActive: true,
-      displayOrder: products.length + 1
+      displayOrder: products.length + 1,
+      color: '#6B7280'
     };
 
     try {
