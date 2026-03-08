@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useStaff } from '@/hooks/useStaff';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { TrendingUp, Euro, CalendarDays, Percent, BarChart3 } from 'lucide-react';
+import { TrendingUp, Euro, CalendarDays, Percent, BarChart3, Download } from 'lucide-react';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
