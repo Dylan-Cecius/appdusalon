@@ -73,8 +73,9 @@ export const useSupabaseServices = () => {
           category: serviceData.category,
           appointment_buffer: serviceData.appointmentBuffer,
           is_active: serviceData.isActive,
-          display_order: serviceData.displayOrder
-        })
+          display_order: serviceData.displayOrder,
+          color: serviceData.color
+        } as any)
         .select()
         .single();
 
