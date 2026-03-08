@@ -57,6 +57,11 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {user?.email === 'demo@appdusalon.com' && (
+                <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-bold uppercase tracking-wide">
+                  Mode Démo
+                </span>
+              )}
               <div>
                 <h1 className="text-lg sm:text-xl font-semibold text-primary font-dancing">
                   L'app du salon
