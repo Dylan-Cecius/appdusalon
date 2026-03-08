@@ -81,7 +81,8 @@ const ServiceManagement = () => {
       category: formData.category,
       appointmentBuffer: parseInt(formData.appointmentBuffer) || 0,
       isActive: true,
-      displayOrder: services.length + 1
+      displayOrder: services.length + 1,
+      color: formData.color
     };
 
     try {
