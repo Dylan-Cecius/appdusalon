@@ -53,13 +53,13 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     if (selectedTimeSlot && isOpen) {
       setStartTime(selectedTimeSlot);
     } else if (!isOpen) {
-      // Reset form when modal closes
       setAppointmentType('client');
       setStartTime('');
       setClientName('');
       setClientPhone('');
       setSelectedServices([]);
       setNotes('');
+      setSelectedStaffId('');
     }
   }, [selectedTimeSlot, isOpen]);
 
