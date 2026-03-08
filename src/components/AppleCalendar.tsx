@@ -394,22 +394,22 @@ const AppleCalendar = () => {
                       // Calculate top position based on minutes
                       const topPx = (aptMinutes / 60) * 80;
 
-                      const colors = getServiceColor(apt.services);
+                      const color = getAppointmentColor(apt.services);
                       const serviceName = apt.services?.[0]?.name || '';
 
                       return (
                         <div
                           key={apt.id}
                           className={cn(
-                            "group absolute left-3 right-3 p-4 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden border border-white/20",
-                            colors.text,
+                            "group absolute left-3 right-3 p-4 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden",
                             !apt.isPaid && "opacity-70"
                           )}
                           style={{
                             top: `${topPx}px`,
                             height: `${heightPx}px`,
                             minHeight: '40px',
-                            background: colors.gradient
+                            borderLeft: `4px solid ${color}`,
+                            backgroundColor: `${color}26`
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
