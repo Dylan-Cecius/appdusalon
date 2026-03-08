@@ -137,18 +137,20 @@ const AppleCalendar = () => {
                 
                 <div className="space-y-1.5">
                   {dayAppointments.slice(0, 3).map((apt) => {
-                    const colors = getServiceColor(apt.services);
+                    const color = getAppointmentColor(apt.services);
                     const serviceName = apt.services?.[0]?.name || '';
+                    const serviceNames = apt.services?.map((s: any) => s.name).join(', ') || '';
                     return (
                       <div
                         key={apt.id}
                         className={cn(
-                          "relative text-[10px] px-2 py-1 rounded-md font-semibold truncate hover:shadow-sm transition-shadow border border-white/20 group",
-                          colors.text,
+                          "relative text-[10px] px-2 py-1 rounded-md font-semibold truncate hover:shadow-sm transition-shadow group",
                           !apt.isPaid && "opacity-70"
                         )}
                         style={{
-                          background: colors.gradient
+                          borderLeft: `4px solid ${color}`,
+                          backgroundColor: `${color}26`,
+                          color: 'inherit'
                         }}
                       >
                         <div
