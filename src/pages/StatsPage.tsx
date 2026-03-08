@@ -19,6 +19,7 @@ import { AverageBasketStats } from '@/components/stats/AverageBasketStats';
 import { EmployeeRevenueStats } from '@/components/stats/EmployeeRevenueStats';
 import { AverageDailyClientsStats } from '@/components/stats/AverageDailyClientsStats';
 import { MonthlyComparisonChart } from '@/components/stats/MonthlyComparisonChart';
+import { StaffCommissionsStats } from '@/components/stats/StaffCommissionsStats';
 import TransactionsManager from '@/components/TransactionsManager';
 import { FeatureGate } from '@/components/FeatureGate';
 import { useNavigate } from 'react-router-dom';
