@@ -16,6 +16,7 @@ import StatsPage from "./pages/StatsPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ClientsPage from "./pages/ClientsPage";
+import StaffPage from "./pages/StaffPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
@@ -52,6 +53,7 @@ const App = () => {
                 {/* Routes principales */}
                 <Route path="/pos" element={<AuthGuard><POSPage /></AuthGuard>} />
                 <Route path="/clients" element={<AuthGuard><ClientsPage /></AuthGuard>} />
+                <Route path="/equipe" element={<AuthGuard><StaffPage /></AuthGuard>} />
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
                 <Route path="/abonnement" element={<Navigate to="/abonnements" replace />} />

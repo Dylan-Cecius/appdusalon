@@ -19,6 +19,7 @@ import { AverageBasketStats } from '@/components/stats/AverageBasketStats';
 import { EmployeeRevenueStats } from '@/components/stats/EmployeeRevenueStats';
 import { AverageDailyClientsStats } from '@/components/stats/AverageDailyClientsStats';
 import { MonthlyComparisonChart } from '@/components/stats/MonthlyComparisonChart';
+import { StaffCommissionsStats } from '@/components/stats/StaffCommissionsStats';
 import TransactionsManager from '@/components/TransactionsManager';
 import { FeatureGate } from '@/components/FeatureGate';
 import { useNavigate } from 'react-router-dom';
@@ -154,6 +155,8 @@ const StatsPage = () => {
         </div>
 
         <EmployeeRevenueStats />
+
+        <StaffCommissionsStats />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div id="custom-date-range">

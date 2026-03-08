@@ -11,7 +11,8 @@ export interface Appointment {
   totalPrice: number;
   notes?: string;
   isPaid: boolean;
-  barberId?: string; // ID du coiffeur assigné
+  barberId?: string;
+  staffId?: string;
 }
 
 // Mock appointments for demonstration

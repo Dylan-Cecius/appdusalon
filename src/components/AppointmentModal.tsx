@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Plus } from 'lucide-react';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
+import { useStaff } from '@/hooks/useStaff';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -41,8 +42,10 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('');
   const { addAppointment } = useSupabaseAppointments();
   const { services } = useSupabaseServices();
+  const { activeStaff } = useStaff();
   const isMobile = useIsMobile();
 
   // Pre-fill time when selectedTimeSlot is provided
@@ -50,13 +53,13 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     if (selectedTimeSlot && isOpen) {
       setStartTime(selectedTimeSlot);
     } else if (!isOpen) {
-      // Reset form when modal closes
       setAppointmentType('client');
       setStartTime('');
       setClientName('');
       setClientPhone('');
       setSelectedServices([]);
       setNotes('');
+      setSelectedStaffId('');
     }
   }, [selectedTimeSlot, isOpen]);
 
@@ -138,7 +141,8 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       totalPrice: appointmentType === 'client' ? totalPrice : 0,
       notes: notes || undefined,
       isPaid: false,
-      barberId: barberId
+      barberId: barberId,
+      staffId: selectedStaffId || undefined
     });
 
     toast({
@@ -153,6 +157,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     setSelectedServices([]);
     setStartTime('');
     setNotes('');
+    setSelectedStaffId('');
     onClose();
   }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, barberId, totalPrice, addAppointment, onClose]);
 
@@ -224,6 +229,28 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
                       onChange={(e) => setClientName(e.target.value)}
                       placeholder="Description personnalisée..."
                     />
+                  </div>
+                )}
+
+                {/* Staff selector */}
+                {activeStaff.length > 0 && (
+                  <div>
+                    <Label>Prestataire</Label>
+                    <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner (optionnel)" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border z-50">
+                        {activeStaff.map(s => (
+                          <SelectItem key={s.id} value={s.id}>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
+                              {s.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
@@ -386,6 +413,28 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
                     onChange={(e) => setClientName(e.target.value)}
                     placeholder="Description personnalisée..."
                   />
+                </div>
+              )}
+
+              {/* Staff selector */}
+              {activeStaff.length > 0 && (
+                <div>
+                  <Label>Prestataire</Label>
+                  <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner (optionnel)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border z-50">
+                      {activeStaff.map(s => (
+                        <SelectItem key={s.id} value={s.id}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
+                            {s.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 

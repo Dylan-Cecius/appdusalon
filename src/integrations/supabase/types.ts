@@ -65,6 +65,7 @@ export type Database = {
           notes: string | null
           salon_id: string | null
           services: Json
+          staff_id: string | null
           start_time: string
           status: string
           total_price: number
@@ -83,6 +84,7 @@ export type Database = {
           notes?: string | null
           salon_id?: string | null
           services: Json
+          staff_id?: string | null
           start_time: string
           status?: string
           total_price: number
@@ -101,6 +103,7 @@ export type Database = {
           notes?: string | null
           salon_id?: string | null
           services?: Json
+          staff_id?: string | null
           start_time?: string
           status?: string
           total_price?: number
@@ -120,6 +123,13 @@ export type Database = {
             columns: ["salon_id"]
             isOneToOne: false
             referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -635,6 +645,53 @@ export type Database = {
           },
         ]
       }
+      staff: {
+        Row: {
+          color: string
+          commission_rate: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          role: string
+          salon_id: string
+        }
+        Insert: {
+          color?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          role?: string
+          salon_id: string
+        }
+        Update: {
+          color?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          role?: string
+          salon_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -740,6 +797,7 @@ export type Database = {
           items: Json
           payment_method: string
           salon_id: string | null
+          staff_id: string | null
           total_amount: number
           transaction_date: string
           updated_at: string
@@ -753,6 +811,7 @@ export type Database = {
           items: Json
           payment_method: string
           salon_id?: string | null
+          staff_id?: string | null
           total_amount: number
           transaction_date?: string
           updated_at?: string
@@ -766,6 +825,7 @@ export type Database = {
           items?: Json
           payment_method?: string
           salon_id?: string | null
+          staff_id?: string | null
           total_amount?: number
           transaction_date?: string
           updated_at?: string
@@ -791,6 +851,13 @@ export type Database = {
             columns: ["salon_id"]
             isOneToOne: false
             referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
