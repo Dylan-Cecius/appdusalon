@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Scissors, Eye, EyeOff } from 'lucide-react';
+import { Scissors, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,6 +16,10 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaVerifying, setMfaVerifying] = useState(false);
   const navigate = useNavigate();
   const authFormRef = useRef<HTMLFormElement>(null);
   const forgotFormRef = useRef<HTMLFormElement>(null);
@@ -92,11 +97,21 @@ const Auth = () => {
             });
           }
         } else {
-          toast({
-            title: "Connexion réussie",
-            description: "Bienvenue !",
-          });
-          navigate('/');
+          // Check if MFA is required
+          const { data: factorsData } = await supabase.auth.mfa.listFactors();
+          const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
+
+          if (verifiedFactor) {
+            setMfaRequired(true);
+            setMfaFactorId(verifiedFactor.id);
+            setMfaCode('');
+          } else {
+            toast({
+              title: "Connexion réussie",
+              description: "Bienvenue !",
+            });
+            navigate('/');
+          }
         }
       } else {
         const redirectUrl = `${window.location.origin}/`;
@@ -183,24 +198,112 @@ const Auth = () => {
     }
   };
 
+  const handleMfaVerify = async () => {
+    if (mfaCode.length !== 6 || !mfaFactorId) return;
+
+    setMfaVerifying(true);
+    try {
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: mfaFactorId,
+      });
+      if (challengeError) throw challengeError;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challenge.id,
+        code: mfaCode,
+      });
+
+      if (verifyError) {
+        toast({
+          title: "Code invalide",
+          description: "Le code 2FA est incorrect. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        setMfaCode('');
+      } else {
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue !",
+        });
+        navigate('/');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur de vérification 2FA",
+        variant: "destructive",
+      });
+    } finally {
+      setMfaVerifying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <div className="p-3 bg-accent rounded-lg mb-4">
-            <Scissors className="h-8 w-8 text-accent-foreground" />
+            {mfaRequired ? (
+              <ShieldCheck className="h-8 w-8 text-accent-foreground" />
+            ) : (
+              <Scissors className="h-8 w-8 text-accent-foreground" />
+            )}
           </div>
           <h1 className="text-2xl font-bold text-center font-dancing">L&apos;app du salon</h1>
           <p className="text-muted-foreground text-center text-sm sm:text-base">
-            {isForgotPassword 
-              ? 'Réinitialisez votre mot de passe' 
-              : isLogin 
-                ? 'Connectez-vous à votre compte' 
-                : 'Créez votre compte salon'}
+            {mfaRequired
+              ? 'Vérification en deux étapes'
+              : isForgotPassword 
+                ? 'Réinitialisez votre mot de passe' 
+                : isLogin 
+                  ? 'Connectez-vous à votre compte' 
+                  : 'Créez votre compte salon'}
           </p>
         </div>
 
-        {isForgotPassword ? (
+        {mfaRequired ? (
+          <div className="space-y-6">
+            <p className="text-sm text-muted-foreground text-center">
+              Entrez le code à 6 chiffres de votre application d'authentification
+            </p>
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                value={mfaCode}
+                onChange={(value) => setMfaCode(value)}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            <Button
+              className="w-full min-h-[48px] text-base touch-manipulation"
+              onClick={handleMfaVerify}
+              disabled={mfaCode.length !== 6 || mfaVerifying}
+            >
+              {mfaVerifying ? 'Vérification...' : 'Vérifier'}
+            </Button>
+            <Button
+              variant="link"
+              className="w-full text-sm"
+              onClick={() => {
+                setMfaRequired(false);
+                setMfaFactorId(null);
+                setMfaCode('');
+                supabase.auth.signOut();
+              }}
+            >
+              Retour à la connexion
+            </Button>
+          </div>
+        ) : isForgotPassword ? (
           <form ref={forgotFormRef} onSubmit={handleForgotPassword} className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
@@ -294,7 +397,7 @@ const Auth = () => {
           </form>
         )}
 
-        {!isForgotPassword && (
+        {!isForgotPassword && !mfaRequired && (
           <>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
@@ -352,26 +455,28 @@ const Auth = () => {
           </>
         )}
 
-        <div className="mt-6 text-center">
-          <Button
-            variant="link"
-            onClick={() => {
-              if (isForgotPassword) {
-                setIsForgotPassword(false);
-              } else {
-                setIsLogin(!isLogin);
+        {!mfaRequired && (
+          <div className="mt-6 text-center">
+            <Button
+              variant="link"
+              onClick={() => {
+                if (isForgotPassword) {
+                  setIsForgotPassword(false);
+                } else {
+                  setIsLogin(!isLogin);
+                }
+              }}
+              className="text-sm min-h-[48px] touch-manipulation"
+            >
+              {isForgotPassword
+                ? "Retour à la connexion"
+                : isLogin 
+                  ? "Pas de compte ? Créez-en un" 
+                  : "Déjà un compte ? Connectez-vous"
               }
-            }}
-            className="text-sm min-h-[48px] touch-manipulation"
-          >
-            {isForgotPassword
-              ? "Retour à la connexion"
-              : isLogin 
-                ? "Pas de compte ? Créez-en un" 
-                : "Déjà un compte ? Connectez-vous"
-            }
-          </Button>
-        </div>
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );

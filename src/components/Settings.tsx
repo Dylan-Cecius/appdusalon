@@ -15,6 +15,7 @@ import ServiceManagement from './ServiceManagement';
 import ProductManagement from './ProductManagement';
 import { EmployeeManagement } from './EmployeeManagement';
 import ActivityLogViewer from './ActivityLogViewer';
+import TwoFactorSettings from './TwoFactorSettings';
 
 const Settings = () => {
   const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
@@ -758,6 +759,9 @@ const Settings = () => {
       
       {/* Gestion des employés (admin only) */}
       {permissions.isAdmin && <EmployeeManagement />}
+
+      {/* Double authentification (admin only) */}
+      {permissions.isAdmin && <TwoFactorSettings />}
 
       {/* Journal d'activité (admin only) */}
       {permissions.isAdmin && <ActivityLogViewer />}
