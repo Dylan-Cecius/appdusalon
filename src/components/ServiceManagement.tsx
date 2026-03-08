@@ -18,7 +18,8 @@ const ServiceManagement = () => {
     price: '',
     duration: '',
     category: 'general',
-    appointmentBuffer: '10'
+    appointmentBuffer: '10',
+    color: '#6B7280'
   });
 
   const resetForm = () => {
