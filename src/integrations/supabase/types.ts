@@ -559,6 +559,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_demo: boolean
           name: string
           owner_user_id: string
           updated_at: string
@@ -566,6 +567,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_demo?: boolean
           name: string
           owner_user_id: string
           updated_at?: string
@@ -573,6 +575,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_demo?: boolean
           name?: string
           owner_user_id?: string
           updated_at?: string
@@ -918,6 +921,7 @@ export type Database = {
       }
       hash_password: { Args: { password_text: string }; Returns: string }
       is_salon_admin: { Args: { _user_id: string }; Returns: boolean }
+      reset_demo_data: { Args: never; Returns: undefined }
       use_promo_code: {
         Args: { code_text: string; user_id_param: string }
         Returns: Json
