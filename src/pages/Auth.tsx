@@ -455,26 +455,28 @@ const Auth = () => {
           </>
         )}
 
-        <div className="mt-6 text-center">
-          <Button
-            variant="link"
-            onClick={() => {
-              if (isForgotPassword) {
-                setIsForgotPassword(false);
-              } else {
-                setIsLogin(!isLogin);
+        {!mfaRequired && (
+          <div className="mt-6 text-center">
+            <Button
+              variant="link"
+              onClick={() => {
+                if (isForgotPassword) {
+                  setIsForgotPassword(false);
+                } else {
+                  setIsLogin(!isLogin);
+                }
+              }}
+              className="text-sm min-h-[48px] touch-manipulation"
+            >
+              {isForgotPassword
+                ? "Retour à la connexion"
+                : isLogin 
+                  ? "Pas de compte ? Créez-en un" 
+                  : "Déjà un compte ? Connectez-vous"
               }
-            }}
-            className="text-sm min-h-[48px] touch-manipulation"
-          >
-            {isForgotPassword
-              ? "Retour à la connexion"
-              : isLogin 
-                ? "Pas de compte ? Créez-en un" 
-                : "Déjà un compte ? Connectez-vous"
-            }
-          </Button>
-        </div>
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
