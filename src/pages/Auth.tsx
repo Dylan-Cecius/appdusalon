@@ -97,11 +97,21 @@ const Auth = () => {
             });
           }
         } else {
-          toast({
-            title: "Connexion réussie",
-            description: "Bienvenue !",
-          });
-          navigate('/');
+          // Check if MFA is required
+          const { data: factorsData } = await supabase.auth.mfa.listFactors();
+          const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
+
+          if (verifiedFactor) {
+            setMfaRequired(true);
+            setMfaFactorId(verifiedFactor.id);
+            setMfaCode('');
+          } else {
+            toast({
+              title: "Connexion réussie",
+              description: "Bienvenue !",
+            });
+            navigate('/');
+          }
         }
       } else {
         const redirectUrl = `${window.location.origin}/`;
