@@ -760,6 +760,9 @@ const Settings = () => {
       {/* Gestion des employés (admin only) */}
       {permissions.isAdmin && <EmployeeManagement />}
 
+      {/* Double authentification (admin only) */}
+      {permissions.isAdmin && <TwoFactorSettings />}
+
       {/* Journal d'activité (admin only) */}
       {permissions.isAdmin && <ActivityLogViewer />}
     </div>
