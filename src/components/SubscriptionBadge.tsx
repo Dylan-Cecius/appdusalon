@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Crown, Zap, Building2 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useSalonDemo } from '@/hooks/useSalonDemo';
 
 interface SubscriptionBadgeProps {
   onUpgrade?: () => void;
