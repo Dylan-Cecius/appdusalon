@@ -48,7 +48,8 @@ const ServiceManagement = () => {
         price: service.price.toString(),
         duration: service.duration.toString(),
         category: service.category,
-        appointmentBuffer: service.appointmentBuffer.toString()
+        appointmentBuffer: service.appointmentBuffer.toString(),
+        color: service.color || '#6B7280'
       });
     } else {
       resetForm();
