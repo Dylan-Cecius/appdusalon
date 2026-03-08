@@ -23,6 +23,37 @@ const Auth = () => {
   const navigate = useNavigate();
   const authFormRef = useRef<HTMLFormElement>(null);
   const forgotFormRef = useRef<HTMLFormElement>(null);
+
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: 'demo@appdusalon.com',
+        password: 'Demo2024!',
+      });
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Le compte démo n'est pas disponible pour le moment",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Mode démo activé",
+          description: "Bienvenue dans la démonstration !",
+        });
+        navigate('/');
+      }
+    } catch {
+      toast({
+        title: "Erreur",
+        description: "Impossible de se connecter au compte démo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {

@@ -765,6 +765,9 @@ const Settings = () => {
 
       {/* Journal d'activité (admin only) */}
       {permissions.isAdmin && <ActivityLogViewer />}
+
+      {/* Mode démonstration */}
+      <DemoResetSection />
     </div>
   );
 };
