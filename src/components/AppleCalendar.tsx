@@ -29,20 +29,39 @@ const AppleCalendar = () => {
 
   const activeBarbers = barbers.filter(b => b.is_active);
 
-  // Build a map: service name → color from DB services
+  // Default colors by category
+  const categoryColors: Record<string, string> = {
+    coupe: '#10B981',
+    coloration: '#8B5CF6',
+    couleur: '#8B5CF6',
+    barbe: '#3B82F6',
+    soin: '#EC4899',
+    combo: '#F97316',
+    produit: '#6B7280',
+    general: '#6B7280',
+  };
+
+  // Build a map: service name (lowercase) → color from DB services
   const serviceColorMap = useMemo(() => {
     const map: Record<string, string> = {};
     dbServices.forEach(s => {
-      map[s.name.toLowerCase()] = s.color || '#6B7280';
+      map[s.name.toLowerCase()] = s.color || categoryColors[s.category] || '#6B7280';
     });
     return map;
   }, [dbServices]);
 
-  // Get color for an appointment based on its first service name
+  // Get color for an appointment based on its first service
   const getAppointmentColor = (services: any[]): string => {
     if (!services || services.length === 0) return '#6B7280';
-    const name = (services[0]?.name || '').toLowerCase();
-    return serviceColorMap[name] || '#6B7280';
+    const svc = services[0];
+    const name = (svc?.name || '').toLowerCase();
+    // 1. Try exact name match from DB
+    if (serviceColorMap[name]) return serviceColorMap[name];
+    // 2. Try category from the appointment's service JSON
+    const cat = (svc?.category || '').toLowerCase();
+    if (categoryColors[cat]) return categoryColors[cat];
+    // 3. Fallback
+    return '#6B7280';
   };
 
   // Set first barber as selected when barbers load
