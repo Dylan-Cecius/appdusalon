@@ -140,6 +140,7 @@ export const useSupabaseAppointments = () => {
           notes: appointment.notes,
           is_paid: appointment.isPaid,
           barber_id: appointment.barberId,
+          staff_id: appointment.staffId || null,
           user_id: user.id
         })
         .select(`
