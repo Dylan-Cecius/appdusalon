@@ -6,16 +6,72 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, Plus, Edit, Trash2, Clock } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, Plus, Edit, Trash2, Clock, RotateCcw, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseSettings, type Barber } from '@/hooks/useSupabaseSettings';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import ServiceManagement from './ServiceManagement';
 import ProductManagement from './ProductManagement';
 import { EmployeeManagement } from './EmployeeManagement';
 import ActivityLogViewer from './ActivityLogViewer';
 import TwoFactorSettings from './TwoFactorSettings';
+
+const DemoResetSection = () => {
+  const { user } = useAuth();
+  const [resetting, setResetting] = useState(false);
+
+  if (user?.email !== 'demo@appdusalon.com') return null;
+
+  const handleReset = async () => {
+    if (!window.confirm('Réinitialiser toutes les données de démonstration ?')) return;
+    setResetting(true);
+    try {
+      const { error } = await supabase.rpc('reset_demo_data');
+      if (error) throw error;
+      toast({
+        title: "✅ Données réinitialisées",
+        description: "Les données de démonstration ont été restaurées avec succès",
+      });
+      // Reload to refresh all data
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err: any) {
+      toast({
+        title: "Erreur",
+        description: err.message || "Impossible de réinitialiser les données",
+        variant: "destructive",
+      });
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  return (
+    <Card className="p-6 border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
+          <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+        </div>
+        <div>
+          <h3 className="text-xl font-semibold text-purple-700 dark:text-purple-300">Mode démonstration</h3>
+          <p className="text-sm text-purple-600/80 dark:text-purple-400/80">
+            Ces données sont fictives et peuvent être réinitialisées à tout moment.
+          </p>
+        </div>
+      </div>
+      <Button
+        onClick={handleReset}
+        disabled={resetting}
+        variant="outline"
+        className="border-purple-400 text-purple-700 hover:bg-purple-100 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-900/30"
+      >
+        <RotateCcw className="h-4 w-4 mr-2" />
+        {resetting ? 'Réinitialisation...' : 'Réinitialiser les données démo'}
+      </Button>
+    </Card>
+  );
+};
 
 const Settings = () => {
   const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
