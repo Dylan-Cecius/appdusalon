@@ -77,16 +77,50 @@ export const StaffPerformance = () => {
 
   const totalRevenue = stats.reduce((s, x) => s + x.revenue, 0);
 
+  const handleExportCSV = () => {
+    const csvContent = [
+      ['Nom', 'Rôle', 'Période', 'CA (€)', 'Rendez-vous', 'Commission (€)', 'Part du CA (%)'].join(';'),
+      ...stats.map(s => [
+        `"${s.name}"`,
+        `"${s.role}"`,
+        periodLabels[period],
+        s.revenue.toFixed(2),
+        s.rdvCount,
+        s.commission.toFixed(2),
+        totalRevenue > 0 ? ((s.revenue / totalRevenue) * 100).toFixed(0) : '0'
+      ].join(';'))
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    
+    const dateStr = format(new Date(), 'yyyy-MM-dd');
+    const periodSlug = period.replace('_', '-');
+    link.setAttribute('download', `performances_equipe_${periodSlug}_${dateStr}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (activeStaff.length === 0) return null;
 
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            Performance de l'équipe
-          </CardTitle>
+          <div className="flex items-center gap-4 flex-wrap">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Performance de l'équipe
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={handleExportCSV} className="h-8">
+              <Download className="h-4 w-4 mr-2" />
+              Exporter CSV
+            </Button>
+          </div>
           <div className="flex gap-1 bg-muted/50 rounded-lg p-1">
             {(Object.keys(periodLabels) as Period[]).map(p => (
               <button
