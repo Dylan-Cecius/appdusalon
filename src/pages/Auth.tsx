@@ -16,6 +16,10 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaVerifying, setMfaVerifying] = useState(false);
   const navigate = useNavigate();
   const authFormRef = useRef<HTMLFormElement>(null);
   const forgotFormRef = useRef<HTMLFormElement>(null);
