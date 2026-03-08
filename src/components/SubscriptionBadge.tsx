@@ -10,6 +10,7 @@ interface SubscriptionBadgeProps {
 
 const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
   const { subscribed, subscription_tier, loading } = useSubscription();
+  const { isDemo } = useSalonDemo();
 
   if (loading) {
     return (
@@ -19,7 +20,10 @@ const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
     );
   }
 
-  if (!subscribed) {
+  // Masquer le badge "Gratuit" et le bouton "Upgrade" en mode démo
+  if (!subscribed && isDemo) {
+    return null;
+  }
     return (
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="bg-muted text-muted-foreground">
