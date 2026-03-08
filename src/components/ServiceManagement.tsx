@@ -167,13 +167,14 @@ const ServiceManagement = () => {
 
         <div className="space-y-3">
           {services.map((service) => (
-            <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
+            <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg" style={{ borderLeftWidth: '4px', borderLeftColor: service.color || '#6B7280' }}>
               <div className="flex-1">
                 <div className="flex items-center gap-3">
                   <h4 className="font-medium">{service.name}</h4>
                   <span className="px-2 py-1 bg-muted rounded-full text-xs">
                     {categories.find(c => c.id === service.category)?.name || service.category}
                   </span>
+                  <span className="w-4 h-4 rounded-full border border-border" style={{ backgroundColor: service.color || '#6B7280' }} />
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   {service.price.toFixed(2)}€ • {service.duration} min
