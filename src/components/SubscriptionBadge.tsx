@@ -24,6 +24,8 @@ const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
   if (!subscribed && isDemo) {
     return null;
   }
+
+  if (!subscribed) {
     return (
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="bg-muted text-muted-foreground">
