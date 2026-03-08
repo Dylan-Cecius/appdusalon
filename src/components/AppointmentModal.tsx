@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Plus } from 'lucide-react';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
+import { useStaff } from '@/hooks/useStaff';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
