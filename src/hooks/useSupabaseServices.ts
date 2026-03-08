@@ -104,6 +104,7 @@ export const useSupabaseServices = () => {
       if (serviceData.appointmentBuffer !== undefined) updateData.appointment_buffer = serviceData.appointmentBuffer;
       if (serviceData.isActive !== undefined) updateData.is_active = serviceData.isActive;
       if (serviceData.displayOrder !== undefined) updateData.display_order = serviceData.displayOrder;
+      if (serviceData.color !== undefined) updateData.color = serviceData.color;
 
       const { error } = await supabase
         .from('services')
