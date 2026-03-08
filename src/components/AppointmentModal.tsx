@@ -141,7 +141,8 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       totalPrice: appointmentType === 'client' ? totalPrice : 0,
       notes: notes || undefined,
       isPaid: false,
-      barberId: barberId
+      barberId: barberId,
+      staffId: selectedStaffId || undefined
     });
 
     toast({
