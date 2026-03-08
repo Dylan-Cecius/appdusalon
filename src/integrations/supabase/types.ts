@@ -596,6 +596,7 @@ export type Database = {
         Row: {
           appointment_buffer: number | null
           category: string
+          color: string | null
           created_at: string
           display_order: number | null
           duration: number
@@ -610,6 +611,7 @@ export type Database = {
         Insert: {
           appointment_buffer?: number | null
           category?: string
+          color?: string | null
           created_at?: string
           display_order?: number | null
           duration: number
@@ -624,6 +626,7 @@ export type Database = {
         Update: {
           appointment_buffer?: number | null
           category?: string
+          color?: string | null
           created_at?: string
           display_order?: number | null
           duration?: number

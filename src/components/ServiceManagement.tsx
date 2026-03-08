@@ -18,8 +18,15 @@ const ServiceManagement = () => {
     price: '',
     duration: '',
     category: 'general',
-    appointmentBuffer: '10'
+    appointmentBuffer: '10',
+    color: '#6B7280'
   });
+
+  const categoryDefaultColors: Record<string, string> = {
+    coupe: '#10B981', coloration: '#8B5CF6', couleur: '#8B5CF6',
+    barbe: '#3B82F6', soin: '#EC4899', combo: '#F97316',
+    produit: '#6B7280', general: '#6B7280'
+  };
 
   const resetForm = () => {
     setFormData({
@@ -27,7 +34,8 @@ const ServiceManagement = () => {
       price: '',
       duration: '',
       category: 'general',
-      appointmentBuffer: '10'
+      appointmentBuffer: '10',
+      color: '#6B7280'
     });
     setEditingService(null);
   };
@@ -40,7 +48,8 @@ const ServiceManagement = () => {
         price: service.price.toString(),
         duration: service.duration.toString(),
         category: service.category,
-        appointmentBuffer: service.appointmentBuffer.toString()
+        appointmentBuffer: service.appointmentBuffer.toString(),
+        color: service.color || '#6B7280'
       });
     } else {
       resetForm();
@@ -72,7 +81,8 @@ const ServiceManagement = () => {
       category: formData.category,
       appointmentBuffer: parseInt(formData.appointmentBuffer) || 0,
       isActive: true,
-      displayOrder: services.length + 1
+      displayOrder: services.length + 1,
+      color: formData.color
     };
 
     try {
@@ -157,13 +167,14 @@ const ServiceManagement = () => {
 
         <div className="space-y-3">
           {services.map((service) => (
-            <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
+            <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg" style={{ borderLeftWidth: '4px', borderLeftColor: service.color || '#6B7280' }}>
               <div className="flex-1">
                 <div className="flex items-center gap-3">
                   <h4 className="font-medium">{service.name}</h4>
                   <span className="px-2 py-1 bg-muted rounded-full text-xs">
                     {categories.find(c => c.id === service.category)?.name || service.category}
                   </span>
+                  <span className="w-4 h-4 rounded-full border border-border" style={{ backgroundColor: service.color || '#6B7280' }} />
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   {service.price.toFixed(2)}€ • {service.duration} min
@@ -251,7 +262,7 @@ const ServiceManagement = () => {
 
             <div>
               <Label htmlFor="category">Catégorie</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value, color: formData.color === categoryDefaultColors[formData.category] ? (categoryDefaultColors[value] || '#6B7280') : formData.color })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une catégorie" />
                 </SelectTrigger>
@@ -263,6 +274,20 @@ const ServiceManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="color">Couleur</Label>
+              <div className="flex items-center gap-3 mt-1">
+                <input
+                  id="color"
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                />
+                <span className="text-sm text-muted-foreground">{formData.color}</span>
+              </div>
             </div>
 
             <div>

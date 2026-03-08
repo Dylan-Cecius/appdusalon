@@ -11,6 +11,7 @@ export interface Service {
   appointmentBuffer: number;
   isActive: boolean;
   displayOrder: number;
+  color: string;
 }
 
 export const useSupabaseServices = () => {
@@ -46,7 +47,8 @@ export const useSupabaseServices = () => {
         category: service.category,
         appointmentBuffer: service.appointment_buffer || 0,
         isActive: service.is_active,
-        displayOrder: service.display_order || 0
+        displayOrder: service.display_order || 0,
+        color: (service as any).color || '#6B7280'
       })) || [];
 
       setServices(formattedServices);
@@ -71,8 +73,9 @@ export const useSupabaseServices = () => {
           category: serviceData.category,
           appointment_buffer: serviceData.appointmentBuffer,
           is_active: serviceData.isActive,
-          display_order: serviceData.displayOrder
-        })
+          display_order: serviceData.displayOrder,
+          color: serviceData.color
+        } as any)
         .select()
         .single();
 
@@ -101,6 +104,7 @@ export const useSupabaseServices = () => {
       if (serviceData.appointmentBuffer !== undefined) updateData.appointment_buffer = serviceData.appointmentBuffer;
       if (serviceData.isActive !== undefined) updateData.is_active = serviceData.isActive;
       if (serviceData.displayOrder !== undefined) updateData.display_order = serviceData.displayOrder;
+      if (serviceData.color !== undefined) updateData.color = serviceData.color;
 
       const { error } = await supabase
         .from('services')

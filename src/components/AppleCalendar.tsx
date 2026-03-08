@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
@@ -7,6 +7,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import AppointmentModal from './AppointmentModal';
 import EditAppointmentModal from './EditAppointmentModal';
 import { toast } from '@/hooks/use-toast';
@@ -24,43 +25,24 @@ const AppleCalendar = () => {
   
   const { appointments, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
+  const { services: dbServices } = useSupabaseServices();
 
   const activeBarbers = barbers.filter(b => b.is_active);
 
-  // Get color based on service category
-  const getServiceColor = (services: any[]) => {
-    if (!services || services.length === 0) return {
-      gradient: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
-      text: 'text-white'
-    };
-    
-    const mainService = services[0];
-    const category = mainService.category || 'general';
-    
-    const categoryColors: Record<string, { gradient: string; text: string }> = {
-      'coupe': { 
-        gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-        text: 'text-white'
-      },
-      'barbe': { 
-        gradient: 'linear-gradient(135deg, #f97316, #c2410c)',
-        text: 'text-white'
-      },
-      'combo': { 
-        gradient: 'linear-gradient(135deg, #a855f7, #7e22ce)',
-        text: 'text-white'
-      },
-      'produit': { 
-        gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
-        text: 'text-white'
-      },
-      'general': { 
-        gradient: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
-        text: 'text-white'
-      }
-    };
-    
-    return categoryColors[category] || categoryColors['general'];
+  // Build a map: service name → color from DB services
+  const serviceColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    dbServices.forEach(s => {
+      map[s.name.toLowerCase()] = s.color || '#6B7280';
+    });
+    return map;
+  }, [dbServices]);
+
+  // Get color for an appointment based on its first service name
+  const getAppointmentColor = (services: any[]): string => {
+    if (!services || services.length === 0) return '#6B7280';
+    const name = (services[0]?.name || '').toLowerCase();
+    return serviceColorMap[name] || '#6B7280';
   };
 
   // Set first barber as selected when barbers load
@@ -155,18 +137,20 @@ const AppleCalendar = () => {
                 
                 <div className="space-y-1.5">
                   {dayAppointments.slice(0, 3).map((apt) => {
-                    const colors = getServiceColor(apt.services);
+                    const color = getAppointmentColor(apt.services);
                     const serviceName = apt.services?.[0]?.name || '';
+                    const serviceNames = apt.services?.map((s: any) => s.name).join(', ') || '';
                     return (
                       <div
                         key={apt.id}
                         className={cn(
-                          "relative text-[10px] px-2 py-1 rounded-md font-semibold truncate hover:shadow-sm transition-shadow border border-white/20 group",
-                          colors.text,
+                          "relative text-[10px] px-2 py-1 rounded-md font-semibold truncate hover:shadow-sm transition-shadow group",
                           !apt.isPaid && "opacity-70"
                         )}
                         style={{
-                          background: colors.gradient
+                          borderLeft: `4px solid ${color}`,
+                          backgroundColor: `${color}26`,
+                          color: 'inherit'
                         }}
                       >
                         <div
@@ -293,22 +277,22 @@ const AppleCalendar = () => {
                         // Calculate top position based on minutes
                         const topPx = (aptMinutes / 60) * 80;
 
-                        const colors = getServiceColor(apt.services);
+                        const color = getAppointmentColor(apt.services);
                         const serviceName = apt.services?.[0]?.name || '';
 
                         return (
                           <div
                             key={apt.id}
                             className={cn(
-                              "group absolute left-1 right-1 text-xs p-2 rounded-xl cursor-pointer shadow-md hover:shadow-lg overflow-hidden transition-shadow border border-white/20",
-                              colors.text,
+                              "group absolute left-1 right-1 text-xs p-2 rounded-xl cursor-pointer shadow-md hover:shadow-lg overflow-hidden transition-shadow",
                               !apt.isPaid && "opacity-70"
                             )}
                             style={{
                               top: `${topPx}px`,
                               height: `${heightPx}px`,
                               minHeight: '20px',
-                              background: colors.gradient
+                              borderLeft: `4px solid ${color}`,
+                              backgroundColor: `${color}26`
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -410,22 +394,22 @@ const AppleCalendar = () => {
                       // Calculate top position based on minutes
                       const topPx = (aptMinutes / 60) * 80;
 
-                      const colors = getServiceColor(apt.services);
+                      const color = getAppointmentColor(apt.services);
                       const serviceName = apt.services?.[0]?.name || '';
 
                       return (
                         <div
                           key={apt.id}
                           className={cn(
-                            "group absolute left-3 right-3 p-4 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden border border-white/20",
-                            colors.text,
+                            "group absolute left-3 right-3 p-4 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all overflow-hidden",
                             !apt.isPaid && "opacity-70"
                           )}
                           style={{
                             top: `${topPx}px`,
                             height: `${heightPx}px`,
                             minHeight: '40px',
-                            background: colors.gradient
+                            borderLeft: `4px solid ${color}`,
+                            backgroundColor: `${color}26`
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
