@@ -232,6 +232,28 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
                   </div>
                 )}
 
+                {/* Staff selector */}
+                {activeStaff.length > 0 && (
+                  <div>
+                    <Label>Prestataire</Label>
+                    <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner (optionnel)" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border z-50">
+                        {activeStaff.map(s => (
+                          <SelectItem key={s.id} value={s.id}>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
+                              {s.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 {/* Time */}
                 <div>
                   <Label htmlFor="startTime">Heure de début *</Label>
