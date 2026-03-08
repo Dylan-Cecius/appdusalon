@@ -16,6 +16,7 @@ import StatsPage from "./pages/StatsPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ClientsPage from "./pages/ClientsPage";
+import StaffPage from "./pages/StaffPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
