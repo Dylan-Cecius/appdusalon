@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Crown, Zap, Building2 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useSalonDemo } from '@/hooks/useSalonDemo';
 
 interface SubscriptionBadgeProps {
   onUpgrade?: () => void;
@@ -9,6 +10,7 @@ interface SubscriptionBadgeProps {
 
 const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
   const { subscribed, subscription_tier, loading } = useSubscription();
+  const { isDemo } = useSalonDemo();
 
   if (loading) {
     return (
@@ -16,6 +18,11 @@ const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
         <div className="h-6 bg-muted rounded w-20"></div>
       </div>
     );
+  }
+
+  // Masquer le badge "Gratuit" et le bouton "Upgrade" en mode démo
+  if (!subscribed && isDemo) {
+    return null;
   }
 
   if (!subscribed) {
