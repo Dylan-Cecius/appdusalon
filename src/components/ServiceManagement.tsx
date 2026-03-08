@@ -22,13 +22,20 @@ const ServiceManagement = () => {
     color: '#6B7280'
   });
 
+  const categoryDefaultColors: Record<string, string> = {
+    coupe: '#10B981', coloration: '#8B5CF6', couleur: '#8B5CF6',
+    barbe: '#3B82F6', soin: '#EC4899', combo: '#F97316',
+    produit: '#6B7280', general: '#6B7280'
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
       price: '',
       duration: '',
       category: 'general',
-      appointmentBuffer: '10'
+      appointmentBuffer: '10',
+      color: '#6B7280'
     });
     setEditingService(null);
   };
