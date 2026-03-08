@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useStaff, Staff } from '@/hooks/useStaff';
 import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent } from 'lucide-react';
+import { StaffPerformance } from '@/components/StaffPerformance';
 
 const roleOptions = [
   { value: 'gérant', label: 'Gérant' },
@@ -235,6 +236,8 @@ const StaffPage = () => {
             </div>
           )}
         </div>
+
+        <StaffPerformance />
       </div>
 
       {/* Edit Dialog */}
