@@ -15,6 +15,7 @@ import ServiceManagement from './ServiceManagement';
 import ProductManagement from './ProductManagement';
 import { EmployeeManagement } from './EmployeeManagement';
 import ActivityLogViewer from './ActivityLogViewer';
+import TwoFactorSettings from './TwoFactorSettings';
 
 const Settings = () => {
   const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
