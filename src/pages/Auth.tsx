@@ -394,6 +394,18 @@ const Auth = () => {
             >
               {loading ? 'Chargement...' : isLogin ? 'Se connecter' : "S'inscrire"}
             </Button>
+
+            {isLogin && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full min-h-[48px] text-base touch-manipulation border-purple-400 text-purple-600 hover:bg-purple-50 dark:border-purple-500 dark:text-purple-400 dark:hover:bg-purple-950/30"
+                disabled={loading}
+                onClick={handleDemoLogin}
+              >
+                ✨ Essayer la démo gratuite
+              </Button>
+            )}
           </form>
         )}
 
