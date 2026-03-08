@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
@@ -7,6 +7,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import AppointmentModal from './AppointmentModal';
 import EditAppointmentModal from './EditAppointmentModal';
 import { toast } from '@/hooks/use-toast';
