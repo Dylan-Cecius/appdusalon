@@ -236,6 +236,8 @@ const StaffPage = () => {
             </div>
           )}
         </div>
+
+        <StaffPerformance />
       </div>
 
       {/* Edit Dialog */}
