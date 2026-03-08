@@ -11,6 +11,7 @@ export interface Service {
   appointmentBuffer: number;
   isActive: boolean;
   displayOrder: number;
+  color: string;
 }
 
 export const useSupabaseServices = () => {
