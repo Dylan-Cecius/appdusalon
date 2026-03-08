@@ -42,8 +42,10 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('');
   const { addAppointment } = useSupabaseAppointments();
   const { services } = useSupabaseServices();
+  const { activeStaff } = useStaff();
   const isMobile = useIsMobile();
 
   // Pre-fill time when selectedTimeSlot is provided
