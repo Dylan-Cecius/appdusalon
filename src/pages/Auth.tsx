@@ -262,7 +262,48 @@ const Auth = () => {
           </p>
         </div>
 
-        {isForgotPassword ? (
+        {mfaRequired ? (
+          <div className="space-y-6">
+            <p className="text-sm text-muted-foreground text-center">
+              Entrez le code à 6 chiffres de votre application d'authentification
+            </p>
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                value={mfaCode}
+                onChange={(value) => setMfaCode(value)}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            <Button
+              className="w-full min-h-[48px] text-base touch-manipulation"
+              onClick={handleMfaVerify}
+              disabled={mfaCode.length !== 6 || mfaVerifying}
+            >
+              {mfaVerifying ? 'Vérification...' : 'Vérifier'}
+            </Button>
+            <Button
+              variant="link"
+              className="w-full text-sm"
+              onClick={() => {
+                setMfaRequired(false);
+                setMfaFactorId(null);
+                setMfaCode('');
+                supabase.auth.signOut();
+              }}
+            >
+              Retour à la connexion
+            </Button>
+          </div>
+        ) : isForgotPassword ? (
           <form ref={forgotFormRef} onSubmit={handleForgotPassword} className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
