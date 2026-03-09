@@ -33,6 +33,14 @@ const StatsPage = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
 
+  useEffect(() => {
+    setTimeout(() => {
+      document
+        .getElementById('revenue-section')
+        ?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }, []);
+
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
