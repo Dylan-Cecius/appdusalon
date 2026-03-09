@@ -112,7 +112,7 @@ const Dashboard = () => {
   const statusData = useMemo(() => {
     const all = appointments.filter(a => new Date(a.startTime) >= startOfMonth);
     const completed = all.filter(a => a.status === 'completed').length;
-    const pending = all.filter(a => a.status === 'scheduled' || a.status === 'pending').length;
+    const pending = all.filter(a => a.status === 'scheduled').length;
     const cancelled = all.filter(a => a.status === 'cancelled').length;
     return [
       { name: 'Complétés', value: completed },
