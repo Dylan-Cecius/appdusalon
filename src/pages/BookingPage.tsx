@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Clock, User, ArrowLeft, Loader2, Scissors } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { toast } from 'sonner';
 
 const SALON_ID = '6658d645-23c8-415b-ac09-86684c3df509';
