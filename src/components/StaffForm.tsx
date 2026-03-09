@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -92,4 +92,4 @@ const StaffForm = ({ initialValues, onSubmit, submitLabel, isPending }: StaffFor
   );
 };
 
-export default StaffForm;
+export default memo(StaffForm);
