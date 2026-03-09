@@ -37,7 +37,7 @@ const StatsPage = () => {
     setTimeout(() => {
       const el = document.getElementById('revenue-section');
       if (el) {
-        window.scrollTo({ top: el.offsetTop - 80, behavior: 'instant' as ScrollBehavior });
+        window.scrollTo({ top: el.offsetTop - 120, behavior: 'instant' as ScrollBehavior });
       }
     }, 100);
   }, []);
