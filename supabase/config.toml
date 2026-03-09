@@ -41,3 +41,15 @@ verify_jwt = false
 
 [functions.create-public-booking]
 verify_jwt = false
+
+[functions.send-sms-campaign]
+verify_jwt = false
+
+[functions.send-sms-automation]
+verify_jwt = false
+
+[functions.send-sms-test]
+verify_jwt = false
+
+[functions.check-appointment-reminders]
+verify_jwt = false
