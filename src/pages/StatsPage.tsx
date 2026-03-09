@@ -35,9 +35,10 @@ const StatsPage = () => {
 
   useEffect(() => {
     setTimeout(() => {
-      document
-        .getElementById('revenue-section')
-        ?.scrollIntoView({ behavior: 'auto' });
+      const el = document.getElementById('revenue-section');
+      if (el) {
+        window.scrollTo({ top: el.offsetTop - 80, behavior: 'instant' as ScrollBehavior });
+      }
     }, 100);
   }, []);
 
