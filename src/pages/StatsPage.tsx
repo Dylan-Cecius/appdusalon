@@ -137,7 +137,8 @@ const StatsPage = () => {
           </div>
         </Card>
 
-        <div id="stats-overview">
+        <div id="revenue-section">
+          <h3 className="text-lg sm:text-xl font-bold mb-4">Chiffre d'affaires</h3>
           <StatsOverview stats={stats} />
         </div>
 
