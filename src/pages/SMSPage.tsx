@@ -217,15 +217,7 @@ const SMSPage = () => {
     }
   };
 
-  const VariableButtons = ({ variables, onInsert }: { variables: string[]; onInsert: (v: string) => void }) => (
-    <div className="flex flex-wrap gap-1 mt-1">
-      {variables.map((v) => (
-        <Button key={v} type="button" variant="outline" size="sm" className="text-xs h-7" onClick={() => onInsert(v)}>
-          {v}
-        </Button>
-      ))}
-    </div>
-  );
+  // VariableButtons extracted outside component below
 
   return (
     <MainLayout>
@@ -597,5 +589,15 @@ const SMSPage = () => {
     </MainLayout>
   );
 };
+
+const VariableButtons = ({ variables, onInsert }: { variables: string[]; onInsert: (v: string) => void }) => (
+  <div className="flex flex-wrap gap-1 mt-1">
+    {variables.map((v) => (
+      <Button key={v} type="button" variant="outline" size="sm" className="text-xs h-7" onClick={() => onInsert(v)}>
+        {v}
+      </Button>
+    ))}
+  </div>
+);
 
 export default SMSPage;
