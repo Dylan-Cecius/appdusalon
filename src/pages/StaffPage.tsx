@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,42 +27,41 @@ const StaffPage = () => {
   const [showInactive, setShowInactive] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
-  const [form, setForm] = useState<StaffFormData>(defaultForm);
 
-  const resetForm = () => setForm(defaultForm);
+  const editInitialValues = useMemo<StaffFormData>(() => {
+    if (!editingStaff) return defaultForm;
+    return {
+      name: editingStaff.name,
+      role: editingStaff.role,
+      color: editingStaff.color,
+      phone: editingStaff.phone || '',
+      email: editingStaff.email || '',
+      commission_rate: editingStaff.commission_rate,
+      is_active: editingStaff.is_active,
+    };
+  }, [editingStaff]);
 
-  const handleCreate = async () => {
-    if (!form.name.trim()) return;
+  const handleCreate = async (data: StaffFormData) => {
+    if (!data.name.trim()) return;
     await createStaff.mutateAsync({
-      name: form.name, role: form.role, color: form.color,
-      phone: form.phone || null, email: form.email || null,
-      commission_rate: form.commission_rate, is_active: true,
+      name: data.name, role: data.role, color: data.color,
+      phone: data.phone || null, email: data.email || null,
+      commission_rate: data.commission_rate, is_active: true,
     });
     setIsCreateOpen(false);
-    resetForm();
   };
 
-  const handleEdit = async () => {
+  const handleEdit = async (data: StaffFormData) => {
     if (!editingStaff) return;
     await updateStaff.mutateAsync({
       id: editingStaff.id,
       updates: {
-        name: form.name, role: form.role, color: form.color,
-        phone: form.phone || null, email: form.email || null,
-        commission_rate: form.commission_rate, is_active: form.is_active,
+        name: data.name, role: data.role, color: data.color,
+        phone: data.phone || null, email: data.email || null,
+        commission_rate: data.commission_rate, is_active: data.is_active,
       },
     });
     setEditingStaff(null);
-    resetForm();
-  };
-
-  const openEdit = (s: Staff) => {
-    setForm({
-      name: s.name, role: s.role, color: s.color,
-      phone: s.phone || '', email: s.email || '',
-      commission_rate: s.commission_rate, is_active: s.is_active,
-    });
-    setEditingStaff(s);
   };
 
   const displayedStaff = showInactive ? staff : activeStaff;
@@ -82,7 +81,7 @@ const StaffPage = () => {
               <Switch checked={showInactive} onCheckedChange={setShowInactive} />
               <Label className="text-sm">Voir inactifs</Label>
             </div>
-            <Dialog open={isCreateOpen} onOpenChange={(o) => { setIsCreateOpen(o); if (!o) resetForm(); }}>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button><UserPlus className="h-4 w-4 mr-2" />Ajouter un membre</Button>
               </DialogTrigger>
@@ -91,7 +90,7 @@ const StaffPage = () => {
                   <DialogTitle>Nouveau membre</DialogTitle>
                   <DialogDescription>Ajoutez un membre à votre équipe</DialogDescription>
                 </DialogHeader>
-                <StaffForm form={form} setForm={setForm} onSubmit={handleCreate} submitLabel="Ajouter" isPending={createStaff.isPending} />
+                <StaffForm initialValues={defaultForm} onSubmit={handleCreate} submitLabel="Ajouter" isPending={createStaff.isPending} />
               </DialogContent>
             </Dialog>
           </div>
@@ -113,7 +112,7 @@ const StaffPage = () => {
                     {s.commission_rate > 0 && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Percent className="h-3 w-3" />{s.commission_rate}% commission</p>}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openEdit(s)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setEditingStaff(s)}><Edit2 className="h-3.5 w-3.5" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -144,13 +143,14 @@ const StaffPage = () => {
         <StaffPerformance />
       </div>
 
-      <Dialog open={!!editingStaff} onOpenChange={(o) => { if (!o) { setEditingStaff(null); resetForm(); } }}>
+      {/* Edit Dialog */}
+      <Dialog open={!!editingStaff} onOpenChange={(o) => { if (!o) setEditingStaff(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier {editingStaff?.name}</DialogTitle>
             <DialogDescription>Modifiez les informations du membre</DialogDescription>
           </DialogHeader>
-          <StaffForm form={form} setForm={setForm} onSubmit={handleEdit} submitLabel="Enregistrer" isPending={updateStaff.isPending} />
+          <StaffForm initialValues={editInitialValues} onSubmit={handleEdit} submitLabel="Enregistrer" isPending={updateStaff.isPending} />
         </DialogContent>
       </Dialog>
     </MainLayout>
