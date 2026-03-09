@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -37,20 +37,47 @@ interface StaffFormProps {
 const StaffForm = ({ initialValues, onSubmit, submitLabel, isPending }: StaffFormProps) => {
   const [form, setForm] = useState<StaffFormData>(initialValues);
 
-  // Reset local state when initialValues change (e.g., opening edit for a different staff)
   useEffect(() => {
     setForm(initialValues);
   }, [initialValues]);
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, name: e.target.value }));
+  }, []);
+
+  const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, phone: e.target.value }));
+  }, []);
+
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, email: e.target.value }));
+  }, []);
+
+  const handleCommissionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, commission_rate: parseInt(e.target.value) || 0 }));
+  }, []);
+
+  const handleRoleChange = useCallback((v: string) => {
+    setForm(f => ({ ...f, role: v }));
+  }, []);
+
+  const handleColorClick = useCallback((c: string) => {
+    setForm(f => ({ ...f, color: c }));
+  }, []);
+
+  const handleSubmit = useCallback(() => {
+    onSubmit(form);
+  }, [onSubmit, form]);
 
   return (
     <div className="space-y-4">
       <div>
         <Label>Nom *</Label>
-        <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Marie Dupont" />
+        <Input value={form.name} onChange={handleNameChange} placeholder="Marie Dupont" />
       </div>
       <div>
         <Label>Rôle</Label>
-        <Select value={form.role} onValueChange={(v) => setForm(f => ({ ...f, role: v }))}>
+        <Select value={form.role} onValueChange={handleRoleChange}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             {roleOptions.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
@@ -66,7 +93,7 @@ const StaffForm = ({ initialValues, onSubmit, submitLabel, isPending }: StaffFor
               type="button"
               className={`w-8 h-8 rounded-full border-2 transition-transform ${form.color === c ? 'border-foreground scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: c }}
-              onClick={() => setForm(f => ({ ...f, color: c }))}
+              onClick={() => handleColorClick(c)}
             />
           ))}
         </div>
@@ -74,18 +101,18 @@ const StaffForm = ({ initialValues, onSubmit, submitLabel, isPending }: StaffFor
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Téléphone</Label>
-          <Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="0612345678" />
+          <Input value={form.phone} onChange={handlePhoneChange} placeholder="0612345678" />
         </div>
         <div>
           <Label>Email</Label>
-          <Input value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} placeholder="marie@salon.com" />
+          <Input value={form.email} onChange={handleEmailChange} placeholder="marie@salon.com" />
         </div>
       </div>
       <div>
         <Label>Commission (%)</Label>
-        <Input type="number" min={0} max={100} value={form.commission_rate} onChange={(e) => setForm(f => ({ ...f, commission_rate: parseInt(e.target.value) || 0 }))} />
+        <Input type="number" min={0} max={100} value={form.commission_rate} onChange={handleCommissionChange} />
       </div>
-      <Button onClick={() => onSubmit(form)} className="w-full" disabled={isPending || !form.name.trim()}>
+      <Button onClick={handleSubmit} className="w-full" disabled={isPending || !form.name.trim()}>
         {isPending ? 'En cours...' : submitLabel}
       </Button>
     </div>
