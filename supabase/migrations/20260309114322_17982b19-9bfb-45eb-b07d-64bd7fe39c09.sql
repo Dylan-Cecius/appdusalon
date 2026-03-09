@@ -1,0 +1,1 @@
+UPDATE public.salons SET slug = 'salon-demo' WHERE id = '6658d645-23c8-415b-ac09-86684c3df509' AND slug IS NULL;
