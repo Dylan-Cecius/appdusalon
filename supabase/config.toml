@@ -32,3 +32,12 @@ verify_jwt = true
 
 [functions.customer-portal]
 verify_jwt = true
+
+[functions.get-salon-booking-data]
+verify_jwt = false
+
+[functions.get-booking-slots]
+verify_jwt = false
+
+[functions.create-public-booking]
+verify_jwt = false
