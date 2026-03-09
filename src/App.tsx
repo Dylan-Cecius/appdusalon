@@ -18,6 +18,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ClientsPage from "./pages/ClientsPage";
 import StaffPage from "./pages/StaffPage";
 import BookingPage from "./pages/BookingPage";
+import SMSPage from "./pages/SMSPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
