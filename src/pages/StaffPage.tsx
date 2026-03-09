@@ -1,30 +1,16 @@
 import { useState } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useStaff, Staff } from '@/hooks/useStaff';
 import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent } from 'lucide-react';
 import { StaffPerformance } from '@/components/StaffPerformance';
-
-const roleOptions = [
-  { value: 'gérant', label: 'Gérant' },
-  { value: 'coiffeur', label: 'Coiffeur' },
-  { value: 'esthéticien', label: 'Esthéticien' },
-  { value: 'barbier', label: 'Barbier' },
-  { value: 'assistant', label: 'Assistant' },
-];
-
-const colorOptions = [
-  '#8B5CF6', '#3B82F6', '#EC4899', '#EF4444',
-  '#F97316', '#22C55E', '#14B8A6', '#6366F1',
-];
+import StaffForm, { StaffFormData } from '@/components/StaffForm';
 
 const roleBadgeColor: Record<string, string> = {
   'gérant': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -34,34 +20,23 @@ const roleBadgeColor: Record<string, string> = {
   'assistant': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
 };
 
+const defaultForm: StaffFormData = { name: '', role: 'coiffeur', color: '#8B5CF6', phone: '', email: '', commission_rate: 0, is_active: true };
+
 const StaffPage = () => {
   const { staff, activeStaff, isLoading, createStaff, updateStaff, deleteStaff } = useStaff();
   const [showInactive, setShowInactive] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [form, setForm] = useState<StaffFormData>(defaultForm);
 
-  const [form, setForm] = useState({
-    name: '',
-    role: 'coiffeur',
-    color: '#8B5CF6',
-    phone: '',
-    email: '',
-    commission_rate: 0,
-    is_active: true,
-  });
-
-  const resetForm = () => setForm({ name: '', role: 'coiffeur', color: '#8B5CF6', phone: '', email: '', commission_rate: 0, is_active: true });
+  const resetForm = () => setForm(defaultForm);
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
     await createStaff.mutateAsync({
-      name: form.name,
-      role: form.role,
-      color: form.color,
-      phone: form.phone || null,
-      email: form.email || null,
-      commission_rate: form.commission_rate,
-      is_active: true,
+      name: form.name, role: form.role, color: form.color,
+      phone: form.phone || null, email: form.email || null,
+      commission_rate: form.commission_rate, is_active: true,
     });
     setIsCreateOpen(false);
     resetForm();
@@ -72,13 +47,9 @@ const StaffPage = () => {
     await updateStaff.mutateAsync({
       id: editingStaff.id,
       updates: {
-        name: form.name,
-        role: form.role,
-        color: form.color,
-        phone: form.phone || null,
-        email: form.email || null,
-        commission_rate: form.commission_rate,
-        is_active: form.is_active,
+        name: form.name, role: form.role, color: form.color,
+        phone: form.phone || null, email: form.email || null,
+        commission_rate: form.commission_rate, is_active: form.is_active,
       },
     });
     setEditingStaff(null);
@@ -87,67 +58,14 @@ const StaffPage = () => {
 
   const openEdit = (s: Staff) => {
     setForm({
-      name: s.name,
-      role: s.role,
-      color: s.color,
-      phone: s.phone || '',
-      email: s.email || '',
-      commission_rate: s.commission_rate,
-      is_active: s.is_active,
+      name: s.name, role: s.role, color: s.color,
+      phone: s.phone || '', email: s.email || '',
+      commission_rate: s.commission_rate, is_active: s.is_active,
     });
     setEditingStaff(s);
   };
 
   const displayedStaff = showInactive ? staff : activeStaff;
-
-  const StaffForm = ({ onSubmit, submitLabel, isPending }: { onSubmit: () => void; submitLabel: string; isPending: boolean }) => (
-    <div className="space-y-4">
-      <div>
-        <Label>Nom *</Label>
-        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Marie Dupont" />
-      </div>
-      <div>
-        <Label>Rôle</Label>
-        <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {roleOptions.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Couleur</Label>
-        <div className="flex gap-2 mt-1">
-          {colorOptions.map(c => (
-            <button
-              key={c}
-              type="button"
-              className={`w-8 h-8 rounded-full border-2 transition-transform ${form.color === c ? 'border-foreground scale-110' : 'border-transparent'}`}
-              style={{ backgroundColor: c }}
-              onClick={() => setForm({ ...form, color: c })}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Téléphone</Label>
-          <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0612345678" />
-        </div>
-        <div>
-          <Label>Email</Label>
-          <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="marie@salon.com" />
-        </div>
-      </div>
-      <div>
-        <Label>Commission (%)</Label>
-        <Input type="number" min={0} max={100} value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: parseInt(e.target.value) || 0 })} />
-      </div>
-      <Button onClick={onSubmit} className="w-full" disabled={isPending || !form.name.trim()}>
-        {isPending ? 'En cours...' : submitLabel}
-      </Button>
-    </div>
-  );
 
   if (isLoading) return <MainLayout><div className="p-8 text-center text-muted-foreground">Chargement...</div></MainLayout>;
 
@@ -173,7 +91,7 @@ const StaffPage = () => {
                   <DialogTitle>Nouveau membre</DialogTitle>
                   <DialogDescription>Ajoutez un membre à votre équipe</DialogDescription>
                 </DialogHeader>
-                <StaffForm onSubmit={handleCreate} submitLabel="Ajouter" isPending={createStaff.isPending} />
+                <StaffForm form={form} setForm={setForm} onSubmit={handleCreate} submitLabel="Ajouter" isPending={createStaff.isPending} />
               </DialogContent>
             </Dialog>
           </div>
@@ -189,28 +107,16 @@ const StaffPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold truncate">{s.name}</h3>
-                    <Badge className={`mt-1 ${roleBadgeColor[s.role] || roleBadgeColor['assistant']}`}>
-                      {s.role}
-                    </Badge>
-                    {s.phone && (
-                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><Phone className="h-3 w-3" />{s.phone}</p>
-                    )}
-                    {s.email && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{s.email}</p>
-                    )}
-                    {s.commission_rate > 0 && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Percent className="h-3 w-3" />{s.commission_rate}% commission</p>
-                    )}
+                    <Badge className={`mt-1 ${roleBadgeColor[s.role] || roleBadgeColor['assistant']}`}>{s.role}</Badge>
+                    {s.phone && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><Phone className="h-3 w-3" />{s.phone}</p>}
+                    {s.email && <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{s.email}</p>}
+                    {s.commission_rate > 0 && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Percent className="h-3 w-3" />{s.commission_rate}% commission</p>}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openEdit(s)}>
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openEdit(s)}><Edit2 className="h-3.5 w-3.5" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
@@ -228,7 +134,6 @@ const StaffPage = () => {
               </CardContent>
             </Card>
           ))}
-
           {displayedStaff.length === 0 && (
             <div className="col-span-full text-center py-12 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -236,18 +141,16 @@ const StaffPage = () => {
             </div>
           )}
         </div>
-
         <StaffPerformance />
       </div>
 
-      {/* Edit Dialog */}
       <Dialog open={!!editingStaff} onOpenChange={(o) => { if (!o) { setEditingStaff(null); resetForm(); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier {editingStaff?.name}</DialogTitle>
             <DialogDescription>Modifiez les informations du membre</DialogDescription>
           </DialogHeader>
-          <StaffForm onSubmit={handleEdit} submitLabel="Enregistrer" isPending={updateStaff.isPending} />
+          <StaffForm form={form} setForm={setForm} onSubmit={handleEdit} submitLabel="Enregistrer" isPending={updateStaff.isPending} />
         </DialogContent>
       </Dialog>
     </MainLayout>
