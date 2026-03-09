@@ -37,7 +37,7 @@ const StatsPage = () => {
     setTimeout(() => {
       document
         .getElementById('revenue-section')
-        ?.scrollIntoView({ behavior: 'smooth' });
+        ?.scrollIntoView({ behavior: 'auto' });
     }, 100);
   }, []);
 
