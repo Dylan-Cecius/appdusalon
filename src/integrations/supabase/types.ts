@@ -237,6 +237,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          birth_date: string | null
           created_at: string
           email: string | null
           id: string
@@ -244,10 +245,12 @@ export type Database = {
           notes: string | null
           phone: string
           salon_id: string | null
+          sms_opt_out: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -255,10 +258,12 @@ export type Database = {
           notes?: string | null
           phone: string
           salon_id?: string | null
+          sms_opt_out?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          birth_date?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -266,6 +271,7 @@ export type Database = {
           notes?: string | null
           phone?: string
           salon_id?: string | null
+          sms_opt_out?: boolean | null
           updated_at?: string
           user_id?: string
         }
@@ -646,6 +652,173 @@ export type Database = {
             foreignKeyName: "services_salon_id_fkey"
             columns: ["salon_id"]
             isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_campaigns: {
+        Row: {
+          created_at: string | null
+          id: string
+          inactive_months: number | null
+          message: string
+          name: string
+          recipient_type: string | null
+          recipients_count: number | null
+          salon_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inactive_months?: number | null
+          message: string
+          name: string
+          recipient_type?: string | null
+          recipients_count?: number | null
+          salon_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inactive_months?: number | null
+          message?: string
+          name?: string
+          recipient_type?: string | null
+          recipients_count?: number | null
+          salon_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_campaigns_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_logs: {
+        Row: {
+          campaign_id: string | null
+          client_id: string | null
+          id: string
+          message: string
+          phone_number: string | null
+          salon_id: string
+          sent_at: string | null
+          status: string | null
+          twilio_sid: string | null
+          type: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          client_id?: string | null
+          id?: string
+          message: string
+          phone_number?: string | null
+          salon_id: string
+          sent_at?: string | null
+          status?: string | null
+          twilio_sid?: string | null
+          type: string
+        }
+        Update: {
+          campaign_id?: string | null
+          client_id?: string | null
+          id?: string
+          message?: string
+          phone_number?: string | null
+          salon_id?: string
+          sent_at?: string | null
+          status?: string | null
+          twilio_sid?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "sms_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_logs_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_settings: {
+        Row: {
+          birthday_enabled: boolean | null
+          birthday_message: string | null
+          created_at: string | null
+          id: string
+          reactivation_enabled: boolean | null
+          reactivation_message: string | null
+          reactivation_months: number | null
+          reminder_enabled: boolean | null
+          reminder_hours_before: number | null
+          reminder_message: string | null
+          salon_id: string
+          twilio_account_sid: string | null
+          twilio_auth_token: string | null
+          twilio_phone_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          birthday_enabled?: boolean | null
+          birthday_message?: string | null
+          created_at?: string | null
+          id?: string
+          reactivation_enabled?: boolean | null
+          reactivation_message?: string | null
+          reactivation_months?: number | null
+          reminder_enabled?: boolean | null
+          reminder_hours_before?: number | null
+          reminder_message?: string | null
+          salon_id: string
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_phone_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          birthday_enabled?: boolean | null
+          birthday_message?: string | null
+          created_at?: string | null
+          id?: string
+          reactivation_enabled?: boolean | null
+          reactivation_message?: string | null
+          reactivation_months?: number | null
+          reminder_enabled?: boolean | null
+          reminder_hours_before?: number | null
+          reminder_message?: string | null
+          salon_id?: string
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_phone_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_settings_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: true
             referencedRelation: "salons"
             referencedColumns: ["id"]
           },
