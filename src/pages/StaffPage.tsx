@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,33 +28,29 @@ const StaffPage = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
 
-  const editInitialValues = useMemo<StaffFormData>(() => {
-    if (!editingStaff) return defaultForm;
-    return {
-      name: editingStaff.name,
-      role: editingStaff.role,
-      color: editingStaff.color,
-      phone: editingStaff.phone || '',
-      email: editingStaff.email || '',
-      commission_rate: editingStaff.commission_rate,
-      is_active: editingStaff.is_active,
-    };
-  }, [editingStaff]);
+  // Use refs for mutation functions to keep callbacks stable
+  const createStaffRef = useRef(createStaff);
+  createStaffRef.current = createStaff;
+  const updateStaffRef = useRef(updateStaff);
+  updateStaffRef.current = updateStaff;
+  const editingStaffRef = useRef(editingStaff);
+  editingStaffRef.current = editingStaff;
 
   const handleCreate = useCallback(async (data: StaffFormData) => {
     if (!data.name.trim()) return;
-    await createStaff.mutateAsync({
+    await createStaffRef.current.mutateAsync({
       name: data.name, role: data.role, color: data.color,
       phone: data.phone || null, email: data.email || null,
       commission_rate: data.commission_rate, is_active: true,
     });
     setIsCreateOpen(false);
-  }, [createStaff]);
+  }, []);
 
   const handleEdit = useCallback(async (data: StaffFormData) => {
-    if (!editingStaff) return;
-    await updateStaff.mutateAsync({
-      id: editingStaff.id,
+    const current = editingStaffRef.current;
+    if (!current) return;
+    await updateStaffRef.current.mutateAsync({
+      id: current.id,
       updates: {
         name: data.name, role: data.role, color: data.color,
         phone: data.phone || null, email: data.email || null,
@@ -62,7 +58,21 @@ const StaffPage = () => {
       },
     });
     setEditingStaff(null);
-  }, [editingStaff, updateStaff]);
+  }, []);
+
+  const handleEditDialogChange = useCallback((o: boolean) => {
+    if (!o) setEditingStaff(null);
+  }, []);
+
+  const editInitialValues: StaffFormData = editingStaff ? {
+    name: editingStaff.name,
+    role: editingStaff.role,
+    color: editingStaff.color,
+    phone: editingStaff.phone || '',
+    email: editingStaff.email || '',
+    commission_rate: editingStaff.commission_rate,
+    is_active: editingStaff.is_active,
+  } : defaultForm;
 
   const displayedStaff = showInactive ? staff : activeStaff;
 
@@ -90,7 +100,7 @@ const StaffPage = () => {
                   <DialogTitle>Nouveau membre</DialogTitle>
                   <DialogDescription>Ajoutez un membre à votre équipe</DialogDescription>
                 </DialogHeader>
-                <StaffForm initialValues={defaultForm} onSubmit={handleCreate} submitLabel="Ajouter" isPending={createStaff.isPending} />
+                <StaffForm key="create" initialValues={defaultForm} onSubmit={handleCreate} submitLabel="Ajouter" isPending={createStaff.isPending} />
               </DialogContent>
             </Dialog>
           </div>
@@ -143,14 +153,14 @@ const StaffPage = () => {
         <StaffPerformance />
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingStaff} onOpenChange={(o) => { if (!o) setEditingStaff(null); }}>
+      {/* Edit Dialog — key={id} remounts form only when switching staff */}
+      <Dialog open={!!editingStaff} onOpenChange={handleEditDialogChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier {editingStaff?.name}</DialogTitle>
             <DialogDescription>Modifiez les informations du membre</DialogDescription>
           </DialogHeader>
-          <StaffForm initialValues={editInitialValues} onSubmit={handleEdit} submitLabel="Enregistrer" isPending={updateStaff.isPending} />
+          <StaffForm key={editingStaff?.id || 'none'} initialValues={editInitialValues} onSubmit={handleEdit} submitLabel="Enregistrer" isPending={updateStaff.isPending} />
         </DialogContent>
       </Dialog>
     </MainLayout>
