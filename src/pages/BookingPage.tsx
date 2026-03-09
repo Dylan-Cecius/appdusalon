@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { format, addDays, isBefore, startOfDay } from 'date-fns';
+import { useParams } from 'react-router-dom';
+import { format, isBefore, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,8 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Clock, User, ArrowLeft, Loader2, Scissors } from 'lucide-react';
 import { toast } from 'sonner';
 
-const SALON_ID = '6658d645-23c8-415b-ac09-86684c3df509';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://vrawwiqeutbqqdzkhrax.supabase.co';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYXd3aXFldXRicXFkemtocmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxNjA0MDEsImV4cCI6MjA3MTczNjQwMX0.TnKumTl96ixa3D5hX0caknjh4DlwPU24PG9m-4hBJjY';
 
 interface Service {
   id: string;
@@ -38,15 +40,18 @@ interface TimeSlot {
 const STEP_LABELS = ['Prestation', 'Personnel', 'Date & Heure', 'Coordonnées'];
 
 export default function BookingPage() {
+  const { salonSlug } = useParams<{ salonSlug: string }>();
+
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [salonName, setSalonName] = useState('');
+  const [salonId, setSalonId] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Selections
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [noPreference, setNoPreference] = useState(false);
@@ -58,17 +63,29 @@ export default function BookingPage() {
   const [phone, setPhone] = useState('');
   const [confirmed, setConfirmed] = useState(false);
 
-  // Fetch salon data
+  // Fetch salon data by slug
   useEffect(() => {
+    if (!salonSlug) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
     const fetchData = async () => {
       try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://vrawwiqeutbqqdzkhrax.supabase.co'}/functions/v1/get-salon-booking-data?salon_id=${SALON_ID}`;
-        const response = await fetch(url, {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYXd3aXFldXRicXFkemtocmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxNjA0MDEsImV4cCI6MjA3MTczNjQwMX0.TnKumTl96ixa3D5hX0caknjh4DlwPU24PG9m-4hBJjY',
-          }
-        });
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/get-salon-booking-data?slug=${encodeURIComponent(salonSlug)}`,
+          { headers: { apikey: SUPABASE_KEY } }
+        );
+        if (response.status === 404) {
+          setNotFound(true);
+          return;
+        }
         const data = await response.json();
+        if (!data.salon_id) {
+          setNotFound(true);
+          return;
+        }
+        setSalonId(data.salon_id);
         setServices(data.services || []);
         setStaff(data.staff || []);
         setSalonName(data.salon?.name || 'Notre Salon');
@@ -80,23 +97,21 @@ export default function BookingPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [salonSlug]);
 
   // Fetch slots when date changes
   useEffect(() => {
-    if (!selectedDate || !selectedService) return;
+    if (!selectedDate || !selectedService || !salonId) return;
     const fetchSlots = async () => {
       setSlotsLoading(true);
       setSelectedSlot(null);
       try {
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
         const staffParam = noPreference ? '' : `&staff_id=${selectedStaff?.id || ''}`;
-        const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://vrawwiqeutbqqdzkhrax.supabase.co'}/functions/v1/get-booking-slots?salon_id=${SALON_ID}&date=${dateStr}&duration=${selectedService.duration}${staffParam}`;
-        const response = await fetch(url, {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYXd3aXFldXRicXFkemtocmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxNjA0MDEsImV4cCI6MjA3MTczNjQwMX0.TnKumTl96ixa3D5hX0caknjh4DlwPU24PG9m-4hBJjY',
-          }
-        });
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/get-booking-slots?salon_id=${salonId}&date=${dateStr}&duration=${selectedService.duration}${staffParam}`,
+          { headers: { apikey: SUPABASE_KEY } }
+        );
         const data = await response.json();
         setSlots(data.slots || []);
       } catch (error) {
@@ -107,24 +122,20 @@ export default function BookingPage() {
       }
     };
     fetchSlots();
-  }, [selectedDate, selectedService, selectedStaff, noPreference]);
+  }, [selectedDate, selectedService, selectedStaff, noPreference, salonId]);
 
   const handleSubmit = async () => {
-    if (!selectedService || !selectedSlot || !firstName.trim() || !lastName.trim() || !phone.trim()) {
+    if (!selectedService || !selectedSlot || !firstName.trim() || !lastName.trim() || !phone.trim() || !salonId) {
       toast.error('Veuillez remplir tous les champs');
       return;
     }
     setSubmitting(true);
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://vrawwiqeutbqqdzkhrax.supabase.co'}/functions/v1/create-public-booking`;
-      const response = await fetch(url, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/create-public-booking`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYXd3aXFldXRicXFkemtocmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxNjA0MDEsImV4cCI6MjA3MTczNjQwMX0.TnKumTl96ixa3D5hX0caknjh4DlwPU24PG9m-4hBJjY',
-        },
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
         body: JSON.stringify({
-          salon_id: SALON_ID,
+          salon_id: salonId,
           staff_id: noPreference ? null : selectedStaff?.id,
           service: { name: selectedService.name, price: selectedService.price },
           start_time: selectedSlot.start_time,
@@ -149,6 +160,22 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full text-center">
+          <CardContent className="pt-8 pb-8 space-y-4">
+            <Scissors className="h-12 w-12 text-muted-foreground mx-auto" />
+            <h2 className="text-2xl font-bold text-foreground">Salon introuvable</h2>
+            <p className="text-muted-foreground">
+              Le salon « {salonSlug} » n'existe pas ou n'a pas de page de réservation.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -186,9 +213,9 @@ export default function BookingPage() {
       {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-1">
             <Scissors className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold text-foreground">{salonName}</h1>
+            <h1 className="text-xl font-bold text-foreground">Réserver chez {salonName}</h1>
           </div>
           <p className="text-sm text-muted-foreground mb-4">Réservez votre rendez-vous en ligne</p>
 
@@ -208,12 +235,7 @@ export default function BookingPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         {step > 1 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setStep(step - 1)}
-            className="mb-4"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setStep(step - 1)} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" /> Retour
           </Button>
         )}
@@ -227,22 +249,14 @@ export default function BookingPage() {
                 <Card
                   key={service.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedService?.id === service.id
-                      ? 'ring-2 ring-primary bg-primary/5'
-                      : 'hover:bg-muted/50'
+                    selectedService?.id === service.id ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
                   }`}
-                  onClick={() => {
-                    setSelectedService(service);
-                    setStep(2);
-                  }}
+                  onClick={() => { setSelectedService(service); setStep(2); }}
                 >
                   <CardContent className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       {service.color && (
-                        <div
-                          className="w-3 h-3 rounded-full shrink-0"
-                          style={{ backgroundColor: service.color }}
-                        />
+                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: service.color }} />
                       )}
                       <div>
                         <p className="font-medium text-foreground">{service.name}</p>
@@ -267,16 +281,9 @@ export default function BookingPage() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Choisissez un membre du personnel</h2>
             <div className="grid gap-3">
-              {/* No preference option */}
               <Card
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  noPreference ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
-                }`}
-                onClick={() => {
-                  setNoPreference(true);
-                  setSelectedStaff(null);
-                  setStep(3);
-                }}
+                className={`cursor-pointer transition-all hover:shadow-md ${noPreference ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'}`}
+                onClick={() => { setNoPreference(true); setSelectedStaff(null); setStep(3); }}
               >
                 <CardContent className="flex items-center gap-3 p-4">
                   <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
@@ -293,15 +300,9 @@ export default function BookingPage() {
                 <Card
                   key={member.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedStaff?.id === member.id && !noPreference
-                      ? 'ring-2 ring-primary bg-primary/5'
-                      : 'hover:bg-muted/50'
+                    selectedStaff?.id === member.id && !noPreference ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
                   }`}
-                  onClick={() => {
-                    setSelectedStaff(member);
-                    setNoPreference(false);
-                    setStep(3);
-                  }}
+                  onClick={() => { setSelectedStaff(member); setNoPreference(false); setStep(3); }}
                 >
                   <CardContent className="flex items-center gap-3 p-4">
                     <div
@@ -325,21 +326,16 @@ export default function BookingPage() {
         {step === 3 && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-foreground">Choisissez une date et un créneau</h2>
-
             <div className="flex justify-center">
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => {
-                  setSelectedDate(date);
-                  setSelectedSlot(null);
-                }}
+                onSelect={(date) => { setSelectedDate(date); setSelectedSlot(null); }}
                 disabled={(date) => isBefore(date, startOfDay(new Date()))}
                 locale={fr}
                 className="rounded-md border pointer-events-auto"
               />
             </div>
-
             {selectedDate && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">
@@ -357,9 +353,7 @@ export default function BookingPage() {
                         variant={selectedSlot?.time === slot.time ? 'default' : 'outline'}
                         size="sm"
                         disabled={!slot.available}
-                        onClick={() => {
-                          setSelectedSlot(slot);
-                        }}
+                        onClick={() => setSelectedSlot(slot)}
                         className={!slot.available ? 'opacity-40 line-through' : ''}
                       >
                         {slot.time}
@@ -372,11 +366,8 @@ export default function BookingPage() {
                     )}
                   </div>
                 )}
-
                 {selectedSlot && (
-                  <Button onClick={() => setStep(4)} className="w-full mt-4">
-                    Continuer
-                  </Button>
+                  <Button onClick={() => setStep(4)} className="w-full mt-4">Continuer</Button>
                 )}
               </div>
             )}
@@ -387,54 +378,29 @@ export default function BookingPage() {
         {step === 4 && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-foreground">Vos coordonnées</h2>
-
-            {/* Recap */}
             <Card>
               <CardContent className="p-4 space-y-1 text-sm">
                 <p><strong>Prestation :</strong> {selectedService?.name} — {selectedService?.price.toFixed(2)} €</p>
-                {selectedStaff && !noPreference && (
-                  <p><strong>Avec :</strong> {selectedStaff.name}</p>
-                )}
+                {selectedStaff && !noPreference && <p><strong>Avec :</strong> {selectedStaff.name}</p>}
                 <p><strong>Date :</strong> {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}</p>
                 <p><strong>Heure :</strong> {selectedSlot?.time}</p>
               </CardContent>
             </Card>
-
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Prénom</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Jean"
-                    maxLength={50}
-                  />
+                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jean" maxLength={50} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Nom</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Dupont"
-                    maxLength={50}
-                  />
+                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Dupont" maxLength={50} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Numéro de téléphone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="06 12 34 56 78"
-                  maxLength={20}
-                />
+                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06 12 34 56 78" maxLength={20} />
               </div>
-
               <Button
                 onClick={handleSubmit}
                 disabled={submitting || !firstName.trim() || !lastName.trim() || !phone.trim()}

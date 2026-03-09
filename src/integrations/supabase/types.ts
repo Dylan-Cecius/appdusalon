@@ -572,6 +572,7 @@ export type Database = {
           is_demo: boolean
           name: string
           owner_user_id: string
+          slug: string | null
           updated_at: string
         }
         Insert: {
@@ -580,6 +581,7 @@ export type Database = {
           is_demo?: boolean
           name: string
           owner_user_id: string
+          slug?: string | null
           updated_at?: string
         }
         Update: {
@@ -588,6 +590,7 @@ export type Database = {
           is_demo?: boolean
           name?: string
           owner_user_id?: string
+          slug?: string | null
           updated_at?: string
         }
         Relationships: []

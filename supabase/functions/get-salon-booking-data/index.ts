@@ -19,48 +19,58 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const salonId = url.searchParams.get('salon_id');
+    const slug = url.searchParams.get('slug');
 
-    if (!salonId) {
+    if (!salonId && !slug) {
       return new Response(
-        JSON.stringify({ error: 'salon_id is required' }),
+        JSON.stringify({ error: 'salon_id or slug is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Resolve salon
+    let salonQuery = supabase
+      .from('salons')
+      .select('id, name, owner_user_id')
+    
+    if (slug) {
+      salonQuery = salonQuery.eq('slug', slug);
+    } else {
+      salonQuery = salonQuery.eq('id', salonId);
+    }
+
+    const { data: salon, error: salonError } = await salonQuery.single();
+
+    if (salonError || !salon) {
+      return new Response(
+        JSON.stringify({ error: 'Salon not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Fetch services and staff in parallel
-    const [servicesRes, staffRes, salonRes] = await Promise.all([
+    const [servicesRes, staffRes] = await Promise.all([
       supabase
         .from('services')
         .select('id, name, price, duration, category, color')
-        .eq('salon_id', salonId)
+        .eq('salon_id', salon.id)
         .eq('is_active', true)
         .order('display_order'),
       supabase
         .from('staff')
         .select('id, name, role, color')
-        .eq('salon_id', salonId)
+        .eq('salon_id', salon.id)
         .eq('is_active', true)
         .order('name'),
-      supabase
-        .from('salons')
-        .select('id, name, owner_user_id')
-        .eq('id', salonId)
-        .single()
     ]);
-
-    if (servicesRes.error) {
-      console.error('Error fetching services:', servicesRes.error);
-    }
-    if (staffRes.error) {
-      console.error('Error fetching staff:', staffRes.error);
-    }
 
     return new Response(
       JSON.stringify({
+        salon_id: salon.id,
         services: servicesRes.data || [],
         staff: staffRes.data || [],
-        salon: salonRes.data ? { id: salonRes.data.id, name: salonRes.data.name } : null,
-        owner_user_id: salonRes.data?.owner_user_id || null
+        salon: { id: salon.id, name: salon.name },
+        owner_user_id: salon.owner_user_id
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
