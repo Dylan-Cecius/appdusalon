@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -10,7 +11,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useStaff, Staff } from '@/hooks/useStaff';
 import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent } from 'lucide-react';
 import { StaffPerformance } from '@/components/StaffPerformance';
-import StaffForm, { StaffFormData } from '@/components/StaffForm';
 
 const roleBadgeColor: Record<string, string> = {
   'gérant': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -20,7 +20,18 @@ const roleBadgeColor: Record<string, string> = {
   'assistant': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
 };
 
-const defaultForm: StaffFormData = { name: '', role: 'coiffeur', color: '#8B5CF6', phone: '', email: '', commission_rate: 0, is_active: true };
+const roleOptions = [
+  { value: 'gérant', label: 'Gérant' },
+  { value: 'coiffeur', label: 'Coiffeur' },
+  { value: 'esthéticien', label: 'Esthéticien' },
+  { value: 'barbier', label: 'Barbier' },
+  { value: 'assistant', label: 'Assistant' },
+];
+
+const colorOptions = [
+  '#8B5CF6', '#3B82F6', '#EC4899', '#EF4444',
+  '#F97316', '#22C55E', '#14B8A6', '#6366F1',
+];
 
 const StaffPage = () => {
   const { staff, activeStaff, isLoading, createStaff, updateStaff, deleteStaff } = useStaff();
@@ -28,51 +39,41 @@ const StaffPage = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
 
-  // Use refs for mutation functions to keep callbacks stable
-  const createStaffRef = useRef(createStaff);
-  createStaffRef.current = createStaff;
-  const updateStaffRef = useRef(updateStaff);
-  updateStaffRef.current = updateStaff;
-  const editingStaffRef = useRef(editingStaff);
-  editingStaffRef.current = editingStaff;
-
-  const handleCreate = useCallback(async (data: StaffFormData) => {
-    if (!data.name.trim()) return;
-    await createStaffRef.current.mutateAsync({
-      name: data.name, role: data.role, color: data.color,
-      phone: data.phone || null, email: data.email || null,
-      commission_rate: data.commission_rate, is_active: true,
+  const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const name = (fd.get('name') as string || '').trim();
+    if (!name) return;
+    await createStaff.mutateAsync({
+      name,
+      role: fd.get('role') as string || 'coiffeur',
+      color: fd.get('color') as string || '#8B5CF6',
+      phone: (fd.get('phone') as string) || null,
+      email: (fd.get('email') as string) || null,
+      commission_rate: parseInt(fd.get('commission') as string || '0') || 0,
+      is_active: true,
     });
     setIsCreateOpen(false);
-  }, []);
+  };
 
-  const handleEdit = useCallback(async (data: StaffFormData) => {
-    const current = editingStaffRef.current;
-    if (!current) return;
-    await updateStaffRef.current.mutateAsync({
-      id: current.id,
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingStaff) return;
+    const fd = new FormData(e.currentTarget);
+    await updateStaff.mutateAsync({
+      id: editingStaff.id,
       updates: {
-        name: data.name, role: data.role, color: data.color,
-        phone: data.phone || null, email: data.email || null,
-        commission_rate: data.commission_rate, is_active: data.is_active,
+        name: (fd.get('name') as string || '').trim(),
+        role: fd.get('role') as string || 'coiffeur',
+        color: fd.get('color') as string || '#8B5CF6',
+        phone: (fd.get('phone') as string) || null,
+        email: (fd.get('email') as string) || null,
+        commission_rate: parseInt(fd.get('commission') as string || '0') || 0,
+        is_active: editingStaff.is_active,
       },
     });
     setEditingStaff(null);
-  }, []);
-
-  const handleEditDialogChange = useCallback((o: boolean) => {
-    if (!o) setEditingStaff(null);
-  }, []);
-
-  const editInitialValues: StaffFormData = editingStaff ? {
-    name: editingStaff.name,
-    role: editingStaff.role,
-    color: editingStaff.color,
-    phone: editingStaff.phone || '',
-    email: editingStaff.email || '',
-    commission_rate: editingStaff.commission_rate,
-    is_active: editingStaff.is_active,
-  } : defaultForm;
+  };
 
   const displayedStaff = showInactive ? staff : activeStaff;
 
@@ -91,18 +92,7 @@ const StaffPage = () => {
               <Switch checked={showInactive} onCheckedChange={setShowInactive} />
               <Label className="text-sm">Voir inactifs</Label>
             </div>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button><UserPlus className="h-4 w-4 mr-2" />Ajouter un membre</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Nouveau membre</DialogTitle>
-                  <DialogDescription>Ajoutez un membre à votre équipe</DialogDescription>
-                </DialogHeader>
-                <StaffForm key="create" initialValues={defaultForm} onSubmit={handleCreate} submitLabel="Ajouter" isPending={createStaff.isPending} />
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsCreateOpen(true)}><UserPlus className="h-4 w-4 mr-2" />Ajouter un membre</Button>
           </div>
         </div>
 
@@ -153,14 +143,109 @@ const StaffPage = () => {
         <StaffPerformance />
       </div>
 
-      {/* Edit Dialog — key={id} remounts form only when switching staff */}
-      <Dialog open={!!editingStaff} onOpenChange={handleEditDialogChange}>
+      {/* Create Dialog — always mounted, controlled via open prop */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nouveau membre</DialogTitle>
+            <DialogDescription>Ajoutez un membre à votre équipe</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateSubmit}>
+            <div className="space-y-4">
+              <div>
+                <Label>Nom *</Label>
+                <Input name="name" placeholder="Marie Dupont" required />
+              </div>
+              <div>
+                <Label>Rôle</Label>
+                <select name="role" defaultValue="coiffeur" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  {roleOptions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <Label>Couleur</Label>
+                <div className="flex gap-2 mt-1">
+                  {colorOptions.map((c, i) => (
+                    <label key={c} className="cursor-pointer">
+                      <input type="radio" name="color" value={c} defaultChecked={i === 0} className="sr-only peer" />
+                      <div className="w-8 h-8 rounded-full border-2 border-transparent peer-checked:border-foreground peer-checked:scale-110 transition-transform" style={{ backgroundColor: c }} />
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Téléphone</Label>
+                  <Input name="phone" placeholder="0612345678" />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input name="email" type="email" placeholder="marie@salon.com" />
+                </div>
+              </div>
+              <div>
+                <Label>Commission (%)</Label>
+                <Input name="commission" type="number" min={0} max={100} defaultValue="0" />
+              </div>
+              <Button type="submit" className="w-full" disabled={createStaff.isPending}>
+                {createStaff.isPending ? 'En cours...' : 'Ajouter'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog — always mounted, controlled via open prop */}
+      <Dialog open={!!editingStaff} onOpenChange={(o) => { if (!o) setEditingStaff(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier {editingStaff?.name}</DialogTitle>
             <DialogDescription>Modifiez les informations du membre</DialogDescription>
           </DialogHeader>
-          <StaffForm key={editingStaff?.id || 'none'} initialValues={editInitialValues} onSubmit={handleEdit} submitLabel="Enregistrer" isPending={updateStaff.isPending} />
+          {editingStaff && (
+            <form key={editingStaff.id} onSubmit={handleEditSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <Label>Nom *</Label>
+                  <Input name="name" defaultValue={editingStaff.name} required />
+                </div>
+                <div>
+                  <Label>Rôle</Label>
+                  <select name="role" defaultValue={editingStaff.role} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    {roleOptions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label>Couleur</Label>
+                  <div className="flex gap-2 mt-1">
+                    {colorOptions.map(c => (
+                      <label key={c} className="cursor-pointer">
+                        <input type="radio" name="color" value={c} defaultChecked={c === editingStaff.color} className="sr-only peer" />
+                        <div className="w-8 h-8 rounded-full border-2 border-transparent peer-checked:border-foreground peer-checked:scale-110 transition-transform" style={{ backgroundColor: c }} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Téléphone</Label>
+                    <Input name="phone" defaultValue={editingStaff.phone || ''} placeholder="0612345678" />
+                  </div>
+                  <div>
+                    <Label>Email</Label>
+                    <Input name="email" type="email" defaultValue={editingStaff.email || ''} placeholder="marie@salon.com" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Commission (%)</Label>
+                  <Input name="commission" type="number" min={0} max={100} defaultValue={editingStaff.commission_rate} />
+                </div>
+                <Button type="submit" className="w-full" disabled={updateStaff.isPending}>
+                  {updateStaff.isPending ? 'En cours...' : 'Enregistrer'}
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </MainLayout>
