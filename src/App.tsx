@@ -59,6 +59,7 @@ const App = () => {
                 <Route path="/clients" element={<AuthGuard><ClientsPage /></AuthGuard>} />
                 <Route path="/equipe" element={<AuthGuard><StaffPage /></AuthGuard>} />
                 <Route path="/sms" element={<AuthGuard><SMSPage /></AuthGuard>} />
+                <Route path="/stocks" element={<AuthGuard><StocksPage /></AuthGuard>} />
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
                 <Route path="/abonnement" element={<Navigate to="/abonnements" replace />} />
