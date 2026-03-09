@@ -63,12 +63,6 @@ export default function BookingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await supabase.functions.invoke('get-salon-booking-data', {
-          body: null,
-          headers: { 'Content-Type': 'application/json' },
-          method: 'GET',
-        });
-        // Edge functions via invoke always use POST, so use fetch directly
         const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://vrawwiqeutbqqdzkhrax.supabase.co'}/functions/v1/get-salon-booking-data?salon_id=${SALON_ID}`;
         const response = await fetch(url, {
           headers: {
