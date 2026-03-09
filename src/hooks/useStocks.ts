@@ -34,6 +34,34 @@ export interface StockMovement {
   created_at: string;
 }
 
+export type StockStatus = 'ok' | 'low' | 'critical';
+
+export const getStockStatus = (current: number, min: number): StockStatus => {
+  if (current <= min) return 'critical';
+  if (current <= min * 1.2) return 'low';
+  return 'ok';
+};
+
+export const PRODUCT_CATEGORIES = [
+  { value: 'capillaire', label: 'Capillaire' },
+  { value: 'coloration', label: 'Coloration' },
+  { value: 'soin', label: 'Soin' },
+  { value: 'coiffage', label: 'Coiffage' },
+  { value: 'barbe', label: 'Barbe' },
+  { value: 'accessoire', label: 'Accessoire' },
+  { value: 'autre', label: 'Autre' },
+];
+
+export const UNIT_OPTIONS = [
+  { value: 'unité', label: 'Unité' },
+  { value: 'ml', label: 'ml' },
+  { value: 'g', label: 'g' },
+  { value: 'L', label: 'L' },
+  { value: 'flacon', label: 'Flacon' },
+  { value: 'tube', label: 'Tube' },
+  { value: 'boîte', label: 'Boîte' },
+];
+
 export const useStocks = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -44,7 +72,8 @@ export const useStocks = () => {
       const { data, error } = await supabase
         .from('products' as any)
         .select('*')
-        .order('name');
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
       if (error) throw error;
       return (data || []) as unknown as Product[];
     },
@@ -58,7 +87,7 @@ export const useStocks = () => {
         .from('stock_movements' as any)
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(200);
       if (error) throw error;
       return (data || []) as unknown as StockMovement[];
     },
@@ -108,7 +137,7 @@ export const useStocks = () => {
   });
 
   const addStockMovement = useMutation({
-    mutationFn: async (movement: { product_id: string; type: string; quantity: number; reason?: string }) => {
+    mutationFn: async (movement: { product_id: string; type: string; quantity: number; reason?: string; notes?: string }) => {
       const salonId = await getSalonId();
       const product = products.find(p => p.id === movement.product_id);
       if (!product) throw new Error('Produit introuvable');
@@ -124,14 +153,16 @@ export const useStocks = () => {
         newStock = movement.quantity;
       }
 
+      const reasonText = [movement.reason, movement.notes].filter(Boolean).join(' — ');
+
       const { error: mvError } = await supabase.from('stock_movements' as any).insert({
         salon_id: salonId,
         product_id: movement.product_id,
         type: movement.type,
-        quantity: movement.quantity,
+        quantity: movement.type === 'out' ? -movement.quantity : movement.quantity,
         previous_stock: previousStock,
         new_stock: newStock,
-        reason: movement.reason || null,
+        reason: reasonText || null,
         created_by: user!.id,
       } as any);
       if (mvError) throw mvError;
@@ -149,15 +180,32 @@ export const useStocks = () => {
     onError: (e: any) => toast({ title: 'Erreur', description: e.message, variant: 'destructive' }),
   });
 
-  const lowStockProducts = products.filter(p => p.is_active && p.current_stock <= p.min_stock);
-  const totalStockValue = products.reduce((sum, p) => sum + (p.current_stock * p.purchase_price), 0);
+  const activeProducts = products.filter(p => p.is_active);
+  const lowStockProducts = activeProducts.filter(p => getStockStatus(p.current_stock, p.min_stock) !== 'ok');
+  const criticalStockProducts = activeProducts.filter(p => getStockStatus(p.current_stock, p.min_stock) === 'critical');
+  const totalStockValue = activeProducts.reduce((sum, p) => sum + (p.current_stock * p.purchase_price), 0);
+  const totalSellValue = activeProducts.reduce((sum, p) => sum + (p.current_stock * p.sell_price), 0);
+
+  // Category stats
+  const categoryStats = PRODUCT_CATEGORIES.map(cat => {
+    const catProducts = activeProducts.filter(p => p.category === cat.value);
+    return {
+      category: cat.label,
+      value: cat.value,
+      count: catProducts.length,
+      totalValue: catProducts.reduce((sum, p) => sum + (p.current_stock * p.purchase_price), 0),
+    };
+  }).filter(c => c.count > 0);
 
   return {
-    products: products.filter(p => p.is_active),
+    products: activeProducts,
     allProducts: products,
     movements,
     lowStockProducts,
+    criticalStockProducts,
     totalStockValue,
+    totalSellValue,
+    categoryStats,
     isLoading,
     movementsLoading,
     createProduct,
