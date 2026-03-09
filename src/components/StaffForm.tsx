@@ -92,4 +92,4 @@ const StaffForm = ({ initialValues, onSubmit, submitLabel, isPending }: StaffFor
   );
 };
 
-export default StaffForm;
+export default memo(StaffForm);

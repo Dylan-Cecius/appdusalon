@@ -41,7 +41,7 @@ const StaffPage = () => {
     };
   }, [editingStaff]);
 
-  const handleCreate = async (data: StaffFormData) => {
+  const handleCreate = useCallback(async (data: StaffFormData) => {
     if (!data.name.trim()) return;
     await createStaff.mutateAsync({
       name: data.name, role: data.role, color: data.color,
@@ -49,9 +49,9 @@ const StaffPage = () => {
       commission_rate: data.commission_rate, is_active: true,
     });
     setIsCreateOpen(false);
-  };
+  }, [createStaff]);
 
-  const handleEdit = async (data: StaffFormData) => {
+  const handleEdit = useCallback(async (data: StaffFormData) => {
     if (!editingStaff) return;
     await updateStaff.mutateAsync({
       id: editingStaff.id,
@@ -62,7 +62,7 @@ const StaffPage = () => {
       },
     });
     setEditingStaff(null);
-  };
+  }, [editingStaff, updateStaff]);
 
   const displayedStaff = showInactive ? staff : activeStaff;
 
