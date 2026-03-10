@@ -199,7 +199,7 @@ const POSPage = () => {
 
         {/* Cart Sidebar - Desktop and Tablet */}
         {!isMobile && (
-          <div className="xl:col-span-1">
+          <div className="md:col-span-1">
             <div className="sticky top-24">
               <CartSidebar
                 items={cartItems}
