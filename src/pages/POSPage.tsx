@@ -136,9 +136,9 @@ const POSPage = () => {
         </div>
       </div>
 
-      <div className={cn("gap-4 sm:gap-6", isMobile ? "space-y-6" : "grid grid-cols-1 xl:grid-cols-3")}>
+      <div className={cn("gap-4 sm:gap-6", isMobile ? "space-y-6" : "grid grid-cols-1 md:grid-cols-3")}>
         {/* Services Section */}
-        <div className={cn(isMobile ? "space-y-4" : "xl:col-span-2 space-y-6")}>
+        <div className={cn(isMobile ? "space-y-4" : "md:col-span-2 space-y-6")}>
           {servicesLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
