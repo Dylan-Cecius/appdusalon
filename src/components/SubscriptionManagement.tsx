@@ -140,7 +140,7 @@ const SubscriptionManagement = () => {
           </Card>
 
           {/* Plans Cards */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             {plans.map((plan) => {
               const isCurrentPlan = subscription_tier === plan.id;
               
