@@ -101,14 +101,18 @@ const Dashboard = () => {
   // --- Pie: appointment statuses this month ---
   const statusData = useMemo(() => {
     const all = appointments.filter(a => new Date(a.startTime) >= startOfMonth);
+    if (all.length === 0) return [];
     const completed = all.filter(a => a.status === 'completed').length;
     const pending = all.filter(a => a.status === 'scheduled').length;
     const cancelled = all.filter(a => a.status === 'cancelled').length;
-    return [
+    const result = [
       { name: 'Complétés', value: completed },
       { name: 'En attente', value: pending },
       { name: 'Annulés', value: cancelled },
     ].filter(d => d.value > 0);
+    // If total values sum to 0, return empty
+    if (result.reduce((s, d) => s + d.value, 0) === 0) return [];
+    return result;
   }, [appointments]);
 
   // --- Upcoming appointments ---
@@ -280,19 +284,19 @@ const Dashboard = () => {
                       <Pie
                         data={statusData}
                         cx="50%"
-                        cy="45%"
-                        innerRadius={50}
-                        outerRadius={80}
+                        cy="42%"
+                        innerRadius={45}
+                        outerRadius={75}
                         paddingAngle={4}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                         labelLine={false}
                       >
                         {statusData.map((_, idx) => (
                           <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
