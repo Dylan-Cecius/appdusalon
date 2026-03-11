@@ -184,12 +184,13 @@ const ProAgenda = () => {
     const apt = active.data.current?.appointment;
     if (!apt) return;
 
-    const parts = over.id.toString().split('-');
-    if (parts[0] !== 'slot' || parts.length < 4) return;
+    // Read barberId, hour, minute from droppable data
+    const dropData = over.data.current;
+    if (!dropData?.barberId) return;
 
-    const newBarberId = parts[1];
-    const newHour = parseInt(parts[2]);
-    const newMinute = parseInt(parts[3]);
+    const newBarberId = dropData.barberId as string;
+    const newHour = dropData.hour as number;
+    const newMinute = dropData.minute as number;
 
     const oldStart = new Date(apt.startTime);
     const oldEnd = new Date(apt.endTime);
@@ -207,6 +208,7 @@ const ProAgenda = () => {
         endTime: newEnd,
         barberId: newBarberId,
       });
+      await refreshAppointments();
       toast({ title: "RDV déplacé", description: `${apt.clientName} → ${format(newStart, 'HH:mm')}` });
     } catch {
       toast({ title: "Erreur", description: "Impossible de déplacer le rendez-vous", variant: "destructive" });
