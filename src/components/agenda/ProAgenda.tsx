@@ -285,7 +285,7 @@ const ProAgenda = () => {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full bg-background overflow-hidden">
+      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'hsl(222 30% 12%)' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
