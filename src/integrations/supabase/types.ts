@@ -938,6 +938,7 @@ export type Database = {
           color: string
           commission_rate: number | null
           created_at: string | null
+          daily_schedules: Json | null
           email: string | null
           end_time: string
           id: string
@@ -953,6 +954,7 @@ export type Database = {
           color?: string
           commission_rate?: number | null
           created_at?: string | null
+          daily_schedules?: Json | null
           email?: string | null
           end_time?: string
           id?: string
@@ -968,6 +970,7 @@ export type Database = {
           color?: string
           commission_rate?: number | null
           created_at?: string | null
+          daily_schedules?: Json | null
           email?: string | null
           end_time?: string
           id?: string

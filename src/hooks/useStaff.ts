@@ -3,6 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
+export interface DaySchedule {
+  start: string;
+  end: string;
+}
+
+export type DailySchedules = Record<string, DaySchedule>;
+
+const DEFAULT_DAILY_SCHEDULES: DailySchedules = {
+  Monday: { start: '09:00', end: '19:00' },
+  Tuesday: { start: '09:00', end: '19:00' },
+  Wednesday: { start: '09:00', end: '19:00' },
+  Thursday: { start: '09:00', end: '19:00' },
+  Friday: { start: '09:00', end: '19:00' },
+  Saturday: { start: '09:00', end: '19:00' },
+};
+
 export interface Staff {
   id: string;
   salon_id: string;
@@ -16,8 +32,11 @@ export interface Staff {
   start_time: string;
   end_time: string;
   working_days: string[];
+  daily_schedules: DailySchedules;
   created_at: string;
 }
+
+export const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export const useStaff = () => {
   const { user } = useAuth();
@@ -32,12 +51,17 @@ export const useStaff = () => {
         .select('*')
         .order('name');
       if (error) throw error;
-      return (data as any[]).map((s: any) => ({
-        ...s,
-        start_time: s.start_time || '09:00',
-        end_time: s.end_time || '19:00',
-        working_days: s.working_days || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-      })) as Staff[];
+      return (data as any[]).map((s: any) => {
+        const ds: DailySchedules = s.daily_schedules || DEFAULT_DAILY_SCHEDULES;
+        const workingDays = Object.keys(ds);
+        return {
+          ...s,
+          daily_schedules: ds,
+          working_days: workingDays,
+          start_time: s.start_time || '09:00',
+          end_time: s.end_time || '19:00',
+        };
+      }) as Staff[];
     },
     enabled: !!user,
   });
