@@ -281,7 +281,6 @@ const Auth = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center">
-              <img src={logoImg} alt="L'app du salon" className="h-32 sm:h-40 w-auto mb-4" />
               <p className="text-muted-foreground text-center text-sm sm:text-base">
                 {isForgotPassword 
                   ? 'Réinitialisez votre mot de passe' 
