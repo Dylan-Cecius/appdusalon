@@ -7,36 +7,41 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const url = new URL(req.url);
+    const salonOwnerId = url.searchParams.get('salonOwnerId');
+
+    if (!salonOwnerId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameter: salonOwnerId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get active barbers
     const { data: barbers, error } = await supabase
       .from('barbers')
       .select('id, name, working_days, start_time, end_time, color')
       .eq('is_active', true)
+      .eq('user_id', salonOwnerId)
       .order('name');
 
     if (error) {
       console.error('Error fetching barbers:', error);
       return new Response(
         JSON.stringify({ error: 'Failed to fetch barbers' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Format barbers data for external use
     const formattedBarbers = barbers?.map(barber => ({
       id: barber.id,
       name: barber.name,
@@ -49,22 +54,15 @@ serve(async (req) => {
     })) || [];
 
     return new Response(
-      JSON.stringify({ 
-        barbers: formattedBarbers
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ barbers: formattedBarbers }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
