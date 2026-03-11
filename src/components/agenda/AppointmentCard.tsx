@@ -94,7 +94,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
               </div>
             )}
             {!appointment.isPaid && heightPx >= 75 && (
-              <div className="text-[10px] font-semibold text-orange-500 mt-1">Non payé</div>
+              <div className="text-[10px] font-semibold text-destructive mt-1">Non payé</div>
             )}
           </>
         )}
@@ -114,7 +114,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
           <div className="text-xs">{format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}</div>
           <div className="text-xs font-semibold">{appointment.totalPrice}€</div>
           {appointment.notes && <div className="text-xs italic">{appointment.notes}</div>}
-          {!appointment.isPaid && <div className="text-xs font-bold text-orange-500">Non payé</div>}
+          {!appointment.isPaid && <div className="text-xs font-bold text-destructive">Non payé</div>}
         </div>
       </TooltipContent>
     </Tooltip>
