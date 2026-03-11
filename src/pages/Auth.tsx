@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
-import logoImg from '@/assets/logo.png';
+import logoImg from '@/assets/logo-auth.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
@@ -281,6 +281,7 @@ const Auth = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center">
+              <img src={logoImg} alt="L'app du salon" className="h-32 sm:h-40 w-auto mb-4" />
               <p className="text-muted-foreground text-center text-sm sm:text-base">
                 {isForgotPassword 
                   ? 'Réinitialisez votre mot de passe' 
