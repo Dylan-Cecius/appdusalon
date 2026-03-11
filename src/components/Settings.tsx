@@ -816,8 +816,7 @@ const Settings = () => {
       {/* Gestion des produits */}
       <ProductManagement />
       
-      {/* Gestion des employés (admin only) */}
-      {permissions.isAdmin && <EmployeeManagement />}
+      
 
       {/* Double authentification (admin only) */}
       {permissions.isAdmin && <TwoFactorSettings />}

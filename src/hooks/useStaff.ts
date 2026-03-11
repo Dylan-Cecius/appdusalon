@@ -13,6 +13,9 @@ export interface Staff {
   email: string | null;
   commission_rate: number;
   is_active: boolean;
+  start_time: string;
+  end_time: string;
+  working_days: string[];
   created_at: string;
 }
 
@@ -29,7 +32,12 @@ export const useStaff = () => {
         .select('*')
         .order('name');
       if (error) throw error;
-      return (data as any[]) as Staff[];
+      return (data as any[]).map((s: any) => ({
+        ...s,
+        start_time: s.start_time || '09:00',
+        end_time: s.end_time || '19:00',
+        working_days: s.working_days || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+      })) as Staff[];
     },
     enabled: !!user,
   });
