@@ -51,8 +51,8 @@ serve(async (req) => {
 
     // Define subscription plans
     const plans = {
-      starter: { name: "Starter", price: 1900, priceId: "price_starter" }, // 19€
-      pro: { name: "Pro", price: 3900, priceId: "price_pro" }, // 39€
+      starter: { name: "Starter", price: 3900, priceId: "price_starter" }, // 39€
+      pro: { name: "Pro", price: 9900, priceId: "price_pro" }, // 99€
       enterprise: { name: "Enterprise", price: 7900, priceId: "price_enterprise" } // 79€
     };
 

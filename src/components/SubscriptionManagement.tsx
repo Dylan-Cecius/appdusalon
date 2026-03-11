@@ -28,7 +28,7 @@ const SubscriptionManagement = () => {
     {
       id: 'starter',
       name: 'Starter',
-      price: '19€',
+      price: '39€',
       icon: <Crown className="h-6 w-6" />,
       features: [
         '1 salon',
@@ -41,7 +41,7 @@ const SubscriptionManagement = () => {
     {
       id: 'pro',
       name: 'Pro',
-      price: '39€',
+      price: '99€',
       icon: <Zap className="h-6 w-6" />,
       features: [
         'Multi-salons',
