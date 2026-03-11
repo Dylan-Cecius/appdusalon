@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import SecurityAlert from '@/components/SecurityAlert';
-import logoImg from '@/assets/logo.png';
+import logoImg from '@/assets/logo-auth.png';
 
 interface MainLayoutProps {
   children: React.ReactNode;
