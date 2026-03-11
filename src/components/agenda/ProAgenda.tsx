@@ -28,11 +28,11 @@ const SLOT_HEIGHT = 28; // px per 15-min slot — bigger for readability
 const TIME_COL_WIDTH = 56;
 
 // Droppable slot component
-const DroppableSlot = ({ id, hour, minute, isBreak, onClick }: {
-  id: string; hour: number; minute: number; isBreak: boolean;
+const DroppableSlot = ({ id, barberId, hour, minute, isBreak, onClick }: {
+  id: string; barberId: string; hour: number; minute: number; isBreak: boolean;
   onClick: () => void;
 }) => {
-  const { isOver, setNodeRef } = useDroppable({ id, data: { hour, minute } });
+  const { isOver, setNodeRef } = useDroppable({ id, data: { barberId, hour, minute } });
   return (
     <div
       ref={setNodeRef}
