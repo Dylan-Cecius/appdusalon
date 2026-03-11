@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Crown, Check, Users, RefreshCw, Gift, Sparkles } from 'lucide-react';
+import { Crown, Check, Users, RefreshCw, Gift, Sparkles, X } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
