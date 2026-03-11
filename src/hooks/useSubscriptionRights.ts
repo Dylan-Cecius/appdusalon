@@ -2,15 +2,11 @@ import { useMemo } from 'react';
 import { useSubscription } from './useSubscription';
 import { useAuth } from './useAuth';
 
-// Définition des droits par type d'abonnement
 export interface SubscriptionRights {
-  // Limites numériques
   maxBarbers: number;
   maxAppointmentsPerMonth: number;
   maxTransactionsPerMonth: number;
   maxServicesPerBarber: number;
-  
-  // Fonctionnalités activées
   canAccessAdvancedStats: boolean;
   canExportReports: boolean;
   canSendEmails: boolean;
@@ -20,31 +16,29 @@ export interface SubscriptionRights {
   canAccessMultiSalon: boolean;
   canAccessAPI: boolean;
   canAccessWhiteLabel: boolean;
-  
-  // Support et formation
   supportLevel: 'community' | 'email' | 'priority' | 'dedicated';
   hasCustomTraining: boolean;
-  
-  // Intégrations
   canUseThirdPartyIntegrations: boolean;
   canUseAdvancedBookingFeatures: boolean;
-  
-  // Branding
   canRemoveBranding: boolean;
   canCustomizeDomain: boolean;
+  canAccessFullClientNotes: boolean;
+  canAccessOnlineBooking: boolean;
+  canAccessTargetedMarketing: boolean;
+  canAccessBasicStats: boolean;
 }
 
-// Configuration des droits par type d'abonnement
 const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
-  // Utilisateur non connecté ou sans abonnement
+  // Plan Gratuit (0€/mois)
   'none': {
     maxBarbers: 1,
     maxAppointmentsPerMonth: 50,
     maxTransactionsPerMonth: 50,
     maxServicesPerBarber: 5,
     canAccessAdvancedStats: false,
+    canAccessBasicStats: false,
     canExportReports: false,
-    canSendEmails: false,
+    canSendEmails: true, // Notifications auto basiques
     canManageInventory: false,
     canAccessCustomerPortal: false,
     canSetCustomPricing: false,
@@ -57,17 +51,21 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canUseAdvancedBookingFeatures: false,
     canRemoveBranding: false,
     canCustomizeDomain: false,
+    canAccessFullClientNotes: false,
+    canAccessOnlineBooking: false,
+    canAccessTargetedMarketing: false,
   },
 
-  // Abonnement Basic (7€/mois)
-  'Basic': {
-    maxBarbers: 2,
-    maxAppointmentsPerMonth: 200,
-    maxTransactionsPerMonth: 200,
-    maxServicesPerBarber: 10,
-    canAccessAdvancedStats: true,
-    canExportReports: true,
-    canSendEmails: false,
+  // Plan Solo (19€/mois)
+  'Solo': {
+    maxBarbers: 1,
+    maxAppointmentsPerMonth: -1, // Illimité
+    maxTransactionsPerMonth: -1,
+    maxServicesPerBarber: -1,
+    canAccessAdvancedStats: false,
+    canAccessBasicStats: true,
+    canExportReports: false,
+    canSendEmails: true,
     canManageInventory: false,
     canAccessCustomerPortal: false,
     canSetCustomPricing: false,
@@ -80,21 +78,25 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canUseAdvancedBookingFeatures: true,
     canRemoveBranding: false,
     canCustomizeDomain: false,
+    canAccessFullClientNotes: true,
+    canAccessOnlineBooking: true,
+    canAccessTargetedMarketing: false,
   },
 
-  // Abonnement Premium (15€/mois)
-  'Premium': {
+  // Plan Équipe (59€/mois)
+  'Equipe': {
     maxBarbers: 5,
-    maxAppointmentsPerMonth: 1000,
-    maxTransactionsPerMonth: 1000,
-    maxServicesPerBarber: 25,
+    maxAppointmentsPerMonth: -1,
+    maxTransactionsPerMonth: -1,
+    maxServicesPerBarber: -1,
     canAccessAdvancedStats: true,
+    canAccessBasicStats: true,
     canExportReports: true,
     canSendEmails: true,
     canManageInventory: true,
     canAccessCustomerPortal: true,
     canSetCustomPricing: true,
-    canAccessMultiSalon: false,
+    canAccessMultiSalon: true,
     canAccessAPI: false,
     canAccessWhiteLabel: false,
     supportLevel: 'priority',
@@ -103,38 +105,19 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canUseAdvancedBookingFeatures: true,
     canRemoveBranding: true,
     canCustomizeDomain: false,
+    canAccessFullClientNotes: true,
+    canAccessOnlineBooking: true,
+    canAccessTargetedMarketing: true,
   },
 
-  // Abonnement Enterprise (39€/mois)
-  'Enterprise': {
-    maxBarbers: -1, // Illimité
-    maxAppointmentsPerMonth: -1, // Illimité
-    maxTransactionsPerMonth: -1, // Illimité
-    maxServicesPerBarber: -1, // Illimité
-    canAccessAdvancedStats: true,
-    canExportReports: true,
-    canSendEmails: true,
-    canManageInventory: true,
-    canAccessCustomerPortal: true,
-    canSetCustomPricing: true,
-    canAccessMultiSalon: true,
-    canAccessAPI: true,
-    canAccessWhiteLabel: false,
-    supportLevel: 'dedicated',
-    hasCustomTraining: true,
-    canUseThirdPartyIntegrations: true,
-    canUseAdvancedBookingFeatures: true,
-    canRemoveBranding: true,
-    canCustomizeDomain: true,
-  },
-
-  // Abonnement à vie (468€ une fois)
+  // Accès à vie (legacy / promo)
   'Lifetime': {
-    maxBarbers: -1, // Illimité
-    maxAppointmentsPerMonth: -1, // Illimité
-    maxTransactionsPerMonth: -1, // Illimité
-    maxServicesPerBarber: -1, // Illimité
+    maxBarbers: -1,
+    maxAppointmentsPerMonth: -1,
+    maxTransactionsPerMonth: -1,
+    maxServicesPerBarber: -1,
     canAccessAdvancedStats: true,
+    canAccessBasicStats: true,
     canExportReports: true,
     canSendEmails: true,
     canManageInventory: true,
@@ -149,6 +132,9 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canUseAdvancedBookingFeatures: true,
     canRemoveBranding: true,
     canCustomizeDomain: true,
+    canAccessFullClientNotes: true,
+    canAccessOnlineBooking: true,
+    canAccessTargetedMarketing: true,
   },
 };
 
@@ -159,23 +145,12 @@ export const useSubscriptionRights = () => {
   const isDemo = user?.email === 'demo@appdusalon.com';
 
   const rights = useMemo((): SubscriptionRights => {
-    if (!user) {
-      return SUBSCRIPTION_RIGHTS['none'];
-    }
-
-    // En mode démo, débloquer toutes les fonctionnalités (Enterprise)
-    if (isDemo) {
-      return SUBSCRIPTION_RIGHTS['Enterprise'];
-    }
-
-    if (!subscribed || !subscription_tier) {
-      return SUBSCRIPTION_RIGHTS['none'];
-    }
-
+    if (!user) return SUBSCRIPTION_RIGHTS['none'];
+    if (isDemo) return SUBSCRIPTION_RIGHTS['Equipe'];
+    if (!subscribed || !subscription_tier) return SUBSCRIPTION_RIGHTS['none'];
     return SUBSCRIPTION_RIGHTS[subscription_tier] || SUBSCRIPTION_RIGHTS['none'];
   }, [user, subscribed, subscription_tier, isDemo]);
 
-  // Fonctions utilitaires pour vérifier les droits
   const canAccess = (feature: keyof SubscriptionRights) => {
     return rights[feature] as boolean;
   };
@@ -196,9 +171,7 @@ export const useSubscriptionRights = () => {
     return Math.max(0, limit - currentCount);
   };
 
-  const getSupportLevel = () => {
-    return rights.supportLevel;
-  };
+  const getSupportLevel = () => rights.supportLevel;
 
   return {
     rights,

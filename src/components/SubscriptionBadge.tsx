@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Crown, Zap, Building2 } from 'lucide-react';
+import { Crown, Sparkles, Users } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useSalonDemo } from '@/hooks/useSalonDemo';
 
@@ -20,10 +20,7 @@ const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
     );
   }
 
-  // Masquer le badge "Gratuit" et le bouton "Upgrade" en mode démo
-  if (!subscribed && isDemo) {
-    return null;
-  }
+  if (!subscribed && isDemo) return null;
 
   if (!subscribed) {
     return (
@@ -35,7 +32,7 @@ const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
           <Button
             size="sm"
             onClick={onUpgrade}
-            className="bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 text-white"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90 text-white"
           >
             <Crown className="h-3 w-3 mr-1" />
             Upgrade
@@ -47,28 +44,28 @@ const SubscriptionBadge = ({ onUpgrade }: SubscriptionBadgeProps) => {
 
   const getPlanConfig = () => {
     switch (subscription_tier) {
-      case 'starter':
+      case 'Solo':
         return {
-          icon: <Crown className="h-3 w-3" />,
-          label: 'Starter',
+          icon: <Sparkles className="h-3 w-3" />,
+          label: 'Solo',
           color: 'bg-gradient-to-r from-blue-500 to-blue-600'
         };
-      case 'pro':
+      case 'Equipe':
         return {
-          icon: <Zap className="h-3 w-3" />,
-          label: 'Pro',
+          icon: <Users className="h-3 w-3" />,
+          label: 'Équipe',
           color: 'bg-gradient-to-r from-purple-500 to-purple-600'
         };
-      case 'enterprise':
+      case 'Lifetime':
         return {
-          icon: <Building2 className="h-3 w-3" />,
-          label: 'Enterprise',
+          icon: <Crown className="h-3 w-3" />,
+          label: 'Lifetime',
           color: 'bg-gradient-to-r from-yellow-500 to-yellow-600'
         };
       default:
         return {
-          icon: <Crown className="h-3 w-3" />,
-          label: 'Pro',
+          icon: <Sparkles className="h-3 w-3" />,
+          label: subscription_tier || 'Pro',
           color: 'bg-gradient-to-r from-green-500 to-green-600'
         };
     }
