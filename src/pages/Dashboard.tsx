@@ -175,12 +175,38 @@ const Dashboard = () => {
 
         {/* 4 KPI Cards */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-          {/* CA du mois */}
+          {/* CA du jour */}
           <Card className="border-2 hover:border-accent/50 transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du mois</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-success/10">
                 <DollarSign className="h-4 w-4 text-pos-success" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-5 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{stats.todayRevenue.toFixed(0)} €</div>
+            </CardContent>
+          </Card>
+
+          {/* CA Hebdomadaire */}
+          <Card className="border-2 hover:border-accent/50 transition-all">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Hebdo</CardTitle>
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-5 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{stats.weeklyRevenue.toFixed(0)} €</div>
+            </CardContent>
+          </Card>
+
+          {/* CA Mensuel */}
+          <Card className="border-2 hover:border-accent/50 transition-all">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Mensuel</CardTitle>
+              <div className="p-1.5 rounded-lg bg-accent/10">
+                <BarChart3 className="h-4 w-4 text-accent-foreground" />
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
@@ -189,45 +215,17 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* RDV ce mois */}
+          {/* Clients encaissés aujourd'hui */}
           <Card className="border-2 hover:border-accent/50 transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">RDV ce mois</CardTitle>
-              <div className="p-1.5 rounded-lg bg-primary/10">
-                <Calendar className="h-4 w-4 text-primary" />
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{monthAppointments.length}</div>
-              <Variation current={monthAppointments.length} previous={prevMonthAppointments.length} />
-            </CardContent>
-          </Card>
-
-          {/* Nouveaux clients */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Nouveaux clients</CardTitle>
-              <div className="p-1.5 rounded-lg bg-accent/10">
-                <Users className="h-4 w-4 text-accent-foreground" />
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{newClientsThisMonth}</div>
-              <Variation current={newClientsThisMonth} previous={newClientsPrevMonth} />
-            </CardContent>
-          </Card>
-
-          {/* Taux d'occupation */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Taux d'occupation</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Clients du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-card/10">
-                <Target className="h-4 w-4 text-pos-card" />
+                <Users className="h-4 w-4 text-pos-card" />
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{occupancyRate}%</div>
-              <Variation current={occupancyRate} previous={prevOccupancyRate} />
+              <div className="text-lg sm:text-2xl font-bold">{todayDistinctClients}</div>
+              <Variation current={todayDistinctClients} previous={yesterdayDistinctClients} suffix="vs hier" />
             </CardContent>
           </Card>
         </div>
