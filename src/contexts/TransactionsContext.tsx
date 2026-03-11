@@ -147,17 +147,20 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { data: products } = await supabase
           .from('products' as any)
-          .select('id, name, current_stock')
+          .select('id, name, current_stock, min_stock')
           .eq('salon_id', salonIdData)
           .eq('is_active', true);
 
         if (products && products.length > 0) {
+          const lowStockAlerts: string[] = [];
+
           for (const item of transaction.items) {
             const matchingProduct = (products as any[]).find(
               (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
             );
             if (matchingProduct) {
-              const newStock = Math.max(0, matchingProduct.current_stock - (item.quantity || 1));
+              const qty = item.quantity || 1;
+              const newStock = Math.max(0, matchingProduct.current_stock - qty);
               await supabase.from('products' as any)
                 .update({ current_stock: newStock, updated_at: new Date().toISOString() } as any)
                 .eq('id', matchingProduct.id);
@@ -166,13 +169,26 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
                 salon_id: salonIdData,
                 product_id: matchingProduct.id,
                 type: 'out',
-                quantity: -(item.quantity || 1),
+                quantity: -qty,
                 previous_stock: matchingProduct.current_stock,
                 new_stock: newStock,
                 reason: 'Vente POS automatique',
                 created_by: user.id,
               } as any);
+
+              // Alerte stock bas
+              if (newStock <= matchingProduct.min_stock) {
+                lowStockAlerts.push(`${matchingProduct.name} (${newStock} restant${newStock > 1 ? 's' : ''})`);
+              }
             }
+          }
+
+          if (lowStockAlerts.length > 0) {
+            toast({
+              title: "⚠️ Stock bas",
+              description: lowStockAlerts.join(', '),
+              variant: "destructive",
+            });
           }
         }
       } catch (stockError) {
