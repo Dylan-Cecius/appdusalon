@@ -27,10 +27,12 @@ export const useSupabaseServices = () => {
     }
 
     try {
+      const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+
       const { data, error } = await supabase
         .from('services')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
         .eq('is_active', true)
         .order('display_order');
 
