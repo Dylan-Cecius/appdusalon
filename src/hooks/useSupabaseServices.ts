@@ -150,8 +150,7 @@ export const useSupabaseServices = () => {
         .from('services')
         .update({ is_active: false })
         .eq('id', id)
-        .eq('user_id', user.id)
-        .eq('is_active', true); // Sécurité supplémentaire
+        .eq('is_active', true);
 
       if (error) {
         console.error('Error deleting service:', error);
