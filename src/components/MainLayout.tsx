@@ -67,7 +67,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 </span>
               )}
               <div>
-                <img src={logoImg} alt="L'app du salon" className="h-12 sm:h-14 w-auto" />
+                <img src={logoImg} alt="L'app du salon" className="h-24 sm:h-28 w-auto" />
                 {!isMobile && (
                   <p className="text-sm text-muted-foreground">
                     {new Date().toLocaleDateString('fr-FR', {
