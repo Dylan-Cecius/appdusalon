@@ -24,7 +24,7 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 48;
+const SLOT_HEIGHT = 72;
 const TIME_COL_WIDTH = 60;
 
 // Map JS getDay (0=Sun) to day names
