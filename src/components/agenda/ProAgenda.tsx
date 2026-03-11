@@ -124,6 +124,13 @@ const ProAgenda = () => {
     return isTimeOpen(checkDate);
   }, [hasOpeningHours, selectedDate, isTimeOpen]);
 
+  // Set default barber
+  useEffect(() => {
+    if (activeBarbers.length > 0 && !selectedBarberId) {
+      setSelectedBarberId(activeBarbers[0].id);
+    }
+  }, [activeBarbers, selectedBarberId]);
+
   // Mobile: list view per barber
   if (isMobile) {
     return (
