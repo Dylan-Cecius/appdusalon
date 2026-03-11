@@ -34,23 +34,23 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
   });
 
   const serviceName = appointment.services?.[0]?.name || '';
-  const isShort = heightPx < 40;
+  const isShort = heightPx < 44;
 
   const style: React.CSSProperties = isDragOverlay
     ? {
-        width: 160,
-        height: `${Math.max(heightPx, 20)}px`,
-        backgroundColor: `${color}30`,
-        borderLeft: `3px solid ${color}`,
+        width: 180,
+        height: `${Math.max(heightPx, 24)}px`,
+        backgroundColor: `${color}25`,
+        border: `1.5px solid ${color}40`,
         opacity: 0.95,
       }
     : {
         top: `${topPx}px`,
-        height: `${Math.max(heightPx, 20)}px`,
-        backgroundColor: `${color}20`,
-        borderLeft: `3px solid ${color}`,
+        height: `${Math.max(heightPx, 24)}px`,
+        backgroundColor: `${color}18`,
+        border: `1.5px solid ${color}30`,
         transform: CSS.Translate.toString(transform),
-        opacity: isDragging ? 0.3 : 1,
+        opacity: isDragging ? 0.25 : 1,
       };
 
   const card = (
@@ -59,13 +59,11 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       {...listeners}
       {...attributes}
       className={cn(
-        "rounded-lg cursor-grab overflow-hidden transition-shadow duration-150",
-        "shadow-sm border border-black/5",
-        !isDragOverlay && "absolute left-1 right-1",
-        isDragOverlay && "shadow-xl ring-2 ring-primary/30",
+        "rounded-lg cursor-grab overflow-hidden transition-all duration-150",
+        !isDragOverlay && "absolute left-1.5 right-1.5",
+        isDragOverlay && "shadow-xl ring-2 ring-primary/20",
         isDragging && "z-50",
-        !appointment.isPaid && "ring-1 ring-orange-400/50",
-        "hover:shadow-lg hover:z-20",
+        "hover:shadow-md hover:z-20",
         "active:cursor-grabbing"
       )}
       style={style}
@@ -75,27 +73,27 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
         onClick();
       }}
     >
-      <div className={cn("px-2 h-full flex flex-col justify-center", isShort ? "py-0" : "py-1.5")}>
+      <div className={cn("px-2.5 h-full flex flex-col justify-center", isShort ? "py-0" : "py-2")}>
         {isShort ? (
-          <div className="flex items-center gap-1 text-[10px] font-semibold text-foreground truncate">
-            <span>{format(startTime, 'HH:mm')}</span>
-            <span className="truncate">{appointment.clientName}</span>
+          <div className="flex items-center gap-1.5 text-[11px] font-medium truncate" style={{ color }}>
+            <span className="font-semibold text-foreground">{appointment.clientName}</span>
+            <span className="opacity-70">{format(startTime, 'HH:mm')}</span>
           </div>
         ) : (
           <>
-            <div className="text-xs font-bold text-foreground truncate leading-tight">
+            <div className="text-[13px] font-semibold text-foreground truncate leading-tight">
               {appointment.clientName}
             </div>
-            <div className="text-[10px] text-muted-foreground truncate leading-tight mt-0.5" style={{ color }}>
+            <div className="text-[11px] truncate leading-tight mt-0.5 opacity-80" style={{ color }}>
               {serviceName}
             </div>
-            {heightPx >= 55 && (
-              <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">
-                {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+            {heightPx >= 60 && (
+              <div className="text-[11px] text-muted-foreground leading-tight mt-1">
+                {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
               </div>
             )}
-            {!appointment.isPaid && heightPx >= 70 && (
-              <div className="text-[9px] font-bold text-orange-500 mt-0.5">NON PAYÉ</div>
+            {!appointment.isPaid && heightPx >= 75 && (
+              <div className="text-[10px] font-semibold text-orange-500 mt-1">Non payé</div>
             )}
           </>
         )}
@@ -112,7 +110,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
         <div className="space-y-1">
           <div className="font-bold">{appointment.clientName}</div>
           <div className="text-xs text-muted-foreground">{serviceName}</div>
-          <div className="text-xs">{format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}</div>
+          <div className="text-xs">{format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}</div>
           <div className="text-xs font-semibold">{appointment.totalPrice}€</div>
           {appointment.notes && <div className="text-xs italic">{appointment.notes}</div>}
           {!appointment.isPaid && <div className="text-xs font-bold text-orange-500">Non payé</div>}

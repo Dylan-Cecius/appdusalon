@@ -16,14 +16,14 @@ const AgendaHeader = ({ selectedDate, onDateChange, onAddClick }: AgendaHeaderPr
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-3 bg-card border-b border-border/50">
+    <div className="flex items-center justify-between gap-3 px-5 py-2.5 border-b border-border/30 bg-background">
       {/* Left: Navigation */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => onDateChange(subDays(selectedDate, 1))}
-          className="h-8 w-8 rounded-lg"
+          className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -32,7 +32,7 @@ const AgendaHeader = ({ selectedDate, onDateChange, onAddClick }: AgendaHeaderPr
           variant={isToday ? 'default' : 'outline'}
           onClick={() => onDateChange(new Date())}
           className={cn(
-            "h-8 px-3 text-xs font-semibold rounded-lg",
+            "h-7 px-3 text-xs font-medium rounded-full",
             isToday && "bg-primary text-primary-foreground"
           )}
         >
@@ -43,7 +43,7 @@ const AgendaHeader = ({ selectedDate, onDateChange, onAddClick }: AgendaHeaderPr
           variant="ghost"
           size="icon"
           onClick={() => onDateChange(addDays(selectedDate, 1))}
-          className="h-8 w-8 rounded-lg"
+          className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -52,7 +52,7 @@ const AgendaHeader = ({ selectedDate, onDateChange, onAddClick }: AgendaHeaderPr
       {/* Center: Date display with picker */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" className="h-8 gap-2 text-sm font-bold hover:bg-muted/50">
+          <Button variant="ghost" className="h-8 gap-2 text-sm font-semibold hover:bg-muted/50">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="capitalize">
               {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
@@ -73,7 +73,8 @@ const AgendaHeader = ({ selectedDate, onDateChange, onAddClick }: AgendaHeaderPr
       <Button
         onClick={onAddClick}
         size="sm"
-        className="h-8 rounded-lg shadow-sm font-semibold gap-1.5"
+        variant="outline"
+        className="h-8 rounded-full font-medium gap-1.5 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
       >
         <Plus className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Nouveau RDV</span>
