@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Scissors, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import logoImg from '@/assets/logo.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
@@ -274,14 +275,13 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
-          <div className="p-3 bg-accent rounded-lg mb-4">
-            {mfaRequired ? (
+          {mfaRequired ? (
+            <div className="p-3 bg-accent rounded-lg mb-4">
               <ShieldCheck className="h-8 w-8 text-accent-foreground" />
-            ) : (
-              <Scissors className="h-8 w-8 text-accent-foreground" />
-            )}
-          </div>
-          <h1 className="text-2xl font-bold text-center font-dancing">L&apos;app du salon</h1>
+            </div>
+          ) : (
+            <img src={logoImg} alt="L'app du salon" className="h-16 sm:h-20 w-auto mb-4" />
+          )}
           <p className="text-muted-foreground text-center text-sm sm:text-base">
             {mfaRequired
               ? 'Vérification en deux étapes'
