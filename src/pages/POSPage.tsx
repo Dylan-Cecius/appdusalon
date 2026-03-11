@@ -108,6 +108,20 @@ const POSPage = () => {
       cartItemsCount={cartItems.length} 
       onCartOpen={() => setIsCartOpen(true)}
     >
+      {/* Header with manage button */}
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div></div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsTransactionsOpen(true)}
+          className="gap-2"
+        >
+          <ClipboardList className="h-4 w-4" />
+          Gérer les encaissements
+        </Button>
+      </div>
+
       {/* Session Summary Bar */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
         <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-green-500/10 border border-green-500/20">
