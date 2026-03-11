@@ -38,7 +38,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessAdvancedStats: false,
     canAccessBasicStats: true,
     canExportReports: false,
-    canSendEmails: true, // Notifications auto basiques
+    canSendEmails: false,
     canManageInventory: false,
     canAccessCustomerPortal: false,
     canSetCustomPricing: false,
