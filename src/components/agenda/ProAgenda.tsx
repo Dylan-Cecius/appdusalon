@@ -37,11 +37,11 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, onCli
       ref={setNodeRef}
       className={cn(
         "transition-colors",
-        isHourStart ? "border-t border-border/30" : "",
+        isHourStart ? "border-t border-white/10" : "border-t border-white/[0.04]",
         isBreak
-          ? "bg-muted/20 cursor-not-allowed"
-          : "hover:bg-primary/[0.03] cursor-pointer",
-        isOver && !isBreak && "bg-primary/[0.06]"
+          ? "bg-black/20 cursor-not-allowed"
+          : "hover:bg-white/[0.04] cursor-pointer",
+        isOver && !isBreak && "bg-white/[0.08]"
       )}
       style={{ height: `${SLOT_HEIGHT}px` }}
       onClick={() => !isBreak && onClick()}
