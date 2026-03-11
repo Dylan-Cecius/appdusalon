@@ -6,10 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useStaff, Staff } from '@/hooks/useStaff';
+import { useStaff, Staff, DailySchedules, ALL_DAYS } from '@/hooks/useStaff';
 import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent, Clock } from 'lucide-react';
 import { StaffPerformance } from '@/components/StaffPerformance';
 
@@ -35,10 +34,14 @@ const colorOptions = [
 ];
 
 const dayLabels: Record<string, string> = {
+  Monday: 'Lundi', Tuesday: 'Mardi', Wednesday: 'Mercredi',
+  Thursday: 'Jeudi', Friday: 'Vendredi', Saturday: 'Samedi', Sunday: 'Dimanche',
+};
+
+const dayLabelsShort: Record<string, string> = {
   Monday: 'Lun', Tuesday: 'Mar', Wednesday: 'Mer',
   Thursday: 'Jeu', Friday: 'Ven', Saturday: 'Sam', Sunday: 'Dim',
 };
-const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const StaffPage = () => {
   const { staff, activeStaff, isLoading, createStaff, updateStaff, deleteStaff } = useStaff();
@@ -46,36 +49,45 @@ const StaffPage = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [scheduleStaff, setScheduleStaff] = useState<Staff | null>(null);
-
-  // Schedule editing state
-  const [schedStartTime, setSchedStartTime] = useState('09:00');
-  const [schedEndTime, setSchedEndTime] = useState('19:00');
-  const [schedDays, setSchedDays] = useState<string[]>([]);
+  const [schedules, setSchedules] = useState<DailySchedules>({});
 
   const openScheduleDialog = (s: Staff) => {
     setScheduleStaff(s);
-    setSchedStartTime(s.start_time || '09:00');
-    setSchedEndTime(s.end_time || '19:00');
-    setSchedDays(s.working_days || allDays.slice(0, 6));
+    setSchedules({ ...s.daily_schedules });
+  };
+
+  const toggleDay = (day: string) => {
+    setSchedules(prev => {
+      const copy = { ...prev };
+      if (copy[day]) {
+        delete copy[day];
+      } else {
+        copy[day] = { start: '09:00', end: '19:00' };
+      }
+      return copy;
+    });
+  };
+
+  const updateDayTime = (day: string, field: 'start' | 'end', value: string) => {
+    setSchedules(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }));
   };
 
   const handleScheduleSave = async () => {
     if (!scheduleStaff) return;
+    const workingDays = Object.keys(schedules);
     await updateStaff.mutateAsync({
       id: scheduleStaff.id,
       updates: {
-        start_time: schedStartTime,
-        end_time: schedEndTime,
-        working_days: schedDays,
-      },
+        daily_schedules: schedules,
+        working_days: workingDays,
+        start_time: workingDays.length > 0 ? schedules[workingDays[0]].start : '09:00',
+        end_time: workingDays.length > 0 ? schedules[workingDays[0]].end : '19:00',
+      } as any,
     });
     setScheduleStaff(null);
-  };
-
-  const toggleDay = (day: string) => {
-    setSchedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
   };
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -83,6 +95,8 @@ const StaffPage = () => {
     const fd = new FormData(e.currentTarget);
     const name = (fd.get('name') as string || '').trim();
     if (!name) return;
+    const defaultSchedules: DailySchedules = {};
+    ALL_DAYS.slice(0, 6).forEach(d => { defaultSchedules[d] = { start: '09:00', end: '19:00' }; });
     await createStaff.mutateAsync({
       name,
       role: fd.get('role') as string || 'coiffeur',
@@ -93,7 +107,8 @@ const StaffPage = () => {
       is_active: true,
       start_time: '09:00',
       end_time: '19:00',
-      working_days: allDays.slice(0, 6),
+      working_days: ALL_DAYS.slice(0, 6),
+      daily_schedules: defaultSchedules,
     });
     setIsCreateOpen(false);
   };
@@ -118,6 +133,19 @@ const StaffPage = () => {
   };
 
   const displayedStaff = showInactive ? staff : activeStaff;
+
+  const formatStaffScheduleSummary = (s: Staff) => {
+    const ds = s.daily_schedules;
+    const days = Object.keys(ds);
+    if (days.length === 0) return 'Aucun jour';
+    const dayNames = days.map(d => dayLabelsShort[d] || d).join(', ');
+    // Check if all days have the same hours
+    const firstStart = ds[days[0]]?.start;
+    const firstEnd = ds[days[0]]?.end;
+    const allSame = days.every(d => ds[d]?.start === firstStart && ds[d]?.end === firstEnd);
+    if (allSame) return `${firstStart} - ${firstEnd} · ${dayNames}`;
+    return dayNames;
+  };
 
   if (isLoading) return <MainLayout><div className="p-8 text-center text-muted-foreground">Chargement...</div></MainLayout>;
 
@@ -154,7 +182,7 @@ const StaffPage = () => {
                     {s.commission_rate > 0 && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Percent className="h-3 w-3" />{s.commission_rate}% commission</p>}
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                       <Clock className="h-3 w-3" />
-                      {s.start_time} - {s.end_time} · {(s.working_days || []).map(d => dayLabels[d] || d).join(', ')}
+                      {formatStaffScheduleSummary(s)}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -300,47 +328,49 @@ const StaffPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Schedule Dialog */}
+      {/* Schedule Dialog - per day configuration */}
       <Dialog open={!!scheduleStaff} onOpenChange={(o) => { if (!o) setScheduleStaff(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Horaires de {scheduleStaff?.name}</DialogTitle>
-            <DialogDescription>Configurez les jours et heures de travail</DialogDescription>
+            <DialogDescription>Configurez les heures de travail pour chaque jour</DialogDescription>
           </DialogHeader>
-          <div className="space-y-5">
-            <div>
-              <Label className="mb-2 block">Jours de travail</Label>
-              <div className="flex flex-wrap gap-2">
-                {allDays.map(day => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => toggleDay(day)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                      schedDays.includes(day)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    {dayLabels[day]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Heure de début</Label>
-                <Input type="time" value={schedStartTime} onChange={e => setSchedStartTime(e.target.value)} />
-              </div>
-              <div>
-                <Label>Heure de fin</Label>
-                <Input type="time" value={schedEndTime} onChange={e => setSchedEndTime(e.target.value)} />
-              </div>
-            </div>
-            <Button onClick={handleScheduleSave} className="w-full" disabled={updateStaff.isPending}>
-              {updateStaff.isPending ? 'En cours...' : 'Enregistrer les horaires'}
-            </Button>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            {ALL_DAYS.map(day => {
+              const isActive = !!schedules[day];
+              return (
+                <div key={day} className={`rounded-lg border p-3 transition-colors ${isActive ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/30'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="font-medium text-sm">{dayLabels[day]}</Label>
+                    <Switch checked={isActive} onCheckedChange={() => toggleDay(day)} />
+                  </div>
+                  {isActive && (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={schedules[day]?.start || '09:00'}
+                        onChange={e => updateDayTime(day, 'start', e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                      <span className="text-muted-foreground text-xs">à</span>
+                      <Input
+                        type="time"
+                        value={schedules[day]?.end || '19:00'}
+                        onChange={e => updateDayTime(day, 'end', e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  )}
+                  {!isActive && (
+                    <p className="text-xs text-muted-foreground">Repos</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
+          <Button onClick={handleScheduleSave} className="w-full" disabled={updateStaff.isPending}>
+            {updateStaff.isPending ? 'En cours...' : 'Enregistrer les horaires'}
+          </Button>
         </DialogContent>
       </Dialog>
     </MainLayout>

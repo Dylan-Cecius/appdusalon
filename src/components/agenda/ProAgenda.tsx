@@ -36,9 +36,11 @@ const jsWeekDayMap: Record<number, string> = {
 /** Check if a staff member works at a given time slot on a given date */
 const isStaffWorking = (staff: Staff, date: Date, hour: number, minute: number): boolean => {
   const dayName = jsWeekDayMap[getDay(date)];
-  if (!(staff.working_days || []).includes(dayName)) return false;
+  const ds = staff.daily_schedules;
+  if (!ds || !ds[dayName]) return false;
+  const daySchedule = ds[dayName];
   const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  return timeStr >= staff.start_time && timeStr < staff.end_time;
+  return timeStr >= daySchedule.start && timeStr < daySchedule.end;
 };
 
 const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isAbsent, onClick }: {
