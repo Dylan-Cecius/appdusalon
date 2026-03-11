@@ -34,19 +34,22 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
   });
 
   const serviceName = appointment.services?.[0]?.name || '';
-  const isShort = heightPx < 44;
+  const cardHeight = Math.max(heightPx, 40);
+  const isShort = cardHeight < 44;
 
   const style: React.CSSProperties = isDragOverlay
     ? {
         width: 180,
-        height: `${Math.max(heightPx, 24)}px`,
+        minHeight: '40px',
+        height: `${cardHeight}px`,
         backgroundColor: `${color}25`,
         border: `1.5px solid ${color}40`,
         opacity: 0.95,
       }
     : {
         top: `${topPx}px`,
-        height: `${Math.max(heightPx, 24)}px`,
+        minHeight: '40px',
+        height: `${cardHeight}px`,
         backgroundColor: `${color}18`,
         border: `1.5px solid ${color}30`,
         transform: CSS.Translate.toString(transform),
