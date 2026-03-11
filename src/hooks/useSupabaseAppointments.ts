@@ -126,12 +126,15 @@ export const useSupabaseAppointments = () => {
         return;
       }
 
+      // Get salon_id for RLS compliance
+      const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+
       // SECURITY: Use selective columns instead of select('*')
       const { data, error } = await supabase
         .from('appointments' as any)
         .insert({
           client_name: appointment.clientName,
-          client_phone: appointment.clientPhone,
+          client_phone: appointment.clientPhone || '',
           services: appointment.services as any,
           start_time: appointment.startTime.toISOString(),
           end_time: appointment.endTime.toISOString(),
@@ -141,7 +144,8 @@ export const useSupabaseAppointments = () => {
           is_paid: appointment.isPaid,
           barber_id: appointment.barberId,
           staff_id: appointment.staffId || null,
-          user_id: user.id
+          user_id: user.id,
+          salon_id: salonId
         })
         .select(`
           id,
