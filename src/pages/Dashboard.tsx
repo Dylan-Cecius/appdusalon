@@ -28,8 +28,8 @@ const CHART_COLORS = [
 
 const Dashboard = () => {
   const { stats } = useCombinedStats();
+  const { transactions } = useTransactions();
   const { appointments } = useSupabaseAppointments();
-  const { clients } = useClients();
   const { subscription_end, subscribed } = useSubscription();
 
   const now = new Date();
