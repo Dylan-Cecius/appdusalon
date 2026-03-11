@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import SecurityAlert from '@/components/SecurityAlert';
+import logoImg from '@/assets/logo.png';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -66,9 +67,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 </span>
               )}
               <div>
-                <h1 className="text-lg sm:text-xl font-semibold text-primary font-dancing">
-                  L'app du salon
-                </h1>
+                <img src={logoImg} alt="L'app du salon" className="h-8 sm:h-10 w-auto" />
                 {!isMobile && (
                   <p className="text-sm text-muted-foreground">
                     {new Date().toLocaleDateString('fr-FR', {
