@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { isSameDay, format } from 'date-fns';
+import { isSameDay, format, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import {
@@ -13,9 +13,9 @@ import {
   useDroppable,
 } from '@dnd-kit/core';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useOpeningHours } from '@/hooks/useOpeningHours';
+import { useStaff, Staff } from '@/hooks/useStaff';
 import { useIsMobile } from '@/hooks/use-mobile';
 import AppointmentModal from '../AppointmentModal';
 import EditAppointmentModal from '../EditAppointmentModal';
@@ -24,28 +24,64 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 48; // taller slots like Planity
+const SLOT_HEIGHT = 48;
 const TIME_COL_WIDTH = 60;
 
-const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, onClick }: {
-  id: string; barberId: string; hour: number; minute: number; isBreak: boolean; isHourStart: boolean;
+// Map JS getDay (0=Sun) to day names
+const jsWeekDayMap: Record<number, string> = {
+  0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
+  4: 'Thursday', 5: 'Friday', 6: 'Saturday',
+};
+
+/** Check if a staff member works at a given time slot on a given date */
+const isStaffWorking = (staff: Staff, date: Date, hour: number, minute: number): boolean => {
+  const dayName = jsWeekDayMap[getDay(date)];
+  if (!(staff.working_days || []).includes(dayName)) return false;
+  const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  return timeStr >= staff.start_time && timeStr < staff.end_time;
+};
+
+const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isAbsent, onClick }: {
+  id: string; barberId: string; hour: number; minute: number; isBreak: boolean; isHourStart: boolean; isAbsent: boolean;
   onClick: () => void;
 }) => {
   const { isOver, setNodeRef } = useDroppable({ id, data: { barberId, hour, minute } });
+  const blocked = isBreak || isAbsent;
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "transition-colors",
+        "transition-colors relative",
         isHourStart ? "border-t border-white/10" : "border-t border-white/[0.04]",
-        isBreak
-          ? "bg-black/20 cursor-not-allowed"
+        blocked
+          ? "cursor-not-allowed"
           : "hover:bg-white/[0.04] cursor-pointer",
-        isOver && !isBreak && "bg-white/[0.08]"
+        isAbsent && "bg-white/[0.02]",
+        isBreak && !isAbsent && "bg-black/20",
+        isOver && !blocked && "bg-white/[0.08]"
       )}
       style={{ height: `${SLOT_HEIGHT}px` }}
-      onClick={() => !isBreak && onClick()}
-    />
+      onClick={() => !blocked && onClick()}
+    >
+      {/* Show ABSENT label on the hour mark for absent slots */}
+      {isAbsent && isHourStart && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-[10px] font-semibold tracking-widest text-white/15 uppercase select-none">
+            ABSENT
+          </span>
+        </div>
+      )}
+      {/* Diagonal hatching for absent slots */}
+      {isAbsent && (
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 6px, white 6px, white 7px)',
+          }}
+        />
+      )}
+    </div>
   );
 };
 
@@ -60,16 +96,17 @@ const ProAgenda = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { appointments, updateAppointment, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
-  const { barbers } = useSupabaseSettings();
   const { services: dbServices } = useSupabaseServices();
-  const { isTimeOpen, getScheduleForDate, hasData: hasOpeningHours } = useOpeningHours();
+  const { getScheduleForDate, hasData: hasOpeningHours } = useOpeningHours();
+  const { activeStaff } = useStaff();
   const isMobile = useIsMobile();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  const activeBarbers = useMemo(() => barbers.filter(b => b.is_active), [barbers]);
+  // Use staff as agenda columns
+  const agendaMembers = useMemo(() => activeStaff, [activeStaff]);
 
   const categoryColors: Record<string, string> = {
     coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
@@ -144,27 +181,28 @@ const ProAgenda = () => {
     return appointments.filter(apt => isSameDay(new Date(apt.startTime), selectedDate));
   }, [appointments, selectedDate]);
 
-  const appointmentsByBarber = useMemo(() => {
+  // Map appointments by staff ID (using barberId field which stores the staff/barber id)
+  const appointmentsByMember = useMemo(() => {
     const map: Record<string, any[]> = {};
-    activeBarbers.forEach(b => { map[b.id] = []; });
+    agendaMembers.forEach(m => { map[m.id] = []; });
     dayAppointments.forEach(apt => {
       const bid = apt.barberId || '';
       if (map[bid]) map[bid].push(apt);
     });
     return map;
-  }, [dayAppointments, activeBarbers]);
+  }, [dayAppointments, agendaMembers]);
 
-  const handleSlotClick = (barberId: string, hour: number, minute: number) => {
-    setSelectedBarberId(barberId);
+  const handleSlotClick = (memberId: string, hour: number, minute: number) => {
+    setSelectedBarberId(memberId);
     setSelectedTimeSlot(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
     setIsModalOpen(true);
   };
 
   useEffect(() => {
-    if (activeBarbers.length > 0 && !selectedBarberId) {
-      setSelectedBarberId(activeBarbers[0].id);
+    if (agendaMembers.length > 0 && !selectedBarberId) {
+      setSelectedBarberId(agendaMembers[0].id);
     }
-  }, [activeBarbers, selectedBarberId]);
+  }, [agendaMembers, selectedBarberId]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const apt = event.active.data.current?.appointment;
@@ -196,6 +234,13 @@ const ProAgenda = () => {
 
     if (newStart.getTime() === oldStart.getTime() && newBarberId === apt.barberId) return;
 
+    // Check if staff works at that time
+    const targetMember = agendaMembers.find(m => m.id === newBarberId);
+    if (targetMember && !isStaffWorking(targetMember, selectedDate, newHour, newMinute)) {
+      toast({ title: "Impossible", description: `${targetMember.name} est absent à cet horaire`, variant: "destructive" });
+      return;
+    }
+
     try {
       await updateAppointment(apt.id, {
         startTime: newStart,
@@ -218,28 +263,28 @@ const ProAgenda = () => {
           onDateChange={setSelectedDate}
           onAddClick={() => {
             setSelectedTimeSlot('');
-            setSelectedBarberId(activeBarbers[0]?.id || '');
+            setSelectedBarberId(agendaMembers[0]?.id || '');
             setIsModalOpen(true);
           }}
         />
         <div className="flex gap-1 px-3 py-2 border-b border-border/20 bg-background overflow-x-auto">
-          {activeBarbers.map((barber) => (
+          {agendaMembers.map((member) => (
             <button
-              key={barber.id}
-              onClick={() => setSelectedBarberId(barber.id)}
+              key={member.id}
+              onClick={() => setSelectedBarberId(member.id)}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all",
-                selectedBarberId === barber.id
+                selectedBarberId === member.id
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              {barber.name}
+              {member.name}
             </button>
           ))}
         </div>
         <div className="flex-1 overflow-auto p-3 space-y-1.5">
-          {(appointmentsByBarber[selectedBarberId] || [])
+          {(appointmentsByMember[selectedBarberId] || [])
             .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             .map((apt: any) => {
               const color = getAppointmentColor(apt.services);
@@ -260,7 +305,7 @@ const ProAgenda = () => {
                 </div>
               );
             })}
-          {(appointmentsByBarber[selectedBarberId] || []).length === 0 && (
+          {(appointmentsByMember[selectedBarberId] || []).length === 0 && (
             <div className="text-center text-muted-foreground text-sm py-12">Aucun rendez-vous</div>
           )}
         </div>
@@ -280,8 +325,8 @@ const ProAgenda = () => {
   }
 
   // Desktop view
-  const barberCount = activeBarbers.length;
-  const colMinWidth = barberCount <= 1 ? 300 : barberCount <= 3 ? 220 : 160;
+  const memberCount = agendaMembers.length;
+  const colMinWidth = memberCount <= 1 ? 300 : memberCount <= 3 ? 220 : 160;
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -291,34 +336,43 @@ const ProAgenda = () => {
           onDateChange={setSelectedDate}
           onAddClick={() => {
             setSelectedTimeSlot('');
-            setSelectedBarberId(activeBarbers[0]?.id || '');
+            setSelectedBarberId(agendaMembers[0]?.id || '');
             setIsModalOpen(true);
           }}
         />
 
-        {/* Barber column headers */}
+        {/* Member column headers */}
         <div
           className="flex border-b border-white/10 shrink-0"
           style={{ paddingLeft: `${TIME_COL_WIDTH}px`, backgroundColor: 'hsl(222 30% 14%)' }}
         >
-          {activeBarbers.map((barber, i) => (
-            <div
-              key={barber.id}
-              className={cn(
-                "flex-1 px-3 py-2.5",
-                i > 0 && "border-l border-white/10"
-              )}
-              style={{ minWidth: `${colMinWidth}px` }}
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : '#fff' }}
-                />
-                <span className="text-sm font-medium text-white/90">{barber.name}</span>
+          {agendaMembers.map((member, i) => {
+            const dayName = jsWeekDayMap[getDay(selectedDate)];
+            const worksToday = (member.working_days || []).includes(dayName);
+            return (
+              <div
+                key={member.id}
+                className={cn(
+                  "flex-1 px-3 py-2.5",
+                  i > 0 && "border-l border-white/10"
+                )}
+                style={{ minWidth: `${colMinWidth}px` }}
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: member.color?.startsWith('#') ? member.color : '#fff' }}
+                  />
+                  <span className={cn("text-sm font-medium", worksToday ? "text-white/90" : "text-white/40")}>
+                    {member.name}
+                  </span>
+                  {!worksToday && (
+                    <span className="text-[10px] text-white/25 uppercase tracking-wider">Absent</span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Scrollable grid */}
@@ -340,9 +394,7 @@ const ProAgenda = () => {
                   style={{ height: `${SLOT_HEIGHT}px` }}
                 >
                   {label && (
-                    <span className={cn(
-                      "text-xs font-normal leading-none tabular-nums text-white/50"
-                    )}>
+                    <span className="text-xs font-normal leading-none tabular-nums text-white/50">
                       {label}
                     </span>
                   )}
@@ -350,10 +402,10 @@ const ProAgenda = () => {
               ))}
             </div>
 
-            {/* Barber columns */}
-            {activeBarbers.map((barber, i) => (
+            {/* Member columns */}
+            {agendaMembers.map((member, i) => (
               <div
-                key={barber.id}
+                key={member.id}
                 className={cn(
                   "flex-1 relative",
                   i > 0 && "border-l border-white/10"
@@ -361,21 +413,25 @@ const ProAgenda = () => {
                 style={{ minWidth: `${colMinWidth}px` }}
               >
                 {/* Droppable grid slots */}
-                {timeLabels.map(({ hour, minute, isBreak }, idx) => (
-                  <DroppableSlot
-                    key={idx}
-                    id={`slot|${barber.id}|${hour}|${minute}`}
-                    barberId={barber.id}
-                    hour={hour}
-                    minute={minute}
-                    isBreak={isBreak}
-                    isHourStart={minute === 0}
-                    onClick={() => handleSlotClick(barber.id, hour, minute)}
-                  />
-                ))}
+                {timeLabels.map(({ hour, minute, isBreak }, idx) => {
+                  const absent = !isStaffWorking(member, selectedDate, hour, minute);
+                  return (
+                    <DroppableSlot
+                      key={idx}
+                      id={`slot|${member.id}|${hour}|${minute}`}
+                      barberId={member.id}
+                      hour={hour}
+                      minute={minute}
+                      isBreak={isBreak}
+                      isHourStart={minute === 0}
+                      isAbsent={absent}
+                      onClick={() => handleSlotClick(member.id, hour, minute)}
+                    />
+                  );
+                })}
 
                 {/* Appointment cards */}
-                {(appointmentsByBarber[barber.id] || []).map((apt: any) => (
+                {(appointmentsByMember[member.id] || []).map((apt: any) => (
                   <AppointmentCard
                     key={apt.id}
                     appointment={apt}
