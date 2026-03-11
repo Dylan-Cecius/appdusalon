@@ -15,7 +15,6 @@ import { supabase } from '@/integrations/supabase/client';
 import ServiceManagement from './ServiceManagement';
 import OpeningHoursSettings from './OpeningHoursSettings';
 import ProductManagement from './ProductManagement';
-import { EmployeeManagement } from './EmployeeManagement';
 import ActivityLogViewer from './ActivityLogViewer';
 import TwoFactorSettings from './TwoFactorSettings';
 
@@ -817,8 +816,7 @@ const Settings = () => {
       {/* Gestion des produits */}
       <ProductManagement />
       
-      {/* Gestion des employés (admin only) */}
-      {permissions.isAdmin && <EmployeeManagement />}
+      
 
       {/* Double authentification (admin only) */}
       {permissions.isAdmin && <TwoFactorSettings />}

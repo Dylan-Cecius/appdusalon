@@ -939,36 +939,45 @@ export type Database = {
           commission_rate: number | null
           created_at: string | null
           email: string | null
+          end_time: string
           id: string
           is_active: boolean | null
           name: string
           phone: string | null
           role: string
           salon_id: string
+          start_time: string
+          working_days: string[] | null
         }
         Insert: {
           color?: string
           commission_rate?: number | null
           created_at?: string | null
           email?: string | null
+          end_time?: string
           id?: string
           is_active?: boolean | null
           name: string
           phone?: string | null
           role?: string
           salon_id: string
+          start_time?: string
+          working_days?: string[] | null
         }
         Update: {
           color?: string
           commission_rate?: number | null
           created_at?: string | null
           email?: string | null
+          end_time?: string
           id?: string
           is_active?: boolean | null
           name?: string
           phone?: string | null
           role?: string
           salon_id?: string
+          start_time?: string
+          working_days?: string[] | null
         }
         Relationships: [
           {
