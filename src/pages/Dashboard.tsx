@@ -284,19 +284,19 @@ const Dashboard = () => {
                       <Pie
                         data={statusData}
                         cx="50%"
-                        cy="45%"
-                        innerRadius={50}
-                        outerRadius={80}
+                        cy="42%"
+                        innerRadius={45}
+                        outerRadius={75}
                         paddingAngle={4}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                         labelLine={false}
                       >
                         {statusData.map((_, idx) => (
                           <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
