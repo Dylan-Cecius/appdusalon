@@ -449,8 +449,6 @@ const Index = () => {
       </header>
 
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        {/* Security Alert */}
-        <SecurityAlert />
         
         <Tabs value={currentView} onValueChange={handleViewChange} className="space-y-4 sm:space-y-6">
           <TabsList className={cn("grid w-full bg-card", isMobile ? "grid-cols-4 max-w-full" : "grid-cols-7 max-w-5xl")}>

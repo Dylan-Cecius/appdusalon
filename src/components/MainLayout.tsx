@@ -237,9 +237,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
       </div>
 
       {/* Contenu principal */}
-      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-screen-2xl">
-        {/* Security Alert */}
-        <SecurityAlert />
+        
         
         {children}
       </div>
