@@ -75,16 +75,17 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
     >
       <div className={cn("px-2.5 h-full flex flex-col justify-center", isShort ? "py-0" : "py-2")}>
         {isShort ? (
-          <div className="flex items-center gap-1.5 text-[11px] font-medium truncate" style={{ color }}>
-            <span className="font-semibold text-foreground">{appointment.clientName}</span>
-            <span className="opacity-70">{format(startTime, 'HH:mm')}</span>
+          <div className="flex items-center gap-1.5 text-[11px] font-medium truncate">
+            <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+            <span className="font-semibold text-foreground truncate">{appointment.clientName}</span>
+            <span className="text-muted-foreground shrink-0">{format(startTime, 'HH:mm')}</span>
           </div>
         ) : (
           <>
             <div className="text-[13px] font-semibold text-foreground truncate leading-tight">
               {appointment.clientName}
             </div>
-            <div className="text-[11px] leading-tight mt-0.5 opacity-80 line-clamp-2 break-words" style={{ color }}>
+            <div className="text-[11px] leading-tight mt-0.5 text-muted-foreground line-clamp-2 break-words">
               {serviceName}
             </div>
             {heightPx >= 60 && (
