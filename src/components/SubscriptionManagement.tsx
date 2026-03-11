@@ -31,9 +31,10 @@ const SubscriptionManagement = () => {
       price: '0€',
       icon: <Gift className="h-6 w-6" />,
       features: [
-        'Jusqu\'à 50 rendez-vous / mois',
+        'Rendez-vous illimités',
         'Notification SMS/email automatique',
         'Fiche client basique',
+        'Statistiques de base',
         'Caisse (POS) de base',
       ],
       color: 'from-gray-400 to-gray-500',
