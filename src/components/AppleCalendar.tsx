@@ -282,15 +282,7 @@ const AppleCalendar = () => {
         </div>
 
         {/* Week grid */}
-        <div className="overflow-auto max-h-[600px]" ref={(el) => {
-          // Scroll to 10h on mount
-          if (el) {
-            setTimeout(() => {
-              const hourHeight = 80; // 80px per hour
-              el.scrollTop = hourHeight * 9; // Scroll to 9h to show 10h-19h
-            }, 100);
-          }
-        }}>
+        <div className="overflow-auto max-h-[600px]">
           <div className="grid grid-cols-[60px_repeat(7,1fr)]">
             {visibleHours.map((hour) => (
               <>
