@@ -34,19 +34,22 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
   });
 
   const serviceName = appointment.services?.[0]?.name || '';
-  const isShort = heightPx < 44;
+  const cardHeight = Math.max(heightPx, 40);
+  const isShort = cardHeight < 44;
 
   const style: React.CSSProperties = isDragOverlay
     ? {
         width: 180,
-        height: `${Math.max(heightPx, 24)}px`,
+        minHeight: '40px',
+        height: `${cardHeight}px`,
         backgroundColor: `${color}25`,
         border: `1.5px solid ${color}40`,
         opacity: 0.95,
       }
     : {
         top: `${topPx}px`,
-        height: `${Math.max(heightPx, 24)}px`,
+        minHeight: '40px',
+        height: `${cardHeight}px`,
         backgroundColor: `${color}18`,
         border: `1.5px solid ${color}30`,
         transform: CSS.Translate.toString(transform),
@@ -59,7 +62,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       {...listeners}
       {...attributes}
       className={cn(
-        "rounded-lg cursor-grab overflow-visible transition-all duration-150",
+        "rounded-lg cursor-grab overflow-hidden transition-all duration-150",
         !isDragOverlay && "absolute left-1.5 right-1.5",
         isDragOverlay && "shadow-xl ring-2 ring-primary/20",
         isDragging && "z-50",
@@ -73,7 +76,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
         onClick();
       }}
     >
-      <div className={cn("px-2.5 h-full flex flex-col overflow-hidden", isShort ? "justify-start py-1" : "justify-start py-2") }>
+      <div className={cn("px-2.5 h-full flex flex-col overflow-hidden", isShort ? "justify-start py-1" : "justify-start py-1") }>
         {isShort ? (
           <div className="flex items-center gap-1.5 text-[11px] leading-normal font-medium min-w-0">
             <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -82,10 +85,10 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
           </div>
         ) : (
           <>
-            <div className="text-[13px] font-semibold text-foreground truncate leading-normal">
+            <div className="text-[13px] font-semibold text-foreground truncate leading-normal min-w-0">
               {appointment.clientName}
             </div>
-            <div className="text-[11px] leading-normal mt-0.5 text-muted-foreground line-clamp-2 break-words">
+            <div className="text-[11px] leading-normal mt-0.5 text-muted-foreground truncate min-w-0">
               {serviceName}
             </div>
             {heightPx >= 60 && (
