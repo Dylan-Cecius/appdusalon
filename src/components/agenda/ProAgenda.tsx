@@ -333,7 +333,7 @@ const ProAgenda = () => {
                 <div
                   key={idx}
                   className={cn(
-                    "flex items-start justify-end pr-3",
+                    "flex items-center justify-end pr-3",
                     minute === 0 ? "border-t border-border/30" : "",
                     isBreak && "bg-muted/10"
                   )}
@@ -341,7 +341,7 @@ const ProAgenda = () => {
                 >
                   {label && (
                     <span className={cn(
-                      "text-xs font-normal -mt-2.5 tabular-nums",
+                      "text-xs font-normal leading-none tabular-nums",
                       isBreak ? "text-muted-foreground/40" : "text-muted-foreground/70"
                     )}>
                       {label}
