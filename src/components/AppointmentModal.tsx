@@ -82,7 +82,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     setSelectedServices(prev => prev.filter(s => s.id !== serviceId));
   }, []);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation depends on appointment type
@@ -111,14 +111,9 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     appointmentStart.setHours(hours, minutes, 0, 0);
     
     const appointmentEnd = new Date(appointmentStart);
-    // Only use service duration for client display, not buffer
-    const displayDuration = selectedServices.reduce((total, service) => 
-      total + service.duration, 0
-    );
+    const displayDuration = selectedServices.reduce((total, service) => total + service.duration, 0);
     appointmentEnd.setMinutes(appointmentEnd.getMinutes() + displayDuration);
 
-    console.log('Creating appointment with barberId:', barberId, 'selectedDate:', selectedDate);
-    
     if (!barberId) {
       toast({
         title: "Erreur",
@@ -128,38 +123,43 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       return;
     }
 
-    // For non-client appointments, use the appointment type as clientName
-    const finalClientName = appointmentType === 'client' ? clientName : appointmentTypes.find(t => t.value === appointmentType)?.label || clientName;
-    
-    addAppointment({
-      clientName: finalClientName,
-      clientPhone: appointmentType === 'client' ? clientPhone : undefined,
-      services: appointmentType === 'client' ? selectedServices : [],
-      startTime: appointmentStart,
-      endTime: appointmentEnd,
-      status: 'scheduled',
-      totalPrice: appointmentType === 'client' ? totalPrice : 0,
-      notes: notes || undefined,
-      isPaid: false,
-      barberId: barberId,
-      staffId: selectedStaffId || undefined
-    });
+    const finalClientName = appointmentType === 'client'
+      ? clientName
+      : appointmentTypes.find(t => t.value === appointmentType)?.label || clientName;
 
-    toast({
-      title: "Rendez-vous créé",
-      description: `RDV pour ${finalClientName} le ${format(appointmentStart, 'dd/MM à HH:mm')}`,
-    });
+    try {
+      await addAppointment({
+        clientName: finalClientName,
+        clientPhone: appointmentType === 'client' ? clientPhone : undefined,
+        services: appointmentType === 'client' ? selectedServices : [],
+        startTime: appointmentStart,
+        endTime: appointmentEnd,
+        status: 'scheduled',
+        totalPrice: appointmentType === 'client' ? totalPrice : 0,
+        notes: notes || undefined,
+        isPaid: false,
+        barberId: barberId,
+        staffId: selectedStaffId || undefined
+      });
 
-    // Reset form
-    setAppointmentType('client');
-    setClientName('');
-    setClientPhone('');
-    setSelectedServices([]);
-    setStartTime('');
-    setNotes('');
-    setSelectedStaffId('');
-    onClose();
-  }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, barberId, totalPrice, addAppointment, onClose]);
+      toast({
+        title: "Rendez-vous créé",
+        description: `RDV pour ${finalClientName} le ${format(appointmentStart, 'dd/MM à HH:mm')}`,
+      });
+
+      // Reset form
+      setAppointmentType('client');
+      setClientName('');
+      setClientPhone('');
+      setSelectedServices([]);
+      setStartTime('');
+      setNotes('');
+      setSelectedStaffId('');
+      onClose();
+    } catch {
+      // addAppointment gère déjà le toast d'erreur
+    }
+  }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, barberId, totalPrice, addAppointment, onClose, selectedStaffId]);
 
   return (
     <>
