@@ -62,7 +62,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       {...listeners}
       {...attributes}
       className={cn(
-        "rounded-lg cursor-grab overflow-visible transition-all duration-150",
+        "rounded-lg cursor-grab overflow-hidden transition-all duration-150",
         !isDragOverlay && "absolute left-1.5 right-1.5",
         isDragOverlay && "shadow-xl ring-2 ring-primary/20",
         isDragging && "z-50",
