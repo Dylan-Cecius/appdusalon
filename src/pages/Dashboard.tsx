@@ -370,11 +370,11 @@ const Dashboard = () => {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm text-muted-foreground">Taux complétion</span>
-                  <span className="text-sm font-semibold">{occupancyRate}%</span>
+                  <span className="text-sm text-muted-foreground">Clients du jour</span>
+                  <span className="text-sm font-semibold">{todayDistinctClients}</span>
                 </div>
-                <Progress value={occupancyRate} className="h-2.5" />
-                <p className="text-[10px] text-muted-foreground mt-1">RDV complétés / total</p>
+                <Progress value={Math.min(todayDistinctClients * 10, 100)} className="h-2.5" />
+                <p className="text-[10px] text-muted-foreground mt-1">Encaissements aujourd'hui</p>
               </div>
             </CardContent>
           </Card>
