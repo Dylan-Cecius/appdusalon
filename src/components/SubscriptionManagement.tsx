@@ -122,11 +122,6 @@ const SubscriptionManagement = () => {
               </p>
             )}
             
-            {subscribed && subscription_tier === 'Enterprise' && !subscription_end && (
-              <p className="text-sm text-green-600 mb-4 font-medium">
-                🎉 Abonnement à vie actif - Aucun renouvellement requis !
-              </p>
-            )}
 
             {subscribed && (
               <Button 
