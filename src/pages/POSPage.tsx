@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Euro, Receipt, Scissors } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
@@ -9,6 +10,7 @@ import { cn } from '@/lib/utils';
 import ServiceCard from '@/components/ServiceCard';
 import CartSidebar from '@/components/CartSidebar';
 import MainLayout from '@/components/MainLayout';
+import TransactionsManager from '@/components/TransactionsManager';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 
 interface CartItem {
