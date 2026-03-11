@@ -356,7 +356,7 @@ const ProAgenda = () => {
                 key={barber.id}
                 className={cn(
                   "flex-1 relative",
-                  i > 0 && "border-l border-border/20"
+                  i > 0 && "border-l border-white/10"
                 )}
                 style={{ minWidth: `${colMinWidth}px` }}
               >
