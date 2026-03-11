@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Crown, Check, Zap, RefreshCw, Gift } from 'lucide-react';
+import { Crown, Check, Users, RefreshCw, Gift, Sparkles } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -26,32 +26,50 @@ const SubscriptionManagement = () => {
 
   const plans = [
     {
-      id: 'starter',
-      name: 'Starter',
-      price: '39€',
-      icon: <Crown className="h-6 w-6" />,
+      id: 'free',
+      name: 'Gratuit',
+      price: '0€',
+      icon: <Gift className="h-6 w-6" />,
       features: [
-        '1 salon',
-        'Fonctions de base (POS, agenda)',
-        'Stats simples',
-        'Support par email'
+        'Jusqu\'à 50 rendez-vous / mois',
+        'Notification SMS/email automatique',
+        'Fiche client basique',
+        'Caisse (POS) de base',
       ],
-      color: 'from-blue-500 to-blue-600'
+      color: 'from-gray-400 to-gray-500',
+      isFree: true,
     },
     {
-      id: 'pro',
-      name: 'Pro',
-      price: '99€',
-      icon: <Zap className="h-6 w-6" />,
+      id: 'solo',
+      name: 'Solo',
+      price: '19€',
+      priceNote: 'tarif early adopter',
+      icon: <Sparkles className="h-6 w-6" />,
       features: [
-        'Multi-salons',
-        'Rapports avancés',
-        'Email automatique',
-        'Gestion des stocks',
-        'Support prioritaire'
+        'Rendez-vous illimités',
+        'Notifications SMS/email automatiques',
+        'Fiche client complète + notes',
+        'Statistiques de base',
+        'Réservation en ligne / acompte',
+      ],
+      color: 'from-blue-500 to-blue-600',
+      popular: true,
+    },
+    {
+      id: 'equipe',
+      name: 'Équipe',
+      price: '59€',
+      icon: <Users className="h-6 w-6" />,
+      features: [
+        'Tout ce qui est inclus dans Solo +',
+        'Jusqu\'à 5 membres du personnel',
+        'Statistiques avancées par employé',
+        'Marketing ciblé',
+        'Multi-établissements',
+        'Rapports exportables',
+        'Support prioritaire',
       ],
       color: 'from-purple-500 to-purple-600',
-      popular: true
     },
   ];
 
@@ -69,6 +87,16 @@ const SubscriptionManagement = () => {
       </Card>
     );
   }
+
+  const getCurrentTierId = () => {
+    if (!subscribed) return 'free';
+    if (subscription_tier === 'Solo') return 'solo';
+    if (subscription_tier === 'Equipe') return 'equipe';
+    if (subscription_tier === 'Lifetime') return 'equipe'; // Lifetime maps to max
+    return 'free';
+  };
+
+  const currentTierId = getCurrentTierId();
 
   return (
     <div className="space-y-6">
@@ -90,7 +118,7 @@ const SubscriptionManagement = () => {
                 <div>
                   <h3 className="text-xl font-semibold text-primary">Statut de l'abonnement</h3>
                   <p className="text-sm text-muted-foreground">
-                    Gérer votre abonnement Salon Pro
+                    Gérer votre abonnement L'app du salon
                   </p>
                 </div>
               </div>
@@ -107,10 +135,10 @@ const SubscriptionManagement = () => {
 
             <div className="flex items-center gap-4 mb-4">
               <Badge variant={subscribed ? "default" : "secondary"} className="text-sm">
-                {subscribed ? "✅ Actif" : "❌ Inactif"}
+                {subscribed ? "✅ Actif" : "Plan Gratuit"}
               </Badge>
               {subscription_tier && (
-                <Badge variant="outline" className="text-sm capitalize">
+                <Badge variant="outline" className="text-sm">
                   Plan {subscription_tier}
                 </Badge>
               )}
@@ -121,7 +149,6 @@ const SubscriptionManagement = () => {
                 Renouvellement le {format(new Date(subscription_end), 'dd MMMM yyyy', { locale: fr })}
               </p>
             )}
-            
 
             {subscribed && (
               <Button 
@@ -135,9 +162,9 @@ const SubscriptionManagement = () => {
           </Card>
 
           {/* Plans Cards */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {plans.map((plan) => {
-              const isCurrentPlan = subscription_tier === plan.id;
+              const isCurrentPlan = currentTierId === plan.id;
               
               return (
                 <Card 
@@ -167,10 +194,11 @@ const SubscriptionManagement = () => {
                     <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                     <div className="text-3xl font-bold text-primary mb-1">
                       {plan.price}
-                      {plan.id !== 'enterprise' && (
-                        <span className="text-sm font-normal text-muted-foreground">/mois</span>
-                      )}
+                      <span className="text-sm font-normal text-muted-foreground">/mois</span>
                     </div>
+                    {plan.priceNote && (
+                      <p className="text-xs text-muted-foreground italic">{plan.priceNote}</p>
+                    )}
                   </div>
 
                   <ul className="space-y-3 mb-6 flex-grow">
@@ -182,13 +210,23 @@ const SubscriptionManagement = () => {
                     ))}
                   </ul>
 
-                  <Button
-                    onClick={() => createCheckoutSession(plan.id as 'starter' | 'pro' | 'enterprise')}
-                    disabled={isCurrentPlan}
-                    className={`w-full ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : `bg-gradient-to-r ${plan.color} hover:opacity-90`}`}
-                  >
-                    {isCurrentPlan ? 'Plan Actuel' : `Choisir ${plan.name}`}
-                  </Button>
+                  {plan.isFree ? (
+                    <Button
+                      disabled={isCurrentPlan}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isCurrentPlan ? 'Plan Actuel' : 'Plan Gratuit'}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => createCheckoutSession(plan.id as 'starter' | 'pro' | 'enterprise')}
+                      disabled={isCurrentPlan}
+                      className={`w-full ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : `bg-gradient-to-r ${plan.color} hover:opacity-90`}`}
+                    >
+                      {isCurrentPlan ? 'Plan Actuel' : `Choisir ${plan.name}`}
+                    </Button>
+                  )}
                 </Card>
               );
             })}
@@ -198,9 +236,9 @@ const SubscriptionManagement = () => {
             <Card className="p-6 bg-muted/50">
               <div className="text-center">
                 <Crown className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">Débloque toutes les fonctionnalités</h3>
+                <h3 className="text-lg font-semibold mb-2">Passez à un plan payant</h3>
                 <p className="text-muted-foreground mb-4">
-                  Choisissez un plan pour accéder à toutes les fonctionnalités avancées de Salon Pro
+                  Débloquez les rendez-vous illimités, les fiches clients complètes et bien plus encore.
                 </p>
               </div>
             </Card>

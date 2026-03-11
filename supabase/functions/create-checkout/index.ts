@@ -7,7 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper logging function for enhanced debugging
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -23,9 +22,7 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
-    // Create Supabase client using the anon key for user authentication
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
@@ -33,7 +30,6 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
@@ -42,18 +38,15 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get subscription plan from request body
     const { plan } = await req.json();
-    if (!plan || !['starter', 'pro', 'enterprise'].includes(plan)) {
-      throw new Error("Invalid subscription plan");
+    if (!plan || !['solo', 'equipe'].includes(plan)) {
+      throw new Error("Invalid subscription plan. Must be 'solo' or 'equipe'");
     }
     logStep("Plan validated", { plan });
 
-    // Define subscription plans
     const plans = {
-      starter: { name: "Starter", price: 3900, priceId: "price_starter" }, // 39€
-      pro: { name: "Pro", price: 9900, priceId: "price_pro" }, // 99€
-      enterprise: { name: "Enterprise", price: 7900, priceId: "price_enterprise" } // 79€
+      solo: { name: "Solo", price: 1900 },   // 19€
+      equipe: { name: "Équipe", price: 5900 }, // 59€
     };
 
     const selectedPlan = plans[plan as keyof typeof plans];
@@ -61,19 +54,15 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Check if customer already exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
-    } else {
-      logStep("No existing customer, will create one");
     }
 
     const origin = req.headers.get("origin") || "https://bc4f1f06-3375-468e-a2e9-bd0862a8c643.sandbox.lovable.dev";
     
-    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -82,7 +71,7 @@ serve(async (req) => {
           price_data: {
             currency: "eur",
             product_data: { 
-              name: `Salon Pro - Plan ${selectedPlan.name}`,
+              name: `L'app du salon - Plan ${selectedPlan.name}`,
               description: `Abonnement mensuel au plan ${selectedPlan.name}`
             },
             unit_amount: selectedPlan.price,
@@ -108,7 +97,7 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in create-checkout", { message: errorMessage });
+    logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
