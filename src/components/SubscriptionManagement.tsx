@@ -32,10 +32,12 @@ const SubscriptionManagement = () => {
       icon: <Gift className="h-6 w-6" />,
       features: [
         'Rendez-vous illimités',
-        'Notification SMS/email automatique',
         'Fiche client basique',
         'Statistiques de base',
         'Caisse (POS) de base',
+      ],
+      missingFeatures: [
+        'Notification SMS/email automatique',
       ],
       color: 'from-gray-400 to-gray-500',
       isFree: true,
