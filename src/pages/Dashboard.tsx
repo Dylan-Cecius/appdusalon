@@ -191,7 +191,7 @@ const Dashboard = () => {
           {/* CA Hebdomadaire */}
           <Card className="border-2 hover:border-accent/50 transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Hebdo</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA hebdomadaire</CardTitle>
               <div className="p-1.5 rounded-lg bg-primary/10">
                 <TrendingUp className="h-4 w-4 text-primary" />
               </div>
