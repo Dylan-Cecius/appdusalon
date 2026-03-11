@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useCombinedStats } from '@/hooks/useCombinedStats';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
-import { useClients } from '@/hooks/useClients';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
