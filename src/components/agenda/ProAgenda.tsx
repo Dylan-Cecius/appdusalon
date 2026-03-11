@@ -378,7 +378,8 @@ const ProAgenda = () => {
                 {timeLabels.map(({ hour, minute, isBreak }, idx) => (
                   <DroppableSlot
                     key={idx}
-                    id={`slot-${barber.id}-${hour}-${minute}`}
+                    id={`slot|${barber.id}|${hour}|${minute}`}
+                    barberId={barber.id}
                     hour={hour}
                     minute={minute}
                     isBreak={isBreak}
