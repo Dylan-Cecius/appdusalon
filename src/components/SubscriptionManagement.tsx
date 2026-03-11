@@ -204,11 +204,17 @@ const SubscriptionManagement = () => {
                     )}
                   </div>
 
-                  <ul className="space-y-3 mb-6 flex-grow">
+                   <ul className="space-y-3 mb-6 flex-grow">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-center gap-3">
                         <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                    {plan.missingFeatures?.map((feature, index) => (
+                      <li key={`missing-${index}`} className="flex items-center gap-3 opacity-50">
+                        <X className="h-4 w-4 text-destructive flex-shrink-0" />
+                        <span className="text-sm line-through">{feature}</span>
                       </li>
                     ))}
                   </ul>
