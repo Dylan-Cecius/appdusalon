@@ -280,8 +280,8 @@ const Auth = () => {
               <ShieldCheck className="h-8 w-8 text-accent-foreground" />
             </div>
           ) : (
-            <div className="flex flex-col items-center">
-              <img src={logoImg} alt="L'app du salon" className="h-64 sm:h-80 w-auto -mb-16 sm:-mb-20" />
+            <div className="flex flex-col items-center w-full">
+              <img src={logoImg} alt="L'app du salon" className="h-64 sm:h-80 w-auto -mb-16 sm:-mb-20 mx-auto" />
               <p className="text-muted-foreground text-center text-sm sm:text-base">
                 {isForgotPassword 
                   ? 'Réinitialisez votre mot de passe' 
