@@ -50,45 +50,27 @@ const Dashboard = () => {
     [appointments]
   );
 
-  // --- KPI: New clients this month ---
-  const newClientsThisMonth = useMemo(() =>
-    clients.filter(c => new Date(c.created_at) >= startOfMonth).length,
-    [clients]
-  );
-  const newClientsPrevMonth = useMemo(() =>
-    clients.filter(c => {
-      const d = new Date(c.created_at);
-      return d >= startOfPrevMonth && d <= endOfPrevMonth;
-    }).length,
-    [clients]
-  );
+  // --- KPI: Clients encaissés aujourd'hui (distinct clients from today's transactions) ---
+  const todayDistinctClients = useMemo(() => {
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayTx = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate()) >= startOfToday;
+    });
+    return todayTx.length;
+  }, [transactions]);
 
-  // --- KPI: Occupancy rate ---
-  const completedThisMonth = useMemo(() =>
-    appointments.filter(a => new Date(a.startTime) >= startOfMonth && a.status === 'completed').length,
-    [appointments]
-  );
-  const totalThisMonth = useMemo(() =>
-    appointments.filter(a => new Date(a.startTime) >= startOfMonth).length,
-    [appointments]
-  );
-  const occupancyRate = totalThisMonth > 0 ? Math.round((completedThisMonth / totalThisMonth) * 100) : 0;
-
-  const completedPrevMonth = useMemo(() =>
-    appointments.filter(a => {
-      const d = new Date(a.startTime);
-      return d >= startOfPrevMonth && d <= endOfPrevMonth && a.status === 'completed';
-    }).length,
-    [appointments]
-  );
-  const totalPrevMonth = useMemo(() =>
-    appointments.filter(a => {
-      const d = new Date(a.startTime);
-      return d >= startOfPrevMonth && d <= endOfPrevMonth;
-    }).length,
-    [appointments]
-  );
-  const prevOccupancyRate = totalPrevMonth > 0 ? Math.round((completedPrevMonth / totalPrevMonth) * 100) : 0;
+  // --- Previous day clients for comparison ---
+  const yesterdayDistinctClients = useMemo(() => {
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayTx = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      const txLocal = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+      return txLocal >= startOfYesterday && txLocal < startOfToday;
+    });
+    return yesterdayTx.length;
+  }, [transactions]);
 
   // --- Revenue chart: 6 months ---
   const revenueChartData = useMemo(() => {
