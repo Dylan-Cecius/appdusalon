@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
 import {
-  DollarSign, Users, Calendar, AlertTriangle, TrendingUp, TrendingDown,
+  DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
   ArrowRight, CalendarCheck, BarChart3, Target, Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
