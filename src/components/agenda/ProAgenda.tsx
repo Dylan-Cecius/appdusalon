@@ -215,12 +215,7 @@ const ProAgenda = () => {
     );
   }
 
-  // Set default barber for mobile
-  useEffect(() => {
-    if (activeBarbers.length > 0 && !selectedBarberId) {
-      setSelectedBarberId(activeBarbers[0].id);
-    }
-  }, [activeBarbers, selectedBarberId]);
+  // Desktop: multi-column view below
 
   // Desktop: multi-column view
   return (
