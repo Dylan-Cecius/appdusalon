@@ -143,6 +143,42 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       // Mettre à jour immédiatement l'état local
       setTransactions(prev => [newTransaction, ...prev]);
 
+      // Auto-décrémentation du stock pour les produits correspondants
+      try {
+        const { data: products } = await supabase
+          .from('products' as any)
+          .select('id, name, current_stock')
+          .eq('salon_id', salonIdData)
+          .eq('is_active', true);
+
+        if (products && products.length > 0) {
+          for (const item of transaction.items) {
+            const matchingProduct = (products as any[]).find(
+              (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+            );
+            if (matchingProduct) {
+              const newStock = Math.max(0, matchingProduct.current_stock - (item.quantity || 1));
+              await supabase.from('products' as any)
+                .update({ current_stock: newStock, updated_at: new Date().toISOString() } as any)
+                .eq('id', matchingProduct.id);
+              
+              await supabase.from('stock_movements' as any).insert({
+                salon_id: salonIdData,
+                product_id: matchingProduct.id,
+                type: 'out',
+                quantity: -(item.quantity || 1),
+                previous_stock: matchingProduct.current_stock,
+                new_stock: newStock,
+                reason: 'Vente POS automatique',
+                created_by: user.id,
+              } as any);
+            }
+          }
+        }
+      } catch (stockError) {
+        console.error('Error updating stock after sale:', stockError);
+      }
+
       // Log activity
       try {
         const clientName = transaction.items?.map(i => i.name).join(', ') || '';

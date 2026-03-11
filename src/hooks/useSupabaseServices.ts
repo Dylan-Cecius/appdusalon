@@ -27,10 +27,12 @@ export const useSupabaseServices = () => {
     }
 
     try {
+      const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+
       const { data, error } = await supabase
         .from('services')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
         .eq('is_active', true)
         .order('display_order');
 
@@ -63,10 +65,13 @@ export const useSupabaseServices = () => {
     if (!user) return null;
 
     try {
+      const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+
       const { data, error } = await supabase
         .from('services')
         .insert({
           user_id: user.id,
+          salon_id: salonId,
           name: serviceData.name,
           price: serviceData.price,
           duration: serviceData.duration,
@@ -109,8 +114,7 @@ export const useSupabaseServices = () => {
       const { error } = await supabase
         .from('services')
         .update(updateData)
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Error updating service:', error);
@@ -133,7 +137,6 @@ export const useSupabaseServices = () => {
         .from('services')
         .select('id, name')
         .eq('id', id)
-        .eq('user_id', user.id)
         .eq('is_active', true)
         .single();
 
@@ -147,8 +150,7 @@ export const useSupabaseServices = () => {
         .from('services')
         .update({ is_active: false })
         .eq('id', id)
-        .eq('user_id', user.id)
-        .eq('is_active', true); // Sécurité supplémentaire
+        .eq('is_active', true);
 
       if (error) {
         console.error('Error deleting service:', error);
