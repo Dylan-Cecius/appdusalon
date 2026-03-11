@@ -28,7 +28,7 @@ const SubscriptionManagement = () => {
     {
       id: 'starter',
       name: 'Starter',
-      price: '19€',
+      price: '39€',
       icon: <Crown className="h-6 w-6" />,
       features: [
         '1 salon',
