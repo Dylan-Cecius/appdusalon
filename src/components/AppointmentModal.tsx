@@ -461,7 +461,10 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
                     {services.filter(service => service.category !== 'produit').map((service) => (
                       <Card 
                         key={service.id}
-                        className="p-3 cursor-pointer hover:bg-accent/10 transition-colors"
+                        className={cn(
+                          "p-3 cursor-pointer transition-all duration-200 hover:bg-accent/10 active:scale-95",
+                          selectedServices.find(s => s.id === service.id) && "ring-2 ring-primary bg-primary/5 scale-[0.97]"
+                        )}
                         onClick={() => addService(service)}
                       >
                         <div className="text-sm font-medium">{service.name}</div>
