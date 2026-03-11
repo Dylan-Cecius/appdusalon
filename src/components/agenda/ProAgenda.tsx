@@ -298,24 +298,24 @@ const ProAgenda = () => {
 
         {/* Barber column headers */}
         <div
-          className="flex border-b border-border/30 bg-background shrink-0"
-          style={{ paddingLeft: `${TIME_COL_WIDTH}px` }}
+          className="flex border-b border-white/10 shrink-0"
+          style={{ paddingLeft: `${TIME_COL_WIDTH}px`, backgroundColor: 'hsl(222 30% 14%)' }}
         >
           {activeBarbers.map((barber, i) => (
             <div
               key={barber.id}
               className={cn(
                 "flex-1 px-3 py-2.5",
-                i > 0 && "border-l border-border/20"
+                i > 0 && "border-l border-white/10"
               )}
               style={{ minWidth: `${colMinWidth}px` }}
             >
               <div className="flex items-center gap-2">
                 <div
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : 'hsl(var(--primary))' }}
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : '#fff' }}
                 />
-                <span className="text-sm font-medium text-foreground">{barber.name}</span>
+                <span className="text-sm font-medium text-white/90">{barber.name}</span>
               </div>
             </div>
           ))}
