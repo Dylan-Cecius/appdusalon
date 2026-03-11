@@ -63,10 +63,13 @@ export const useSupabaseServices = () => {
     if (!user) return null;
 
     try {
+      const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+
       const { data, error } = await supabase
         .from('services')
         .insert({
           user_id: user.id,
+          salon_id: salonId,
           name: serviceData.name,
           price: serviceData.price,
           duration: serviceData.duration,
