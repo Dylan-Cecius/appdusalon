@@ -32,11 +32,11 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
   // Plan Gratuit (0€/mois)
   'none': {
     maxBarbers: 1,
-    maxAppointmentsPerMonth: 50,
-    maxTransactionsPerMonth: 50,
+    maxAppointmentsPerMonth: -1,
+    maxTransactionsPerMonth: -1,
     maxServicesPerBarber: 5,
     canAccessAdvancedStats: false,
-    canAccessBasicStats: false,
+    canAccessBasicStats: true,
     canExportReports: false,
     canSendEmails: true, // Notifications auto basiques
     canManageInventory: false,
