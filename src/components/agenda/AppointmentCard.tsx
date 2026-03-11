@@ -84,7 +84,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
             <div className="text-[13px] font-semibold text-foreground truncate leading-tight">
               {appointment.clientName}
             </div>
-            <div className="text-[11px] truncate leading-tight mt-0.5 opacity-80" style={{ color }}>
+            <div className="text-[11px] leading-tight mt-0.5 opacity-80 line-clamp-2 break-words" style={{ color }}>
               {serviceName}
             </div>
             {heightPx >= 60 && (
