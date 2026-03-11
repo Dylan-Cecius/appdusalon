@@ -72,23 +72,31 @@ const Dashboard = () => {
     return yesterdayTx.length;
   }, [transactions]);
 
-  // --- Revenue chart: 6 months ---
+  // --- Revenue chart: 6 months (from transactions + paid appointments) ---
   const revenueChartData = useMemo(() => {
     const months: { name: string; ca: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
       const label = format(mStart, 'MMM', { locale: fr });
-      const ca = appointments
+      // Revenue from transactions
+      const txRevenue = transactions
+        .filter(tx => {
+          const d = new Date(tx.transactionDate);
+          return d >= mStart && d <= mEnd;
+        })
+        .reduce((s, tx) => s + tx.totalAmount, 0);
+      // Revenue from paid appointments
+      const aptRevenue = appointments
         .filter(a => {
           const d = new Date(a.startTime);
-          return d >= mStart && d <= mEnd && a.status === 'completed';
+          return d >= mStart && d <= mEnd && a.isPaid;
         })
         .reduce((s, a) => s + Number(a.totalPrice), 0);
-      months.push({ name: label.charAt(0).toUpperCase() + label.slice(1), ca: Math.round(ca) });
+      months.push({ name: label.charAt(0).toUpperCase() + label.slice(1), ca: Math.round(txRevenue + aptRevenue) });
     }
     return months;
-  }, [appointments]);
+  }, [transactions, appointments]);
 
   // --- Pie: appointment statuses this month ---
   const statusData = useMemo(() => {
