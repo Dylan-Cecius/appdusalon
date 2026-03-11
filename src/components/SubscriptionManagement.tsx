@@ -41,7 +41,7 @@ const SubscriptionManagement = () => {
     {
       id: 'pro',
       name: 'Pro',
-      price: '39€',
+      price: '99€',
       icon: <Zap className="h-6 w-6" />,
       features: [
         'Multi-salons',
