@@ -280,17 +280,22 @@ const Auth = () => {
               <ShieldCheck className="h-8 w-8 text-accent-foreground" />
             </div>
           ) : (
-            <img src={logoImg} alt="L'app du salon" className="h-16 sm:h-20 w-auto mb-4" />
+            <div className="flex flex-col items-center">
+              <img src={logoImg} alt="L'app du salon" className="h-48 sm:h-60 w-auto" />
+              <p className="text-muted-foreground text-center text-sm sm:text-base -mt-4">
+                {isForgotPassword 
+                  ? 'Réinitialisez votre mot de passe' 
+                  : isLogin 
+                    ? 'Connectez-vous à votre compte' 
+                    : 'Créez votre compte salon'}
+              </p>
+            </div>
           )}
-          <p className="text-muted-foreground text-center text-sm sm:text-base">
-            {mfaRequired
-              ? 'Vérification en deux étapes'
-              : isForgotPassword 
-                ? 'Réinitialisez votre mot de passe' 
-                : isLogin 
-                  ? 'Connectez-vous à votre compte' 
-                  : 'Créez votre compte salon'}
-          </p>
+          {mfaRequired && (
+            <p className="text-muted-foreground text-center text-sm sm:text-base">
+              Vérification en deux étapes
+            </p>
+          )}
         </div>
 
         {mfaRequired ? (
