@@ -137,7 +137,6 @@ export const useSupabaseServices = () => {
         .from('services')
         .select('id, name')
         .eq('id', id)
-        .eq('user_id', user.id)
         .eq('is_active', true)
         .single();
 
