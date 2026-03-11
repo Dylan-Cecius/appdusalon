@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useCombinedStats } from '@/hooks/useCombinedStats';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
-import { useClients } from '@/hooks/useClients';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
 import {
-  DollarSign, Users, Calendar, AlertTriangle, TrendingUp, TrendingDown,
+  DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
   ArrowRight, CalendarCheck, BarChart3, Target, Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -28,8 +28,8 @@ const CHART_COLORS = [
 
 const Dashboard = () => {
   const { stats } = useCombinedStats();
+  const { transactions } = useTransactions();
   const { appointments } = useSupabaseAppointments();
-  const { clients } = useClients();
   const { subscription_end, subscribed } = useSubscription();
 
   const now = new Date();
@@ -50,63 +50,53 @@ const Dashboard = () => {
     [appointments]
   );
 
-  // --- KPI: New clients this month ---
-  const newClientsThisMonth = useMemo(() =>
-    clients.filter(c => new Date(c.created_at) >= startOfMonth).length,
-    [clients]
-  );
-  const newClientsPrevMonth = useMemo(() =>
-    clients.filter(c => {
-      const d = new Date(c.created_at);
-      return d >= startOfPrevMonth && d <= endOfPrevMonth;
-    }).length,
-    [clients]
-  );
+  // --- KPI: Clients encaissés aujourd'hui (distinct clients from today's transactions) ---
+  const todayDistinctClients = useMemo(() => {
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayTx = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      return new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate()) >= startOfToday;
+    });
+    return todayTx.length;
+  }, [transactions]);
 
-  // --- KPI: Occupancy rate ---
-  const completedThisMonth = useMemo(() =>
-    appointments.filter(a => new Date(a.startTime) >= startOfMonth && a.status === 'completed').length,
-    [appointments]
-  );
-  const totalThisMonth = useMemo(() =>
-    appointments.filter(a => new Date(a.startTime) >= startOfMonth).length,
-    [appointments]
-  );
-  const occupancyRate = totalThisMonth > 0 ? Math.round((completedThisMonth / totalThisMonth) * 100) : 0;
+  // --- Previous day clients for comparison ---
+  const yesterdayDistinctClients = useMemo(() => {
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayTx = transactions.filter(tx => {
+      const txDate = new Date(tx.transactionDate);
+      const txLocal = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+      return txLocal >= startOfYesterday && txLocal < startOfToday;
+    });
+    return yesterdayTx.length;
+  }, [transactions]);
 
-  const completedPrevMonth = useMemo(() =>
-    appointments.filter(a => {
-      const d = new Date(a.startTime);
-      return d >= startOfPrevMonth && d <= endOfPrevMonth && a.status === 'completed';
-    }).length,
-    [appointments]
-  );
-  const totalPrevMonth = useMemo(() =>
-    appointments.filter(a => {
-      const d = new Date(a.startTime);
-      return d >= startOfPrevMonth && d <= endOfPrevMonth;
-    }).length,
-    [appointments]
-  );
-  const prevOccupancyRate = totalPrevMonth > 0 ? Math.round((completedPrevMonth / totalPrevMonth) * 100) : 0;
-
-  // --- Revenue chart: 6 months ---
+  // --- Revenue chart: 6 months (from transactions + paid appointments) ---
   const revenueChartData = useMemo(() => {
     const months: { name: string; ca: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
       const label = format(mStart, 'MMM', { locale: fr });
-      const ca = appointments
+      // Revenue from transactions
+      const txRevenue = transactions
+        .filter(tx => {
+          const d = new Date(tx.transactionDate);
+          return d >= mStart && d <= mEnd;
+        })
+        .reduce((s, tx) => s + tx.totalAmount, 0);
+      // Revenue from paid appointments
+      const aptRevenue = appointments
         .filter(a => {
           const d = new Date(a.startTime);
-          return d >= mStart && d <= mEnd && a.status === 'completed';
+          return d >= mStart && d <= mEnd && a.isPaid;
         })
         .reduce((s, a) => s + Number(a.totalPrice), 0);
-      months.push({ name: label.charAt(0).toUpperCase() + label.slice(1), ca: Math.round(ca) });
+      months.push({ name: label.charAt(0).toUpperCase() + label.slice(1), ca: Math.round(txRevenue + aptRevenue) });
     }
     return months;
-  }, [appointments]);
+  }, [transactions, appointments]);
 
   // --- Pie: appointment statuses this month ---
   const statusData = useMemo(() => {
@@ -185,12 +175,38 @@ const Dashboard = () => {
 
         {/* 4 KPI Cards */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-          {/* CA du mois */}
+          {/* CA du jour */}
           <Card className="border-2 hover:border-accent/50 transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du mois</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-success/10">
                 <DollarSign className="h-4 w-4 text-pos-success" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-5 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{stats.todayRevenue.toFixed(0)} €</div>
+            </CardContent>
+          </Card>
+
+          {/* CA Hebdomadaire */}
+          <Card className="border-2 hover:border-accent/50 transition-all">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Hebdo</CardTitle>
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-5 pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{stats.weeklyRevenue.toFixed(0)} €</div>
+            </CardContent>
+          </Card>
+
+          {/* CA Mensuel */}
+          <Card className="border-2 hover:border-accent/50 transition-all">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Mensuel</CardTitle>
+              <div className="p-1.5 rounded-lg bg-accent/10">
+                <BarChart3 className="h-4 w-4 text-accent-foreground" />
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
@@ -199,45 +215,17 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* RDV ce mois */}
+          {/* Clients encaissés aujourd'hui */}
           <Card className="border-2 hover:border-accent/50 transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">RDV ce mois</CardTitle>
-              <div className="p-1.5 rounded-lg bg-primary/10">
-                <Calendar className="h-4 w-4 text-primary" />
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{monthAppointments.length}</div>
-              <Variation current={monthAppointments.length} previous={prevMonthAppointments.length} />
-            </CardContent>
-          </Card>
-
-          {/* Nouveaux clients */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Nouveaux clients</CardTitle>
-              <div className="p-1.5 rounded-lg bg-accent/10">
-                <Users className="h-4 w-4 text-accent-foreground" />
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{newClientsThisMonth}</div>
-              <Variation current={newClientsThisMonth} previous={newClientsPrevMonth} />
-            </CardContent>
-          </Card>
-
-          {/* Taux d'occupation */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Taux d'occupation</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Clients du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-card/10">
-                <Target className="h-4 w-4 text-pos-card" />
+                <Users className="h-4 w-4 text-pos-card" />
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{occupancyRate}%</div>
-              <Variation current={occupancyRate} previous={prevOccupancyRate} />
+              <div className="text-lg sm:text-2xl font-bold">{todayDistinctClients}</div>
+              <Variation current={todayDistinctClients} previous={yesterdayDistinctClients} suffix="vs hier" />
             </CardContent>
           </Card>
         </div>
@@ -382,11 +370,11 @@ const Dashboard = () => {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm text-muted-foreground">Taux complétion</span>
-                  <span className="text-sm font-semibold">{occupancyRate}%</span>
+                  <span className="text-sm text-muted-foreground">Clients du jour</span>
+                  <span className="text-sm font-semibold">{todayDistinctClients}</span>
                 </div>
-                <Progress value={occupancyRate} className="h-2.5" />
-                <p className="text-[10px] text-muted-foreground mt-1">RDV complétés / total</p>
+                <Progress value={Math.min(todayDistinctClients * 10, 100)} className="h-2.5" />
+                <p className="text-[10px] text-muted-foreground mt-1">Encaissements aujourd'hui</p>
               </div>
             </CardContent>
           </Card>
