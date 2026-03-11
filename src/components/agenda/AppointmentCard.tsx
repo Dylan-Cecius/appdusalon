@@ -59,7 +59,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       {...listeners}
       {...attributes}
       className={cn(
-        "rounded-lg cursor-grab overflow-hidden transition-all duration-150",
+        "rounded-lg cursor-grab overflow-visible transition-all duration-150",
         !isDragOverlay && "absolute left-1.5 right-1.5",
         isDragOverlay && "shadow-xl ring-2 ring-primary/20",
         isDragging && "z-50",
@@ -73,23 +73,23 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
         onClick();
       }}
     >
-      <div className={cn("px-2.5 h-full flex flex-col justify-center", isShort ? "py-0" : "py-2")}>
+      <div className={cn("px-2.5 h-full flex flex-col", isShort ? "justify-center py-0.5" : "justify-start py-2") }>
         {isShort ? (
-          <div className="flex items-center gap-1.5 text-[11px] font-medium truncate">
+          <div className="flex items-center gap-1.5 text-[11px] leading-snug font-medium truncate">
             <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
             <span className="font-semibold text-foreground truncate">{appointment.clientName}</span>
             <span className="text-muted-foreground shrink-0">{format(startTime, 'HH:mm')}</span>
           </div>
         ) : (
           <>
-            <div className="text-[13px] font-semibold text-foreground truncate leading-tight">
+            <div className="text-[13px] font-semibold text-foreground truncate leading-snug">
               {appointment.clientName}
             </div>
-            <div className="text-[11px] leading-tight mt-0.5 text-muted-foreground line-clamp-2 break-words">
+            <div className="text-[11px] leading-snug mt-0.5 text-muted-foreground line-clamp-2 break-words">
               {serviceName}
             </div>
             {heightPx >= 60 && (
-              <div className="text-[11px] text-muted-foreground leading-tight mt-1">
+              <div className="text-[11px] text-muted-foreground leading-snug mt-1">
                 {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
               </div>
             )}
