@@ -1,10 +1,12 @@
-import AppleCalendar from '@/components/AppleCalendar';
+import ProAgenda from '@/components/agenda/ProAgenda';
 import MainLayout from '@/components/MainLayout';
 
 const AgendaPage = () => {
   return (
     <MainLayout>
-      <AppleCalendar />
+      <div className="h-[calc(100vh-80px)]">
+        <ProAgenda />
+      </div>
     </MainLayout>
   );
 };
