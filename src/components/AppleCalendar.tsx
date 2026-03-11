@@ -237,7 +237,23 @@ const AppleCalendar = () => {
   const renderWeekView = () => {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-    const hours = Array.from({ length: 24 }, (_, i) => i); // 0h-23h
+    
+    // Compute visible hours: union of all open hours across the week days
+    let visibleHours: number[];
+    if (hasOpeningHours) {
+      const hourSet = new Set<number>();
+      weekDays.forEach(day => {
+        const sched = getScheduleForDate(day);
+        if (sched && sched.is_open) {
+          const startH = parseInt(sched.open_time.split(':')[0]);
+          const endH = parseInt(sched.close_time.split(':')[0]);
+          for (let h = startH; h < endH; h++) hourSet.add(h);
+        }
+      });
+      visibleHours = hourSet.size > 0 ? Array.from(hourSet).sort((a, b) => a - b) : Array.from({ length: 24 }, (_, i) => i);
+    } else {
+      visibleHours = Array.from({ length: 24 }, (_, i) => i);
+    }
 
     return (
       <div className="bg-gradient-to-br from-background via-background to-muted/20 rounded-3xl overflow-hidden border border-border/50 shadow-lg">
@@ -266,17 +282,9 @@ const AppleCalendar = () => {
         </div>
 
         {/* Week grid */}
-        <div className="overflow-auto max-h-[600px]" ref={(el) => {
-          // Scroll to 10h on mount
-          if (el) {
-            setTimeout(() => {
-              const hourHeight = 80; // 80px per hour
-              el.scrollTop = hourHeight * 9; // Scroll to 9h to show 10h-19h
-            }, 100);
-          }
-        }}>
+        <div className="overflow-auto max-h-[600px]">
           <div className="grid grid-cols-[60px_repeat(7,1fr)]">
-            {hours.map((hour) => (
+            {visibleHours.map((hour) => (
               <>
                 <div key={`hour-${hour}`} className="p-2 text-sm text-foreground/50 font-medium text-right border-b border-border/30 h-20 bg-muted/5">
                   {hour}:00
@@ -381,7 +389,20 @@ const AppleCalendar = () => {
 
   // Render Day View
   const renderDayView = () => {
-    const hours = Array.from({ length: 24 }, (_, i) => i); // 0h-23h
+    // Compute visible hours for this day
+    let visibleHours: number[];
+    if (hasOpeningHours) {
+      const sched = getScheduleForDate(selectedDate);
+      if (sched && sched.is_open) {
+        const startH = parseInt(sched.open_time.split(':')[0]);
+        const endH = parseInt(sched.close_time.split(':')[0]);
+        visibleHours = Array.from({ length: endH - startH }, (_, i) => startH + i);
+      } else {
+        visibleHours = Array.from({ length: 24 }, (_, i) => i);
+      }
+    } else {
+      visibleHours = Array.from({ length: 24 }, (_, i) => i);
+    }
     const dayAppointments = getAppointmentsForDate(selectedDate);
 
     return (
@@ -397,17 +418,9 @@ const AppleCalendar = () => {
         </div>
 
         {/* Day timeline */}
-        <div className="overflow-auto max-h-[600px]" ref={(el) => {
-          // Scroll to 10h on mount
-          if (el) {
-            setTimeout(() => {
-              const hourHeight = 80; // 80px per hour
-              el.scrollTop = hourHeight * 9; // Scroll to 9h to show 10h-19h
-            }, 100);
-          }
-        }}>
+        <div className="overflow-auto max-h-[600px]">
           <div className="grid grid-cols-[90px_1fr]">
-            {hours.map((hour) => {
+            {visibleHours.map((hour) => {
               const checkDate = new Date(selectedDate);
               checkDate.setHours(hour, 0, 0, 0);
               const slotOpen = isTimeOpen(checkDate);

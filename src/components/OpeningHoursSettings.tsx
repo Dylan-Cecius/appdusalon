@@ -125,7 +125,7 @@ const OpeningHoursSettings = () => {
                     checked={hasBreak[day.day_of_week]}
                     onCheckedChange={(checked) => toggleBreak(day.day_of_week, checked)}
                   />
-                  <Label className="text-xs sm:text-sm text-muted-foreground">Pause méridienne</Label>
+                  <Label className="text-xs sm:text-sm text-muted-foreground">Pause midi</Label>
                 </div>
 
                 {/* Break hours */}
