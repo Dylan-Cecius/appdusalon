@@ -326,23 +326,22 @@ const ProAgenda = () => {
           <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
             {/* Time column */}
             <div
-              className="sticky left-0 z-10 bg-background shrink-0"
-              style={{ width: `${TIME_COL_WIDTH}px` }}
+              className="sticky left-0 z-10 shrink-0 border-r border-white/10"
+              style={{ width: `${TIME_COL_WIDTH}px`, backgroundColor: 'hsl(222 30% 12%)' }}
             >
               {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
                 <div
                   key={idx}
                   className={cn(
                     "flex items-center justify-end pr-3",
-                    minute === 0 ? "border-t border-border/30" : "",
-                    isBreak && "bg-muted/10"
+                    minute === 0 ? "border-t border-white/10" : "border-t border-white/[0.04]",
+                    isBreak && "opacity-30"
                   )}
                   style={{ height: `${SLOT_HEIGHT}px` }}
                 >
                   {label && (
                     <span className={cn(
-                      "text-xs font-normal leading-none tabular-nums",
-                      isBreak ? "text-muted-foreground/40" : "text-muted-foreground/70"
+                      "text-xs font-normal leading-none tabular-nums text-white/50"
                     )}>
                       {label}
                     </span>
