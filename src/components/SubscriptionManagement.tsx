@@ -53,21 +53,6 @@ const SubscriptionManagement = () => {
       color: 'from-purple-500 to-purple-600',
       popular: true
     },
-    {
-      id: 'enterprise',
-      name: 'Abonnement à vie',
-      price: '468€',
-      icon: <Building2 className="h-6 w-6" />,
-      features: [
-        'Abonnement PRO à vie',
-        'Multi-salons',
-        'Rapports avancés',
-        'Email automatique',
-        'Gestion des stocks',
-        'Support prioritaire'
-      ],
-      color: 'from-slate-600 to-slate-800'
-    }
   ];
 
   if (loading) {
