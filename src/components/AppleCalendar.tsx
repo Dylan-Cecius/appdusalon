@@ -237,7 +237,23 @@ const AppleCalendar = () => {
   const renderWeekView = () => {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-    const hours = Array.from({ length: 24 }, (_, i) => i); // 0h-23h
+    
+    // Compute visible hours: union of all open hours across the week days
+    let visibleHours: number[];
+    if (hasOpeningHours) {
+      const hourSet = new Set<number>();
+      weekDays.forEach(day => {
+        const sched = getScheduleForDate(day);
+        if (sched && sched.is_open) {
+          const startH = parseInt(sched.open_time.split(':')[0]);
+          const endH = parseInt(sched.close_time.split(':')[0]);
+          for (let h = startH; h < endH; h++) hourSet.add(h);
+        }
+      });
+      visibleHours = hourSet.size > 0 ? Array.from(hourSet).sort((a, b) => a - b) : Array.from({ length: 24 }, (_, i) => i);
+    } else {
+      visibleHours = Array.from({ length: 24 }, (_, i) => i);
+    }
 
     return (
       <div className="bg-gradient-to-br from-background via-background to-muted/20 rounded-3xl overflow-hidden border border-border/50 shadow-lg">
