@@ -24,6 +24,7 @@ interface CartItem {
 const POSPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
   const { toast } = useToast();
   const { services, loading: servicesLoading, categories } = useSupabaseServices();
   const { addTransaction, transactions } = useTransactions();
