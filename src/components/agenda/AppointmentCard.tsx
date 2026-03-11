@@ -75,16 +75,17 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
     >
       <div className={cn("px-2.5 h-full flex flex-col justify-center", isShort ? "py-0" : "py-2")}>
         {isShort ? (
-          <div className="flex items-center gap-1.5 text-[11px] font-medium truncate" style={{ color }}>
-            <span className="font-semibold text-foreground">{appointment.clientName}</span>
-            <span className="opacity-70">{format(startTime, 'HH:mm')}</span>
+          <div className="flex items-center gap-1.5 text-[11px] font-medium truncate">
+            <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+            <span className="font-semibold text-foreground truncate">{appointment.clientName}</span>
+            <span className="text-muted-foreground shrink-0">{format(startTime, 'HH:mm')}</span>
           </div>
         ) : (
           <>
             <div className="text-[13px] font-semibold text-foreground truncate leading-tight">
               {appointment.clientName}
             </div>
-            <div className="text-[11px] leading-tight mt-0.5 opacity-80 line-clamp-2 break-words" style={{ color }}>
+            <div className="text-[11px] leading-tight mt-0.5 text-muted-foreground line-clamp-2 break-words">
               {serviceName}
             </div>
             {heightPx >= 60 && (
@@ -93,7 +94,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
               </div>
             )}
             {!appointment.isPaid && heightPx >= 75 && (
-              <div className="text-[10px] font-semibold text-orange-500 mt-1">Non payé</div>
+              <div className="text-[10px] font-semibold text-destructive mt-1">Non payé</div>
             )}
           </>
         )}
@@ -113,7 +114,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
           <div className="text-xs">{format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}</div>
           <div className="text-xs font-semibold">{appointment.totalPrice}€</div>
           {appointment.notes && <div className="text-xs italic">{appointment.notes}</div>}
-          {!appointment.isPaid && <div className="text-xs font-bold text-orange-500">Non payé</div>}
+          {!appointment.isPaid && <div className="text-xs font-bold text-destructive">Non payé</div>}
         </div>
       </TooltipContent>
     </Tooltip>
