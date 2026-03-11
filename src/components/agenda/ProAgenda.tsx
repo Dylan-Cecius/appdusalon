@@ -28,11 +28,11 @@ const SLOT_HEIGHT = 28; // px per 15-min slot — bigger for readability
 const TIME_COL_WIDTH = 56;
 
 // Droppable slot component
-const DroppableSlot = ({ id, hour, minute, isBreak, onClick }: {
-  id: string; hour: number; minute: number; isBreak: boolean;
+const DroppableSlot = ({ id, barberId, hour, minute, isBreak, onClick }: {
+  id: string; barberId: string; hour: number; minute: number; isBreak: boolean;
   onClick: () => void;
 }) => {
-  const { isOver, setNodeRef } = useDroppable({ id, data: { hour, minute } });
+  const { isOver, setNodeRef } = useDroppable({ id, data: { barberId, hour, minute } });
   return (
     <div
       ref={setNodeRef}
@@ -60,7 +60,7 @@ const ProAgenda = () => {
   const [draggedAppointment, setDraggedAppointment] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { appointments, updateAppointment, markAsPaid, deleteAppointment } = useSupabaseAppointments();
+  const { appointments, updateAppointment, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
   const { services: dbServices } = useSupabaseServices();
   const { isTimeOpen, getScheduleForDate, hasData: hasOpeningHours } = useOpeningHours();
@@ -184,12 +184,13 @@ const ProAgenda = () => {
     const apt = active.data.current?.appointment;
     if (!apt) return;
 
-    const parts = over.id.toString().split('-');
-    if (parts[0] !== 'slot' || parts.length < 4) return;
+    // Read barberId, hour, minute from droppable data
+    const dropData = over.data.current;
+    if (!dropData?.barberId) return;
 
-    const newBarberId = parts[1];
-    const newHour = parseInt(parts[2]);
-    const newMinute = parseInt(parts[3]);
+    const newBarberId = dropData.barberId as string;
+    const newHour = dropData.hour as number;
+    const newMinute = dropData.minute as number;
 
     const oldStart = new Date(apt.startTime);
     const oldEnd = new Date(apt.endTime);
@@ -207,6 +208,7 @@ const ProAgenda = () => {
         endTime: newEnd,
         barberId: newBarberId,
       });
+      await refreshAppointments();
       toast({ title: "RDV déplacé", description: `${apt.clientName} → ${format(newStart, 'HH:mm')}` });
     } catch {
       toast({ title: "Erreur", description: "Impossible de déplacer le rendez-vous", variant: "destructive" });
@@ -268,7 +270,7 @@ const ProAgenda = () => {
             <div className="text-center text-muted-foreground text-sm py-12">Aucun rendez-vous</div>
           )}
         </div>
-        <AppointmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
+        <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
         {selectedAppointment && (
           <EditAppointmentModal
             isOpen={isEditModalOpen}
@@ -376,7 +378,8 @@ const ProAgenda = () => {
                 {timeLabels.map(({ hour, minute, isBreak }, idx) => (
                   <DroppableSlot
                     key={idx}
-                    id={`slot-${barber.id}-${hour}-${minute}`}
+                    id={`slot|${barber.id}|${hour}|${minute}`}
+                    barberId={barber.id}
                     hour={hour}
                     minute={minute}
                     isBreak={isBreak}
@@ -420,7 +423,7 @@ const ProAgenda = () => {
         </DragOverlay>
 
         {/* Modals */}
-        <AppointmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
+        <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
         {selectedAppointment && (
           <EditAppointmentModal
             isOpen={isEditModalOpen}
