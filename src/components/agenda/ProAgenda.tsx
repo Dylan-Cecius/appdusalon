@@ -60,7 +60,7 @@ const ProAgenda = () => {
   const [draggedAppointment, setDraggedAppointment] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { appointments, updateAppointment, markAsPaid, deleteAppointment } = useSupabaseAppointments();
+  const { appointments, updateAppointment, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
   const { services: dbServices } = useSupabaseServices();
   const { isTimeOpen, getScheduleForDate, hasData: hasOpeningHours } = useOpeningHours();
