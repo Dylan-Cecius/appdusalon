@@ -24,12 +24,11 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 28; // px per 15-min slot — bigger for readability
-const TIME_COL_WIDTH = 56;
+const SLOT_HEIGHT = 48; // taller slots like Planity
+const TIME_COL_WIDTH = 60;
 
-// Droppable slot component
-const DroppableSlot = ({ id, barberId, hour, minute, isBreak, onClick }: {
-  id: string; barberId: string; hour: number; minute: number; isBreak: boolean;
+const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, onClick }: {
+  id: string; barberId: string; hour: number; minute: number; isBreak: boolean; isHourStart: boolean;
   onClick: () => void;
 }) => {
   const { isOver, setNodeRef } = useDroppable({ id, data: { barberId, hour, minute } });
@@ -37,12 +36,12 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, onClick }: {
     <div
       ref={setNodeRef}
       className={cn(
-        "border-b transition-colors",
-        minute === 0 ? "border-border/40" : "border-border/10",
+        "transition-colors",
+        isHourStart ? "border-t border-border/30" : "",
         isBreak
-          ? "bg-muted/30 cursor-not-allowed"
-          : "hover:bg-primary/5 cursor-pointer",
-        isOver && !isBreak && "bg-primary/10 ring-1 ring-inset ring-primary/20"
+          ? "bg-muted/20 cursor-not-allowed"
+          : "hover:bg-primary/[0.03] cursor-pointer",
+        isOver && !isBreak && "bg-primary/[0.06]"
       )}
       style={{ height: `${SLOT_HEIGHT}px` }}
       onClick={() => !isBreak && onClick()}
@@ -73,34 +72,33 @@ const ProAgenda = () => {
   const activeBarbers = useMemo(() => barbers.filter(b => b.is_active), [barbers]);
 
   const categoryColors: Record<string, string> = {
-    coupe: '#10B981', coloration: '#8B5CF6', couleur: '#8B5CF6',
-    barbe: '#3B82F6', soin: '#EC4899', combo: '#F97316',
-    produit: '#6B7280', general: '#6B7280',
+    coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
+    barbe: '#60a5fa', soin: '#f472b6', combo: '#fb923c',
+    produit: '#94a3b8', general: '#94a3b8',
   };
 
   const serviceColorMap = useMemo(() => {
     const map: Record<string, string> = {};
     dbServices.forEach(s => {
-      map[s.name.toLowerCase()] = s.color || categoryColors[s.category] || '#6B7280';
+      map[s.name.toLowerCase()] = s.color || categoryColors[s.category] || '#94a3b8';
     });
     return map;
   }, [dbServices]);
 
   const getAppointmentColor = useCallback((services: any[]): string => {
-    if (!services || services.length === 0) return '#6B7280';
+    if (!services || services.length === 0) return '#94a3b8';
     const svc = services[0];
     const name = (svc?.name || '').toLowerCase();
     if (serviceColorMap[name]) return serviceColorMap[name];
     const cat = (svc?.category || '').toLowerCase();
     if (categoryColors[cat]) return categoryColors[cat];
-    if (name.includes('barbe')) return '#3B82F6';
-    if (name.includes('coupe')) return '#10B981';
-    if (name.includes('color') || name.includes('mèche')) return '#8B5CF6';
-    if (name.includes('soin')) return '#EC4899';
-    return '#6B7280';
+    if (name.includes('barbe')) return '#60a5fa';
+    if (name.includes('coupe')) return '#34d399';
+    if (name.includes('color') || name.includes('mèche')) return '#a78bfa';
+    if (name.includes('soin')) return '#f472b6';
+    return '#94a3b8';
   }, [serviceColorMap]);
 
-  // Compute visible time slots based on opening hours
   const { timeLabels, startHour } = useMemo(() => {
     const sched = getScheduleForDate(selectedDate);
     let openH = 8, closeH = 21;
@@ -108,7 +106,6 @@ const ProAgenda = () => {
     if (hasOpeningHours && sched && sched.is_open) {
       openH = parseInt(sched.open_time.split(':')[0]);
       closeH = parseInt(sched.close_time.split(':')[0]);
-      // Add 1 to closeH if close_time has minutes
       const closeM = parseInt(sched.close_time.split(':')[1] || '0');
       if (closeM > 0) closeH += 1;
     }
@@ -134,7 +131,6 @@ const ProAgenda = () => {
 
   const totalSlots = timeLabels.length;
 
-  // Scroll to current time on mount and date change
   useEffect(() => {
     if (scrollRef.current) {
       const now = new Date();
@@ -170,7 +166,6 @@ const ProAgenda = () => {
     }
   }, [activeBarbers, selectedBarberId]);
 
-  // Drag handlers
   const handleDragStart = (event: DragStartEvent) => {
     const apt = event.active.data.current?.appointment;
     if (apt) setDraggedAppointment(apt);
@@ -184,7 +179,6 @@ const ProAgenda = () => {
     const apt = active.data.current?.appointment;
     if (!apt) return;
 
-    // Read barberId, hour, minute from droppable data
     const dropData = over.data.current;
     if (!dropData?.barberId) return;
 
@@ -228,23 +222,23 @@ const ProAgenda = () => {
             setIsModalOpen(true);
           }}
         />
-        <div className="flex gap-1 px-3 py-2 border-b border-border/30 bg-muted/20 overflow-x-auto">
+        <div className="flex gap-1 px-3 py-2 border-b border-border/20 bg-background overflow-x-auto">
           {activeBarbers.map((barber) => (
             <button
               key={barber.id}
               onClick={() => setSelectedBarberId(barber.id)}
               className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all",
+                "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all",
                 selectedBarberId === barber.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-card text-muted-foreground hover:bg-muted/50"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
               {barber.name}
             </button>
           ))}
         </div>
-        <div className="flex-1 overflow-auto p-3 space-y-2">
+        <div className="flex-1 overflow-auto p-3 space-y-1.5">
           {(appointmentsByBarber[selectedBarberId] || [])
             .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             .map((apt: any) => {
@@ -253,16 +247,16 @@ const ProAgenda = () => {
               return (
                 <div
                   key={apt.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/30 shadow-sm active:scale-[0.98] transition-transform"
-                  style={{ borderLeft: `4px solid ${color}` }}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/20 active:scale-[0.98] transition-transform"
+                  style={{ backgroundColor: `${color}10`, borderColor: `${color}25` }}
                   onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
                 >
-                  <div className="text-sm font-mono font-bold text-muted-foreground w-14 shrink-0">{format(st, 'HH:mm')}</div>
+                  <div className="text-sm font-mono font-medium text-muted-foreground w-12 shrink-0">{format(st, 'HH:mm')}</div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{apt.clientName}</div>
                     <div className="text-xs text-muted-foreground truncate">{apt.services?.[0]?.name}</div>
                   </div>
-                  <div className="text-sm font-bold shrink-0">{apt.totalPrice}€</div>
+                  <div className="text-sm font-semibold shrink-0">{apt.totalPrice}€</div>
                 </div>
               );
             })}
@@ -285,14 +279,13 @@ const ProAgenda = () => {
     );
   }
 
-  // Desktop view with DnD
+  // Desktop view
   const barberCount = activeBarbers.length;
-  // Compute column min-width: distribute available space evenly
-  const colMinWidth = barberCount <= 1 ? 300 : barberCount <= 3 ? 200 : 160;
+  const colMinWidth = barberCount <= 1 ? 300 : barberCount <= 3 ? 220 : 160;
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full bg-background rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="flex flex-col h-full bg-background overflow-hidden">
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -305,30 +298,24 @@ const ProAgenda = () => {
 
         {/* Barber column headers */}
         <div
-          className="flex border-b border-border/50 bg-card shrink-0"
+          className="flex border-b border-border/30 bg-background shrink-0"
           style={{ paddingLeft: `${TIME_COL_WIDTH}px` }}
         >
           {activeBarbers.map((barber, i) => (
             <div
               key={barber.id}
               className={cn(
-                "flex-1 px-3 py-3 text-center",
-                i > 0 && "border-l border-border/30"
+                "flex-1 px-3 py-2.5",
+                i > 0 && "border-l border-border/20"
               )}
               style={{ minWidth: `${colMinWidth}px` }}
             >
-              <div
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide"
-                style={{
-                  backgroundColor: barber.color?.startsWith('#') ? `${barber.color}12` : 'hsl(var(--muted))',
-                  color: barber.color?.startsWith('#') ? barber.color : undefined,
-                }}
-              >
+              <div className="flex items-center gap-2">
                 <div
-                  className="w-2.5 h-2.5 rounded-full ring-2 ring-white/50"
+                  className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : 'hsl(var(--primary))' }}
                 />
-                {barber.name}
+                <span className="text-sm font-medium text-foreground">{barber.name}</span>
               </div>
             </div>
           ))}
@@ -339,23 +326,23 @@ const ProAgenda = () => {
           <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
             {/* Time column */}
             <div
-              className="sticky left-0 z-10 bg-background/95 backdrop-blur-sm border-r border-border/30 shrink-0"
+              className="sticky left-0 z-10 bg-background shrink-0"
               style={{ width: `${TIME_COL_WIDTH}px` }}
             >
               {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
                 <div
                   key={idx}
                   className={cn(
-                    "flex items-center justify-end pr-2",
-                    minute === 0 ? "border-b border-border/40" : "border-b border-border/10",
-                    isBreak && "bg-muted/20"
+                    "flex items-start justify-end pr-3",
+                    minute === 0 ? "border-t border-border/30" : "",
+                    isBreak && "bg-muted/10"
                   )}
                   style={{ height: `${SLOT_HEIGHT}px` }}
                 >
                   {label && (
                     <span className={cn(
-                      "text-[11px] font-semibold leading-none",
-                      isBreak ? "text-muted-foreground/50" : "text-muted-foreground"
+                      "text-xs font-normal -mt-2.5 tabular-nums",
+                      isBreak ? "text-muted-foreground/40" : "text-muted-foreground/70"
                     )}>
                       {label}
                     </span>
@@ -370,7 +357,7 @@ const ProAgenda = () => {
                 key={barber.id}
                 className={cn(
                   "flex-1 relative",
-                  i > 0 && "border-l border-border/30"
+                  i > 0 && "border-l border-border/20"
                 )}
                 style={{ minWidth: `${colMinWidth}px` }}
               >
@@ -383,6 +370,7 @@ const ProAgenda = () => {
                     hour={hour}
                     minute={minute}
                     isBreak={isBreak}
+                    isHourStart={minute === 0}
                     onClick={() => handleSlotClick(barber.id, hour, minute)}
                   />
                 ))}
