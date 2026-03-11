@@ -292,7 +292,7 @@ const AppleCalendar = () => {
           }
         }}>
           <div className="grid grid-cols-[60px_repeat(7,1fr)]">
-            {hours.map((hour) => (
+            {visibleHours.map((hour) => (
               <>
                 <div key={`hour-${hour}`} className="p-2 text-sm text-foreground/50 font-medium text-right border-b border-border/30 h-20 bg-muted/5">
                   {hour}:00
