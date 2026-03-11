@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
+import { useOpeningHours } from '@/hooks/useOpeningHours';
 import AppointmentModal from './AppointmentModal';
 import EditAppointmentModal from './EditAppointmentModal';
 import { toast } from '@/hooks/use-toast';
@@ -26,6 +27,7 @@ const AppleCalendar = () => {
   const { appointments, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
   const { services: dbServices } = useSupabaseServices();
+  const { isTimeOpen, isDayOpen, getScheduleForDate, hasData: hasOpeningHours } = useOpeningHours();
 
   const activeBarbers = barbers.filter(b => b.is_active);
 
@@ -138,6 +140,7 @@ const AppleCalendar = () => {
             const isToday = isSameDay(day, new Date());
             const isCurrentMonth = isSameMonth(day, selectedDate);
             const isSelected = isSameDay(day, selectedDate);
+            const isClosed = !isDayOpen(day);
 
             return (
               <div
@@ -149,7 +152,8 @@ const AppleCalendar = () => {
                 className={cn(
                   "min-h-[110px] p-2.5 border-b border-r border-border/30 cursor-pointer transition-all duration-200 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 hover:shadow-inner",
                   !isCurrentMonth && "bg-muted/10 text-muted-foreground/60",
-                  isToday && "bg-gradient-to-br from-primary/10 to-accent/10 ring-1 ring-primary/20 ring-inset",
+                  isClosed && "bg-muted/30 opacity-60",
+                  isToday && !isClosed && "bg-gradient-to-br from-primary/10 to-accent/10 ring-1 ring-primary/20 ring-inset",
                   isSelected && "ring-2 ring-primary/50 ring-inset shadow-sm"
                 )}
               >
@@ -160,6 +164,9 @@ const AppleCalendar = () => {
                   {format(day, 'd')}
                 </div>
                 
+                {isClosed ? (
+                  <div className="text-[10px] text-muted-foreground font-medium text-center mt-2">Fermé</div>
+                ) : (
                 <div className="space-y-1.5">
                   {dayAppointments.slice(0, 3).map((apt) => {
                     const color = getAppointmentColor(apt.services);
@@ -217,6 +224,7 @@ const AppleCalendar = () => {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             );
           })}
@@ -275,12 +283,21 @@ const AppleCalendar = () => {
                 </div>
                 {weekDays.map((day) => {
                   const dayAppointments = getAppointmentsForDate(day);
+                  const checkDate = new Date(day);
+                  checkDate.setHours(hour, 0, 0, 0);
+                  const slotOpen = isTimeOpen(checkDate);
 
                   return (
                     <div
                       key={`${day}-${hour}`}
-                      className="border-l border-b border-border/30 h-20 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 cursor-pointer relative transition-colors"
+                      className={cn(
+                        "border-l border-b border-border/30 h-20 relative transition-colors",
+                        slotOpen
+                          ? "hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 cursor-pointer"
+                          : "bg-muted/30 cursor-not-allowed"
+                      )}
                       onClick={() => {
+                        if (!slotOpen) return;
                         setSelectedDate(day);
                         setSelectedTimeSlot(`${hour}:00`);
                         setIsModalOpen(true);
@@ -391,14 +408,27 @@ const AppleCalendar = () => {
         }}>
           <div className="grid grid-cols-[90px_1fr]">
             {hours.map((hour) => {
+              const checkDate = new Date(selectedDate);
+              checkDate.setHours(hour, 0, 0, 0);
+              const slotOpen = isTimeOpen(checkDate);
+
               return (
                 <>
-                  <div key={`hour-${hour}`} className="p-4 text-sm text-foreground/50 font-medium text-right border-b border-border/30 h-20 bg-muted/5">
+                  <div key={`hour-${hour}`} className={cn(
+                    "p-4 text-sm font-medium text-right border-b border-border/30 h-20",
+                    slotOpen ? "text-foreground/50 bg-muted/5" : "text-muted-foreground/40 bg-muted/20"
+                  )}>
                     {hour}:00
                   </div>
                   <div
-                    className="border-b border-border/30 h-20 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 cursor-pointer relative transition-colors"
+                    className={cn(
+                      "border-b border-border/30 h-20 relative transition-colors",
+                      slotOpen
+                        ? "hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5 cursor-pointer"
+                        : "bg-muted/20 cursor-not-allowed"
+                    )}
                     onClick={() => {
+                      if (!slotOpen) return;
                       setSelectedTimeSlot(`${hour}:00`);
                       setIsModalOpen(true);
                     }}
