@@ -37,11 +37,11 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, onCli
       ref={setNodeRef}
       className={cn(
         "transition-colors",
-        isHourStart ? "border-t border-border/30" : "",
+        isHourStart ? "border-t border-white/10" : "border-t border-white/[0.04]",
         isBreak
-          ? "bg-muted/20 cursor-not-allowed"
-          : "hover:bg-primary/[0.03] cursor-pointer",
-        isOver && !isBreak && "bg-primary/[0.06]"
+          ? "bg-black/20 cursor-not-allowed"
+          : "hover:bg-white/[0.04] cursor-pointer",
+        isOver && !isBreak && "bg-white/[0.08]"
       )}
       style={{ height: `${SLOT_HEIGHT}px` }}
       onClick={() => !isBreak && onClick()}
@@ -285,7 +285,7 @@ const ProAgenda = () => {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full bg-background overflow-hidden">
+      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'hsl(222 30% 12%)' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -298,24 +298,24 @@ const ProAgenda = () => {
 
         {/* Barber column headers */}
         <div
-          className="flex border-b border-border/30 bg-background shrink-0"
-          style={{ paddingLeft: `${TIME_COL_WIDTH}px` }}
+          className="flex border-b border-white/10 shrink-0"
+          style={{ paddingLeft: `${TIME_COL_WIDTH}px`, backgroundColor: 'hsl(222 30% 14%)' }}
         >
           {activeBarbers.map((barber, i) => (
             <div
               key={barber.id}
               className={cn(
                 "flex-1 px-3 py-2.5",
-                i > 0 && "border-l border-border/20"
+                i > 0 && "border-l border-white/10"
               )}
               style={{ minWidth: `${colMinWidth}px` }}
             >
               <div className="flex items-center gap-2">
                 <div
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : 'hsl(var(--primary))' }}
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : '#fff' }}
                 />
-                <span className="text-sm font-medium text-foreground">{barber.name}</span>
+                <span className="text-sm font-medium text-white/90">{barber.name}</span>
               </div>
             </div>
           ))}
@@ -326,23 +326,22 @@ const ProAgenda = () => {
           <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
             {/* Time column */}
             <div
-              className="sticky left-0 z-10 bg-background shrink-0"
-              style={{ width: `${TIME_COL_WIDTH}px` }}
+              className="sticky left-0 z-10 shrink-0 border-r border-white/10"
+              style={{ width: `${TIME_COL_WIDTH}px`, backgroundColor: 'hsl(222 30% 12%)' }}
             >
               {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
                 <div
                   key={idx}
                   className={cn(
                     "flex items-center justify-end pr-3",
-                    minute === 0 ? "border-t border-border/30" : "",
-                    isBreak && "bg-muted/10"
+                    minute === 0 ? "border-t border-white/10" : "border-t border-white/[0.04]",
+                    isBreak && "opacity-30"
                   )}
                   style={{ height: `${SLOT_HEIGHT}px` }}
                 >
                   {label && (
                     <span className={cn(
-                      "text-xs font-normal leading-none tabular-nums",
-                      isBreak ? "text-muted-foreground/40" : "text-muted-foreground/70"
+                      "text-xs font-normal leading-none tabular-nums text-white/50"
                     )}>
                       {label}
                     </span>
@@ -357,7 +356,7 @@ const ProAgenda = () => {
                 key={barber.id}
                 className={cn(
                   "flex-1 relative",
-                  i > 0 && "border-l border-border/20"
+                  i > 0 && "border-l border-white/10"
                 )}
                 style={{ minWidth: `${colMinWidth}px` }}
               >
