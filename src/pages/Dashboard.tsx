@@ -278,7 +278,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="pb-3">
               <div className="h-[220px] sm:h-[260px]">
-                {statusData.length > 0 ? (
+                {statusData.length > 1 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -300,7 +300,7 @@ const Dashboard = () => {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Aucun RDV ce mois</div>
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Pas de rendez-vous prévus</div>
                 )}
               </div>
             </CardContent>
