@@ -270,7 +270,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Delete transaction
+  // Delete transaction with stock restoration
   const deleteTransaction = async (id: string) => {
     try {
       if (!isSupabaseConfigured) {
@@ -282,12 +282,70 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // Find the transaction to restore stock
+      const txToDelete = transactions.find(tx => tx.id === id);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+
       const { error } = await supabase
         .from('transactions' as any)
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // Restore stock for deleted transaction items
+      if (txToDelete && salonIdData) {
+        try {
+          const { data: products } = await supabase
+            .from('products' as any)
+            .select('id, name, current_stock, min_stock')
+            .eq('salon_id', salonIdData)
+            .eq('is_active', true);
+
+          if (products && products.length > 0) {
+            const restoredItems: string[] = [];
+
+            for (const item of txToDelete.items) {
+              const matchingProduct = (products as any[]).find(
+                (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+              );
+              if (matchingProduct) {
+                const qty = item.quantity || 1;
+                const newStock = matchingProduct.current_stock + qty;
+                await supabase.from('products' as any)
+                  .update({ current_stock: newStock, updated_at: new Date().toISOString() } as any)
+                  .eq('id', matchingProduct.id);
+
+                await supabase.from('stock_movements' as any).insert({
+                  salon_id: salonIdData,
+                  product_id: matchingProduct.id,
+                  type: 'in',
+                  quantity: qty,
+                  previous_stock: matchingProduct.current_stock,
+                  new_stock: newStock,
+                  reason: 'Annulation encaissement — remise en stock',
+                  created_by: user.id,
+                } as any);
+
+                restoredItems.push(`${matchingProduct.name} (+${qty})`);
+              }
+            }
+
+            if (restoredItems.length > 0) {
+              toast({
+                title: "📦 Stock restauré",
+                description: restoredItems.join(', '),
+              });
+            }
+          }
+        } catch (stockError) {
+          console.error('Error restoring stock after deletion:', stockError);
+        }
+      }
 
       setTransactions(prev => prev.filter(tx => tx.id !== id));
       
