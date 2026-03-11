@@ -250,6 +250,11 @@ const POSPage = () => {
           </DrawerContent>
         </Drawer>
       )}
+      {/* Transactions Manager Modal */}
+      <TransactionsManager
+        isOpen={isTransactionsOpen}
+        onClose={() => setIsTransactionsOpen(false)}
+      />
     </MainLayout>
   );
 };
