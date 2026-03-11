@@ -24,16 +24,13 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 20; // px per 15-min slot
-const START_HOUR = 8;
-const END_HOUR = 21;
-const TOTAL_SLOTS = (END_HOUR - START_HOUR) * 4;
-const TIME_COL_WIDTH = 56; // px
+const SLOT_HEIGHT = 28; // px per 15-min slot — bigger for readability
+const TIME_COL_WIDTH = 56;
 
 // Droppable slot component
-const DroppableSlot = ({ id, hour, minute, isOpen, onClick, children }: {
-  id: string; hour: number; minute: number; isOpen: boolean;
-  onClick: () => void; children?: React.ReactNode;
+const DroppableSlot = ({ id, hour, minute, isBreak, onClick }: {
+  id: string; hour: number; minute: number; isBreak: boolean;
+  onClick: () => void;
 }) => {
   const { isOver, setNodeRef } = useDroppable({ id, data: { hour, minute } });
   return (
@@ -41,17 +38,15 @@ const DroppableSlot = ({ id, hour, minute, isOpen, onClick, children }: {
       ref={setNodeRef}
       className={cn(
         "border-b transition-colors",
-        minute === 0 ? "border-border/30" : "border-border/10",
-        isOpen
-          ? "hover:bg-primary/5 cursor-pointer"
-          : "bg-muted/20 cursor-not-allowed",
-        isOver && isOpen && "bg-primary/10"
+        minute === 0 ? "border-border/40" : "border-border/10",
+        isBreak
+          ? "bg-muted/30 cursor-not-allowed"
+          : "hover:bg-primary/5 cursor-pointer",
+        isOver && !isBreak && "bg-primary/10 ring-1 ring-inset ring-primary/20"
       )}
       style={{ height: `${SLOT_HEIGHT}px` }}
-      onClick={() => isOpen && onClick()}
-    >
-      {children}
-    </div>
+      onClick={() => !isBreak && onClick()}
+    />
   );
 };
 
@@ -65,10 +60,10 @@ const ProAgenda = () => {
   const [draggedAppointment, setDraggedAppointment] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { appointments, updateAppointment, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
+  const { appointments, updateAppointment, markAsPaid, deleteAppointment } = useSupabaseAppointments();
   const { barbers } = useSupabaseSettings();
   const { services: dbServices } = useSupabaseServices();
-  const { isTimeOpen, hasData: hasOpeningHours } = useOpeningHours();
+  const { isTimeOpen, getScheduleForDate, hasData: hasOpeningHours } = useOpeningHours();
   const isMobile = useIsMobile();
 
   const sensors = useSensors(
@@ -105,14 +100,49 @@ const ProAgenda = () => {
     return '#6B7280';
   }, [serviceColorMap]);
 
+  // Compute visible time slots based on opening hours
+  const { timeLabels, startHour } = useMemo(() => {
+    const sched = getScheduleForDate(selectedDate);
+    let openH = 8, closeH = 21;
+
+    if (hasOpeningHours && sched && sched.is_open) {
+      openH = parseInt(sched.open_time.split(':')[0]);
+      closeH = parseInt(sched.close_time.split(':')[0]);
+      // Add 1 to closeH if close_time has minutes
+      const closeM = parseInt(sched.close_time.split(':')[1] || '0');
+      if (closeM > 0) closeH += 1;
+    }
+
+    const labels: { hour: number; minute: number; label: string; isBreak: boolean }[] = [];
+    for (let h = openH; h < closeH; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        let isBreak = false;
+        if (sched?.break_start && sched?.break_end) {
+          const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+          isBreak = timeStr >= sched.break_start && timeStr < sched.break_end;
+        }
+        labels.push({
+          hour: h,
+          minute: m,
+          label: m === 0 ? `${h.toString().padStart(2, '0')}:00` : '',
+          isBreak,
+        });
+      }
+    }
+    return { timeLabels: labels, startHour: openH };
+  }, [selectedDate, getScheduleForDate, hasOpeningHours]);
+
+  const totalSlots = timeLabels.length;
+
+  // Scroll to current time on mount and date change
   useEffect(() => {
     if (scrollRef.current) {
       const now = new Date();
-      const currentSlot = (now.getHours() - START_HOUR) * 4 + Math.floor(now.getMinutes() / 15);
+      const currentSlot = (now.getHours() - startHour) * 4 + Math.floor(now.getMinutes() / 15);
       const scrollTo = Math.max(0, (currentSlot - 4) * SLOT_HEIGHT);
       scrollRef.current.scrollTop = scrollTo;
     }
-  }, []);
+  }, [startHour]);
 
   const dayAppointments = useMemo(() => {
     return appointments.filter(apt => isSameDay(new Date(apt.startTime), selectedDate));
@@ -129,30 +159,10 @@ const ProAgenda = () => {
   }, [dayAppointments, activeBarbers]);
 
   const handleSlotClick = (barberId: string, hour: number, minute: number) => {
-    const checkDate = new Date(selectedDate);
-    checkDate.setHours(hour, minute, 0, 0);
-    if (hasOpeningHours && !isTimeOpen(checkDate)) return;
     setSelectedBarberId(barberId);
     setSelectedTimeSlot(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
     setIsModalOpen(true);
   };
-
-  const timeLabels = useMemo(() => {
-    const labels: { hour: number; minute: number; label: string }[] = [];
-    for (let h = START_HOUR; h < END_HOUR; h++) {
-      for (let m = 0; m < 60; m += 15) {
-        labels.push({ hour: h, minute: m, label: m === 0 ? `${h.toString().padStart(2, '0')}:00` : '' });
-      }
-    }
-    return labels;
-  }, []);
-
-  const isSlotOpen = useCallback((hour: number, minute: number) => {
-    if (!hasOpeningHours) return true;
-    const checkDate = new Date(selectedDate);
-    checkDate.setHours(hour, minute, 0, 0);
-    return isTimeOpen(checkDate);
-  }, [hasOpeningHours, selectedDate, isTimeOpen]);
 
   useEffect(() => {
     if (activeBarbers.length > 0 && !selectedBarberId) {
@@ -174,7 +184,6 @@ const ProAgenda = () => {
     const apt = active.data.current?.appointment;
     if (!apt) return;
 
-    // Parse droppable id: "slot-{barberId}-{hour}-{minute}"
     const parts = over.id.toString().split('-');
     if (parts[0] !== 'slot' || parts.length < 4) return;
 
@@ -182,7 +191,6 @@ const ProAgenda = () => {
     const newHour = parseInt(parts[2]);
     const newMinute = parseInt(parts[3]);
 
-    // Calculate new times
     const oldStart = new Date(apt.startTime);
     const oldEnd = new Date(apt.endTime);
     const durationMs = oldEnd.getTime() - oldStart.getTime();
@@ -191,7 +199,6 @@ const ProAgenda = () => {
     newStart.setHours(newHour, newMinute, 0, 0);
     const newEnd = new Date(newStart.getTime() + durationMs);
 
-    // Skip if nothing changed
     if (newStart.getTime() === oldStart.getTime() && newBarberId === apt.barberId) return;
 
     try {
@@ -200,10 +207,7 @@ const ProAgenda = () => {
         endTime: newEnd,
         barberId: newBarberId,
       });
-      toast({
-        title: "RDV déplacé",
-        description: `${apt.clientName} → ${format(newStart, 'HH:mm')}`,
-      });
+      toast({ title: "RDV déplacé", description: `${apt.clientName} → ${format(newStart, 'HH:mm')}` });
     } catch {
       toast({ title: "Erreur", description: "Impossible de déplacer le rendez-vous", variant: "destructive" });
     }
@@ -243,7 +247,7 @@ const ProAgenda = () => {
             .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             .map((apt: any) => {
               const color = getAppointmentColor(apt.services);
-              const startTime = new Date(apt.startTime);
+              const st = new Date(apt.startTime);
               return (
                 <div
                   key={apt.id}
@@ -251,7 +255,7 @@ const ProAgenda = () => {
                   style={{ borderLeft: `4px solid ${color}` }}
                   onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
                 >
-                  <div className="text-sm font-mono font-bold text-muted-foreground w-14 shrink-0">{format(startTime, 'HH:mm')}</div>
+                  <div className="text-sm font-mono font-bold text-muted-foreground w-14 shrink-0">{format(st, 'HH:mm')}</div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{apt.clientName}</div>
                     <div className="text-xs text-muted-foreground truncate">{apt.services?.[0]?.name}</div>
@@ -280,6 +284,10 @@ const ProAgenda = () => {
   }
 
   // Desktop view with DnD
+  const barberCount = activeBarbers.length;
+  // Compute column min-width: distribute available space evenly
+  const colMinWidth = barberCount <= 1 ? 300 : barberCount <= 3 ? 200 : 160;
+
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col h-full bg-background rounded-xl border border-border/50 shadow-sm overflow-hidden">
@@ -294,17 +302,30 @@ const ProAgenda = () => {
         />
 
         {/* Barber column headers */}
-        <div className="flex border-b border-border/50 bg-muted/10" style={{ paddingLeft: `${TIME_COL_WIDTH}px` }}>
-          {activeBarbers.map((barber) => (
-            <div key={barber.id} className="flex-1 min-w-[140px] px-3 py-2.5 text-center border-l border-border/30">
+        <div
+          className="flex border-b border-border/50 bg-card shrink-0"
+          style={{ paddingLeft: `${TIME_COL_WIDTH}px` }}
+        >
+          {activeBarbers.map((barber, i) => (
+            <div
+              key={barber.id}
+              className={cn(
+                "flex-1 px-3 py-3 text-center",
+                i > 0 && "border-l border-border/30"
+              )}
+              style={{ minWidth: `${colMinWidth}px` }}
+            >
               <div
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide"
                 style={{
-                  backgroundColor: barber.color?.startsWith('#') ? `${barber.color}15` : undefined,
+                  backgroundColor: barber.color?.startsWith('#') ? `${barber.color}12` : 'hsl(var(--muted))',
                   color: barber.color?.startsWith('#') ? barber.color : undefined,
                 }}
               >
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : undefined }} />
+                <div
+                  className="w-2.5 h-2.5 rounded-full ring-2 ring-white/50"
+                  style={{ backgroundColor: barber.color?.startsWith('#') ? barber.color : 'hsl(var(--primary))' }}
+                />
                 {barber.name}
               </div>
             </div>
@@ -312,34 +333,56 @@ const ProAgenda = () => {
         </div>
 
         {/* Scrollable grid */}
-        <div ref={scrollRef} className="flex-1 overflow-auto relative">
-          <div className="flex" style={{ height: `${TOTAL_SLOTS * SLOT_HEIGHT}px` }}>
+        <div ref={scrollRef} className="flex-1 overflow-auto">
+          <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
             {/* Time column */}
-            <div className="sticky left-0 z-10 bg-background border-r border-border/30" style={{ width: `${TIME_COL_WIDTH}px` }}>
-              {timeLabels.map(({ hour, minute, label }, idx) => (
-                <div key={idx} className="border-b border-border/10 flex items-start justify-end pr-2" style={{ height: `${SLOT_HEIGHT}px` }}>
-                  {label && <span className="text-[10px] font-medium text-muted-foreground -mt-1.5">{label}</span>}
+            <div
+              className="sticky left-0 z-10 bg-background/95 backdrop-blur-sm border-r border-border/30 shrink-0"
+              style={{ width: `${TIME_COL_WIDTH}px` }}
+            >
+              {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "flex items-start justify-end pr-2",
+                    minute === 0 ? "border-b border-border/40" : "border-b border-border/10",
+                    isBreak && "bg-muted/20"
+                  )}
+                  style={{ height: `${SLOT_HEIGHT}px` }}
+                >
+                  {label && (
+                    <span className={cn(
+                      "text-[11px] font-semibold -mt-2",
+                      isBreak ? "text-muted-foreground/50" : "text-muted-foreground"
+                    )}>
+                      {label}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
 
             {/* Barber columns */}
-            {activeBarbers.map((barber) => (
-              <div key={barber.id} className="flex-1 min-w-[140px] border-l border-border/30 relative">
+            {activeBarbers.map((barber, i) => (
+              <div
+                key={barber.id}
+                className={cn(
+                  "flex-1 relative",
+                  i > 0 && "border-l border-border/30"
+                )}
+                style={{ minWidth: `${colMinWidth}px` }}
+              >
                 {/* Droppable grid slots */}
-                {timeLabels.map(({ hour, minute }, idx) => {
-                  const open = isSlotOpen(hour, minute);
-                  return (
-                    <DroppableSlot
-                      key={idx}
-                      id={`slot-${barber.id}-${hour}-${minute}`}
-                      hour={hour}
-                      minute={minute}
-                      isOpen={open}
-                      onClick={() => handleSlotClick(barber.id, hour, minute)}
-                    />
-                  );
-                })}
+                {timeLabels.map(({ hour, minute, isBreak }, idx) => (
+                  <DroppableSlot
+                    key={idx}
+                    id={`slot-${barber.id}-${hour}-${minute}`}
+                    hour={hour}
+                    minute={minute}
+                    isBreak={isBreak}
+                    onClick={() => handleSlotClick(barber.id, hour, minute)}
+                  />
+                ))}
 
                 {/* Appointment cards */}
                 {(appointmentsByBarber[barber.id] || []).map((apt: any) => (
@@ -347,14 +390,15 @@ const ProAgenda = () => {
                     key={apt.id}
                     appointment={apt}
                     slotHeight={SLOT_HEIGHT}
-                    startHour={START_HOUR}
+                    startHour={startHour}
                     color={getAppointmentColor(apt.services)}
                     onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
                   />
                 ))}
 
+                {/* Current time indicator */}
                 {isSameDay(selectedDate, new Date()) && (
-                  <CurrentTimeIndicator startHour={START_HOUR} slotHeight={SLOT_HEIGHT} />
+                  <CurrentTimeIndicator startHour={startHour} slotHeight={SLOT_HEIGHT} />
                 )}
               </div>
             ))}
@@ -367,7 +411,7 @@ const ProAgenda = () => {
             <AppointmentCard
               appointment={draggedAppointment}
               slotHeight={SLOT_HEIGHT}
-              startHour={START_HOUR}
+              startHour={startHour}
               color={getAppointmentColor(draggedAppointment.services)}
               onClick={() => {}}
               isDragOverlay
