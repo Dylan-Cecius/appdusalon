@@ -423,7 +423,7 @@ const ProAgenda = () => {
         </DragOverlay>
 
         {/* Modals */}
-        <AppointmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
+        <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
         {selectedAppointment && (
           <EditAppointmentModal
             isOpen={isEditModalOpen}
