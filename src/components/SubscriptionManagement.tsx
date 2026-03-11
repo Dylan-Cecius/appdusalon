@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Crown, Check, Zap, Building2, RefreshCw, Gift } from 'lucide-react';
+import { Crown, Check, Zap, RefreshCw, Gift } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -53,21 +53,6 @@ const SubscriptionManagement = () => {
       color: 'from-purple-500 to-purple-600',
       popular: true
     },
-    {
-      id: 'enterprise',
-      name: 'Abonnement à vie',
-      price: '468€',
-      icon: <Building2 className="h-6 w-6" />,
-      features: [
-        'Abonnement PRO à vie',
-        'Multi-salons',
-        'Rapports avancés',
-        'Email automatique',
-        'Gestion des stocks',
-        'Support prioritaire'
-      ],
-      color: 'from-slate-600 to-slate-800'
-    }
   ];
 
   if (loading) {
@@ -137,11 +122,6 @@ const SubscriptionManagement = () => {
               </p>
             )}
             
-            {subscribed && subscription_tier === 'Enterprise' && !subscription_end && (
-              <p className="text-sm text-green-600 mb-4 font-medium">
-                🎉 Abonnement à vie actif - Aucun renouvellement requis !
-              </p>
-            )}
 
             {subscribed && (
               <Button 
@@ -155,7 +135,7 @@ const SubscriptionManagement = () => {
           </Card>
 
           {/* Plans Cards */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             {plans.map((plan) => {
               const isCurrentPlan = subscription_tier === plan.id;
               
@@ -205,11 +185,7 @@ const SubscriptionManagement = () => {
                   <Button
                     onClick={() => createCheckoutSession(plan.id as 'starter' | 'pro' | 'enterprise')}
                     disabled={isCurrentPlan}
-                    className={`w-full ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : ''} ${
-                      plan.id === 'enterprise' 
-                        ? 'bg-slate-700 hover:bg-slate-800 text-white' 
-                        : `bg-gradient-to-r ${plan.color} hover:opacity-90`
-                    }`}
+                    className={`w-full ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : `bg-gradient-to-r ${plan.color} hover:opacity-90`}`}
                   >
                     {isCurrentPlan ? 'Plan Actuel' : `Choisir ${plan.name}`}
                   </Button>
