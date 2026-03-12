@@ -145,11 +145,9 @@ export const useSubscriptionRights = () => {
   const isDemo = user?.email === 'demo@appdusalon.com';
 
   const rights = useMemo((): SubscriptionRights => {
-    if (!user) return SUBSCRIPTION_RIGHTS['none'];
-    if (isDemo) return SUBSCRIPTION_RIGHTS['Equipe'];
-    if (!subscribed || !subscription_tier) return SUBSCRIPTION_RIGHTS['none'];
-    return SUBSCRIPTION_RIGHTS[subscription_tier] || SUBSCRIPTION_RIGHTS['none'];
-  }, [user, subscribed, subscription_tier, isDemo]);
+    // Tout est débloqué gratuitement pour tous les utilisateurs
+    return SUBSCRIPTION_RIGHTS['Lifetime'];
+  }, []);
 
   const canAccess = (feature: keyof SubscriptionRights) => {
     return rights[feature] as boolean;
