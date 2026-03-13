@@ -126,6 +126,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
           salon_id: salonIdData,
           employee_id: employeeIdData || null,
           client_id: transaction.clientId || null,
+          staff_id: transaction.staffId || null,
           transaction_date: currentTimeUTC.toISOString()
         })
         .select()

@@ -79,7 +79,7 @@ const POSPage = () => {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleCheckout = async (method: 'cash' | 'card', clientId?: string) => {
+  const handleCheckout = async (method: 'cash' | 'card', staffId?: string) => {
     const total = cartItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
@@ -89,7 +89,7 @@ const POSPage = () => {
         items: cartItems,
         totalAmount: total,
         paymentMethod: method,
-        clientId,
+        staffId,
       });
 
       setCartItems([]);
