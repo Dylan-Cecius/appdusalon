@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Trash2, CreditCard, Banknote, User } from "lucide-react";
+import { Trash2, CreditCard, Banknote, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useClients } from "@/hooks/useClients";
+import { useStaff } from "@/hooks/useStaff";
 
 interface CartItem {
   id: string;
@@ -18,12 +18,12 @@ interface CartSidebarProps {
   items: CartItem[];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemoveItem: (id: string) => void;
-  onCheckout: (method: 'cash' | 'card', clientId?: string) => void;
+  onCheckout: (method: 'cash' | 'card', staffId?: string) => void;
 }
 
 const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: CartSidebarProps) => {
-  const { clients } = useClients();
-  const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
+  const { activeStaff } = useStaff();
+  const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalDuration = items.reduce((sum, item) => sum + (item.duration * item.quantity), 0);
 
@@ -112,18 +112,24 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
 
         <div className="mb-4">
           <label className="text-sm font-medium mb-2 flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Client (optionnel)
+            <Users className="h-4 w-4" />
+            Prestataire (optionnel)
           </label>
-          <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+          <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner un client" />
+              <SelectValue placeholder="Sélectionner un prestataire" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Sans client</SelectItem>
-              {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.name} - {client.phone}
+              <SelectItem value="none">Sans prestataire</SelectItem>
+              {activeStaff.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: member.color }}
+                    />
+                    {member.name} — {member.role}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -132,14 +138,14 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
         
         <div className="grid grid-cols-2 gap-3">
           <Button 
-            onClick={() => onCheckout('cash', selectedClientId === 'none' ? undefined : selectedClientId)}
+            onClick={() => onCheckout('cash', selectedStaffId === 'none' ? undefined : selectedStaffId)}
             className="bg-pos-cash hover:bg-pos-cash/90 text-pos-success-foreground flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"
           >
             <Banknote className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
             Cash
           </Button>
           <Button 
-            onClick={() => onCheckout('card', selectedClientId === 'none' ? undefined : selectedClientId)}
+            onClick={() => onCheckout('card', selectedStaffId === 'none' ? undefined : selectedStaffId)}
             className="bg-pos-card hover:bg-pos-card/90 text-white flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"
           >
             <CreditCard className="h-4 w-4 transition-transform duration-200 hover:-rotate-12" />
