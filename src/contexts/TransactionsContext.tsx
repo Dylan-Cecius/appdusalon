@@ -15,6 +15,7 @@ export interface Transaction {
   paymentMethod: 'cash' | 'card';
   transactionDate: Date;
   clientId?: string;
+  staffId?: string;
 }
 
 interface TransactionsContextType {
