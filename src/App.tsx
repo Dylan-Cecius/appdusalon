@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 import POSPage from "./pages/POSPage";
 import AgendaPage from "./pages/AgendaPage";
 import TodoPage from "./pages/TodoPage";
-import SubscriptionPage from "./pages/SubscriptionPage";
+
 import StatsPage from "./pages/StatsPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -62,8 +62,8 @@ const App = () => {
                 <Route path="/stocks" element={<AuthGuard><StocksPage /></AuthGuard>} />
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
-                <Route path="/abonnement" element={<Navigate to="/abonnements" replace />} />
-                <Route path="/abonnements" element={<AuthGuard><SubscriptionPage /></AuthGuard>} />
+                <Route path="/abonnement" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/abonnements" element={<Navigate to="/dashboard" replace />} />
                 
                 {/* Routes protégées par mot de passe */}
                 <Route 

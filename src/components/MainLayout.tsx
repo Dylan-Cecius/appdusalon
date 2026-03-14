@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, Crown, History, Mail, LayoutDashboard, Users, MessageSquare, Package } from 'lucide-react';
+import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import SubscriptionBadge from '@/components/SubscriptionBadge';
+
 import { ThemeToggle } from '@/components/ThemeToggle';
 import SecurityAlert from '@/components/SecurityAlert';
 import logoImg from '@/assets/logo-auth.png';
@@ -82,7 +82,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
             </div>
             
             <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-              <SubscriptionBadge onUpgrade={() => navigate('/abonnements')} />
+              
               {location.pathname === "/pos" && isMobile && onCartOpen && (
                 <Button 
                   variant="outline" 
@@ -121,17 +121,6 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 </div>
               )}
               <ThemeToggle />
-              {!isMobile && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/abonnements')} 
-                  className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
-                >
-                  <Crown className="h-4 w-4" />
-                  Abonnement
-                </Button>
-              )}
               <Button 
                 variant="outline" 
                 size="sm" 
