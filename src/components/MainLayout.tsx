@@ -82,7 +82,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
             </div>
             
             <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-              <SubscriptionBadge onUpgrade={() => navigate('/abonnements')} />
+              
               {location.pathname === "/pos" && isMobile && onCartOpen && (
                 <Button 
                   variant="outline" 
