@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 import POSPage from "./pages/POSPage";
 import AgendaPage from "./pages/AgendaPage";
 import TodoPage from "./pages/TodoPage";
-import SubscriptionPage from "./pages/SubscriptionPage";
+
 import StatsPage from "./pages/StatsPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
