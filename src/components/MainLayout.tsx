@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import SubscriptionBadge from '@/components/SubscriptionBadge';
+
 import { ThemeToggle } from '@/components/ThemeToggle';
 import SecurityAlert from '@/components/SecurityAlert';
 import logoImg from '@/assets/logo-auth.png';
