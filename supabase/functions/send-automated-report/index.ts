@@ -185,7 +185,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailPromises = reportConfig.recipient_emails.map(async (email: string) => {
       return resend.emails.send({
-        from: `${salonName} <onboarding@resend.dev>`,
+        from: "L'app du salon <onboarding@resend.dev>",
         to: [email],
         subject: `${isTest ? "[TEST] " : ""}${reportConfig.report_name} - ${salonName}`,
         html: reportContent,
