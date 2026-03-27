@@ -34,24 +34,20 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
   });
 
   const serviceName = appointment.services?.[0]?.name || '';
-  const cardHeight = Math.max(heightPx, 40);
-  const isShort = cardHeight < 44;
+  const cardHeight = Math.max(heightPx, 44);
+  const isShort = cardHeight < 56;
 
   const style: React.CSSProperties = isDragOverlay
     ? {
-        width: 180,
-        minHeight: '40px',
+        width: 200,
+        minHeight: '44px',
         height: `${cardHeight}px`,
-        backgroundColor: `${color}25`,
-        border: `1.5px solid ${color}40`,
         opacity: 0.95,
       }
     : {
         top: `${topPx}px`,
-        minHeight: '40px',
+        minHeight: '44px',
         height: `${cardHeight}px`,
-        backgroundColor: `${color}18`,
-        border: `1.5px solid ${color}30`,
         transform: CSS.Translate.toString(transform),
         opacity: isDragging ? 0.25 : 1,
       };
@@ -64,40 +60,43 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       className={cn(
         "rounded-lg cursor-grab overflow-hidden transition-all duration-150",
         !isDragOverlay && "absolute left-1.5 right-1.5",
-        isDragOverlay && "shadow-xl ring-2 ring-primary/20",
+        isDragOverlay && "shadow-2xl ring-2 ring-indigo-500/30",
         isDragging && "z-50",
-        "hover:shadow-md hover:z-20",
+        "hover:brightness-110 hover:z-20",
         "active:cursor-grabbing"
       )}
-      style={style}
+      style={{
+        ...style,
+        backgroundColor: '#2a2a3e',
+        borderLeft: `3px solid ${color}`,
+      }}
       onClick={(e) => {
         if (isDragging) return;
         e.stopPropagation();
         onClick();
       }}
     >
-      <div className={cn("px-2.5 h-full flex flex-col overflow-hidden", isShort ? "justify-start py-1" : "justify-start py-1") }>
+      <div className={cn("px-2.5 h-full flex flex-col overflow-hidden", isShort ? "justify-center py-1" : "justify-start py-2")}>
         {isShort ? (
           <div className="flex items-center gap-1.5 text-[11px] leading-normal font-medium min-w-0">
-            <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-            <span className="font-semibold text-foreground truncate flex-1 min-w-0">{appointment.clientName}</span>
-            <span className="text-muted-foreground shrink-0">{format(startTime, 'HH:mm')}</span>
+            <span className="font-semibold text-white truncate flex-1 min-w-0">{appointment.clientName}</span>
+            <span className="text-white/40 shrink-0 text-[10px]">{format(startTime, 'HH:mm')}</span>
           </div>
         ) : (
           <>
-            <div className="text-[13px] font-semibold text-foreground truncate leading-normal min-w-0">
+            <div className="text-[13px] font-semibold text-white truncate leading-normal min-w-0">
               {appointment.clientName}
             </div>
-            <div className="text-[11px] leading-normal mt-0.5 text-muted-foreground truncate min-w-0">
+            <div className="text-[11px] leading-normal mt-0.5 text-white/50 truncate min-w-0">
               {serviceName}
             </div>
             {heightPx >= 60 && (
-              <div className="text-[11px] text-muted-foreground leading-snug mt-1">
+              <div className="text-[10px] text-white/35 leading-snug mt-1 font-mono">
                 {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
               </div>
             )}
             {!appointment.isPaid && heightPx >= 75 && (
-              <div className="text-[10px] font-semibold text-destructive mt-1">Non payé</div>
+              <div className="text-[10px] font-semibold text-red-400 mt-1">Non payé</div>
             )}
           </>
         )}

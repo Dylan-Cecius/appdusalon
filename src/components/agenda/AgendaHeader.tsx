@@ -16,48 +16,49 @@ const AgendaHeader = ({ selectedDate, onDateChange, onAddClick }: AgendaHeaderPr
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   return (
-    <div className="flex items-center justify-between gap-3 px-5 py-2.5 border-b border-border/30 bg-background">
+    <div
+      className="flex items-center justify-between gap-3 px-5 py-3 border-b shrink-0"
+      style={{ backgroundColor: '#0f0f1a', borderColor: 'rgba(255,255,255,0.08)' }}
+    >
       {/* Left: Navigation */}
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
+      <div className="flex items-center gap-1.5">
+        <button
           onClick={() => onDateChange(subDays(selectedDate, 1))}
-          className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
-        </Button>
+        </button>
 
-        <Button
-          variant={isToday ? 'default' : 'outline'}
+        <button
           onClick={() => onDateChange(new Date())}
           className={cn(
-            "h-7 px-3 text-xs font-medium rounded-full",
-            isToday && "bg-primary text-primary-foreground"
+            "h-7 px-3 text-xs font-medium rounded-lg transition-colors",
+            isToday
+              ? "bg-indigo-500 text-white"
+              : "text-white/60 hover:text-white hover:bg-white/10"
           )}
         >
           Aujourd'hui
-        </Button>
+        </button>
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={() => onDateChange(addDays(selectedDate, 1))}
-          className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
         >
           <ChevronRight className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
 
       {/* Center: Date display with picker */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" className="h-8 gap-2 text-sm font-semibold hover:bg-muted/50">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="capitalize">
-              {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+          <button className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
+            <Calendar className="h-4 w-4 text-indigo-400" />
+            <span className="text-white font-semibold text-base capitalize tracking-tight">
+              {format(selectedDate, 'EEEE, d MMMM', { locale: fr })}
             </span>
-          </Button>
+            <ChevronRight className="h-3.5 w-3.5 text-white/30 rotate-90" />
+          </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="center">
           <CalendarPicker
@@ -65,20 +66,19 @@ const AgendaHeader = ({ selectedDate, onDateChange, onAddClick }: AgendaHeaderPr
             selected={selectedDate}
             onSelect={(date) => date && onDateChange(date)}
             locale={fr}
+            className={cn("p-3 pointer-events-auto")}
           />
         </PopoverContent>
       </Popover>
 
       {/* Right: Add button */}
-      <Button
+      <button
         onClick={onAddClick}
-        size="sm"
-        variant="outline"
-        className="h-8 rounded-full font-medium gap-1.5 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+        className="h-9 px-4 rounded-lg font-medium text-sm flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-lg shadow-indigo-500/20"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-4 w-4" />
         <span className="hidden sm:inline">Nouveau RDV</span>
-      </Button>
+      </button>
     </div>
   );
 };
