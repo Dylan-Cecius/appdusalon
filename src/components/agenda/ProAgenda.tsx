@@ -24,16 +24,14 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 96;
-const TIME_COL_WIDTH = 60;
+const SLOT_HEIGHT = 48; // height per 15min slot
+const TIME_COL_WIDTH = 64;
 
-// Map JS getDay (0=Sun) to day names
 const jsWeekDayMap: Record<number, string> = {
   0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
   4: 'Thursday', 5: 'Friday', 6: 'Saturday',
 };
 
-/** Check if a staff member works at a given time slot on a given date */
 const isStaffWorking = (staff: Staff, date: Date, hour: number, minute: number): boolean => {
   const dayName = jsWeekDayMap[getDay(date)];
   const ds = staff.daily_schedules;
@@ -43,8 +41,14 @@ const isStaffWorking = (staff: Staff, date: Date, hour: number, minute: number):
   return timeStr >= daySchedule.start && timeStr < daySchedule.end;
 };
 
-const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isAbsent, onClick }: {
-  id: string; barberId: string; hour: number; minute: number; isBreak: boolean; isHourStart: boolean; isAbsent: boolean;
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+};
+
+const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isHalfHour, isAbsent, onClick }: {
+  id: string; barberId: string; hour: number; minute: number; isBreak: boolean; isHourStart: boolean; isHalfHour: boolean; isAbsent: boolean;
   onClick: () => void;
 }) => {
   const { isOver, setNodeRef } = useDroppable({ id, data: { barberId, hour, minute } });
@@ -55,29 +59,34 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isAbs
       ref={setNodeRef}
       className={cn(
         "transition-colors relative",
-        isHourStart ? "border-t border-white/10" : "border-t border-white/[0.04]",
-        blocked
-          ? "cursor-not-allowed"
-          : "hover:bg-white/[0.04] cursor-pointer",
-        isAbsent && "bg-white/[0.02]",
+        isHourStart && "border-t",
+        isHalfHour && "border-t border-dashed",
+        !isHourStart && !isHalfHour && "border-t",
+        blocked ? "cursor-not-allowed" : "hover:bg-white/[0.03] cursor-pointer",
+        isAbsent && "bg-white/[0.015]",
         isBreak && !isAbsent && "bg-black/20",
-        isOver && !blocked && "bg-white/[0.08]"
+        isOver && !blocked && "bg-indigo-500/10"
       )}
-      style={{ height: `${SLOT_HEIGHT}px` }}
+      style={{
+        height: `${SLOT_HEIGHT}px`,
+        borderColor: isHourStart
+          ? 'rgba(255,255,255,0.08)'
+          : isHalfHour
+            ? 'rgba(255,255,255,0.04)'
+            : 'transparent',
+      }}
       onClick={() => !blocked && onClick()}
     >
-      {/* Show ABSENT label on the hour mark for absent slots */}
       {isAbsent && isHourStart && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[10px] font-semibold tracking-widest text-white/15 uppercase select-none">
+          <span className="text-[9px] font-semibold tracking-widest text-white/10 uppercase select-none">
             ABSENT
           </span>
         </div>
       )}
-      {/* Diagonal hatching for absent slots */}
       {isAbsent && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{
             backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 6px, white 6px, white 7px)',
           }}
@@ -107,8 +116,9 @@ const ProAgenda = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  // Use staff as agenda columns
   const agendaMembers = useMemo(() => activeStaff, [activeStaff]);
+
+  const accentColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
 
   const categoryColors: Record<string, string> = {
     coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
@@ -125,22 +135,18 @@ const ProAgenda = () => {
   }, [dbServices]);
 
   const getAppointmentColor = useCallback((services: any[]): string => {
-    if (!services || services.length === 0) return '#94a3b8';
+    if (!services || services.length === 0) return '#6366f1';
     const svc = services[0];
     const name = (svc?.name || '').toLowerCase();
     if (serviceColorMap[name]) return serviceColorMap[name];
     const cat = (svc?.category || '').toLowerCase();
     if (categoryColors[cat]) return categoryColors[cat];
-    if (name.includes('barbe')) return '#60a5fa';
-    if (name.includes('coupe')) return '#34d399';
-    if (name.includes('color') || name.includes('mèche')) return '#a78bfa';
-    if (name.includes('soin')) return '#f472b6';
-    return '#94a3b8';
+    return '#6366f1';
   }, [serviceColorMap]);
 
   const { timeLabels, startHour } = useMemo(() => {
     const sched = getScheduleForDate(selectedDate);
-    let openH = 8, closeH = 21;
+    let openH = 8, closeH = 20;
 
     if (hasOpeningHours && sched && sched.is_open) {
       openH = parseInt(sched.open_time.split(':')[0]);
@@ -160,7 +166,7 @@ const ProAgenda = () => {
         labels.push({
           hour: h,
           minute: m,
-          label: m === 0 ? `${h.toString().padStart(2, '0')}:00` : '',
+          label: m === 0 ? `${h.toString().padStart(2, '0')}:00` : m === 30 ? `${h.toString().padStart(2, '0')}:30` : '',
           isBreak,
         });
       }
@@ -183,7 +189,6 @@ const ProAgenda = () => {
     return appointments.filter(apt => isSameDay(new Date(apt.startTime), selectedDate));
   }, [appointments, selectedDate]);
 
-  // Map appointments by staff ID (using barberId field which stores the staff/barber id)
   const appointmentsByMember = useMemo(() => {
     const map: Record<string, any[]> = {};
     agendaMembers.forEach(m => { map[m.id] = []; });
@@ -236,7 +241,6 @@ const ProAgenda = () => {
 
     if (newStart.getTime() === oldStart.getTime() && newBarberId === apt.barberId) return;
 
-    // Check if staff works at that time
     const targetMember = agendaMembers.find(m => m.id === newBarberId);
     if (targetMember && !isStaffWorking(targetMember, selectedDate, newHour, newMinute)) {
       toast({ title: "Impossible", description: `${targetMember.name} est absent à cet horaire`, variant: "destructive" });
@@ -244,11 +248,7 @@ const ProAgenda = () => {
     }
 
     try {
-      await updateAppointment(apt.id, {
-        startTime: newStart,
-        endTime: newEnd,
-        barberId: newBarberId,
-      });
+      await updateAppointment(apt.id, { startTime: newStart, endTime: newEnd, barberId: newBarberId });
       await refreshAppointments();
       toast({ title: "RDV déplacé", description: `${apt.clientName} → ${format(newStart, 'HH:mm')}` });
     } catch {
@@ -259,7 +259,7 @@ const ProAgenda = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="flex flex-col h-full bg-background">
+      <div className="flex flex-col h-full" style={{ backgroundColor: '#0f0f1a' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -269,19 +269,28 @@ const ProAgenda = () => {
             setIsModalOpen(true);
           }}
         />
-        <div className="flex gap-1 px-3 py-2 border-b border-border/20 bg-background overflow-x-auto">
-          {agendaMembers.map((member) => (
+        <div className="flex gap-1.5 px-3 py-2.5 overflow-x-auto" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          {agendaMembers.map((member, i) => (
             <button
               key={member.id}
               onClick={() => setSelectedBarberId(member.id)}
               className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all",
+                "px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-2",
                 selectedBarberId === member.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "text-white"
+                  : "text-white/40 hover:text-white/60"
               )}
+              style={{
+                backgroundColor: selectedBarberId === member.id ? '#2a2a3e' : 'transparent',
+              }}
             >
-              {member.name}
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                style={{ backgroundColor: member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length] }}
+              >
+                {getInitials(member.name)}
+              </div>
+              {member.name.split(' ')[0]}
             </button>
           ))}
         </div>
@@ -291,24 +300,27 @@ const ProAgenda = () => {
             .map((apt: any) => {
               const color = getAppointmentColor(apt.services);
               const st = new Date(apt.startTime);
+              const et = new Date(apt.endTime);
               return (
                 <div
                   key={apt.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/20 active:scale-[0.98] transition-transform"
-                  style={{ backgroundColor: `${color}10`, borderColor: `${color}25` }}
+                  className="flex items-center gap-3 p-3 rounded-xl active:scale-[0.98] transition-transform"
+                  style={{ backgroundColor: '#2a2a3e', borderLeft: `3px solid ${color}` }}
                   onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
                 >
-                  <div className="text-sm font-mono font-medium text-muted-foreground w-12 shrink-0">{format(st, 'HH:mm')}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{apt.clientName}</div>
-                    <div className="text-xs text-muted-foreground truncate">{apt.services?.[0]?.name}</div>
+                  <div className="text-sm font-mono font-medium text-white/40 w-12 shrink-0">
+                    {format(st, 'HH:mm')}
                   </div>
-                  <div className="text-sm font-semibold shrink-0">{apt.totalPrice}€</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-white truncate">{apt.clientName}</div>
+                    <div className="text-xs text-white/40 truncate">{apt.services?.[0]?.name}</div>
+                  </div>
+                  <div className="text-sm font-semibold text-white/70 shrink-0">{apt.totalPrice}€</div>
                 </div>
               );
             })}
           {(appointmentsByMember[selectedBarberId] || []).length === 0 && (
-            <div className="text-center text-muted-foreground text-sm py-12">Aucun rendez-vous</div>
+            <div className="text-center text-white/30 text-sm py-12">Aucun rendez-vous</div>
           )}
         </div>
         <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
@@ -328,11 +340,11 @@ const ProAgenda = () => {
 
   // Desktop view
   const memberCount = agendaMembers.length;
-  const colMinWidth = memberCount <= 1 ? 300 : memberCount <= 3 ? 220 : 160;
+  const colMinWidth = memberCount <= 1 ? 280 : memberCount <= 3 ? 200 : 160;
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'hsl(222 30% 12%)' }}>
+      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#0f0f1a' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -343,34 +355,45 @@ const ProAgenda = () => {
           }}
         />
 
-        {/* Member column headers */}
+        {/* Staff column headers */}
         <div
-          className="flex border-b border-white/10 shrink-0"
-          style={{ paddingLeft: `${TIME_COL_WIDTH}px`, backgroundColor: 'hsl(222 30% 14%)' }}
+          className="flex shrink-0"
+          style={{
+            paddingLeft: `${TIME_COL_WIDTH}px`,
+            backgroundColor: '#13131f',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+          }}
         >
           {agendaMembers.map((member, i) => {
             const dayName = jsWeekDayMap[getDay(selectedDate)];
             const worksToday = (member.working_days || []).includes(dayName);
+            const memberColor = member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length];
             return (
               <div
                 key={member.id}
-                className={cn(
-                  "flex-1 px-3 py-2.5",
-                  i > 0 && "border-l border-white/10"
-                )}
-                style={{ minWidth: `${colMinWidth}px` }}
+                className="flex-1 px-3 py-3"
+                style={{
+                  minWidth: `${colMinWidth}px`,
+                  borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                }}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <div
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: member.color?.startsWith('#') ? member.color : '#fff' }}
-                  />
-                  <span className={cn("text-sm font-medium", worksToday ? "text-white/90" : "text-white/40")}>
-                    {member.name}
-                  </span>
-                  {!worksToday && (
-                    <span className="text-[10px] text-white/25 uppercase tracking-wider">Absent</span>
-                  )}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                    style={{
+                      backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    {getInitials(member.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/30")}>
+                      {member.name}
+                    </span>
+                    {!worksToday && (
+                      <span className="text-[10px] text-white/20 uppercase tracking-wider">Absent</span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -382,21 +405,31 @@ const ProAgenda = () => {
           <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
             {/* Time column */}
             <div
-              className="sticky left-0 z-10 shrink-0 border-r border-white/10"
-              style={{ width: `${TIME_COL_WIDTH}px`, backgroundColor: 'hsl(222 30% 12%)' }}
+              className="sticky left-0 z-10 shrink-0"
+              style={{
+                width: `${TIME_COL_WIDTH}px`,
+                backgroundColor: '#0f0f1a',
+                borderRight: '1px solid rgba(255,255,255,0.06)',
+              }}
             >
               {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
                 <div
                   key={idx}
                   className={cn(
-                    "flex items-center justify-end pr-3",
-                    minute === 0 ? "border-t border-white/10" : "border-t border-white/[0.04]",
+                    "flex items-start justify-end pr-3 pt-[-2px]",
                     isBreak && "opacity-30"
                   )}
-                  style={{ height: `${SLOT_HEIGHT}px` }}
+                  style={{
+                    height: `${SLOT_HEIGHT}px`,
+                    borderTop: minute === 0
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : minute === 30
+                        ? '1px dashed rgba(255,255,255,0.04)'
+                        : '1px solid transparent',
+                  }}
                 >
                   {label && (
-                    <span className="text-xs font-normal leading-none tabular-nums text-white/50">
+                    <span className="text-[11px] font-mono leading-none text-white/30 -mt-1.5">
                       {label}
                     </span>
                   )}
@@ -404,15 +437,16 @@ const ProAgenda = () => {
               ))}
             </div>
 
-            {/* Member columns */}
+            {/* Staff columns */}
             {agendaMembers.map((member, i) => (
               <div
                 key={member.id}
-                className={cn(
-                  "flex-1 relative",
-                  i > 0 && "border-l border-white/10"
-                )}
-                style={{ minWidth: `${colMinWidth}px` }}
+                className="flex-1 relative"
+                style={{
+                  minWidth: `${colMinWidth}px`,
+                  backgroundColor: '#1a1a2e',
+                  borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                }}
               >
                 {/* Droppable grid slots */}
                 {timeLabels.map(({ hour, minute, isBreak }, idx) => {
@@ -426,6 +460,7 @@ const ProAgenda = () => {
                       minute={minute}
                       isBreak={isBreak}
                       isHourStart={minute === 0}
+                      isHalfHour={minute === 30}
                       isAbsent={absent}
                       onClick={() => handleSlotClick(member.id, hour, minute)}
                     />
