@@ -24,32 +24,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const initializedRef = useRef(false);
+  const lastAuthTimestamp = useRef(0);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          lastAuthTimestamp.current = Date.now();
+        }
+
         if (event === 'SIGNED_OUT') {
-          // On SIGNED_OUT, verify session is truly gone before clearing user
-          // This prevents false sign-outs from rate-limited token refreshes
-          supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-            if (!currentSession) {
-              setSession(null);
-              setUser(null);
+          const isRecentAuthEvent = Date.now() - lastAuthTimestamp.current < 30000;
+
+          if (isRecentAuthEvent) {
+            if (initializedRef.current) {
+              setLoading(false);
             }
-            // If currentSession exists, ignore the SIGNED_OUT event (rate limit artifact)
-          });
+            return;
+          }
+
+          setUser(null);
+          setSession(null);
         } else {
           setSession(session);
           setUser(session?.user ?? null);
         }
+
         if (initializedRef.current) {
           setLoading(false);
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
