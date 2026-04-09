@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Calendar, CheckSquare, BarChart3, FileText, Settings as SettingsIcon, User, LogOut, Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package, Store } from 'lucide-react';
@@ -23,6 +23,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   const location = useLocation();
   const isMobile = useIsMobile();
   const { salonSettings } = useSupabaseSettings();
+  const navScrollRef = useRef<HTMLDivElement>(null);
 
   // Sauvegarder la route actuelle dans localStorage
   useEffect(() => {
@@ -31,6 +32,12 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
       localStorage.setItem('lastVisitedSection', currentPath);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (navScrollRef.current) {
+      navScrollRef.current.scrollLeft = 0;
+    }
+  }, [location.pathname, isMobile]);
 
   const navItems = [
     { path: '/dashboard', label: isMobile ? 'Home' : 'Dashboard', icon: LayoutDashboard },
@@ -139,11 +146,14 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
 
       {/* Navigation */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-[73px] z-40">
-        <div className="container mx-auto px-4 sm:px-6 py-2">
-          <div className="flex flex-wrap items-center gap-1 justify-center">
+        <div
+          ref={navScrollRef}
+          className="container mx-auto overflow-x-auto px-4 py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:px-6"
+        >
+          <div className="flex w-max min-w-full items-center justify-center gap-2">
             {/* Navigation principale */}
             <div className={cn(
-              "inline-flex flex-wrap items-center gap-0.5 p-1 bg-muted rounded-md",
+              "inline-flex shrink-0 items-center gap-0.5 rounded-md bg-muted p-1",
               isMobile && "min-w-fit"
             )}>
               {navItems.map((item) => {
@@ -153,7 +163,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                     key={item.path}
                     to={item.path}
                     className={cn(
-                      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-1 text-xs sm:text-sm sm:px-3 sm:py-1.5 font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                       "hover:scale-105 active:scale-95 duration-200",
                       "flex gap-1",
                       isActive(item.path)
@@ -170,7 +180,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
 
             {/* Navigation mobile supplémentaire */}
             {isMobile && (
-              <div className="inline-flex items-center gap-1">
+              <div className="inline-flex shrink-0 items-center gap-1">
                 {mobileNavItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -181,7 +191,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                       <Button
                         variant={isActive(item.path) ? "default" : "outline"}
                         size="sm"
-                        className="flex items-center gap-2 min-w-fit hover:scale-105 active:scale-95 transition-all duration-200"
+                        className="flex h-auto min-w-fit items-center gap-1 px-2 py-1.5 text-sm transition-all duration-200 hover:scale-105 active:scale-95"
                       >
                         <Icon className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
                         {item.label}
@@ -194,7 +204,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
 
             {/* Navigation desktop pour les sections supplémentaires */}
             {!isMobile && (
-              <div className="inline-flex items-center gap-1 p-1 bg-muted rounded-md ml-2">
+              <div className="ml-2 inline-flex shrink-0 items-center gap-1 rounded-md bg-muted p-1">
                 {mobileNavItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -202,9 +212,9 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                       key={item.path}
                       to={item.path}
                       className={cn(
-                        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                         "hover:scale-105 active:scale-95 duration-200",
-                        "flex gap-2",
+                        "flex gap-1",
                         isActive(item.path)
                           ? "bg-background text-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground"
