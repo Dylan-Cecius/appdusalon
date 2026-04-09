@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import ServiceManagement from '@/components/ServiceManagement';
-import { useSupabaseServices, Service } from '@/hooks/useSupabaseServices';
+import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { BarChart3, Settings2, TrendingUp, CalendarDays, Scissors } from 'lucide-react';
@@ -21,10 +21,9 @@ interface HistoryRow {
 }
 
 const ServicesPage = () => {
-  const { services, loading } = useSupabaseServices();
+  const { services } = useSupabaseServices();
   const { user } = useAuth();
-  const [serviceCounts, setServiceCounts] = useState<Record<string, number>>({});
-  const [countsLoading, setCountsLoading] = useState(true);
+  
 
   // Stats
   const [stats, setStats] = useState({ todayCount: 0, todayRevenue: 0, weekCount: 0, weekRevenue: 0, monthCount: 0, monthRevenue: 0 });
@@ -61,7 +60,6 @@ const ServicesPage = () => {
         const weekStart = startOfWeek(now, { weekStartsOn: 1 });
         const monthStart = startOfMonth(now);
 
-        const counts: Record<string, number> = {};
         let todayCount = 0, todayRevenue = 0, weekCount = 0, weekRevenue = 0, monthCount = 0, monthRevenue = 0;
         const historyRows: HistoryRow[] = [];
 
@@ -74,7 +72,7 @@ const ServicesPage = () => {
             const qty = item.quantity || 1;
             const price = (item.price || 0) * qty;
 
-            counts[name] = (counts[name] || 0) + qty;
+            
 
             if (isAfter(txDate, monthStart)) { monthCount += qty; monthRevenue += price; }
             if (isAfter(txDate, weekStart)) { weekCount += qty; weekRevenue += price; }
@@ -93,29 +91,18 @@ const ServicesPage = () => {
           });
         });
 
-        setServiceCounts(counts);
+        
         setStats({ todayCount, todayRevenue, weekCount, weekRevenue, monthCount, monthRevenue });
         setHistory(historyRows.slice(0, 50));
       } catch (err) {
         console.error('Error fetching service data:', err);
       } finally {
-        setCountsLoading(false);
         setHistoryLoading(false);
       }
     };
     fetchData();
   }, [user, services]);
 
-  const getCount = (serviceName: string) => serviceCounts[serviceName.toLowerCase().trim()] || 0;
-
-  const sortedServices = useMemo(() => {
-    return [...services].sort((a, b) => getCount(b.name) - getCount(a.name));
-  }, [services, serviceCounts]);
-
-  const categoryLabels: Record<string, string> = {
-    coupe: 'Coupe', coloration: 'Coloration', barbe: 'Barbe',
-    soin: 'Soin', combo: 'Combo', produit: 'Produit', general: 'Général',
-  };
 
   return (
     <MainLayout>
@@ -158,68 +145,6 @@ const ServicesPage = () => {
               <p className="text-2xl font-bold">{stats.monthCount}</p>
               <p className="text-xs text-muted-foreground">{stats.monthRevenue.toFixed(0)}€ de CA</p>
             </Card>
-          </div>
-
-          {/* Services overview table */}
-          <div className="rounded-lg border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Catégorie</TableHead>
-                  <TableHead className="text-right">Prix</TableHead>
-                  <TableHead className="text-right">Durée</TableHead>
-                  <TableHead className="text-right">Réalisations</TableHead>
-                  <TableHead className="text-right">CA généré</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading || countsLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Chargement...
-                    </TableCell>
-                  </TableRow>
-                ) : sortedServices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Aucun service trouvé
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedServices.map((service) => {
-                    const count = getCount(service.name);
-                    const revenue = count * service.price;
-                    return (
-                      <TableRow key={service.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full shrink-0"
-                              style={{ backgroundColor: service.color || '#6B7280' }}
-                            />
-                            <span className="font-medium">{service.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-xs">
-                            {categoryLabels[service.category] || service.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">{service.price}€</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{service.duration} min</TableCell>
-                        <TableCell className="text-right">
-                          <span className="font-semibold">{count}</span>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-primary">
-                          {revenue.toFixed(0)}€
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
           </div>
 
           {/* History table */}
