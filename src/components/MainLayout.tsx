@@ -143,7 +143,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
           <div className="flex flex-wrap items-center gap-1 justify-center">
             {/* Navigation principale */}
             <div className={cn(
-              "inline-flex items-center gap-1 p-1 bg-muted rounded-md",
+              "inline-flex flex-wrap items-center gap-0.5 p-1 bg-muted rounded-md",
               isMobile && "min-w-fit"
             )}>
               {navItems.map((item) => {
