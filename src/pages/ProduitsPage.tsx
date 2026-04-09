@@ -27,15 +27,19 @@ const ProduitsPage = () => {
     lowStockProducts, criticalStockProducts,
   } = useStocks();
 
-  // Sales stats from transactions
+  // Sales stats + history from transactions
   const [salesStats, setSalesStats] = useState({
     todayCount: 0, weekCount: 0, monthCount: 0,
     todayRevenue: 0, weekRevenue: 0, monthRevenue: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [productHistory, setProductHistory] = useState<Array<{
+    date: Date; clientName: string | null; productName: string; quantity: number; price: number; staffName: string | null;
+  }>>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSalesStats = async () => {
+    const fetchSalesData = async () => {
       if (!user) return;
       try {
         const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
@@ -43,21 +47,28 @@ const ProduitsPage = () => {
 
         const { data: transactions } = await supabase
           .from('transactions')
-          .select('items, transaction_date')
-          .eq('salon_id', salonId);
+          .select('items, transaction_date, staff_id, client_id')
+          .eq('salon_id', salonId)
+          .order('transaction_date', { ascending: false });
+
+        const { data: staffData } = await supabase.from('staff').select('id, name').eq('salon_id', salonId);
+        const { data: clientsData } = await supabase.from('clients').select('id, name').eq('salon_id', salonId);
+
+        const staffMap = new Map((staffData || []).map((s: any) => [s.id, s.name]));
+        const clientMap = new Map((clientsData || []).map((c: any) => [c.id, c.name]));
 
         const now = new Date();
         const dayStart = startOfDay(now);
         const weekStart = startOfWeek(now, { weekStartsOn: 1 });
         const monthStart = startOfMonth(now);
 
-        // Get product names for matching
         const productNames = new Set(products.map(p => p.name.toLowerCase().trim()));
 
         let todayCount = 0, weekCount = 0, monthCount = 0;
         let todayRevenue = 0, weekRevenue = 0, monthRevenue = 0;
+        const historyRows: Array<{ date: Date; clientName: string | null; productName: string; quantity: number; price: number; staffName: string | null }> = [];
 
-        transactions?.forEach((tx) => {
+        transactions?.forEach((tx: any) => {
           const txDate = new Date(tx.transaction_date);
           const items = tx.items as any[];
           items?.forEach((item: any) => {
@@ -66,29 +77,31 @@ const ProduitsPage = () => {
             const qty = item.quantity || 1;
             const price = (item.price || 0) * qty;
 
-            if (isAfter(txDate, monthStart)) {
-              monthCount += qty;
-              monthRevenue += price;
-            }
-            if (isAfter(txDate, weekStart)) {
-              weekCount += qty;
-              weekRevenue += price;
-            }
-            if (isAfter(txDate, dayStart)) {
-              todayCount += qty;
-              todayRevenue += price;
-            }
+            if (isAfter(txDate, monthStart)) { monthCount += qty; monthRevenue += price; }
+            if (isAfter(txDate, weekStart)) { weekCount += qty; weekRevenue += price; }
+            if (isAfter(txDate, dayStart)) { todayCount += qty; todayRevenue += price; }
+
+            historyRows.push({
+              date: txDate,
+              clientName: tx.client_id ? clientMap.get(tx.client_id) || null : null,
+              productName: item.name,
+              quantity: qty,
+              price: item.price || 0,
+              staffName: tx.staff_id ? staffMap.get(tx.staff_id) || null : null,
+            });
           });
         });
 
         setSalesStats({ todayCount, weekCount, monthCount, todayRevenue, weekRevenue, monthRevenue });
+        setProductHistory(historyRows.slice(0, 50));
       } catch (err) {
         console.error('Error fetching product sales stats:', err);
       } finally {
         setStatsLoading(false);
+        setHistoryLoading(false);
       }
     };
-    fetchSalesStats();
+    fetchSalesData();
   }, [user, products]);
 
   // Product form modal
