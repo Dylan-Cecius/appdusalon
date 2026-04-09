@@ -31,7 +31,7 @@ import { TransactionsProvider } from '@/contexts/TransactionsContext';
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Chargement...</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 };
