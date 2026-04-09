@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import ServiceManagement from '@/components/ServiceManagement';
-import { useSupabaseServices, Service } from '@/hooks/useSupabaseServices';
+import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -106,16 +106,6 @@ const ServicesPage = () => {
     fetchData();
   }, [user, services]);
 
-  const getCount = (serviceName: string) => serviceCounts[serviceName.toLowerCase().trim()] || 0;
-
-  const sortedServices = useMemo(() => {
-    return [...services].sort((a, b) => getCount(b.name) - getCount(a.name));
-  }, [services, serviceCounts]);
-
-  const categoryLabels: Record<string, string> = {
-    coupe: 'Coupe', coloration: 'Coloration', barbe: 'Barbe',
-    soin: 'Soin', combo: 'Combo', produit: 'Produit', general: 'Général',
-  };
 
   return (
     <MainLayout>
