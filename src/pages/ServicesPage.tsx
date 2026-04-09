@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import ServiceManagement from '@/components/ServiceManagement';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { BarChart3, Settings2, TrendingUp, CalendarDays, Scissors } from 'lucide-react';
-import { startOfDay, startOfWeek, startOfMonth, isAfter, format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { BarChart3, Settings2, TrendingUp, CalendarDays, Scissors, CalendarIcon, X } from 'lucide-react';
+import { startOfDay, startOfWeek, startOfMonth, isAfter, isBefore, format, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface HistoryRow {
   date: Date;
@@ -23,13 +26,15 @@ interface HistoryRow {
 const ServicesPage = () => {
   const { services } = useSupabaseServices();
   const { user } = useAuth();
-  
 
-  // Stats
-  const [stats, setStats] = useState({ todayCount: 0, todayRevenue: 0, weekCount: 0, weekRevenue: 0, monthCount: 0, monthRevenue: 0 });
-  // History
-  const [history, setHistory] = useState<HistoryRow[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
+  const [allRows, setAllRows] = useState<HistoryRow[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Date range filter
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [appliedStart, setAppliedStart] = useState<Date | undefined>();
+  const [appliedEnd, setAppliedEnd] = useState<Date | undefined>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,31 +43,20 @@ const ServicesPage = () => {
         const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
         if (!salonId) return;
 
-        // Fetch transactions with staff and client info
         const { data: transactions } = await supabase
           .from('transactions')
           .select('items, transaction_date, staff_id, client_id')
           .eq('salon_id', salonId)
           .order('transaction_date', { ascending: false });
 
-        // Fetch staff and clients for name lookup
         const { data: staffData } = await supabase.from('staff').select('id, name').eq('salon_id', salonId);
         const { data: clientsData } = await supabase.from('clients').select('id, name').eq('salon_id', salonId);
 
         const staffMap = new Map((staffData || []).map((s: any) => [s.id, s.name]));
         const clientMap = new Map((clientsData || []).map((c: any) => [c.id, c.name]));
-
-        // Get service names set
         const serviceNames = new Set(services.map(s => s.name.toLowerCase().trim()));
 
-        const now = new Date();
-        const dayStart = startOfDay(now);
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-        const monthStart = startOfMonth(now);
-
-        let todayCount = 0, todayRevenue = 0, weekCount = 0, weekRevenue = 0, monthCount = 0, monthRevenue = 0;
-        const historyRows: HistoryRow[] = [];
-
+        const rows: HistoryRow[] = [];
         transactions?.forEach((tx: any) => {
           const txDate = new Date(tx.transaction_date);
           const items = tx.items as any[];
@@ -70,17 +64,8 @@ const ServicesPage = () => {
             const name = item.name?.toLowerCase().trim();
             if (!name || !serviceNames.has(name)) return;
             const qty = item.quantity || 1;
-            const price = (item.price || 0) * qty;
-
-            
-
-            if (isAfter(txDate, monthStart)) { monthCount += qty; monthRevenue += price; }
-            if (isAfter(txDate, weekStart)) { weekCount += qty; weekRevenue += price; }
-            if (isAfter(txDate, dayStart)) { todayCount += qty; todayRevenue += price; }
-
-            // Add to history (collect all, slice later)
             for (let q = 0; q < qty; q++) {
-              historyRows.push({
+              rows.push({
                 date: txDate,
                 clientName: tx.client_id ? clientMap.get(tx.client_id) || null : null,
                 serviceName: item.name,
@@ -91,18 +76,53 @@ const ServicesPage = () => {
           });
         });
 
-        
-        setStats({ todayCount, todayRevenue, weekCount, weekRevenue, monthCount, monthRevenue });
-        setHistory(historyRows.slice(0, 50));
+        setAllRows(rows);
       } catch (err) {
         console.error('Error fetching service data:', err);
       } finally {
-        setHistoryLoading(false);
+        setDataLoading(false);
       }
     };
     fetchData();
   }, [user, services]);
 
+  // Filtered rows based on applied date range
+  const filteredRows = useMemo(() => {
+    if (!appliedStart && !appliedEnd) return allRows;
+    return allRows.filter(r => {
+      if (appliedStart && isBefore(r.date, startOfDay(appliedStart))) return false;
+      if (appliedEnd && isAfter(r.date, endOfDay(appliedEnd))) return false;
+      return true;
+    });
+  }, [allRows, appliedStart, appliedEnd]);
+
+  // Stats computed from filtered rows
+  const stats = useMemo(() => {
+    const now = new Date();
+    const dayStart = startOfDay(now);
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const monthStart = startOfMonth(now);
+
+    // If custom range applied, show single aggregate
+    if (appliedStart || appliedEnd) {
+      const count = filteredRows.length;
+      const revenue = filteredRows.reduce((s, r) => s + r.price, 0);
+      return { todayCount: count, todayRevenue: revenue, weekCount: count, weekRevenue: revenue, monthCount: count, monthRevenue: revenue, isCustom: true };
+    }
+
+    let todayCount = 0, todayRevenue = 0, weekCount = 0, weekRevenue = 0, monthCount = 0, monthRevenue = 0;
+    filteredRows.forEach(r => {
+      if (isAfter(r.date, dayStart)) { todayCount++; todayRevenue += r.price; }
+      if (isAfter(r.date, weekStart)) { weekCount++; weekRevenue += r.price; }
+      if (isAfter(r.date, monthStart)) { monthCount++; monthRevenue += r.price; }
+    });
+    return { todayCount, todayRevenue, weekCount, weekRevenue, monthCount, monthRevenue, isCustom: false };
+  }, [filteredRows, appliedStart, appliedEnd]);
+
+  const historyDisplay = filteredRows.slice(0, 50);
+
+  const handleApply = () => { setAppliedStart(startDate); setAppliedEnd(endDate); };
+  const handleClear = () => { setStartDate(undefined); setEndDate(undefined); setAppliedStart(undefined); setAppliedEnd(undefined); };
 
   return (
     <MainLayout>
@@ -120,31 +140,74 @@ const ServicesPage = () => {
 
         <TabsContent value="overview" className="space-y-4">
           {/* Stats cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <Scissors className="h-4 w-4" />
-                Aujourd'hui
-              </div>
-              <p className="text-2xl font-bold">{stats.todayCount}</p>
-              <p className="text-xs text-muted-foreground">{stats.todayRevenue.toFixed(0)}€ de CA</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <TrendingUp className="h-4 w-4" />
-                Cette semaine
-              </div>
-              <p className="text-2xl font-bold">{stats.weekCount}</p>
-              <p className="text-xs text-muted-foreground">{stats.weekRevenue.toFixed(0)}€ de CA</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <CalendarDays className="h-4 w-4" />
-                Ce mois
-              </div>
-              <p className="text-2xl font-bold">{stats.monthCount}</p>
-              <p className="text-xs text-muted-foreground">{stats.monthRevenue.toFixed(0)}€ de CA</p>
-            </Card>
+          {stats.isCustom ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Scissors className="h-4 w-4" />
+                  Services (période)
+                </div>
+                <p className="text-2xl font-bold">{stats.todayCount}</p>
+                <p className="text-sm font-bold text-green-500">{stats.todayRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Scissors className="h-4 w-4" />
+                  Aujourd'hui
+                </div>
+                <p className="text-2xl font-bold">{stats.todayCount}</p>
+                <p className="text-sm font-bold text-green-500">{stats.todayRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <TrendingUp className="h-4 w-4" />
+                  Cette semaine
+                </div>
+                <p className="text-2xl font-bold">{stats.weekCount}</p>
+                <p className="text-sm font-bold text-green-500">{stats.weekRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <CalendarDays className="h-4 w-4" />
+                  Ce mois
+                </div>
+                <p className="text-2xl font-bold">{stats.monthCount}</p>
+                <p className="text-sm font-bold text-green-500">{stats.monthRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+            </div>
+          )}
+
+          {/* Date range picker */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, 'dd/MM/yyyy') : 'Date début'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus locale={fr} className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, 'dd/MM/yyyy') : 'Date fin'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus locale={fr} className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            <Button size="sm" onClick={handleApply} disabled={!startDate && !endDate}>Appliquer</Button>
+            {(appliedStart || appliedEnd) && (
+              <Button size="sm" variant="ghost" onClick={handleClear}><X className="h-4 w-4 mr-1" />Effacer</Button>
+            )}
           </div>
 
           {/* History table */}
@@ -164,16 +227,16 @@ const ServicesPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {historyLoading ? (
+                {dataLoading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Chargement...</TableCell>
                   </TableRow>
-                ) : history.length === 0 ? (
+                ) : historyDisplay.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Aucun historique</TableCell>
                   </TableRow>
                 ) : (
-                  history.map((row, i) => (
+                  historyDisplay.map((row, i) => (
                     <TableRow key={i}>
                       <TableCell className="text-muted-foreground">{format(row.date, 'dd/MM/yyyy', { locale: fr })}</TableCell>
                       <TableCell className="text-muted-foreground">{format(row.date, 'HH:mm')}</TableCell>
