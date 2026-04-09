@@ -360,6 +360,7 @@ const ProduitsPage = () => {
               </TableBody>
             </Table>
           </div>
+        </TabsContent>
 
         <TabsContent value="manage">
           <ProductManagement />
