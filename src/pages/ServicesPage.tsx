@@ -23,7 +23,7 @@ interface HistoryRow {
 const ServicesPage = () => {
   const { services } = useSupabaseServices();
   const { user } = useAuth();
-  const [countsLoading, setCountsLoading] = useState(true);
+  
 
   // Stats
   const [stats, setStats] = useState({ todayCount: 0, todayRevenue: 0, weekCount: 0, weekRevenue: 0, monthCount: 0, monthRevenue: 0 });
@@ -60,7 +60,6 @@ const ServicesPage = () => {
         const weekStart = startOfWeek(now, { weekStartsOn: 1 });
         const monthStart = startOfMonth(now);
 
-        const counts: Record<string, number> = {};
         let todayCount = 0, todayRevenue = 0, weekCount = 0, weekRevenue = 0, monthCount = 0, monthRevenue = 0;
         const historyRows: HistoryRow[] = [];
 
@@ -98,7 +97,6 @@ const ServicesPage = () => {
       } catch (err) {
         console.error('Error fetching service data:', err);
       } finally {
-        setCountsLoading(false);
         setHistoryLoading(false);
       }
     };
