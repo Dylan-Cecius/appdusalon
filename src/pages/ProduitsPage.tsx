@@ -31,16 +31,16 @@ const ProduitsPage = () => {
     lowStockProducts, criticalStockProducts,
   } = useStocks();
 
-  // Sales stats + history from transactions
-  const [salesStats, setSalesStats] = useState({
-    todayCount: 0, weekCount: 0, monthCount: 0,
-    todayRevenue: 0, weekRevenue: 0, monthRevenue: 0,
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [productHistory, setProductHistory] = useState<Array<{
-    date: Date; clientName: string | null; productName: string; quantity: number; price: number; staffName: string | null;
-  }>>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
+  // All product rows (unfiltered)
+  interface ProductRow { date: Date; clientName: string | null; productName: string; quantity: number; price: number; staffName: string | null; }
+  const [allRows, setAllRows] = useState<ProductRow[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Date range filter
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [appliedStart, setAppliedStart] = useState<Date | undefined>();
+  const [appliedEnd, setAppliedEnd] = useState<Date | undefined>();
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -60,18 +60,9 @@ const ProduitsPage = () => {
 
         const staffMap = new Map((staffData || []).map((s: any) => [s.id, s.name]));
         const clientMap = new Map((clientsData || []).map((c: any) => [c.id, c.name]));
-
-        const now = new Date();
-        const dayStart = startOfDay(now);
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-        const monthStart = startOfMonth(now);
-
         const productNames = new Set(products.map(p => p.name.toLowerCase().trim()));
 
-        let todayCount = 0, weekCount = 0, monthCount = 0;
-        let todayRevenue = 0, weekRevenue = 0, monthRevenue = 0;
-        const historyRows: Array<{ date: Date; clientName: string | null; productName: string; quantity: number; price: number; staffName: string | null }> = [];
-
+        const rows: ProductRow[] = [];
         transactions?.forEach((tx: any) => {
           const txDate = new Date(tx.transaction_date);
           const items = tx.items as any[];
@@ -79,13 +70,7 @@ const ProduitsPage = () => {
             const name = item.name?.toLowerCase().trim();
             if (!name || !productNames.has(name)) return;
             const qty = item.quantity || 1;
-            const price = (item.price || 0) * qty;
-
-            if (isAfter(txDate, monthStart)) { monthCount += qty; monthRevenue += price; }
-            if (isAfter(txDate, weekStart)) { weekCount += qty; weekRevenue += price; }
-            if (isAfter(txDate, dayStart)) { todayCount += qty; todayRevenue += price; }
-
-            historyRows.push({
+            rows.push({
               date: txDate,
               clientName: tx.client_id ? clientMap.get(tx.client_id) || null : null,
               productName: item.name,
@@ -96,17 +81,51 @@ const ProduitsPage = () => {
           });
         });
 
-        setSalesStats({ todayCount, weekCount, monthCount, todayRevenue, weekRevenue, monthRevenue });
-        setProductHistory(historyRows.slice(0, 50));
+        setAllRows(rows);
       } catch (err) {
         console.error('Error fetching product sales stats:', err);
       } finally {
-        setStatsLoading(false);
-        setHistoryLoading(false);
+        setDataLoading(false);
       }
     };
     fetchSalesData();
   }, [user, products]);
+
+  const filteredRows = useMemo(() => {
+    if (!appliedStart && !appliedEnd) return allRows;
+    return allRows.filter(r => {
+      if (appliedStart && isBefore(r.date, startOfDay(appliedStart))) return false;
+      if (appliedEnd && isAfter(r.date, endOfDay(appliedEnd))) return false;
+      return true;
+    });
+  }, [allRows, appliedStart, appliedEnd]);
+
+  const salesStats = useMemo(() => {
+    const now = new Date();
+    const dayStart = startOfDay(now);
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const monthStart = startOfMonth(now);
+
+    if (appliedStart || appliedEnd) {
+      let count = 0, revenue = 0;
+      filteredRows.forEach(r => { count += r.quantity; revenue += r.price * r.quantity; });
+      return { todayCount: count, todayRevenue: revenue, weekCount: count, weekRevenue: revenue, monthCount: count, monthRevenue: revenue, isCustom: true };
+    }
+
+    let todayCount = 0, weekCount = 0, monthCount = 0;
+    let todayRevenue = 0, weekRevenue = 0, monthRevenue = 0;
+    filteredRows.forEach(r => {
+      const p = r.price * r.quantity;
+      if (isAfter(r.date, dayStart)) { todayCount += r.quantity; todayRevenue += p; }
+      if (isAfter(r.date, weekStart)) { weekCount += r.quantity; weekRevenue += p; }
+      if (isAfter(r.date, monthStart)) { monthCount += r.quantity; monthRevenue += p; }
+    });
+    return { todayCount, todayRevenue, weekCount, weekRevenue, monthCount, monthRevenue, isCustom: false };
+  }, [filteredRows, appliedStart, appliedEnd]);
+
+  const historyDisplay = filteredRows.slice(0, 50);
+  const handleApply = () => { setAppliedStart(startDate); setAppliedEnd(endDate); };
+  const handleClear = () => { setStartDate(undefined); setEndDate(undefined); setAppliedStart(undefined); setAppliedEnd(undefined); };
 
   // Product form modal
   const [isModalOpen, setIsModalOpen] = useState(false);
