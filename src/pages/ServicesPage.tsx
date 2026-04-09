@@ -72,7 +72,7 @@ const ServicesPage = () => {
             const qty = item.quantity || 1;
             const price = (item.price || 0) * qty;
 
-            counts[name] = (counts[name] || 0) + qty;
+            
 
             if (isAfter(txDate, monthStart)) { monthCount += qty; monthRevenue += price; }
             if (isAfter(txDate, weekStart)) { weekCount += qty; weekRevenue += price; }
