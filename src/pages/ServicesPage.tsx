@@ -160,68 +160,6 @@ const ServicesPage = () => {
             </Card>
           </div>
 
-          {/* Services overview table */}
-          <div className="rounded-lg border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Catégorie</TableHead>
-                  <TableHead className="text-right">Prix</TableHead>
-                  <TableHead className="text-right">Durée</TableHead>
-                  <TableHead className="text-right">Réalisations</TableHead>
-                  <TableHead className="text-right">CA généré</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading || countsLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Chargement...
-                    </TableCell>
-                  </TableRow>
-                ) : sortedServices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Aucun service trouvé
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedServices.map((service) => {
-                    const count = getCount(service.name);
-                    const revenue = count * service.price;
-                    return (
-                      <TableRow key={service.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full shrink-0"
-                              style={{ backgroundColor: service.color || '#6B7280' }}
-                            />
-                            <span className="font-medium">{service.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-xs">
-                            {categoryLabels[service.category] || service.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">{service.price}€</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{service.duration} min</TableCell>
-                        <TableCell className="text-right">
-                          <span className="font-semibold">{count}</span>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-primary">
-                          {revenue.toFixed(0)}€
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
           {/* History table */}
           <div className="rounded-lg border bg-card">
             <div className="p-4 border-b">
