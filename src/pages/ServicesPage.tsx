@@ -92,7 +92,7 @@ const ServicesPage = () => {
           });
         });
 
-        setServiceCounts(counts);
+        
         setStats({ todayCount, todayRevenue, weekCount, weekRevenue, monthCount, monthRevenue });
         setHistory(historyRows.slice(0, 50));
       } catch (err) {
