@@ -29,18 +29,16 @@ export const useSubscription = () => {
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
-        console.error('Error checking subscription:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de vérifier le statut de l'abonnement",
-          variant: "destructive",
-        });
+        console.warn('Subscription check failed (non-blocking):', error.message);
+        // Ne pas bloquer l'utilisateur ni afficher de toast d'erreur
         return;
       }
 
-      setSubscriptionData(data);
+      if (data) {
+        setSubscriptionData(data);
+      }
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      console.warn('Subscription check failed (non-blocking):', error);
     } finally {
       setLoading(false);
     }
