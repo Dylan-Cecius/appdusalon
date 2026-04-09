@@ -213,41 +213,91 @@ const ProduitsPage = () => {
 
         <TabsContent value="overview" className="space-y-4">
           {/* Stats cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <ShoppingBag className="h-4 w-4" />
-                Ventes aujourd'hui
-              </div>
-              <p className="text-2xl font-bold">{salesStats.todayCount}</p>
-              <p className="text-xs text-muted-foreground">{salesStats.todayRevenue.toFixed(0)}€ de CA</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <TrendingUp className="h-4 w-4" />
-                Cette semaine
-              </div>
-              <p className="text-2xl font-bold">{salesStats.weekCount}</p>
-              <p className="text-xs text-muted-foreground">{salesStats.weekRevenue.toFixed(0)}€ de CA</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <BarChart3 className="h-4 w-4" />
-                Ce mois
-              </div>
-              <p className="text-2xl font-bold">{salesStats.monthCount}</p>
-              <p className="text-xs text-muted-foreground">{salesStats.monthRevenue.toFixed(0)}€ de CA</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <Package className="h-4 w-4" />
-                Valeur du stock
-              </div>
-              <p className="text-2xl font-bold">{totalSellValue.toFixed(0)}€</p>
-              <p className="text-xs text-muted-foreground">{products.length} produits actifs</p>
-            </Card>
-          </div>
+          {salesStats.isCustom ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <ShoppingBag className="h-4 w-4" />
+                  Ventes (période)
+                </div>
+                <p className="text-2xl font-bold">{salesStats.todayCount}</p>
+                <p className="text-sm font-bold text-green-500">{salesStats.todayRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Package className="h-4 w-4" />
+                  Valeur du stock
+                </div>
+                <p className="text-2xl font-bold">{totalSellValue.toFixed(0)}€</p>
+                <p className="text-xs text-muted-foreground">{products.length} produits actifs</p>
+              </Card>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <ShoppingBag className="h-4 w-4" />
+                  Ventes aujourd'hui
+                </div>
+                <p className="text-2xl font-bold">{salesStats.todayCount}</p>
+                <p className="text-sm font-bold text-green-500">{salesStats.todayRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <TrendingUp className="h-4 w-4" />
+                  Cette semaine
+                </div>
+                <p className="text-2xl font-bold">{salesStats.weekCount}</p>
+                <p className="text-sm font-bold text-green-500">{salesStats.weekRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <BarChart3 className="h-4 w-4" />
+                  Ce mois
+                </div>
+                <p className="text-2xl font-bold">{salesStats.monthCount}</p>
+                <p className="text-sm font-bold text-green-500">{salesStats.monthRevenue.toFixed(0)}€ de CA</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Package className="h-4 w-4" />
+                  Valeur du stock
+                </div>
+                <p className="text-2xl font-bold">{totalSellValue.toFixed(0)}€</p>
+                <p className="text-xs text-muted-foreground">{products.length} produits actifs</p>
+              </Card>
+            </div>
+          )}
 
+          {/* Date range picker */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, 'dd/MM/yyyy') : 'Date début'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus locale={fr} className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, 'dd/MM/yyyy') : 'Date fin'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus locale={fr} className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            <Button size="sm" onClick={handleApply} disabled={!startDate && !endDate}>Appliquer</Button>
+            {(appliedStart || appliedEnd) && (
+              <Button size="sm" variant="ghost" onClick={handleClear}><X className="h-4 w-4 mr-1" />Effacer</Button>
+            )}
+          </div>
 
           {/* Product sales history */}
           <div className="rounded-lg border bg-card">
@@ -267,16 +317,16 @@ const ProduitsPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {historyLoading ? (
+                {dataLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Chargement...</TableCell>
                   </TableRow>
-                ) : productHistory.length === 0 ? (
+                ) : historyDisplay.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Aucun historique</TableCell>
                   </TableRow>
                 ) : (
-                  productHistory.map((row, i) => (
+                  historyDisplay.map((row, i) => (
                     <TableRow key={i}>
                       <TableCell className="text-muted-foreground">{format(row.date, 'dd/MM/yyyy', { locale: fr })}</TableCell>
                       <TableCell className="text-muted-foreground">{format(row.date, 'HH:mm')}</TableCell>
