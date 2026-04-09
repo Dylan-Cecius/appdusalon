@@ -17,8 +17,8 @@ export const useSubscription = () => {
     subscription_end: null
   });
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  
+  const { toast } = useToast();
+
 
   const checkSubscription = async () => {
     if (!user) {
