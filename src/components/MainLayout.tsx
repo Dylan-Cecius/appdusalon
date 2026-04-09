@@ -140,10 +140,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
       {/* Navigation */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-[73px] z-40">
         <div className="container mx-auto px-4 sm:px-6 py-2">
-          <div className={cn(
-            "flex items-center gap-2",
-            isMobile ? "overflow-x-auto pb-2" : "justify-center"
-          )}>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 justify-center">
             {/* Navigation principale */}
             <div className={cn(
               "inline-flex items-center gap-1 p-1 bg-muted rounded-md",
