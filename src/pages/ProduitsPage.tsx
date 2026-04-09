@@ -16,7 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { startOfDay, startOfWeek, startOfMonth, isAfter } from 'date-fns';
+import { startOfDay, startOfWeek, startOfMonth, isAfter, format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const ProduitsPage = () => {
   const { user } = useAuth();
@@ -316,7 +317,49 @@ const ProduitsPage = () => {
               </TableBody>
             </Table>
           </div>
-        </TabsContent>
+
+          {/* Product sales history */}
+          <div className="rounded-lg border bg-card">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold">Historique des dernières ventes produits</h3>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Heure</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Produit</TableHead>
+                  <TableHead className="text-right">Qté</TableHead>
+                  <TableHead className="text-right">Prix</TableHead>
+                  <TableHead>Employé</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historyLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Chargement...</TableCell>
+                  </TableRow>
+                ) : productHistory.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Aucun historique</TableCell>
+                  </TableRow>
+                ) : (
+                  productHistory.map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-muted-foreground">{format(row.date, 'dd/MM/yyyy', { locale: fr })}</TableCell>
+                      <TableCell className="text-muted-foreground">{format(row.date, 'HH:mm')}</TableCell>
+                      <TableCell>{row.clientName || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-medium">{row.productName}</TableCell>
+                      <TableCell className="text-right">{row.quantity}</TableCell>
+                      <TableCell className="text-right font-medium">{row.price}€</TableCell>
+                      <TableCell>{row.staffName || <span className="text-muted-foreground">—</span>}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
         <TabsContent value="manage">
           <ProductManagement />
