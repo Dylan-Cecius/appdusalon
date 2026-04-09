@@ -42,7 +42,6 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
     { path: '/equipe', label: 'Équipe', icon: Users },
     { path: '/agenda', label: 'Agenda', icon: Calendar },
     { path: '/stocks', label: 'Stocks', icon: Package },
-    { path: '/stats', label: 'Stats', icon: BarChart3 },
   ];
 
   const mobileNavItems = [
