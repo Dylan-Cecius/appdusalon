@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import ServiceManagement from '@/components/ServiceManagement';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { BarChart3, Settings2, TrendingUp, CalendarDays, Scissors } from 'lucide-react';
@@ -21,9 +21,8 @@ interface HistoryRow {
 }
 
 const ServicesPage = () => {
-  const { services, loading } = useSupabaseServices();
+  const { services } = useSupabaseServices();
   const { user } = useAuth();
-  const [serviceCounts, setServiceCounts] = useState<Record<string, number>>({});
   const [countsLoading, setCountsLoading] = useState(true);
 
   // Stats
