@@ -16,7 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { startOfDay, startOfWeek, startOfMonth, isAfter } from 'date-fns';
+import { startOfDay, startOfWeek, startOfMonth, isAfter, format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const ProduitsPage = () => {
   const { user } = useAuth();
@@ -27,15 +28,19 @@ const ProduitsPage = () => {
     lowStockProducts, criticalStockProducts,
   } = useStocks();
 
-  // Sales stats from transactions
+  // Sales stats + history from transactions
   const [salesStats, setSalesStats] = useState({
     todayCount: 0, weekCount: 0, monthCount: 0,
     todayRevenue: 0, weekRevenue: 0, monthRevenue: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [productHistory, setProductHistory] = useState<Array<{
+    date: Date; clientName: string | null; productName: string; quantity: number; price: number; staffName: string | null;
+  }>>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSalesStats = async () => {
+    const fetchSalesData = async () => {
       if (!user) return;
       try {
         const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
@@ -43,21 +48,28 @@ const ProduitsPage = () => {
 
         const { data: transactions } = await supabase
           .from('transactions')
-          .select('items, transaction_date')
-          .eq('salon_id', salonId);
+          .select('items, transaction_date, staff_id, client_id')
+          .eq('salon_id', salonId)
+          .order('transaction_date', { ascending: false });
+
+        const { data: staffData } = await supabase.from('staff').select('id, name').eq('salon_id', salonId);
+        const { data: clientsData } = await supabase.from('clients').select('id, name').eq('salon_id', salonId);
+
+        const staffMap = new Map((staffData || []).map((s: any) => [s.id, s.name]));
+        const clientMap = new Map((clientsData || []).map((c: any) => [c.id, c.name]));
 
         const now = new Date();
         const dayStart = startOfDay(now);
         const weekStart = startOfWeek(now, { weekStartsOn: 1 });
         const monthStart = startOfMonth(now);
 
-        // Get product names for matching
         const productNames = new Set(products.map(p => p.name.toLowerCase().trim()));
 
         let todayCount = 0, weekCount = 0, monthCount = 0;
         let todayRevenue = 0, weekRevenue = 0, monthRevenue = 0;
+        const historyRows: Array<{ date: Date; clientName: string | null; productName: string; quantity: number; price: number; staffName: string | null }> = [];
 
-        transactions?.forEach((tx) => {
+        transactions?.forEach((tx: any) => {
           const txDate = new Date(tx.transaction_date);
           const items = tx.items as any[];
           items?.forEach((item: any) => {
@@ -66,29 +78,31 @@ const ProduitsPage = () => {
             const qty = item.quantity || 1;
             const price = (item.price || 0) * qty;
 
-            if (isAfter(txDate, monthStart)) {
-              monthCount += qty;
-              monthRevenue += price;
-            }
-            if (isAfter(txDate, weekStart)) {
-              weekCount += qty;
-              weekRevenue += price;
-            }
-            if (isAfter(txDate, dayStart)) {
-              todayCount += qty;
-              todayRevenue += price;
-            }
+            if (isAfter(txDate, monthStart)) { monthCount += qty; monthRevenue += price; }
+            if (isAfter(txDate, weekStart)) { weekCount += qty; weekRevenue += price; }
+            if (isAfter(txDate, dayStart)) { todayCount += qty; todayRevenue += price; }
+
+            historyRows.push({
+              date: txDate,
+              clientName: tx.client_id ? clientMap.get(tx.client_id) || null : null,
+              productName: item.name,
+              quantity: qty,
+              price: item.price || 0,
+              staffName: tx.staff_id ? staffMap.get(tx.staff_id) || null : null,
+            });
           });
         });
 
         setSalesStats({ todayCount, weekCount, monthCount, todayRevenue, weekRevenue, monthRevenue });
+        setProductHistory(historyRows.slice(0, 50));
       } catch (err) {
         console.error('Error fetching product sales stats:', err);
       } finally {
         setStatsLoading(false);
+        setHistoryLoading(false);
       }
     };
-    fetchSalesStats();
+    fetchSalesData();
   }, [user, products]);
 
   // Product form modal
@@ -299,6 +313,49 @@ const ProduitsPage = () => {
                       </TableRow>
                     );
                   })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Product sales history */}
+          <div className="rounded-lg border bg-card">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold">Historique des dernières ventes produits</h3>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Heure</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Produit</TableHead>
+                  <TableHead className="text-right">Qté</TableHead>
+                  <TableHead className="text-right">Prix</TableHead>
+                  <TableHead>Employé</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historyLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Chargement...</TableCell>
+                  </TableRow>
+                ) : productHistory.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Aucun historique</TableCell>
+                  </TableRow>
+                ) : (
+                  productHistory.map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-muted-foreground">{format(row.date, 'dd/MM/yyyy', { locale: fr })}</TableCell>
+                      <TableCell className="text-muted-foreground">{format(row.date, 'HH:mm')}</TableCell>
+                      <TableCell>{row.clientName || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="font-medium">{row.productName}</TableCell>
+                      <TableCell className="text-right">{row.quantity}</TableCell>
+                      <TableCell className="text-right font-medium">{row.price}€</TableCell>
+                      <TableCell>{row.staffName || <span className="text-muted-foreground">—</span>}</TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
