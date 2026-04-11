@@ -400,67 +400,77 @@ const ProAgenda = () => {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Staff filter sidebar */}
-          {sidebarOpen && (
-            <div
-              className="shrink-0 flex flex-col border-r overflow-y-auto"
-              style={{
-                width: `${SIDEBAR_WIDTH}px`,
-                backgroundColor: '#13131f',
-                borderColor: 'rgba(255,255,255,0.08)',
-              }}
-            >
-              <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                <span className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Équipe</span>
-              </div>
-              {agendaMembers.map((member, i) => {
-                const isVisible = visibleMemberIds.has(member.id);
-                const memberColor = member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length];
-                const dayName = jsWeekDayMap[getDay(selectedDate)];
-                const worksToday = (member.working_days || []).includes(dayName);
-                return (
-                  <button
-                    key={member.id}
-                    onClick={() => toggleMemberVisibility(member.id)}
-                    className={cn(
-                      "flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors w-full",
-                      isVisible ? "hover:bg-white/5" : "opacity-40 hover:opacity-60"
-                    )}
-                  >
-                    <div className="relative shrink-0">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                        style={{ backgroundColor: isVisible ? memberColor : 'rgba(255,255,255,0.15)' }}
-                      >
-                        {getInitials(member.name)}
-                      </div>
-                      {/* Checkbox indicator */}
-                      <div
-                        className={cn(
-                          "absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center",
-                          isVisible ? "border-emerald-500 bg-emerald-500" : "border-white/20 bg-transparent"
-                        )}
-                        style={{ borderColor: isVisible ? undefined : 'rgba(255,255,255,0.2)' }}
-                      >
-                        {isVisible && (
-                          <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
+          <div
+            className="shrink-0 flex flex-col border-r overflow-y-auto transition-all duration-300 ease-out"
+            style={{
+              width: sidebarOpen ? `${SIDEBAR_WIDTH}px` : '0px',
+              opacity: sidebarOpen ? 1 : 0,
+              backgroundColor: '#111120',
+              borderColor: 'rgba(255,255,255,0.06)',
+              overflow: sidebarOpen ? 'auto' : 'hidden',
+            }}
+          >
+            <div className="px-3 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">Équipe</span>
+            </div>
+            {agendaMembers.map((member, i) => {
+              const isVisible = visibleMemberIds.has(member.id);
+              const memberColor = member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length];
+              const dayName = jsWeekDayMap[getDay(selectedDate)];
+              const worksToday = (member.working_days || []).includes(dayName);
+              const aptCount = (appointmentsByMember[member.id] || []).length;
+              return (
+                <button
+                  key={member.id}
+                  onClick={() => toggleMemberVisibility(member.id)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2.5 text-left w-full transition-all duration-200",
+                    isVisible
+                      ? "hover:bg-white/[0.04]"
+                      : "opacity-35 hover:opacity-55"
+                  )}
+                >
+                  <div className="relative shrink-0">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-200"
+                      style={{
+                        backgroundColor: isVisible ? memberColor : 'rgba(255,255,255,0.1)',
+                        boxShadow: isVisible ? `0 2px 8px ${memberColor}40` : 'none',
+                      }}
+                    >
+                      {getInitials(member.name)}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className={cn("text-xs font-medium block truncate", isVisible ? "text-white/80" : "text-white/40")}>
-                        {member.name}
-                      </span>
-                      {!worksToday && (
-                        <span className="text-[9px] text-white/20 uppercase">Absent</span>
+                    <div
+                      className={cn(
+                        "absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200",
+                        isVisible ? "bg-emerald-500 border-emerald-400" : "bg-transparent border-white/15"
+                      )}
+                    >
+                      {isVisible && (
+                        <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
                       )}
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className={cn("text-xs font-medium block truncate", isVisible ? "text-white/75" : "text-white/35")}>
+                      {member.name}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {!worksToday ? (
+                        <span className="text-[9px] text-red-400/50 font-medium">Absent</span>
+                      ) : aptCount > 0 ? (
+                        <span className="text-[9px] text-white/25">{aptCount} RDV</span>
+                      ) : (
+                        <span className="text-[9px] text-white/15">Libre</span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
           {/* Main agenda area */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
