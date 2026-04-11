@@ -105,6 +105,8 @@ const ProAgenda = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   const [draggedAppointment, setDraggedAppointment] = useState<any>(null);
+  const [visibleMemberIds, setVisibleMemberIds] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { appointments, updateAppointment, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
