@@ -113,6 +113,50 @@ const POSPage = () => {
     }
   };
 
+  const handleAddService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serviceForm.name.trim()) return;
+    try {
+      await addService({
+        name: serviceForm.name.trim(),
+        price: parseFloat(serviceForm.price) || 0,
+        duration: parseInt(serviceForm.duration) || 30,
+        category: serviceForm.category,
+        appointmentBuffer: 0,
+        isActive: true,
+        displayOrder: 0,
+        color: '#6B7280',
+      });
+      toast({ title: 'Succès', description: 'Service ajouté avec succès' });
+      setServiceForm({ name: '', price: '', duration: '30', category: 'coupe' });
+      setIsAddServiceOpen(false);
+    } catch {
+      toast({ title: 'Erreur', description: "Impossible d'ajouter le service", variant: 'destructive' });
+    }
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!productForm.name.trim()) return;
+    try {
+      await addService({
+        name: productForm.name.trim(),
+        price: parseFloat(productForm.price) || 0,
+        duration: 0,
+        category: 'produit',
+        appointmentBuffer: 0,
+        isActive: true,
+        displayOrder: 0,
+        color: '#10B981',
+      });
+      toast({ title: 'Succès', description: 'Produit ajouté avec succès' });
+      setProductForm({ name: '', price: '', category: 'produit' });
+      setIsAddProductOpen(false);
+    } catch {
+      toast({ title: 'Erreur', description: "Impossible d'ajouter le produit", variant: 'destructive' });
+    }
+  };
+
   return (
     <MainLayout 
       cartItemsCount={cartItems.length} 
