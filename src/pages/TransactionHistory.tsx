@@ -95,7 +95,7 @@ export default function TransactionHistory() {
                   <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
                     <div className="flex items-center gap-2 mb-1">
                       <Banknote className="h-4 w-4 text-emerald-600" />
-                      <span className="text-xs font-medium">Espèces</span>
+                      <span className="text-xs font-medium">Cash</span>
                     </div>
                     <p className="text-lg font-bold text-emerald-600">{dayCash}</p>
                   </div>
@@ -103,7 +103,7 @@ export default function TransactionHistory() {
                   <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
                     <div className="flex items-center gap-2 mb-1">
                       <CreditCard className="h-4 w-4 text-blue-600" />
-                      <span className="text-xs font-medium">Carte</span>
+                      <span className="text-xs font-medium">Bancontact</span>
                     </div>
                     <p className="text-lg font-bold text-blue-600">{dayCard}</p>
                   </div>
@@ -154,19 +154,19 @@ export default function TransactionHistory() {
                                     {transaction.totalAmount.toFixed(2)}€
                                   </p>
                                 </div>
-                                <Badge
+                    <Badge
                                   variant={transaction.paymentMethod === 'cash' ? 'default' : 'secondary'}
                                   className="flex items-center gap-1"
                                 >
                                   {transaction.paymentMethod === 'cash' ? (
                                     <>
                                       <Banknote className="h-3 w-3" />
-                                      Espèces
+                                      Cash
                                     </>
                                   ) : (
                                     <>
                                       <CreditCard className="h-3 w-3" />
-                                      Carte
+                                      Bancontact
                                     </>
                                   )}
                                 </Badge>
