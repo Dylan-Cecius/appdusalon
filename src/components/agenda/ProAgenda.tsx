@@ -479,39 +479,43 @@ const ProAgenda = () => {
               className="flex shrink-0"
               style={{
                 paddingLeft: `${TIME_COL_WIDTH}px`,
-                backgroundColor: '#13131f',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
+                background: 'linear-gradient(180deg, #14142a 0%, #121225 100%)',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
               }}
             >
               {filteredMembers.map((member, i) => {
                 const dayName = jsWeekDayMap[getDay(selectedDate)];
                 const worksToday = (member.working_days || []).includes(dayName);
                 const memberColor = memberColorMap[member.id] || accentColors[i % accentColors.length];
+                const aptCount = (appointmentsByMember[member.id] || []).length;
                 return (
                   <div
                     key={member.id}
                     className="flex-1 px-3 py-3"
                     style={{
                       minWidth: `${colMinWidth}px`,
-                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined,
                     }}
                   >
                     <div className="flex items-center gap-2.5">
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 transition-all duration-200"
                         style={{
-                          backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.1)',
+                          backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.08)',
+                          boxShadow: worksToday ? `0 2px 10px ${memberColor}35` : 'none',
                         }}
                       >
                         {getInitials(member.name)}
                       </div>
                       <div className="min-w-0">
-                        <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/30")}>
+                        <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/25")}>
                           {member.name}
                         </span>
-                        {!worksToday && (
-                          <span className="text-[10px] text-white/20 uppercase tracking-wider">Absent</span>
-                        )}
+                        {!worksToday ? (
+                          <span className="text-[10px] text-red-400/40 font-medium">Absent</span>
+                        ) : aptCount > 0 ? (
+                          <span className="text-[10px] text-white/25">{aptCount} rendez-vous</span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -527,8 +531,8 @@ const ProAgenda = () => {
                   className="sticky left-0 z-10 shrink-0"
                   style={{
                     width: `${TIME_COL_WIDTH}px`,
-                    backgroundColor: '#0f0f1a',
-                    borderRight: '1px solid rgba(255,255,255,0.06)',
+                    backgroundColor: '#0d0d1a',
+                    borderRight: '1px solid rgba(255,255,255,0.05)',
                   }}
                 >
                   {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
