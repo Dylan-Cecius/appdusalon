@@ -139,46 +139,28 @@ const ServicesPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Stats cards */}
-          {stats.isCustom ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Scissors className="h-4 w-4" />
-                  Services (période)
+          {/* KPI Boxes - same style as CA Total */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {[
+              { label: "CA Services du jour", value: stats.todayRevenue, icon: CalendarDays, gradient: 'from-emerald-500 to-emerald-600', glow: 'shadow-emerald-500/20' },
+              { label: "CA Services de la semaine", value: stats.weekRevenue, icon: CalendarRange, gradient: 'from-blue-500 to-blue-600', glow: 'shadow-blue-500/20' },
+              { label: "CA Services du mois", value: stats.monthRevenue, icon: CalendarCheck, gradient: 'from-violet-500 to-violet-600', glow: 'shadow-violet-500/20' },
+            ].map((stat) => (
+              <Card
+                key={stat.label}
+                className={`relative overflow-hidden p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl ${stat.glow}`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-[0.07]`} />
+                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white mb-4 shadow-lg ${stat.glow}`}>
+                  <stat.icon className="h-7 w-7" />
                 </div>
-                <p className="text-2xl font-bold">{stats.todayCount}</p>
-                <p className="text-sm font-bold text-green-500">{stats.todayRevenue.toFixed(0)}€ de CA</p>
+                <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                  {stat.value.toFixed(2)}€
+                </p>
+                <p className="text-sm text-muted-foreground mt-2 font-medium">{stat.label}</p>
               </Card>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Scissors className="h-4 w-4" />
-                  Aujourd'hui
-                </div>
-                <p className="text-2xl font-bold">{stats.todayCount}</p>
-                <p className="text-sm font-bold text-green-500">{stats.todayRevenue.toFixed(0)}€ de CA</p>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <TrendingUp className="h-4 w-4" />
-                  Cette semaine
-                </div>
-                <p className="text-2xl font-bold">{stats.weekCount}</p>
-                <p className="text-sm font-bold text-green-500">{stats.weekRevenue.toFixed(0)}€ de CA</p>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <CalendarDays className="h-4 w-4" />
-                  Ce mois
-                </div>
-                <p className="text-2xl font-bold">{stats.monthCount}</p>
-                <p className="text-sm font-bold text-green-500">{stats.monthRevenue.toFixed(0)}€ de CA</p>
-              </Card>
-            </div>
-          )}
+            ))}
+          </div>
 
           {/* Date range picker */}
           <div className="flex flex-wrap items-center gap-2">
