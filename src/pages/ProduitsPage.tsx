@@ -199,19 +199,7 @@ const ProduitsPage = () => {
 
   return (
     <MainLayout>
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Vue d'ensemble
-          </TabsTrigger>
-          <TabsTrigger value="manage" className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4" />
-            Gérer le stock
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
+      <div className="space-y-4">
           {/* KPI Boxes - CA Produits */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-emerald-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
@@ -327,12 +315,7 @@ const ProduitsPage = () => {
               </TableBody>
             </Table>
           </div>
-        </TabsContent>
-
-        <TabsContent value="manage">
-          <ProductManagement />
-        </TabsContent>
-      </Tabs>
+      </div>
 
       {/* Add/Edit Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={(v) => { if (!v) { setIsModalOpen(false); resetForm(); } }}>
