@@ -5,12 +5,11 @@ import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BarChart3, Settings2, CalendarDays, CalendarRange, CalendarCheck, CalendarIcon, X, Scissors, TrendingUp } from 'lucide-react';
+import { BarChart3, CalendarDays, CalendarRange, CalendarCheck, CalendarIcon, X } from 'lucide-react';
 import { startOfDay, startOfWeek, startOfMonth, isAfter, isBefore, format, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -126,20 +125,8 @@ const ServicesPage = () => {
 
   return (
     <MainLayout>
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Vue d'ensemble
-          </TabsTrigger>
-          <TabsTrigger value="manage" className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4" />
-            Gérer
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          {/* KPI Boxes - same style as CA Total */}
+      <div className="space-y-4">
+          {/* KPI Boxes */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {[
               { label: "CA Services du jour", value: stats.todayRevenue, icon: CalendarDays, gradient: 'from-emerald-500 to-emerald-600', glow: 'shadow-emerald-500/20' },
@@ -232,12 +219,7 @@ const ServicesPage = () => {
               </TableBody>
             </Table>
           </div>
-        </TabsContent>
-
-        <TabsContent value="manage">
-          <ServiceManagement />
-        </TabsContent>
-      </Tabs>
+      </div>
     </MainLayout>
   );
 };
