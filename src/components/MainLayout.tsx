@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Calendar, CheckSquare, Settings as SettingsIcon, User, LogOut, Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package, Store, Menu } from 'lucide-react';
+import { ShoppingCart, Calendar, CheckSquare, Settings as SettingsIcon, User, LogOut, Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package, Store, Menu, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -28,6 +28,7 @@ const allNavItems = [
   { path: '/agenda', label: 'Agenda', icon: Calendar },
   { path: '/stocks', label: 'Stocks', icon: Package },
   { path: '/todo', label: 'To-Do', icon: CheckSquare },
+  { path: '/ca-total', label: 'CA Total', icon: TrendingUp },
   { path: '/rapports', label: 'Rapports', icon: Mail },
   { path: '/parametres', label: 'Paramètres', icon: SettingsIcon },
 ];
