@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BarChart3, Settings2, ShoppingBag, TrendingUp, AlertTriangle, Package, Plus, Edit2, Trash2, CalendarIcon, X, CalendarDays, CalendarRange, CalendarCheck } from 'lucide-react';
+import { BarChart3, Settings2, ShoppingBag, TrendingUp, AlertTriangle, Package, Plus, Edit2, Trash2, CalendarIcon, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -212,27 +212,47 @@ const ProduitsPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* KPI Boxes - same style as CA Total */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            {[
-              { label: "CA Produits du jour", value: salesStats.todayRevenue, icon: CalendarDays, gradient: 'from-emerald-500 to-emerald-600', glow: 'shadow-emerald-500/20' },
-              { label: "CA Produits de la semaine", value: salesStats.weekRevenue, icon: CalendarRange, gradient: 'from-blue-500 to-blue-600', glow: 'shadow-blue-500/20' },
-              { label: "CA Produits du mois", value: salesStats.monthRevenue, icon: CalendarCheck, gradient: 'from-violet-500 to-violet-600', glow: 'shadow-violet-500/20' },
-            ].map((stat) => (
-              <Card
-                key={stat.label}
-                className={`relative overflow-hidden p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl ${stat.glow}`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-[0.07]`} />
-                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white mb-4 shadow-lg ${stat.glow}`}>
-                  <stat.icon className="h-7 w-7" />
+          {/* KPI Boxes - CA Produits */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-emerald-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
+              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-emerald-500/20">
+                    <ShoppingBag className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">CA Produits du jour</span>
                 </div>
-                <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-                  {stat.value.toFixed(2)}€
-                </p>
-                <p className="text-sm text-muted-foreground mt-2 font-medium">{stat.label}</p>
-              </Card>
-            ))}
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{salesStats.todayRevenue.toFixed(2)}€</p>
+                <p className="text-xs text-muted-foreground mt-1">{salesStats.todayCount} vente{salesStats.todayCount > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
+              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-blue-500/20">
+                    <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">CA Produits de la semaine</span>
+                </div>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{salesStats.weekRevenue.toFixed(2)}€</p>
+                <p className="text-xs text-muted-foreground mt-1">{salesStats.weekCount} vente{salesStats.weekCount > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-violet-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
+              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-violet-500/10 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-violet-500/20">
+                    <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">CA Produits du mois</span>
+                </div>
+                <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">{salesStats.monthRevenue.toFixed(2)}€</p>
+                <p className="text-xs text-muted-foreground mt-1">{salesStats.monthCount} vente{salesStats.monthCount > 1 ? 's' : ''}</p>
+              </div>
+            </div>
           </div>
 
           {/* Date range picker */}

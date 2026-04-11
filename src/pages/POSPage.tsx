@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList } from 'lucide-react';
+import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
+import { useStocks } from '@/hooks/useStocks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import ServiceCard from '@/components/ServiceCard';
@@ -12,6 +13,10 @@ import CartSidebar from '@/components/CartSidebar';
 import MainLayout from '@/components/MainLayout';
 import TransactionsManager from '@/components/TransactionsManager';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CartItem {
   id: string;
@@ -25,8 +30,13 @@ const POSPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
+  const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [serviceForm, setServiceForm] = useState({ name: '', price: '', duration: '30', category: 'coupe' });
+  const [productForm, setProductForm] = useState({ name: '', price: '', category: 'produit' });
   const { toast } = useToast();
-  const { services, loading: servicesLoading, categories } = useSupabaseServices();
+  const { services, loading: servicesLoading, categories, addService, fetchServices } = useSupabaseServices();
+  const { createProduct } = useStocks();
   const { addTransaction, transactions } = useTransactions();
   const isMobile = useIsMobile();
 
@@ -103,14 +113,77 @@ const POSPage = () => {
     }
   };
 
+  const handleAddService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serviceForm.name.trim()) return;
+    try {
+      await addService({
+        name: serviceForm.name.trim(),
+        price: parseFloat(serviceForm.price) || 0,
+        duration: parseInt(serviceForm.duration) || 30,
+        category: serviceForm.category,
+        appointmentBuffer: 0,
+        isActive: true,
+        displayOrder: 0,
+        color: '#6B7280',
+      });
+      toast({ title: 'Succès', description: 'Service ajouté avec succès' });
+      setServiceForm({ name: '', price: '', duration: '30', category: 'coupe' });
+      setIsAddServiceOpen(false);
+    } catch {
+      toast({ title: 'Erreur', description: "Impossible d'ajouter le service", variant: 'destructive' });
+    }
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!productForm.name.trim()) return;
+    try {
+      await addService({
+        name: productForm.name.trim(),
+        price: parseFloat(productForm.price) || 0,
+        duration: 0,
+        category: 'produit',
+        appointmentBuffer: 0,
+        isActive: true,
+        displayOrder: 0,
+        color: '#10B981',
+      });
+      toast({ title: 'Succès', description: 'Produit ajouté avec succès' });
+      setProductForm({ name: '', price: '', category: 'produit' });
+      setIsAddProductOpen(false);
+    } catch {
+      toast({ title: 'Erreur', description: "Impossible d'ajouter le produit", variant: 'destructive' });
+    }
+  };
+
   return (
     <MainLayout 
       cartItemsCount={cartItems.length} 
       onCartOpen={() => setIsCartOpen(true)}
     >
-      {/* Header with manage button */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <div></div>
+      {/* Header with action buttons */}
+      <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAddServiceOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un service
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAddProductOpen(true)}
+            className="gap-2"
+          >
+            <Package className="h-4 w-4" />
+            Ajouter un produit
+          </Button>
+        </div>
         <Button
           variant="outline"
           size="sm"
@@ -255,6 +328,71 @@ const POSPage = () => {
         isOpen={isTransactionsOpen}
         onClose={() => setIsTransactionsOpen(false)}
       />
+
+      {/* Add Service Modal */}
+      <Dialog open={isAddServiceOpen} onOpenChange={setIsAddServiceOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter un service</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddService} className="space-y-4">
+            <div>
+              <Label>Nom du service *</Label>
+              <Input value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} placeholder="Ex: Coupe homme" required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Prix (€) *</Label>
+                <Input type="number" step="0.01" min="0" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} placeholder="25" required />
+              </div>
+              <div>
+                <Label>Durée (min)</Label>
+                <Input type="number" min="5" step="5" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} />
+              </div>
+            </div>
+            <div>
+              <Label>Catégorie</Label>
+              <Select value={serviceForm.category} onValueChange={v => setServiceForm({...serviceForm, category: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="coupe">Coupe</SelectItem>
+                  <SelectItem value="barbe">Barbe</SelectItem>
+                  <SelectItem value="combo">Formule</SelectItem>
+                  <SelectItem value="soin">Soin</SelectItem>
+                  <SelectItem value="couleur">Couleur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsAddServiceOpen(false)} className="flex-1">Annuler</Button>
+              <Button type="submit" className="flex-1">Ajouter</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Product Modal */}
+      <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter un produit</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddProduct} className="space-y-4">
+            <div>
+              <Label>Nom du produit *</Label>
+              <Input value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} placeholder="Ex: Gel coiffant" required />
+            </div>
+            <div>
+              <Label>Prix de vente (€) *</Label>
+              <Input type="number" step="0.01" min="0" value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} placeholder="15" required />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsAddProductOpen(false)} className="flex-1">Annuler</Button>
+              <Button type="submit" className="flex-1">Ajouter</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
