@@ -121,7 +121,29 @@ const ProAgenda = () => {
 
   const agendaMembers = useMemo(() => activeStaff, [activeStaff]);
 
-  const accentColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
+  // Initialize visible members when staff loads
+  useEffect(() => {
+    if (activeStaff.length > 0 && visibleMemberIds.size === 0) {
+      setVisibleMemberIds(new Set(activeStaff.map(s => s.id)));
+    }
+  }, [activeStaff]);
+
+  const filteredMembers = useMemo(
+    () => agendaMembers.filter(m => visibleMemberIds.has(m.id)),
+    [agendaMembers, visibleMemberIds]
+  );
+
+  const toggleMemberVisibility = (id: string) => {
+    setVisibleMemberIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        if (next.size > 1) next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const categoryColors: Record<string, string> = {
     coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
