@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BarChart3, Settings2, CalendarDays, CalendarRange, CalendarCheck, CalendarIcon, X } from 'lucide-react';
+import { BarChart3, Settings2, CalendarDays, CalendarRange, CalendarCheck, CalendarIcon, X, Scissors, TrendingUp } from 'lucide-react';
 import { startOfDay, startOfWeek, startOfMonth, isAfter, isBefore, format, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
