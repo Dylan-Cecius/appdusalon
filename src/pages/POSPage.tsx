@@ -162,9 +162,28 @@ const POSPage = () => {
       cartItemsCount={cartItems.length} 
       onCartOpen={() => setIsCartOpen(true)}
     >
-      {/* Header with manage button */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <div></div>
+      {/* Header with action buttons */}
+      <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAddServiceOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un service
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAddProductOpen(true)}
+            className="gap-2"
+          >
+            <Package className="h-4 w-4" />
+            Ajouter un produit
+          </Button>
+        </div>
         <Button
           variant="outline"
           size="sm"
