@@ -34,9 +34,10 @@ export interface StockMovement {
   created_at: string;
 }
 
-export type StockStatus = 'ok' | 'low' | 'critical';
+export type StockStatus = 'ok' | 'low' | 'critical' | 'out';
 
 export const getStockStatus = (current: number, min: number): StockStatus => {
+  if (current === 0) return 'out';
   if (current <= min) return 'critical';
   if (current <= min * 1.2) return 'low';
   return 'ok';
