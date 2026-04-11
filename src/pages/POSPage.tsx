@@ -328,6 +328,71 @@ const POSPage = () => {
         isOpen={isTransactionsOpen}
         onClose={() => setIsTransactionsOpen(false)}
       />
+
+      {/* Add Service Modal */}
+      <Dialog open={isAddServiceOpen} onOpenChange={setIsAddServiceOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter un service</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddService} className="space-y-4">
+            <div>
+              <Label>Nom du service *</Label>
+              <Input value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} placeholder="Ex: Coupe homme" required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Prix (€) *</Label>
+                <Input type="number" step="0.01" min="0" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} placeholder="25" required />
+              </div>
+              <div>
+                <Label>Durée (min)</Label>
+                <Input type="number" min="5" step="5" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} />
+              </div>
+            </div>
+            <div>
+              <Label>Catégorie</Label>
+              <Select value={serviceForm.category} onValueChange={v => setServiceForm({...serviceForm, category: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="coupe">Coupe</SelectItem>
+                  <SelectItem value="barbe">Barbe</SelectItem>
+                  <SelectItem value="combo">Formule</SelectItem>
+                  <SelectItem value="soin">Soin</SelectItem>
+                  <SelectItem value="couleur">Couleur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsAddServiceOpen(false)} className="flex-1">Annuler</Button>
+              <Button type="submit" className="flex-1">Ajouter</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Product Modal */}
+      <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter un produit</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddProduct} className="space-y-4">
+            <div>
+              <Label>Nom du produit *</Label>
+              <Input value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} placeholder="Ex: Gel coiffant" required />
+            </div>
+            <div>
+              <Label>Prix de vente (€) *</Label>
+              <Input type="number" step="0.01" min="0" value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} placeholder="15" required />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsAddProductOpen(false)} className="flex-1">Annuler</Button>
+              <Button type="submit" className="flex-1">Ajouter</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
