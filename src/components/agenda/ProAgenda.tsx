@@ -545,14 +545,19 @@ const ProAgenda = () => {
                       style={{
                         height: `${SLOT_HEIGHT}px`,
                         borderTop: minute === 0
-                          ? '1px solid rgba(255,255,255,0.08)'
+                          ? '1px solid rgba(255,255,255,0.06)'
                           : minute === 30
-                            ? '1px dashed rgba(255,255,255,0.04)'
+                            ? '1px dashed rgba(255,255,255,0.03)'
                             : '1px solid transparent',
                       }}
                     >
                       {label && (
-                        <span className="text-[11px] font-mono leading-none text-white/30 -mt-1.5">
+                        <span className={cn(
+                          "leading-none -mt-1.5 font-mono",
+                          minute === 0
+                            ? "text-[11px] text-white/35 font-medium"
+                            : "text-[10px] text-white/18"
+                        )}>
                           {label}
                         </span>
                       )}
@@ -567,8 +572,8 @@ const ProAgenda = () => {
                     className="flex-1 relative"
                     style={{
                       minWidth: `${colMinWidth}px`,
-                      backgroundColor: '#1a1a2e',
-                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                      backgroundColor: '#16162a',
+                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.04)' : undefined,
                     }}
                   >
                     {timeLabels.map(({ hour, minute, isBreak }, idx) => {
