@@ -30,8 +30,13 @@ const POSPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
+  const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [serviceForm, setServiceForm] = useState({ name: '', price: '', duration: '30', category: 'coupe' });
+  const [productForm, setProductForm] = useState({ name: '', price: '', category: 'produit' });
   const { toast } = useToast();
-  const { services, loading: servicesLoading, categories } = useSupabaseServices();
+  const { services, loading: servicesLoading, categories, addService, fetchServices } = useSupabaseServices();
+  const { createProduct } = useStocks();
   const { addTransaction, transactions } = useTransactions();
   const isMobile = useIsMobile();
 
