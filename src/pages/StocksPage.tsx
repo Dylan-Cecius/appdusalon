@@ -271,6 +271,7 @@ const StocksPage = () => {
                   <SelectItem value="ok">En stock</SelectItem>
                   <SelectItem value="low">Bientôt épuisé</SelectItem>
                   <SelectItem value="critical">Alerte</SelectItem>
+                  <SelectItem value="out">Épuisé</SelectItem>
                 </SelectContent>
               </Select>
             </div>
