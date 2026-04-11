@@ -14,6 +14,7 @@ import TodoPage from "./pages/TodoPage";
 
 import StatsPage from "./pages/StatsPage";
 import ReportsPage from "./pages/ReportsPage";
+import CATotalPage from "./pages/CATotalPage";
 import SettingsPage from "./pages/SettingsPage";
 import ClientsPage from "./pages/ClientsPage";
 import StaffPage from "./pages/StaffPage";
@@ -66,6 +67,7 @@ const App = () => {
                 <Route path="/produits" element={<AuthGuard><ProduitsPage /></AuthGuard>} />
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
+                <Route path="/ca-total" element={<AuthGuard><CATotalPage /></AuthGuard>} />
                 <Route path="/abonnement" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/abonnements" element={<Navigate to="/dashboard" replace />} />
                 
