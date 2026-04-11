@@ -155,6 +155,8 @@ const ProAgenda = () => {
     });
     return map;
   }, [agendaMembers]);
+
+  const categoryColors: Record<string, string> = {
     coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
     barbe: '#60a5fa', soin: '#f472b6', combo: '#fb923c',
     produit: '#94a3b8', general: '#94a3b8',
