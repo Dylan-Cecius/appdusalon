@@ -302,6 +302,7 @@ const ProAgenda = () => {
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
+          appointmentCount={dayAppointments.length}
           onAddClick={() => {
             setSelectedTimeSlot('');
             setSelectedBarberId(agendaMembers[0]?.id || '');
