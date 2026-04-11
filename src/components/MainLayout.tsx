@@ -25,6 +25,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   const isMobile = useIsMobile();
   const { salonSettings } = useSupabaseSettings();
   const navScrollRef = useRef<HTMLDivElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Sauvegarder la route actuelle dans localStorage
   useEffect(() => {
@@ -34,15 +35,14 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
     }
   }, [location.pathname]);
 
+  // Close mobile menu on route change
   useEffect(() => {
-    if (navScrollRef.current) {
-      navScrollRef.current.scrollLeft = 0;
-    }
-  }, [location.pathname, isMobile]);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
-  const navItems = [
-    { path: '/dashboard', label: isMobile ? 'Home' : 'Dashboard', icon: LayoutDashboard },
-    { path: '/pos', label: isMobile ? 'POS' : 'Encaissement', icon: Scissors },
+  const allNavItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/pos', label: 'Encaissement', icon: Scissors },
     { path: '/services', label: 'Services', icon: Scissors },
     { path: '/produits', label: 'Produits', icon: Store },
     { path: '/clients', label: 'Clients', icon: Users },
@@ -50,15 +50,10 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
     { path: '/equipe', label: 'Équipe', icon: Users },
     { path: '/agenda', label: 'Agenda', icon: Calendar },
     { path: '/stocks', label: 'Stocks', icon: Package },
-  ];
-
-  const mobileNavItems = [
     { path: '/todo', label: 'To-Do', icon: CheckSquare },
     { path: '/rapports', label: 'Rapports', icon: Mail },
     { path: '/parametres', label: 'Paramètres', icon: SettingsIcon },
   ];
-
-  const allNavItems = [...navItems, ...mobileNavItems];
 
   const isActive = (path: string) => location.pathname === path;
 
