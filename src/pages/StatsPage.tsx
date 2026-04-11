@@ -19,6 +19,7 @@ import { AverageBasketStats } from '@/components/stats/AverageBasketStats';
 import { EmployeeRevenueStats } from '@/components/stats/EmployeeRevenueStats';
 import { AverageDailyClientsStats } from '@/components/stats/AverageDailyClientsStats';
 import TransactionsManager from '@/components/TransactionsManager';
+import TotalRevenueReport from '@/components/TotalRevenueReport';
 import { FeatureGate } from '@/components/FeatureGate';
 import { useNavigate } from 'react-router-dom';
 
@@ -207,6 +208,10 @@ const StatsPage = () => {
             <OccupancyRateStats />
           </div>
         </FeatureGate>
+
+        <div id="ca-total">
+          <TotalRevenueReport />
+        </div>
       </div>
 
       <TransactionsManager
