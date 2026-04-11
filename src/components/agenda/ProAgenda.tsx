@@ -24,8 +24,9 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 48; // height per 15min slot
+const SLOT_HEIGHT = 48;
 const TIME_COL_WIDTH = 64;
+const SIDEBAR_WIDTH = 180;
 
 const jsWeekDayMap: Record<number, string> = {
   0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
