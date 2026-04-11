@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList } from 'lucide-react';
+import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
+import { useStocks } from '@/hooks/useStocks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import ServiceCard from '@/components/ServiceCard';
@@ -12,6 +13,10 @@ import CartSidebar from '@/components/CartSidebar';
 import MainLayout from '@/components/MainLayout';
 import TransactionsManager from '@/components/TransactionsManager';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CartItem {
   id: string;

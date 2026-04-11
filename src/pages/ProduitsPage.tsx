@@ -212,62 +212,48 @@ const ProduitsPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Stats cards */}
-          {salesStats.isCustom ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <ShoppingBag className="h-4 w-4" />
-                  Ventes (période)
+          {/* KPI Boxes - CA Produits */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-emerald-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
+              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-emerald-500/20">
+                    <ShoppingBag className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">CA Produits du jour</span>
                 </div>
-                <p className="text-2xl font-bold">{salesStats.todayCount}</p>
-                <p className="text-sm font-bold text-green-500">{salesStats.todayRevenue.toFixed(0)}€ de CA</p>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Package className="h-4 w-4" />
-                  Valeur du stock
-                </div>
-                <p className="text-2xl font-bold">{totalSellValue.toFixed(0)}€</p>
-                <p className="text-xs text-muted-foreground">{products.length} produits actifs</p>
-              </Card>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{salesStats.todayRevenue.toFixed(2)}€</p>
+                <p className="text-xs text-muted-foreground mt-1">{salesStats.todayCount} vente{salesStats.todayCount > 1 ? 's' : ''}</p>
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <ShoppingBag className="h-4 w-4" />
-                  Ventes aujourd'hui
+            <div className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
+              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-blue-500/20">
+                    <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">CA Produits de la semaine</span>
                 </div>
-                <p className="text-2xl font-bold">{salesStats.todayCount}</p>
-                <p className="text-sm font-bold text-green-500">{salesStats.todayRevenue.toFixed(0)}€ de CA</p>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <TrendingUp className="h-4 w-4" />
-                  Cette semaine
-                </div>
-                <p className="text-2xl font-bold">{salesStats.weekCount}</p>
-                <p className="text-sm font-bold text-green-500">{salesStats.weekRevenue.toFixed(0)}€ de CA</p>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <BarChart3 className="h-4 w-4" />
-                  Ce mois
-                </div>
-                <p className="text-2xl font-bold">{salesStats.monthCount}</p>
-                <p className="text-sm font-bold text-green-500">{salesStats.monthRevenue.toFixed(0)}€ de CA</p>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Package className="h-4 w-4" />
-                  Valeur du stock
-                </div>
-                <p className="text-2xl font-bold">{totalSellValue.toFixed(0)}€</p>
-                <p className="text-xs text-muted-foreground">{products.length} produits actifs</p>
-              </Card>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{salesStats.weekRevenue.toFixed(2)}€</p>
+                <p className="text-xs text-muted-foreground mt-1">{salesStats.weekCount} vente{salesStats.weekCount > 1 ? 's' : ''}</p>
+              </div>
             </div>
-          )}
+            <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-violet-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
+              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-violet-500/10 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-violet-500/20">
+                    <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">CA Produits du mois</span>
+                </div>
+                <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">{salesStats.monthRevenue.toFixed(2)}€</p>
+                <p className="text-xs text-muted-foreground mt-1">{salesStats.monthCount} vente{salesStats.monthCount > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          </div>
 
           {/* Date range picker */}
           <div className="flex flex-wrap items-center gap-2">
