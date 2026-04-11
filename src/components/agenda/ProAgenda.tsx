@@ -59,37 +59,38 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isHal
     <div
       ref={setNodeRef}
       className={cn(
-        "transition-colors relative",
+        "transition-all duration-150 relative",
         isHourStart && "border-t",
         isHalfHour && "border-t border-dashed",
         !isHourStart && !isHalfHour && "border-t",
-        blocked ? "cursor-not-allowed" : "hover:bg-white/[0.03] cursor-pointer",
-        isAbsent && "bg-white/[0.015]",
-        isBreak && !isAbsent && "bg-black/20",
-        isOver && !blocked && "bg-indigo-500/10"
+        blocked ? "cursor-not-allowed" : "cursor-pointer",
+        !blocked && "hover:bg-indigo-500/[0.04]",
+        isAbsent && "bg-white/[0.012]",
+        isBreak && !isAbsent && "bg-black/15",
+        isOver && !blocked && "bg-indigo-500/[0.08] ring-1 ring-inset ring-indigo-500/20"
       )}
       style={{
         height: `${SLOT_HEIGHT}px`,
         borderColor: isHourStart
-          ? 'rgba(255,255,255,0.08)'
+          ? 'rgba(255,255,255,0.07)'
           : isHalfHour
-            ? 'rgba(255,255,255,0.04)'
+            ? 'rgba(255,255,255,0.035)'
             : 'transparent',
       }}
       onClick={() => !blocked && onClick()}
     >
       {isAbsent && isHourStart && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[9px] font-semibold tracking-widest text-white/10 uppercase select-none">
+          <span className="text-[8px] font-semibold tracking-[0.2em] text-white/8 uppercase select-none">
             ABSENT
           </span>
         </div>
       )}
       {isAbsent && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
+          className="absolute inset-0 pointer-events-none opacity-[0.025]"
           style={{
-            backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 6px, white 6px, white 7px)',
+            backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 8px, white 8px, white 9px)',
           }}
         />
       )}
@@ -297,10 +298,11 @@ const ProAgenda = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="flex flex-col h-full" style={{ backgroundColor: '#0f0f1a' }}>
+      <div className="flex flex-col h-full" style={{ backgroundColor: '#0d0d1a' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
+          appointmentCount={dayAppointments.length}
           onAddClick={() => {
             setSelectedTimeSlot('');
             setSelectedBarberId(agendaMembers[0]?.id || '');
@@ -382,10 +384,13 @@ const ProAgenda = () => {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#0f0f1a' }}>
+      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#0d0d1a' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
+          onToggleSidebar={() => setSidebarOpen(p => !p)}
+          sidebarOpen={sidebarOpen}
+          appointmentCount={dayAppointments.length}
           onAddClick={() => {
             setSelectedTimeSlot('');
             setSelectedBarberId(filteredMembers[0]?.id || agendaMembers[0]?.id || '');
@@ -395,67 +400,77 @@ const ProAgenda = () => {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Staff filter sidebar */}
-          {sidebarOpen && (
-            <div
-              className="shrink-0 flex flex-col border-r overflow-y-auto"
-              style={{
-                width: `${SIDEBAR_WIDTH}px`,
-                backgroundColor: '#13131f',
-                borderColor: 'rgba(255,255,255,0.08)',
-              }}
-            >
-              <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                <span className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Équipe</span>
-              </div>
-              {agendaMembers.map((member, i) => {
-                const isVisible = visibleMemberIds.has(member.id);
-                const memberColor = member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length];
-                const dayName = jsWeekDayMap[getDay(selectedDate)];
-                const worksToday = (member.working_days || []).includes(dayName);
-                return (
-                  <button
-                    key={member.id}
-                    onClick={() => toggleMemberVisibility(member.id)}
-                    className={cn(
-                      "flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors w-full",
-                      isVisible ? "hover:bg-white/5" : "opacity-40 hover:opacity-60"
-                    )}
-                  >
-                    <div className="relative shrink-0">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                        style={{ backgroundColor: isVisible ? memberColor : 'rgba(255,255,255,0.15)' }}
-                      >
-                        {getInitials(member.name)}
-                      </div>
-                      {/* Checkbox indicator */}
-                      <div
-                        className={cn(
-                          "absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center",
-                          isVisible ? "border-emerald-500 bg-emerald-500" : "border-white/20 bg-transparent"
-                        )}
-                        style={{ borderColor: isVisible ? undefined : 'rgba(255,255,255,0.2)' }}
-                      >
-                        {isVisible && (
-                          <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
+          <div
+            className="shrink-0 flex flex-col border-r overflow-y-auto transition-all duration-300 ease-out"
+            style={{
+              width: sidebarOpen ? `${SIDEBAR_WIDTH}px` : '0px',
+              opacity: sidebarOpen ? 1 : 0,
+              backgroundColor: '#111120',
+              borderColor: 'rgba(255,255,255,0.06)',
+              overflow: sidebarOpen ? 'auto' : 'hidden',
+            }}
+          >
+            <div className="px-3 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">Équipe</span>
+            </div>
+            {agendaMembers.map((member, i) => {
+              const isVisible = visibleMemberIds.has(member.id);
+              const memberColor = member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length];
+              const dayName = jsWeekDayMap[getDay(selectedDate)];
+              const worksToday = (member.working_days || []).includes(dayName);
+              const aptCount = (appointmentsByMember[member.id] || []).length;
+              return (
+                <button
+                  key={member.id}
+                  onClick={() => toggleMemberVisibility(member.id)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2.5 text-left w-full transition-all duration-200",
+                    isVisible
+                      ? "hover:bg-white/[0.04]"
+                      : "opacity-35 hover:opacity-55"
+                  )}
+                >
+                  <div className="relative shrink-0">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-200"
+                      style={{
+                        backgroundColor: isVisible ? memberColor : 'rgba(255,255,255,0.1)',
+                        boxShadow: isVisible ? `0 2px 8px ${memberColor}40` : 'none',
+                      }}
+                    >
+                      {getInitials(member.name)}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className={cn("text-xs font-medium block truncate", isVisible ? "text-white/80" : "text-white/40")}>
-                        {member.name}
-                      </span>
-                      {!worksToday && (
-                        <span className="text-[9px] text-white/20 uppercase">Absent</span>
+                    <div
+                      className={cn(
+                        "absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200",
+                        isVisible ? "bg-emerald-500 border-emerald-400" : "bg-transparent border-white/15"
+                      )}
+                    >
+                      {isVisible && (
+                        <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
                       )}
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className={cn("text-xs font-medium block truncate", isVisible ? "text-white/75" : "text-white/35")}>
+                      {member.name}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {!worksToday ? (
+                        <span className="text-[9px] text-red-400/50 font-medium">Absent</span>
+                      ) : aptCount > 0 ? (
+                        <span className="text-[9px] text-white/25">{aptCount} RDV</span>
+                      ) : (
+                        <span className="text-[9px] text-white/15">Libre</span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
           {/* Main agenda area */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -464,39 +479,43 @@ const ProAgenda = () => {
               className="flex shrink-0"
               style={{
                 paddingLeft: `${TIME_COL_WIDTH}px`,
-                backgroundColor: '#13131f',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
+                background: 'linear-gradient(180deg, #14142a 0%, #121225 100%)',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
               }}
             >
               {filteredMembers.map((member, i) => {
                 const dayName = jsWeekDayMap[getDay(selectedDate)];
                 const worksToday = (member.working_days || []).includes(dayName);
                 const memberColor = memberColorMap[member.id] || accentColors[i % accentColors.length];
+                const aptCount = (appointmentsByMember[member.id] || []).length;
                 return (
                   <div
                     key={member.id}
                     className="flex-1 px-3 py-3"
                     style={{
                       minWidth: `${colMinWidth}px`,
-                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined,
                     }}
                   >
                     <div className="flex items-center gap-2.5">
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 transition-all duration-200"
                         style={{
-                          backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.1)',
+                          backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.08)',
+                          boxShadow: worksToday ? `0 2px 10px ${memberColor}35` : 'none',
                         }}
                       >
                         {getInitials(member.name)}
                       </div>
                       <div className="min-w-0">
-                        <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/30")}>
+                        <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/25")}>
                           {member.name}
                         </span>
-                        {!worksToday && (
-                          <span className="text-[10px] text-white/20 uppercase tracking-wider">Absent</span>
-                        )}
+                        {!worksToday ? (
+                          <span className="text-[10px] text-red-400/40 font-medium">Absent</span>
+                        ) : aptCount > 0 ? (
+                          <span className="text-[10px] text-white/25">{aptCount} rendez-vous</span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -512,8 +531,8 @@ const ProAgenda = () => {
                   className="sticky left-0 z-10 shrink-0"
                   style={{
                     width: `${TIME_COL_WIDTH}px`,
-                    backgroundColor: '#0f0f1a',
-                    borderRight: '1px solid rgba(255,255,255,0.06)',
+                    backgroundColor: '#0d0d1a',
+                    borderRight: '1px solid rgba(255,255,255,0.05)',
                   }}
                 >
                   {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
@@ -526,14 +545,19 @@ const ProAgenda = () => {
                       style={{
                         height: `${SLOT_HEIGHT}px`,
                         borderTop: minute === 0
-                          ? '1px solid rgba(255,255,255,0.08)'
+                          ? '1px solid rgba(255,255,255,0.06)'
                           : minute === 30
-                            ? '1px dashed rgba(255,255,255,0.04)'
+                            ? '1px dashed rgba(255,255,255,0.03)'
                             : '1px solid transparent',
                       }}
                     >
                       {label && (
-                        <span className="text-[11px] font-mono leading-none text-white/30 -mt-1.5">
+                        <span className={cn(
+                          "leading-none -mt-1.5 font-mono",
+                          minute === 0
+                            ? "text-[11px] text-white/35 font-medium"
+                            : "text-[10px] text-white/18"
+                        )}>
                           {label}
                         </span>
                       )}
@@ -548,8 +572,8 @@ const ProAgenda = () => {
                     className="flex-1 relative"
                     style={{
                       minWidth: `${colMinWidth}px`,
-                      backgroundColor: '#1a1a2e',
-                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                      backgroundColor: '#16162a',
+                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.04)' : undefined,
                     }}
                   >
                     {timeLabels.map(({ hour, minute, isBreak }, idx) => {
