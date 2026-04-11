@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BarChart3, Settings2, ShoppingBag, TrendingUp, AlertTriangle, Package, Plus, Edit2, Trash2, CalendarIcon, X } from 'lucide-react';
+import { BarChart3, Settings2, ShoppingBag, TrendingUp, AlertTriangle, Package, Plus, Edit2, Trash2, CalendarIcon, X, CalendarDays, CalendarRange, CalendarCheck } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
