@@ -170,7 +170,9 @@ const ProAgenda = () => {
     return map;
   }, [dbServices]);
 
-  const getAppointmentColor = useCallback((services: any[]): string => {
+  const getAppointmentColor = useCallback((services: any[], barberId?: string): string => {
+    // Use barber color if available
+    if (barberId && memberColorMap[barberId]) return memberColorMap[barberId];
     if (!services || services.length === 0) return '#6366f1';
     const svc = services[0];
     const name = (svc?.name || '').toLowerCase();
@@ -178,7 +180,7 @@ const ProAgenda = () => {
     const cat = (svc?.category || '').toLowerCase();
     if (categoryColors[cat]) return categoryColors[cat];
     return '#6366f1';
-  }, [serviceColorMap]);
+  }, [serviceColorMap, memberColorMap]);
 
   const { timeLabels, startHour } = useMemo(() => {
     const sched = getScheduleForDate(selectedDate);
