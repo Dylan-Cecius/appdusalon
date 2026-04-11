@@ -59,37 +59,38 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isHal
     <div
       ref={setNodeRef}
       className={cn(
-        "transition-colors relative",
+        "transition-all duration-150 relative",
         isHourStart && "border-t",
         isHalfHour && "border-t border-dashed",
         !isHourStart && !isHalfHour && "border-t",
-        blocked ? "cursor-not-allowed" : "hover:bg-white/[0.03] cursor-pointer",
-        isAbsent && "bg-white/[0.015]",
-        isBreak && !isAbsent && "bg-black/20",
-        isOver && !blocked && "bg-indigo-500/10"
+        blocked ? "cursor-not-allowed" : "cursor-pointer",
+        !blocked && "hover:bg-indigo-500/[0.04]",
+        isAbsent && "bg-white/[0.012]",
+        isBreak && !isAbsent && "bg-black/15",
+        isOver && !blocked && "bg-indigo-500/[0.08] ring-1 ring-inset ring-indigo-500/20"
       )}
       style={{
         height: `${SLOT_HEIGHT}px`,
         borderColor: isHourStart
-          ? 'rgba(255,255,255,0.08)'
+          ? 'rgba(255,255,255,0.07)'
           : isHalfHour
-            ? 'rgba(255,255,255,0.04)'
+            ? 'rgba(255,255,255,0.035)'
             : 'transparent',
       }}
       onClick={() => !blocked && onClick()}
     >
       {isAbsent && isHourStart && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[9px] font-semibold tracking-widest text-white/10 uppercase select-none">
+          <span className="text-[8px] font-semibold tracking-[0.2em] text-white/8 uppercase select-none">
             ABSENT
           </span>
         </div>
       )}
       {isAbsent && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
+          className="absolute inset-0 pointer-events-none opacity-[0.025]"
           style={{
-            backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 6px, white 6px, white 7px)',
+            backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 8px, white 8px, white 9px)',
           }}
         />
       )}
