@@ -145,7 +145,16 @@ const ProAgenda = () => {
     });
   };
 
-  const categoryColors: Record<string, string> = {
+  const accentColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
+
+  // Map each member to a stable accent color for appointment blocks
+  const memberColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    agendaMembers.forEach((m, i) => {
+      map[m.id] = m.color?.startsWith('#') ? m.color : accentColors[i % accentColors.length];
+    });
+    return map;
+  }, [agendaMembers]);
     coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
     barbe: '#60a5fa', soin: '#f472b6', combo: '#fb923c',
     produit: '#94a3b8', general: '#94a3b8',
