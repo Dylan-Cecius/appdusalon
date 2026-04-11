@@ -39,6 +39,7 @@ const statusConfig = {
   ok: { label: 'En stock', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
   low: { label: 'Bientôt épuisé', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
   critical: { label: 'Alerte', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+  out: { label: 'Épuisé', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' },
 };
 
 const movementTypeLabels: Record<string, string> = {
