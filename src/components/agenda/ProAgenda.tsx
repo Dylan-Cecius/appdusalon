@@ -336,7 +336,7 @@ const ProAgenda = () => {
           {(appointmentsByMember[selectedBarberId] || [])
             .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             .map((apt: any) => {
-              const color = getAppointmentColor(apt.services);
+              const color = getAppointmentColor(apt.services, apt.barberId);
               const st = new Date(apt.startTime);
               const et = new Date(apt.endTime);
               return (
