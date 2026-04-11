@@ -137,9 +137,9 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
 
       {/* Navigation - Desktop: flex-wrap, Mobile: hamburger */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-[73px] z-40">
-        <div className="container mx-auto px-4 py-2 sm:px-6">
-          {/* Desktop: all items in a wrapping flex container */}
-          <div className="hidden md:flex flex-wrap items-center justify-center gap-1 rounded-md bg-muted p-1">
+        <div className="container mx-auto px-2 py-1.5 sm:px-4">
+          {/* Desktop: compact items that fit on one line */}
+          <div className="hidden md:flex flex-wrap items-center justify-center gap-0.5 rounded-md bg-muted p-0.5">
             {allNavItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -147,14 +147,14 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "inline-flex items-center gap-1 whitespace-nowrap rounded-sm px-2 py-1.5 text-sm font-medium transition-all duration-200",
+                    "inline-flex items-center gap-1 whitespace-nowrap rounded-sm px-1.5 lg:px-2 py-1 text-xs lg:text-sm font-medium transition-all duration-200",
                     "hover:scale-105 active:scale-95",
                     isActive(item.path)
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
                   {item.label}
                 </Link>
               );
