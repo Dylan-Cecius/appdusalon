@@ -24,8 +24,9 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 48; // height per 15min slot
+const SLOT_HEIGHT = 48;
 const TIME_COL_WIDTH = 64;
+const SIDEBAR_WIDTH = 180;
 
 const jsWeekDayMap: Record<number, string> = {
   0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
@@ -104,6 +105,8 @@ const ProAgenda = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [selectedBarberId, setSelectedBarberId] = useState<string>('');
   const [draggedAppointment, setDraggedAppointment] = useState<any>(null);
+  const [visibleMemberIds, setVisibleMemberIds] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { appointments, updateAppointment, markAsPaid, deleteAppointment, refreshAppointments } = useSupabaseAppointments();
@@ -118,7 +121,40 @@ const ProAgenda = () => {
 
   const agendaMembers = useMemo(() => activeStaff, [activeStaff]);
 
+  // Initialize visible members when staff loads
+  useEffect(() => {
+    if (activeStaff.length > 0 && visibleMemberIds.size === 0) {
+      setVisibleMemberIds(new Set(activeStaff.map(s => s.id)));
+    }
+  }, [activeStaff]);
+
+  const filteredMembers = useMemo(
+    () => agendaMembers.filter(m => visibleMemberIds.has(m.id)),
+    [agendaMembers, visibleMemberIds]
+  );
+
+  const toggleMemberVisibility = (id: string) => {
+    setVisibleMemberIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        if (next.size > 1) next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const accentColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
+
+  // Map each member to a stable accent color for appointment blocks
+  const memberColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    agendaMembers.forEach((m, i) => {
+      map[m.id] = m.color?.startsWith('#') ? m.color : accentColors[i % accentColors.length];
+    });
+    return map;
+  }, [agendaMembers]);
 
   const categoryColors: Record<string, string> = {
     coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
@@ -134,7 +170,9 @@ const ProAgenda = () => {
     return map;
   }, [dbServices]);
 
-  const getAppointmentColor = useCallback((services: any[]): string => {
+  const getAppointmentColor = useCallback((services: any[], barberId?: string): string => {
+    // Use barber color if available
+    if (barberId && memberColorMap[barberId]) return memberColorMap[barberId];
     if (!services || services.length === 0) return '#6366f1';
     const svc = services[0];
     const name = (svc?.name || '').toLowerCase();
@@ -142,7 +180,7 @@ const ProAgenda = () => {
     const cat = (svc?.category || '').toLowerCase();
     if (categoryColors[cat]) return categoryColors[cat];
     return '#6366f1';
-  }, [serviceColorMap]);
+  }, [serviceColorMap, memberColorMap]);
 
   const { timeLabels, startHour } = useMemo(() => {
     const sched = getScheduleForDate(selectedDate);
@@ -298,7 +336,7 @@ const ProAgenda = () => {
           {(appointmentsByMember[selectedBarberId] || [])
             .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             .map((apt: any) => {
-              const color = getAppointmentColor(apt.services);
+              const color = getAppointmentColor(apt.services, apt.barberId);
               const st = new Date(apt.startTime);
               const et = new Date(apt.endTime);
               return (
@@ -339,7 +377,7 @@ const ProAgenda = () => {
   }
 
   // Desktop view
-  const memberCount = agendaMembers.length;
+  const memberCount = filteredMembers.length;
   const colMinWidth = memberCount <= 1 ? 280 : memberCount <= 3 ? 200 : 160;
 
   return (
@@ -350,141 +388,206 @@ const ProAgenda = () => {
           onDateChange={setSelectedDate}
           onAddClick={() => {
             setSelectedTimeSlot('');
-            setSelectedBarberId(agendaMembers[0]?.id || '');
+            setSelectedBarberId(filteredMembers[0]?.id || agendaMembers[0]?.id || '');
             setIsModalOpen(true);
           }}
         />
 
-        {/* Staff column headers */}
-        <div
-          className="flex shrink-0"
-          style={{
-            paddingLeft: `${TIME_COL_WIDTH}px`,
-            backgroundColor: '#13131f',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          {agendaMembers.map((member, i) => {
-            const dayName = jsWeekDayMap[getDay(selectedDate)];
-            const worksToday = (member.working_days || []).includes(dayName);
-            const memberColor = member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length];
-            return (
-              <div
-                key={member.id}
-                className="flex-1 px-3 py-3"
-                style={{
-                  minWidth: `${colMinWidth}px`,
-                  borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
-                }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                    style={{
-                      backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.1)',
-                    }}
-                  >
-                    {getInitials(member.name)}
-                  </div>
-                  <div className="min-w-0">
-                    <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/30")}>
-                      {member.name}
-                    </span>
-                    {!worksToday && (
-                      <span className="text-[10px] text-white/20 uppercase tracking-wider">Absent</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Scrollable grid */}
-        <div ref={scrollRef} className="flex-1 overflow-auto">
-          <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
-            {/* Time column */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Staff filter sidebar */}
+          {sidebarOpen && (
             <div
-              className="sticky left-0 z-10 shrink-0"
+              className="shrink-0 flex flex-col border-r overflow-y-auto"
               style={{
-                width: `${TIME_COL_WIDTH}px`,
-                backgroundColor: '#0f0f1a',
-                borderRight: '1px solid rgba(255,255,255,0.06)',
+                width: `${SIDEBAR_WIDTH}px`,
+                backgroundColor: '#13131f',
+                borderColor: 'rgba(255,255,255,0.08)',
               }}
             >
-              {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
-                <div
-                  key={idx}
-                  className={cn(
-                    "flex items-start justify-end pr-3 pt-[-2px]",
-                    isBreak && "opacity-30"
-                  )}
-                  style={{
-                    height: `${SLOT_HEIGHT}px`,
-                    borderTop: minute === 0
-                      ? '1px solid rgba(255,255,255,0.08)'
-                      : minute === 30
-                        ? '1px dashed rgba(255,255,255,0.04)'
-                        : '1px solid transparent',
-                  }}
-                >
-                  {label && (
-                    <span className="text-[11px] font-mono leading-none text-white/30 -mt-1.5">
-                      {label}
-                    </span>
-                  )}
-                </div>
-              ))}
+              <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                <span className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Équipe</span>
+              </div>
+              {agendaMembers.map((member, i) => {
+                const isVisible = visibleMemberIds.has(member.id);
+                const memberColor = member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length];
+                const dayName = jsWeekDayMap[getDay(selectedDate)];
+                const worksToday = (member.working_days || []).includes(dayName);
+                return (
+                  <button
+                    key={member.id}
+                    onClick={() => toggleMemberVisibility(member.id)}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors w-full",
+                      isVisible ? "hover:bg-white/5" : "opacity-40 hover:opacity-60"
+                    )}
+                  >
+                    <div className="relative shrink-0">
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                        style={{ backgroundColor: isVisible ? memberColor : 'rgba(255,255,255,0.15)' }}
+                      >
+                        {getInitials(member.name)}
+                      </div>
+                      {/* Checkbox indicator */}
+                      <div
+                        className={cn(
+                          "absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center",
+                          isVisible ? "border-emerald-500 bg-emerald-500" : "border-white/20 bg-transparent"
+                        )}
+                        style={{ borderColor: isVisible ? undefined : 'rgba(255,255,255,0.2)' }}
+                      >
+                        {isVisible && (
+                          <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className={cn("text-xs font-medium block truncate", isVisible ? "text-white/80" : "text-white/40")}>
+                        {member.name}
+                      </span>
+                      {!worksToday && (
+                        <span className="text-[9px] text-white/20 uppercase">Absent</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Main agenda area */}
+          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+            {/* Staff column headers */}
+            <div
+              className="flex shrink-0"
+              style={{
+                paddingLeft: `${TIME_COL_WIDTH}px`,
+                backgroundColor: '#13131f',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              {filteredMembers.map((member, i) => {
+                const dayName = jsWeekDayMap[getDay(selectedDate)];
+                const worksToday = (member.working_days || []).includes(dayName);
+                const memberColor = memberColorMap[member.id] || accentColors[i % accentColors.length];
+                return (
+                  <div
+                    key={member.id}
+                    className="flex-1 px-3 py-3"
+                    style={{
+                      minWidth: `${colMinWidth}px`,
+                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                        style={{
+                          backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.1)',
+                        }}
+                      >
+                        {getInitials(member.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/30")}>
+                          {member.name}
+                        </span>
+                        {!worksToday && (
+                          <span className="text-[10px] text-white/20 uppercase tracking-wider">Absent</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Staff columns */}
-            {agendaMembers.map((member, i) => (
-              <div
-                key={member.id}
-                className="flex-1 relative"
-                style={{
-                  minWidth: `${colMinWidth}px`,
-                  backgroundColor: '#1a1a2e',
-                  borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
-                }}
-              >
-                {/* Droppable grid slots */}
-                {timeLabels.map(({ hour, minute, isBreak }, idx) => {
-                  const absent = !isStaffWorking(member, selectedDate, hour, minute);
-                  return (
-                    <DroppableSlot
+            {/* Scrollable grid */}
+            <div ref={scrollRef} className="flex-1 overflow-auto">
+              <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
+                {/* Time column */}
+                <div
+                  className="sticky left-0 z-10 shrink-0"
+                  style={{
+                    width: `${TIME_COL_WIDTH}px`,
+                    backgroundColor: '#0f0f1a',
+                    borderRight: '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
+                  {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
+                    <div
                       key={idx}
-                      id={`slot|${member.id}|${hour}|${minute}`}
-                      barberId={member.id}
-                      hour={hour}
-                      minute={minute}
-                      isBreak={isBreak}
-                      isHourStart={minute === 0}
-                      isHalfHour={minute === 30}
-                      isAbsent={absent}
-                      onClick={() => handleSlotClick(member.id, hour, minute)}
-                    />
-                  );
-                })}
+                      className={cn(
+                        "flex items-start justify-end pr-3 pt-[-2px]",
+                        isBreak && "opacity-30"
+                      )}
+                      style={{
+                        height: `${SLOT_HEIGHT}px`,
+                        borderTop: minute === 0
+                          ? '1px solid rgba(255,255,255,0.08)'
+                          : minute === 30
+                            ? '1px dashed rgba(255,255,255,0.04)'
+                            : '1px solid transparent',
+                      }}
+                    >
+                      {label && (
+                        <span className="text-[11px] font-mono leading-none text-white/30 -mt-1.5">
+                          {label}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-                {/* Appointment cards */}
-                {(appointmentsByMember[member.id] || []).map((apt: any) => (
-                  <AppointmentCard
-                    key={apt.id}
-                    appointment={apt}
-                    slotHeight={SLOT_HEIGHT}
-                    startHour={startHour}
-                    color={getAppointmentColor(apt.services)}
-                    onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
-                  />
+                {/* Staff columns */}
+                {filteredMembers.map((member, i) => (
+                  <div
+                    key={member.id}
+                    className="flex-1 relative"
+                    style={{
+                      minWidth: `${colMinWidth}px`,
+                      backgroundColor: '#1a1a2e',
+                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+                    }}
+                  >
+                    {timeLabels.map(({ hour, minute, isBreak }, idx) => {
+                      const absent = !isStaffWorking(member, selectedDate, hour, minute);
+                      return (
+                        <DroppableSlot
+                          key={idx}
+                          id={`slot|${member.id}|${hour}|${minute}`}
+                          barberId={member.id}
+                          hour={hour}
+                          minute={minute}
+                          isBreak={isBreak}
+                          isHourStart={minute === 0}
+                          isHalfHour={minute === 30}
+                          isAbsent={absent}
+                          onClick={() => handleSlotClick(member.id, hour, minute)}
+                        />
+                      );
+                    })}
+
+                    {(appointmentsByMember[member.id] || []).map((apt: any) => (
+                      <AppointmentCard
+                        key={apt.id}
+                        appointment={apt}
+                        slotHeight={SLOT_HEIGHT}
+                        startHour={startHour}
+                        color={getAppointmentColor(apt.services, apt.barberId)}
+                        onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
+                      />
+                    ))}
+
+                    {isSameDay(selectedDate, new Date()) && (
+                      <CurrentTimeIndicator startHour={startHour} slotHeight={SLOT_HEIGHT} />
+                    )}
+                  </div>
                 ))}
-
-                {/* Current time indicator */}
-                {isSameDay(selectedDate, new Date()) && (
-                  <CurrentTimeIndicator startHour={startHour} slotHeight={SLOT_HEIGHT} />
-                )}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
@@ -495,7 +598,7 @@ const ProAgenda = () => {
               appointment={draggedAppointment}
               slotHeight={SLOT_HEIGHT}
               startHour={startHour}
-              color={getAppointmentColor(draggedAppointment.services)}
+              color={getAppointmentColor(draggedAppointment.services, draggedAppointment.barberId)}
               onClick={() => {}}
               isDragOverlay
             />
