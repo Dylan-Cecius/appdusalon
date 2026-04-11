@@ -384,10 +384,13 @@ const ProAgenda = () => {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#0f0f1a' }}>
+      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#0d0d1a' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
+          onToggleSidebar={() => setSidebarOpen(p => !p)}
+          sidebarOpen={sidebarOpen}
+          appointmentCount={dayAppointments.length}
           onAddClick={() => {
             setSelectedTimeSlot('');
             setSelectedBarberId(filteredMembers[0]?.id || agendaMembers[0]?.id || '');
