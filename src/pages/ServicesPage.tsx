@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
-import ServiceManagement from '@/components/ServiceManagement';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
