@@ -298,7 +298,7 @@ const ProAgenda = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="flex flex-col h-full" style={{ backgroundColor: '#0f0f1a' }}>
+      <div className="flex flex-col h-full" style={{ backgroundColor: '#0d0d1a' }}>
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
