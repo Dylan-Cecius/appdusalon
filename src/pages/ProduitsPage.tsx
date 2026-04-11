@@ -1,18 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
-import ProductManagement from '@/components/ProductManagement';
 import { useStocks, PRODUCT_CATEGORIES, getStockStatus } from '@/hooks/useStocks';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BarChart3, Settings2, ShoppingBag, TrendingUp, AlertTriangle, Package, Plus, Edit2, Trash2, CalendarIcon, X } from 'lucide-react';
+import { BarChart3, ShoppingBag, TrendingUp, Package, CalendarIcon, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -199,19 +197,7 @@ const ProduitsPage = () => {
 
   return (
     <MainLayout>
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Vue d'ensemble
-          </TabsTrigger>
-          <TabsTrigger value="manage" className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4" />
-            Gérer le stock
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
+      <div className="space-y-4">
           {/* KPI Boxes - CA Produits */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-emerald-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
@@ -327,12 +313,7 @@ const ProduitsPage = () => {
               </TableBody>
             </Table>
           </div>
-        </TabsContent>
-
-        <TabsContent value="manage">
-          <ProductManagement />
-        </TabsContent>
-      </Tabs>
+      </div>
 
       {/* Add/Edit Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={(v) => { if (!v) { setIsModalOpen(false); resetForm(); } }}>
