@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Transaction {
   id: string;
@@ -30,20 +31,16 @@ interface TransactionsContextType {
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
 export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
+  const { user, isReady } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
   // Fetch transactions from Supabase
   const fetchTransactions = async () => {
+    console.log('[Transactions] fetch start', { userId: user?.id });
     try {
-      if (!isSupabaseConfigured) {
-        setTransactions([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!isSupabaseConfigured || !user) {
         setTransactions([]);
         setLoading(false);
         return;
@@ -65,9 +62,10 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Paris')
       })) || [];
 
+      console.log('[Transactions] fetch success', formattedTransactions.length, 'transactions');
       setTransactions(formattedTransactions);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error('[Transactions] fetch error:', error);
       setTransactions([]);
     } finally {
       setLoading(false);
@@ -91,7 +89,6 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         return newTransaction;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
           title: "Erreur",
@@ -103,7 +100,6 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
       const currentTimeUTC = fromZonedTime(new Date(), 'Europe/Paris');
       
-      // Get salon_id and employee_id for the current user
       const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
       const { data: employeeIdData } = await supabase.rpc('get_user_employee_id', { _user_id: user.id });
       
@@ -142,8 +138,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris')
       };
 
-      // Mettre à jour immédiatement l'état local
+      // Update state immediately for live stats
       setTransactions(prev => [newTransaction, ...prev]);
+      console.log('[Transactions] added, new count:', transactions.length + 1);
 
       // Auto-décrémentation du stock pour les produits correspondants
       try {
@@ -178,7 +175,6 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
                 created_by: user.id,
               } as any);
 
-              // Alerte stock bas
               if (newStock <= matchingProduct.min_stock) {
                 lowStockAlerts.push(`${matchingProduct.name} (${newStock} restant${newStock > 1 ? 's' : ''})`);
               }
@@ -284,10 +280,8 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Find the transaction to restore stock
       const txToDelete = transactions.find(tx => tx.id === id);
 
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
@@ -365,8 +359,29 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Setup real-time subscription
+  // Gate fetching on auth readiness + user
   useEffect(() => {
+    if (!isReady) {
+      console.log('[Transactions] effect: auth not ready yet');
+      return;
+    }
+
+    if (!user) {
+      console.log('[Transactions] effect: no user — clearing state');
+      setTransactions([]);
+      setLoading(false);
+      userIdRef.current = null;
+      return;
+    }
+
+    // Avoid duplicate fetch if user hasn't changed
+    if (userIdRef.current === user.id) {
+      return;
+    }
+    userIdRef.current = user.id;
+
+    console.log('[Transactions] effect trigger — fetching for user', user.id);
+    setLoading(true);
     fetchTransactions();
 
     if (!isSupabaseConfigured) return;
@@ -377,6 +392,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         { event: 'INSERT', schema: 'public', table: 'transactions' },
         (payload) => {
           const newRecord = payload.new as any;
+          if (newRecord.user_id !== user.id) return;
           const newTransaction: Transaction = {
             id: newRecord.id,
             items: newRecord.items,
@@ -384,17 +400,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
             paymentMethod: newRecord.payment_method as 'cash' | 'card',
             transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Paris')
           };
-          
-          supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user && newRecord.user_id === user.id) {
-              setTransactions(prev => {
-                // Éviter les doublons
-                if (prev.some(tx => tx.id === newTransaction.id)) {
-                  return prev;
-                }
-                return [newTransaction, ...prev];
-              });
-            }
+          setTransactions(prev => {
+            if (prev.some(tx => tx.id === newTransaction.id)) return prev;
+            return [newTransaction, ...prev];
           });
         }
       )
@@ -402,6 +410,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         { event: 'UPDATE', schema: 'public', table: 'transactions' },
         (payload) => {
           const updatedRecord = payload.new as any;
+          if (updatedRecord.user_id !== user.id) return;
           const updatedTransaction: Transaction = {
             id: updatedRecord.id,
             items: updatedRecord.items,
@@ -409,26 +418,17 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
             paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
             transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Paris')
           };
-          
-          supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user && updatedRecord.user_id === user.id) {
-              setTransactions(prev => 
-                prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
-              );
-            }
-          });
+          setTransactions(prev => 
+            prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
+          );
         }
       )
       .on('postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'transactions' },
         (payload) => {
           const deletedRecord = payload.old as any;
-          
-          supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user && deletedRecord.user_id === user.id) {
-              setTransactions(prev => prev.filter(tx => tx.id !== deletedRecord.id));
-            }
-          });
+          if (deletedRecord.user_id !== user.id) return;
+          setTransactions(prev => prev.filter(tx => tx.id !== deletedRecord.id));
         }
       )
       .subscribe();
@@ -436,7 +436,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isReady, user?.id]);
 
   return (
     <TransactionsContext.Provider

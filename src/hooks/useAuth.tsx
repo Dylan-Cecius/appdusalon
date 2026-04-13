@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isReady: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -27,21 +28,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const explicitSignOut = useRef(false);
 
   useEffect(() => {
+    console.log('[Auth] init start');
+
     // 1. Set up listener FIRST (Supabase best practice)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('[Auth] state change:', event, '| session:', !!currentSession);
+
         // Only process events after initial getSession has resolved
         if (!initialSessionResolved.current) {
+          console.log('[Auth] ignoring event before init resolved');
           return;
         }
 
         if (event === 'SIGNED_OUT') {
           // Only clear state if this was an explicit sign-out from our app
-          // This prevents rate-limit-induced token refresh failures from logging users out
           if (explicitSignOut.current) {
+            console.log('[Auth] explicit sign-out — clearing state');
             setUser(null);
             setSession(null);
             explicitSignOut.current = false;
+          } else {
+            console.log('[Auth] ignoring non-explicit SIGNED_OUT (rate limit / token refresh artifact)');
           }
           return;
         }
@@ -54,6 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // 2. Restore session from localStorage
     supabase.auth.getSession().then(({ data: { session: restoredSession } }) => {
+      console.log('[Auth] init session:', !!restoredSession, restoredSession?.user?.email);
       setSession(restoredSession);
       setUser(restoredSession?.user ?? null);
       initialSessionResolved.current = true;
@@ -64,6 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = useCallback(async () => {
+    console.log('[Auth] signOut called');
     explicitSignOut.current = true;
     // Clear state immediately for responsive UX
     setUser(null);
@@ -72,10 +82,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     window.location.href = '/auth';
   }, []);
 
+  const isReady = !loading;
+
   const value = {
     user,
     session,
     loading,
+    isReady,
     signOut,
   };
 

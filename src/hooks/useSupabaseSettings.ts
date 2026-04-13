@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from './useAuth';
 
 export interface SalonSettings {
   id?: string;
@@ -22,21 +23,22 @@ export interface Barber {
 }
 
 export const useSupabaseSettings = () => {
-  const [salonSettings, setSalonSettings] = useState<SalonSettings>({
+  const { user, isReady } = useAuth();
+  const [salonSettings, setSalonSettings] = useState<SalonSettings | null>({
     name: "L'app du salon",
     logo_url: '',
     stats_password: ''
   });
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
   const fetchSettings = async () => {
+    if (!user) return;
+    console.log('[Settings] fetch start');
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
-      // Récupérer le plus récent enregistrement au lieu du premier
       const { data, error } = await supabase
         .from('salon_settings')
         .select('*')
@@ -51,12 +53,7 @@ export const useSupabaseSettings = () => {
       }
 
       if (data) {
-        console.log('🔍 [DEBUG] Fetched settings:', { 
-          id: data.id, 
-          name: data.name, 
-          has_password: !!data.stats_password,
-          updated_at: data.updated_at
-        });
+        console.log('[Settings] fetched:', data.id, data.name);
         setSalonSettings({
           id: data.id,
           name: data.name,
@@ -65,7 +62,6 @@ export const useSupabaseSettings = () => {
           user_id: data.user_id
         });
       } else {
-        console.log('🔍 [DEBUG] No settings found');
         setSalonSettings(null);
       }
     } catch (error) {
@@ -76,11 +72,10 @@ export const useSupabaseSettings = () => {
   };
 
   const fetchBarbers = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
+    if (!user) return;
+    console.log('[Barbers] fetch start');
 
+    try {
       const { data, error } = await supabase
         .from('barbers')
         .select('*')
@@ -104,40 +99,21 @@ export const useSupabaseSettings = () => {
   };
 
   const saveSalonSettings = async (settings: SalonSettings) => {
-    console.log('🔍 [DEBUG] saveSalonSettings called with:', { 
-      settings: { 
-        ...settings, 
-        stats_password: settings.stats_password ? '[HASH PROVIDED]' : 'undefined' 
-      } 
-    });
-    
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour sauvegarder",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log('🔍 [DEBUG] No authenticated user found');
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour sauvegarder",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      console.log('🔍 [DEBUG] User authenticated:', user.id);
-      console.log('🔍 [DEBUG] Current salonSettings ID:', salonSettings?.id);
-
-      // Utiliser l'ID existant du salonSettings pour faire un vrai UPDATE
       const dataToUpsert = {
         ...settings,
         user_id: user.id,
         id: salonSettings?.id || settings.id
       };
-      
-      console.log('🔍 [DEBUG] Data to upsert:', {
-        ...dataToUpsert,
-        stats_password: dataToUpsert.stats_password ? '[HASH]' : undefined
-      });
 
       const { data, error } = await supabase
         .from('salon_settings')
@@ -145,16 +121,8 @@ export const useSupabaseSettings = () => {
         .select()
         .single();
 
-      console.log('🔍 [DEBUG] Supabase upsert result:', { 
-        data: data ? { 
-          ...data, 
-          stats_password: data.stats_password ? '[HASH IN DB]' : null 
-        } : null, 
-        error 
-      });
-
       if (error) {
-        console.error('🔍 [DEBUG] Error saving settings:', error);
+        console.error('Error saving settings:', error);
         toast({
           title: "Erreur",
           description: "Impossible de sauvegarder les paramètres",
@@ -163,13 +131,6 @@ export const useSupabaseSettings = () => {
         return;
       }
 
-      // Update local state immediately
-      console.log('🔍 [DEBUG] Updating local state with:', { 
-        id: data.id,
-        name: data.name,
-        stats_password: data.stats_password ? '[HASH]' : null
-      });
-      
       setSalonSettings({
         id: data.id,
         name: data.name,
@@ -183,28 +144,23 @@ export const useSupabaseSettings = () => {
         description: "Paramètres du salon sauvegardés"
       });
       
-      // Force refresh to ensure UI updates
-      console.log('🔍 [DEBUG] Calling fetchSettings to refresh');
       await fetchSettings();
-      console.log('🔍 [DEBUG] fetchSettings completed');
     } catch (error) {
-      console.error('🔍 [DEBUG] Error saving settings:', error);
+      console.error('Error saving settings:', error);
     }
   };
 
   const addBarber = async (barber: Omit<Barber, 'id'>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté",
-          variant: "destructive"
-        });
-        return null;
-      }
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté",
+        variant: "destructive"
+      });
+      return null;
+    }
 
+    try {
       const { data, error } = await supabase
         .from('barbers')
         .insert({
@@ -292,10 +248,25 @@ export const useSupabaseSettings = () => {
     }
   };
 
+  // Gate data fetching on auth readiness
   useEffect(() => {
+    if (!isReady) return;
+
+    if (!user) {
+      setSalonSettings(null);
+      setBarbers([]);
+      setLoading(false);
+      userIdRef.current = null;
+      return;
+    }
+
+    if (userIdRef.current === user.id) return;
+    userIdRef.current = user.id;
+
+    console.log('[Settings] effect trigger — fetching for user', user.id);
     fetchSettings();
     fetchBarbers();
-  }, []);
+  }, [isReady, user?.id]);
 
   return {
     salonSettings,

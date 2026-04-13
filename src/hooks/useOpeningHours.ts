@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from './useAuth';
 
 export interface DaySchedule {
-  day_of_week: number; // 0=Monday, 6=Sunday
+  day_of_week: number;
   is_open: boolean;
   open_time: string;
   close_time: string;
@@ -32,16 +33,18 @@ const DAY_LABELS: Record<number, string> = {
 };
 
 export const useOpeningHours = () => {
+  const { user, isReady } = useAuth();
   const [schedule, setSchedule] = useState<DaySchedule[]>(DEFAULT_SCHEDULE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasData, setHasData] = useState(false);
+  const userIdRef = useRef<string | null>(null);
 
   const fetchSchedule = useCallback(async () => {
+    if (!user) return;
+    console.log('[OpeningHours] fetch start');
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
       const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
       if (!salonIdData) return;
@@ -77,18 +80,15 @@ export const useOpeningHours = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const saveSchedule = async (newSchedule: DaySchedule[]) => {
+    if (!user) return;
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
       if (!salonId) return;
 
-      // Upsert all 7 days
       const rows = newSchedule.map(day => ({
         salon_id: salonId,
         day_of_week: day.day_of_week,
@@ -119,10 +119,8 @@ export const useOpeningHours = () => {
     }
   };
 
-  // Helper: check if a given JS Date falls within open hours
   const isTimeOpen = useCallback((date: Date): boolean => {
-    if (!hasData) return true; // No config = always open (default behavior)
-    // JS getDay: 0=Sunday, convert to our 0=Monday
+    if (!hasData) return true;
     const jsDay = date.getDay();
     const dayIndex = jsDay === 0 ? 6 : jsDay - 1;
     const day = schedule.find(s => s.day_of_week === dayIndex);
@@ -131,14 +129,12 @@ export const useOpeningHours = () => {
     const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     if (timeStr < day.open_time || timeStr >= day.close_time) return false;
 
-    // Check break
     if (day.break_start && day.break_end) {
       if (timeStr >= day.break_start && timeStr < day.break_end) return false;
     }
     return true;
   }, [schedule, hasData]);
 
-  // Helper: check if a day is open
   const isDayOpen = useCallback((date: Date): boolean => {
     if (!hasData) return true;
     const jsDay = date.getDay();
@@ -147,7 +143,6 @@ export const useOpeningHours = () => {
     return day?.is_open ?? true;
   }, [schedule, hasData]);
 
-  // Get schedule for a specific date
   const getScheduleForDate = useCallback((date: Date): DaySchedule | null => {
     if (!hasData) return null;
     const jsDay = date.getDay();
@@ -155,9 +150,23 @@ export const useOpeningHours = () => {
     return schedule.find(s => s.day_of_week === dayIndex) || null;
   }, [schedule, hasData]);
 
+  // Gate on auth readiness
   useEffect(() => {
+    if (!isReady) return;
+
+    if (!user) {
+      setSchedule(DEFAULT_SCHEDULE);
+      setHasData(false);
+      setLoading(false);
+      userIdRef.current = null;
+      return;
+    }
+
+    if (userIdRef.current === user.id) return;
+    userIdRef.current = user.id;
+
     fetchSchedule();
-  }, [fetchSchedule]);
+  }, [isReady, user?.id, fetchSchedule]);
 
   return {
     schedule,

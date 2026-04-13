@@ -1,30 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Appointment } from '@/data/appointments';
+import { useAuth } from './useAuth';
 
 export const useSupabaseAppointments = () => {
+  const { user, isReady } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
-  // Fetch appointments from Supabase or use mock data
   const fetchAppointments = async () => {
+    console.log('[Appointments] fetch start');
     try {
-      if (!isSupabaseConfigured) {
-        // Use empty array when Supabase is not configured
+      if (!isSupabaseConfigured || !user) {
         setAppointments([]);
         setLoading(false);
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setAppointments([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch appointments with client data (user is the owner)
       const { data, error } = await supabase
         .from('appointments' as any)
         .select(`
@@ -61,24 +55,20 @@ export const useSupabaseAppointments = () => {
         barberId: apt.barber_id
       })) || [];
 
+      console.log('[Appointments] fetch success', formattedAppointments.length);
       setAppointments(formattedAppointments);
     } catch (error) {
-      console.error('Error fetching appointments:', error);
-      // Use empty array instead of mock data
+      console.error('[Appointments] fetch error:', error);
       setAppointments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // SECURITY: New function to get sensitive client details only when needed
   const getClientDetails = async (appointmentId: string) => {
     try {
       if (!isSupabaseConfigured) {
-        return {
-          clientName: 'Client',
-          clientPhone: '***-***-****'
-        };
+        return { clientName: 'Client', clientPhone: '***-***-****' };
       }
 
       const { data, error } = await supabase
@@ -92,44 +82,29 @@ export const useSupabaseAppointments = () => {
       };
     } catch (error) {
       console.error('Error fetching client details:', error);
-      return {
-        clientName: 'Client',
-        clientPhone: '***-***-****'
-      };
+      return { clientName: 'Client', clientPhone: '***-***-****' };
     }
   };
 
-  // Add new appointment
   const addAppointment = async (appointment: Omit<Appointment, 'id'>) => {
     try {
       if (!isSupabaseConfigured) {
-        // Local fallback when Supabase is not configured
         const newAppointment: Appointment = {
           ...appointment,
           id: Date.now().toString()
         };
         setAppointments(prev => [...prev, newAppointment]);
-        toast({
-          title: "Succès",
-          description: "Rendez-vous ajouté (mode local)"
-        });
+        toast({ title: "Succès", description: "Rendez-vous ajouté (mode local)" });
         return newAppointment;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
         return;
       }
 
-      // Get salon_id for RLS compliance
       const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
 
-      // SECURITY: Use selective columns instead of select('*')
       const { data, error } = await supabase
         .from('appointments' as any)
         .insert({
@@ -147,26 +122,15 @@ export const useSupabaseAppointments = () => {
           user_id: user.id,
           salon_id: salonId
         })
-        .select(`
-          id,
-          barber_id,
-          start_time,
-          end_time,
-          services,
-          total_price,
-          status,
-          is_paid,
-          notes
-        `)
+        .select(`id, barber_id, start_time, end_time, services, total_price, status, is_paid, notes`)
         .single();
 
       if (error) throw error;
 
       const newAppointment: Appointment = {
         id: (data as any).id,
-        // SECURITY: Don't expose sensitive data in the response
-        clientName: 'Client', // Generic placeholder
-        clientPhone: '***-***-****', // Masked placeholder
+        clientName: 'Client',
+        clientPhone: '***-***-****',
         services: (data as any).services as any,
         startTime: new Date((data as any).start_time),
         endTime: new Date((data as any).end_time),
@@ -178,25 +142,16 @@ export const useSupabaseAppointments = () => {
       };
 
       setAppointments(prev => [...prev, newAppointment]);
-      
-      toast({
-        title: "Succès",
-        description: "Rendez-vous ajouté avec succès"
-      });
+      toast({ title: "Succès", description: "Rendez-vous ajouté avec succès" });
 
       return newAppointment;
     } catch (error) {
       console.error('Error adding appointment:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le rendez-vous",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: "Impossible d'ajouter le rendez-vous", variant: "destructive" });
       throw error;
     }
   };
 
-  // Update appointment
   const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
     try {
       const updateData: any = {};
@@ -222,21 +177,13 @@ export const useSupabaseAppointments = () => {
         prev.map(apt => apt.id === id ? { ...apt, ...updates } : apt)
       );
 
-      toast({
-        title: "Succès",
-        description: "Rendez-vous mis à jour avec succès"
-      });
+      toast({ title: "Succès", description: "Rendez-vous mis à jour avec succès" });
     } catch (error) {
       console.error('Error updating appointment:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le rendez-vous",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le rendez-vous", variant: "destructive" });
     }
   };
 
-  // Delete appointment
   const deleteAppointment = async (id: string) => {
     try {
       const { error } = await supabase
@@ -247,51 +194,55 @@ export const useSupabaseAppointments = () => {
       if (error) throw error;
 
       setAppointments(prev => prev.filter(apt => apt.id !== id));
-      
-      toast({
-        title: "Succès",
-        description: "Rendez-vous supprimé avec succès"
-      });
+      toast({ title: "Succès", description: "Rendez-vous supprimé avec succès" });
     } catch (error) {
       console.error('Error deleting appointment:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le rendez-vous",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: "Impossible de supprimer le rendez-vous", variant: "destructive" });
     }
   };
 
-  // Mark as paid
   const markAsPaid = async (id: string) => {
     await updateAppointment(id, { isPaid: true, status: 'completed' });
   };
 
-  // Get appointments for specific date
   const getAppointmentsForDate = (date: Date) => {
     return appointments.filter(apt => 
       apt.startTime.toDateString() === date.toDateString()
     );
   };
 
+  // Gate on auth readiness
   useEffect(() => {
+    if (!isReady) return;
+
+    if (!user) {
+      setAppointments([]);
+      setLoading(false);
+      userIdRef.current = null;
+      return;
+    }
+
+    if (userIdRef.current === user.id) return;
+    userIdRef.current = user.id;
+
+    console.log('[Appointments] effect trigger — fetching for user', user.id);
+    setLoading(true);
     fetchAppointments();
 
-    // Subscribe to real-time changes
+    if (!isSupabaseConfigured) return;
+
     const subscription = supabase
       .channel('appointments')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'appointments' },
-        () => {
-          fetchAppointments();
-        }
+        () => { fetchAppointments(); }
       )
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [isReady, user?.id]);
 
   return {
     appointments,
@@ -301,7 +252,7 @@ export const useSupabaseAppointments = () => {
     deleteAppointment,
     markAsPaid,
     getAppointmentsForDate,
-    getClientDetails, // SECURITY: New secure function to get sensitive data only when needed
+    getClientDetails,
     refreshAppointments: fetchAppointments
   };
 };
