@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -10,39 +9,99 @@ interface SubscriptionData {
   subscription_end: string | null;
 }
 
+// Session-level cache shared across all hook instances
+const subscriptionCache: {
+  data: SubscriptionData | null;
+  lastChecked: number;
+  userId: string | null;
+  pending: Promise<SubscriptionData | null> | null;
+} = {
+  data: null,
+  lastChecked: 0,
+  userId: null,
+  pending: null,
+};
+
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export const useSubscription = () => {
-  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>({
-    subscribed: false,
-    subscription_tier: null,
-    subscription_end: null
-  });
-  const [loading, setLoading] = useState(true);
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>(
+    subscriptionCache.data ?? { subscribed: false, subscription_tier: null, subscription_end: null }
+  );
+  const [loading, setLoading] = useState(!subscriptionCache.data);
   const { user } = useAuth();
   const { toast } = useToast();
+  const mountedRef = useRef(true);
 
-
-  const checkSubscription = async () => {
+  const checkSubscription = async (force = false) => {
     if (!user) {
       setLoading(false);
       return;
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        console.warn('Subscription check failed (non-blocking):', error.message);
-        // Ne pas bloquer l'utilisateur ni afficher de toast d'erreur
-        return;
-      }
+    const now = Date.now();
 
-      if (data) {
-        setSubscriptionData(data);
+    // If user changed, invalidate cache
+    if (subscriptionCache.userId !== user.id) {
+      subscriptionCache.data = null;
+      subscriptionCache.lastChecked = 0;
+      subscriptionCache.userId = user.id;
+      subscriptionCache.pending = null;
+    }
+
+    // Return cached data if still fresh
+    if (!force && subscriptionCache.data && (now - subscriptionCache.lastChecked < CACHE_TTL_MS)) {
+      if (mountedRef.current) {
+        setSubscriptionData(subscriptionCache.data);
+        setLoading(false);
       }
-    } catch (error) {
-      console.warn('Subscription check failed (non-blocking):', error);
+      return;
+    }
+
+    // Deduplicate concurrent calls
+    if (subscriptionCache.pending) {
+      try {
+        const result = await subscriptionCache.pending;
+        if (mountedRef.current && result) {
+          setSubscriptionData(result);
+          setLoading(false);
+        }
+      } catch {
+        if (mountedRef.current) setLoading(false);
+      }
+      return;
+    }
+
+    const fetchPromise = (async (): Promise<SubscriptionData | null> => {
+      try {
+        const { data, error } = await supabase.functions.invoke('check-subscription');
+        if (error) {
+          console.warn('Subscription check failed (non-blocking):', error.message);
+          return null;
+        }
+        return data as SubscriptionData;
+      } catch (error) {
+        console.warn('Subscription check failed (non-blocking):', error);
+        return null;
+      }
+    })();
+
+    subscriptionCache.pending = fetchPromise;
+
+    try {
+      const result = await fetchPromise;
+      if (result) {
+        subscriptionCache.data = result;
+        subscriptionCache.lastChecked = Date.now();
+        if (mountedRef.current) {
+          setSubscriptionData(result);
+        }
+      }
     } finally {
-      setLoading(false);
+      subscriptionCache.pending = null;
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -120,26 +179,16 @@ export const useSubscription = () => {
     }
   };
 
-  // Check subscription status on mount and when user changes
   useEffect(() => {
+    mountedRef.current = true;
     checkSubscription();
-  }, [user]);
-
-  // Auto-refresh every 30 seconds when user is active
-  useEffect(() => {
-    if (!user) return;
-
-    const interval = setInterval(() => {
-      checkSubscription();
-    }, 30000);
-
-    return () => clearInterval(interval);
+    return () => { mountedRef.current = false; };
   }, [user]);
 
   return {
     ...subscriptionData,
     loading,
-    checkSubscription,
+    checkSubscription: () => checkSubscription(true),
     createCheckoutSession,
     openCustomerPortal
   };
