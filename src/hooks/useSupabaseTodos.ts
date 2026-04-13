@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from './useAuth';
 
 export interface TodoItem {
   id: string;
@@ -16,18 +17,20 @@ export interface TodoItem {
 }
 
 export const useSupabaseTodos = () => {
+  const { user, isReady } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
   const fetchTodos = async () => {
+    if (!user) {
+      setTodos([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setTodos([]);
-        setLoading(false);
-        return;
-      }
 
       const { data, error } = await supabase
         .from('todo_items')
@@ -51,40 +54,25 @@ export const useSupabaseTodos = () => {
   };
 
   const addTodo = async (todo: Omit<TodoItem, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté",
-          variant: "destructive"
-        });
-        return;
-      }
+    if (!user) {
+      toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from('todo_items')
-        .insert({
-          ...todo,
-          user_id: user.id
-        })
+        .insert({ ...todo, user_id: user.id })
         .select()
         .single();
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible d'ajouter la tâche",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible d'ajouter la tâche", variant: "destructive" });
         return;
       }
 
       setTodos(prev => [data as TodoItem, ...prev]);
-      toast({
-        title: "Succès",
-        description: "Tâche ajoutée avec succès"
-      });
+      toast({ title: "Succès", description: "Tâche ajoutée avec succès" });
     } catch (error) {
       console.error('Error adding todo:', error);
     }
@@ -100,19 +88,12 @@ export const useSupabaseTodos = () => {
         .single();
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de mettre à jour la tâche",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible de mettre à jour la tâche", variant: "destructive" });
         return;
       }
 
       setTodos(prev => prev.map(t => t.id === id ? data as TodoItem : t));
-      toast({
-        title: "Succès",
-        description: "Tâche mise à jour avec succès"
-      });
+      toast({ title: "Succès", description: "Tâche mise à jour avec succès" });
     } catch (error) {
       console.error('Error updating todo:', error);
     }
@@ -126,19 +107,12 @@ export const useSupabaseTodos = () => {
         .eq('id', id);
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de supprimer la tâche",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible de supprimer la tâche", variant: "destructive" });
         return;
       }
 
       setTodos(prev => prev.filter(t => t.id !== id));
-      toast({
-        title: "Succès",
-        description: "Tâche supprimée avec succès"
-      });
+      toast({ title: "Succès", description: "Tâche supprimée avec succès" });
     } catch (error) {
       console.error('Error deleting todo:', error);
     }
@@ -147,21 +121,21 @@ export const useSupabaseTodos = () => {
   const toggleComplete = async (id: string) => {
     const todo = todos.find(t => t.id === id);
     if (!todo) return;
-
     await updateTodo(id, { is_completed: !todo.is_completed });
   };
 
   useEffect(() => {
+    if (!isReady) return;
+    if (!user) {
+      setTodos([]);
+      setLoading(false);
+      userIdRef.current = null;
+      return;
+    }
+    if (userIdRef.current === user.id) return;
+    userIdRef.current = user.id;
     fetchTodos();
-  }, []);
+  }, [isReady, user?.id]);
 
-  return {
-    todos,
-    loading,
-    addTodo,
-    updateTodo,
-    deleteTodo,
-    toggleComplete,
-    fetchTodos
-  };
+  return { todos, loading, addTodo, updateTodo, deleteTodo, toggleComplete, fetchTodos };
 };
