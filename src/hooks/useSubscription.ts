@@ -9,50 +9,89 @@ interface SubscriptionData {
   subscription_end: string | null;
 }
 
+const DEFAULT_SUBSCRIPTION_DATA: SubscriptionData = {
+  subscribed: false,
+  subscription_tier: null,
+  subscription_end: null,
+};
+
+const cloneSubscriptionData = (data: SubscriptionData): SubscriptionData => ({ ...data });
+
 // Session-level cache shared across all hook instances
 const subscriptionCache: {
   data: SubscriptionData | null;
   lastChecked: number;
+  lastFailed: number;
   userId: string | null;
-  pending: Promise<SubscriptionData | null> | null;
+  pending: Promise<SubscriptionData> | null;
 } = {
   data: null,
   lastChecked: 0,
+  lastFailed: 0,
   userId: null,
   pending: null,
 };
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const FAILURE_RETRY_TTL_MS = 60 * 1000; // 1 minute cooldown after a failed fetch
+
+const resetSubscriptionCache = (userId: string | null = null) => {
+  subscriptionCache.data = null;
+  subscriptionCache.lastChecked = 0;
+  subscriptionCache.lastFailed = 0;
+  subscriptionCache.userId = userId;
+  subscriptionCache.pending = null;
+};
 
 export const useSubscription = () => {
-  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>(
-    subscriptionCache.data ?? { subscribed: false, subscription_tier: null, subscription_end: null }
-  );
-  const [loading, setLoading] = useState(!subscriptionCache.data);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>(() => {
+    if (user && subscriptionCache.userId === user.id && subscriptionCache.data) {
+      return cloneSubscriptionData(subscriptionCache.data);
+    }
+
+    return cloneSubscriptionData(DEFAULT_SUBSCRIPTION_DATA);
+  });
+  const [loading, setLoading] = useState(
+    Boolean(user) && (Boolean(subscriptionCache.pending) || (!subscriptionCache.data && !subscriptionCache.lastFailed))
+  );
   const mountedRef = useRef(true);
 
   const checkSubscription = async (force = false) => {
     if (!user) {
-      setLoading(false);
+      resetSubscriptionCache(null);
+      if (mountedRef.current) {
+        setSubscriptionData(cloneSubscriptionData(DEFAULT_SUBSCRIPTION_DATA));
+        setLoading(false);
+      }
       return;
     }
 
+    const requestUserId = user.id;
     const now = Date.now();
 
     // If user changed, invalidate cache
-    if (subscriptionCache.userId !== user.id) {
-      subscriptionCache.data = null;
-      subscriptionCache.lastChecked = 0;
-      subscriptionCache.userId = user.id;
-      subscriptionCache.pending = null;
+    if (subscriptionCache.userId !== requestUserId) {
+      resetSubscriptionCache(requestUserId);
+      if (mountedRef.current) {
+        setSubscriptionData(cloneSubscriptionData(DEFAULT_SUBSCRIPTION_DATA));
+      }
     }
 
     // Return cached data if still fresh
     if (!force && subscriptionCache.data && (now - subscriptionCache.lastChecked < CACHE_TTL_MS)) {
       if (mountedRef.current) {
-        setSubscriptionData(subscriptionCache.data);
+        setSubscriptionData(cloneSubscriptionData(subscriptionCache.data));
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Reuse fallback data briefly after a failed request to avoid retry storms
+    if (!force && subscriptionCache.lastFailed && (now - subscriptionCache.lastFailed < FAILURE_RETRY_TTL_MS)) {
+      if (mountedRef.current) {
+        setSubscriptionData(cloneSubscriptionData(subscriptionCache.data ?? DEFAULT_SUBSCRIPTION_DATA));
         setLoading(false);
       }
       return;
@@ -60,10 +99,13 @@ export const useSubscription = () => {
 
     // Deduplicate concurrent calls
     if (subscriptionCache.pending) {
+      if (mountedRef.current) {
+        setLoading(true);
+      }
       try {
         const result = await subscriptionCache.pending;
-        if (mountedRef.current && result) {
-          setSubscriptionData(result);
+        if (mountedRef.current && subscriptionCache.userId === requestUserId) {
+          setSubscriptionData(cloneSubscriptionData(result));
           setLoading(false);
         }
       } catch {
@@ -72,17 +114,38 @@ export const useSubscription = () => {
       return;
     }
 
-    const fetchPromise = (async (): Promise<SubscriptionData | null> => {
+    if (mountedRef.current) {
+      setLoading(true);
+    }
+
+    const fetchPromise = (async (): Promise<SubscriptionData> => {
       try {
         const { data, error } = await supabase.functions.invoke('check-subscription');
         if (error) {
-          console.warn('Subscription check failed (non-blocking):', error.message);
-          return null;
+          throw error;
         }
-        return data as SubscriptionData;
+
+        const result = cloneSubscriptionData((data as SubscriptionData | null) ?? DEFAULT_SUBSCRIPTION_DATA);
+
+        if (subscriptionCache.userId === requestUserId) {
+          subscriptionCache.data = result;
+          subscriptionCache.lastChecked = Date.now();
+          subscriptionCache.lastFailed = 0;
+        }
+
+        return result;
       } catch (error) {
-        console.warn('Subscription check failed (non-blocking):', error);
-        return null;
+        console.warn('Subscription check failed (cached fallback):', error);
+
+        const fallbackData = cloneSubscriptionData(subscriptionCache.data ?? DEFAULT_SUBSCRIPTION_DATA);
+
+        if (subscriptionCache.userId === requestUserId) {
+          subscriptionCache.data = fallbackData;
+          subscriptionCache.lastChecked = 0;
+          subscriptionCache.lastFailed = Date.now();
+        }
+
+        return fallbackData;
       }
     })();
 
@@ -90,15 +153,14 @@ export const useSubscription = () => {
 
     try {
       const result = await fetchPromise;
-      if (result) {
-        subscriptionCache.data = result;
-        subscriptionCache.lastChecked = Date.now();
-        if (mountedRef.current) {
-          setSubscriptionData(result);
-        }
+      if (mountedRef.current && subscriptionCache.userId === requestUserId) {
+        setSubscriptionData(cloneSubscriptionData(result));
       }
     } finally {
-      subscriptionCache.pending = null;
+      if (subscriptionCache.userId === requestUserId) {
+        subscriptionCache.pending = null;
+      }
+
       if (mountedRef.current) {
         setLoading(false);
       }
@@ -181,7 +243,7 @@ export const useSubscription = () => {
 
   useEffect(() => {
     mountedRef.current = true;
-    checkSubscription();
+    void checkSubscription();
     return () => { mountedRef.current = false; };
   }, [user]);
 
