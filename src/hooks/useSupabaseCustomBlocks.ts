@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { BlockData } from '@/components/BlockModal';
 import { format } from 'date-fns';
+import { useAuth } from './useAuth';
 
 export interface CustomBlock extends BlockData {
   id: string;
@@ -11,18 +12,20 @@ export interface CustomBlock extends BlockData {
 }
 
 export const useSupabaseCustomBlocks = () => {
+  const { user, isReady } = useAuth();
   const [customBlocks, setCustomBlocks] = useState<CustomBlock[]>([]);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
   const fetchCustomBlocks = async () => {
+    if (!user) {
+      setCustomBlocks([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setCustomBlocks([]);
-        setLoading(false);
-        return;
-      }
 
       const { data, error } = await supabase
         .from('custom_blocks')
@@ -57,17 +60,12 @@ export const useSupabaseCustomBlocks = () => {
   };
 
   const addCustomBlock = async (blockData: BlockData, barberId: string, date: Date) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté",
-          variant: "destructive"
-        });
-        return;
-      }
+    if (!user) {
+      toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from('custom_blocks')
         .insert({
@@ -84,11 +82,7 @@ export const useSupabaseCustomBlocks = () => {
         .single();
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible d'ajouter le créneau bloqué",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible d'ajouter le créneau bloqué", variant: "destructive" });
         return;
       }
 
@@ -104,10 +98,7 @@ export const useSupabaseCustomBlocks = () => {
       };
 
       setCustomBlocks(prev => [...prev, newBlock]);
-      toast({
-        title: "Succès",
-        description: `Créneau "${blockData.title}" ajouté avec succès`
-      });
+      toast({ title: "Succès", description: `Créneau "${blockData.title}" ajouté avec succès` });
     } catch (error) {
       console.error('Error adding custom block:', error);
     }
@@ -129,11 +120,7 @@ export const useSupabaseCustomBlocks = () => {
         .single();
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de modifier le créneau bloqué",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible de modifier le créneau bloqué", variant: "destructive" });
         return;
       }
 
@@ -150,10 +137,7 @@ export const useSupabaseCustomBlocks = () => {
           : block
       ));
 
-      toast({
-        title: "Succès",
-        description: "Créneau modifié avec succès"
-      });
+      toast({ title: "Succès", description: "Créneau modifié avec succès" });
     } catch (error) {
       console.error('Error updating custom block:', error);
     }
@@ -167,20 +151,13 @@ export const useSupabaseCustomBlocks = () => {
         .eq('id', id);
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de supprimer le créneau bloqué",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible de supprimer le créneau bloqué", variant: "destructive" });
         return;
       }
 
       const deletedBlock = customBlocks.find(b => b.id === id);
       setCustomBlocks(prev => prev.filter(block => block.id !== id));
-      toast({
-        title: "Succès",
-        description: `Créneau "${deletedBlock?.title}" supprimé avec succès`
-      });
+      toast({ title: "Succès", description: `Créneau "${deletedBlock?.title}" supprimé avec succès` });
     } catch (error) {
       console.error('Error deleting custom block:', error);
     }
@@ -196,16 +173,20 @@ export const useSupabaseCustomBlocks = () => {
   };
 
   useEffect(() => {
+    if (!isReady) return;
+    if (!user) {
+      setCustomBlocks([]);
+      setLoading(false);
+      userIdRef.current = null;
+      return;
+    }
+    if (userIdRef.current === user.id) return;
+    userIdRef.current = user.id;
     fetchCustomBlocks();
-  }, []);
+  }, [isReady, user?.id]);
 
   return {
-    customBlocks,
-    loading,
-    addCustomBlock,
-    updateCustomBlock,
-    deleteCustomBlock,
-    getCustomBlocksForSlot,
-    fetchCustomBlocks
+    customBlocks, loading, addCustomBlock, updateCustomBlock, deleteCustomBlock,
+    getCustomBlocksForSlot, fetchCustomBlocks
   };
 };

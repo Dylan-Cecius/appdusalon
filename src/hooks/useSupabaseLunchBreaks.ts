@@ -1,21 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { LunchBreakData } from '@/components/LunchBreakModal';
+import { useAuth } from './useAuth';
 
 export const useSupabaseLunchBreaks = () => {
+  const { user, isReady } = useAuth();
   const [lunchBreaks, setLunchBreaks] = useState<LunchBreakData[]>([]);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
   const fetchLunchBreaks = async () => {
+    if (!user) {
+      setLunchBreaks([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLunchBreaks([]);
-        setLoading(false);
-        return;
-      }
 
       const { data, error } = await supabase
         .from('lunch_breaks')
@@ -45,17 +48,12 @@ export const useSupabaseLunchBreaks = () => {
   };
 
   const saveLunchBreak = async (breakData: LunchBreakData) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté",
-          variant: "destructive"
-        });
-        return;
-      }
+    if (!user) {
+      toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from('lunch_breaks')
         .upsert({
@@ -70,24 +68,16 @@ export const useSupabaseLunchBreaks = () => {
         .single();
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de sauvegarder le temps de midi",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible de sauvegarder le temps de midi", variant: "destructive" });
         return;
       }
 
-      // Update local state
       setLunchBreaks(prev => {
         const filtered = prev.filter(lb => lb.barberId !== breakData.barberId);
         return [...filtered, breakData];
       });
 
-      toast({
-        title: "Succès",
-        description: "Temps de midi configuré avec succès"
-      });
+      toast({ title: "Succès", description: "Temps de midi configuré avec succès" });
     } catch (error) {
       console.error('Error saving lunch break:', error);
     }
@@ -101,19 +91,12 @@ export const useSupabaseLunchBreaks = () => {
         .eq('barber_id', barberId);
 
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de supprimer le temps de midi",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Impossible de supprimer le temps de midi", variant: "destructive" });
         return;
       }
 
       setLunchBreaks(prev => prev.filter(lb => lb.barberId !== barberId));
-      toast({
-        title: "Succès",
-        description: "Temps de midi supprimé avec succès"
-      });
+      toast({ title: "Succès", description: "Temps de midi supprimé avec succès" });
     } catch (error) {
       console.error('Error deleting lunch break:', error);
     }
@@ -139,16 +122,20 @@ export const useSupabaseLunchBreaks = () => {
   };
 
   useEffect(() => {
+    if (!isReady) return;
+    if (!user) {
+      setLunchBreaks([]);
+      setLoading(false);
+      userIdRef.current = null;
+      return;
+    }
+    if (userIdRef.current === user.id) return;
+    userIdRef.current = user.id;
     fetchLunchBreaks();
-  }, []);
+  }, [isReady, user?.id]);
 
   return {
-    lunchBreaks,
-    loading,
-    saveLunchBreak,
-    deleteLunchBreak,
-    getLunchBreak,
-    isLunchBreakTime,
-    fetchLunchBreaks
+    lunchBreaks, loading, saveLunchBreak, deleteLunchBreak,
+    getLunchBreak, isLunchBreakTime, fetchLunchBreaks
   };
 };
