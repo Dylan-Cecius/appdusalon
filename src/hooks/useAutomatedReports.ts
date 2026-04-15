@@ -33,7 +33,7 @@ export interface CreateAutomatedReportData {
 export const useAutomatedReports = () => {
   const [reports, setReports] = useState<AutomatedReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const { toast } = useToast();
 
   const fetchReports = async () => {
@@ -215,8 +215,21 @@ export const useAutomatedReports = () => {
   };
 
   useEffect(() => {
-    fetchReports();
-  }, [user]);
+    if (!isReady) {
+      setLoading(true);
+      return;
+    }
+
+    console.log('[AutomatedReports] effect trigger', { userId: user?.id ?? null });
+
+    if (!user) {
+      setReports([]);
+      setLoading(false);
+      return;
+    }
+
+    void fetchReports();
+  }, [isReady, user?.id]);
 
   return {
     reports,

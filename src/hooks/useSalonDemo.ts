@@ -3,11 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export const useSalonDemo = () => {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const [isDemo, setIsDemo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isReady) {
+      setLoading(true);
+      return;
+    }
+
+    console.log('[Demo] effect trigger', { userId: user?.id ?? null });
+
     if (!user) {
       setIsDemo(false);
       setLoading(false);
@@ -15,6 +22,8 @@ export const useSalonDemo = () => {
     }
 
     const checkDemo = async () => {
+      setLoading(true);
+
       try {
         const { data: salonId } = await supabase.rpc('get_user_salon_id', { 
           _user_id: user.id 
@@ -41,8 +50,8 @@ export const useSalonDemo = () => {
       }
     };
 
-    checkDemo();
-  }, [user]);
+    void checkDemo();
+  }, [isReady, user?.id]);
 
   return { isDemo, loading };
 };

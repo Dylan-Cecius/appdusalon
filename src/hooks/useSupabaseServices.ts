@@ -17,7 +17,7 @@ export interface Service {
 export const useSupabaseServices = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
 
   const fetchServices = async () => {
     if (!user) {
@@ -165,8 +165,21 @@ export const useSupabaseServices = () => {
   };
 
   useEffect(() => {
-    fetchServices();
-  }, [user]);
+    if (!isReady) {
+      setLoading(true);
+      return;
+    }
+
+    console.log('[Services] effect trigger', { userId: user?.id ?? null });
+
+    if (!user) {
+      setServices([]);
+      setLoading(false);
+      return;
+    }
+
+    void fetchServices();
+  }, [isReady, user?.id]);
 
   // Group services by category
   const getServicesByCategory = (category: string) => {
