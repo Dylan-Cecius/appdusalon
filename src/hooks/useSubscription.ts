@@ -44,7 +44,7 @@ const resetSubscriptionCache = (userId: string | null = null) => {
 };
 
 export const useSubscription = () => {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const { toast } = useToast();
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>(() => {
     if (user && subscriptionCache.userId === user.id && subscriptionCache.data) {
@@ -59,6 +59,13 @@ export const useSubscription = () => {
   const mountedRef = useRef(true);
 
   const checkSubscription = async (force = false) => {
+    if (!isReady) {
+      if (mountedRef.current) {
+        setLoading(true);
+      }
+      return;
+    }
+
     if (!user) {
       resetSubscriptionCache(null);
       if (mountedRef.current) {
@@ -243,9 +250,17 @@ export const useSubscription = () => {
 
   useEffect(() => {
     mountedRef.current = true;
+
+    if (!isReady) {
+      setLoading(true);
+      return () => { mountedRef.current = false; };
+    }
+
+    console.log('[Subscription] effect trigger', { userId: user?.id ?? null });
     void checkSubscription();
+
     return () => { mountedRef.current = false; };
-  }, [user]);
+  }, [isReady, user?.id]);
 
   return {
     ...subscriptionData,
