@@ -5,12 +5,58 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://vrawwiqeutbqqdzkhrax.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYXd3aXFldXRicXFkemtocmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxNjA0MDEsImV4cCI6MjA3MTczNjQwMX0.TnKumTl96ixa3D5hX0caknjh4DlwPU24PG9m-4hBJjY";
 
+const safeStorage: Storage = {
+  getItem: (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      console.warn('[SafeStorage] getItem failed for', key);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      console.warn('[SafeStorage] setItem failed for', key);
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      console.warn('[SafeStorage] removeItem failed for', key);
+    }
+  },
+  get length() {
+    try {
+      return localStorage.length;
+    } catch {
+      return 0;
+    }
+  },
+  clear: () => {
+    try {
+      localStorage.clear();
+    } catch {
+      console.warn('[SafeStorage] clear failed');
+    }
+  },
+  key: (index: number) => {
+    try {
+      return localStorage.key(index);
+    } catch {
+      return null;
+    }
+  },
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: safeStorage,
     persistSession: true,
     autoRefreshToken: true,
   }
