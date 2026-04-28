@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Calendar, CheckSquare, Settings as SettingsIcon, User, LogOut, Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package, Store, Menu, TrendingUp } from 'lucide-react';
+import {
+  ShoppingCart, Calendar, CheckSquare, Settings as SettingsIcon, User, LogOut,
+  Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package,
+  Store, Menu, TrendingUp, Bell
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import logoImg from '@/assets/logo-auth.png';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -17,19 +18,23 @@ interface MainLayoutProps {
   onCartOpen?: () => void;
 }
 
-const allNavItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/pos', label: 'Encaissement', icon: Scissors },
+const PRIMARY_NAV = [
+  { path: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { path: '/agenda', label: 'Agenda', icon: Calendar },
+  { path: '/pos', label: 'Encaissement', icon: ShoppingCart },
+  { path: '/stats', label: 'Statistiques', icon: TrendingUp },
+];
+
+const SECONDARY_NAV = [
+  { path: '/clients', label: 'Clients', icon: Users },
   { path: '/services', label: 'Services', icon: Scissors },
   { path: '/produits', label: 'Produits', icon: Store },
-  { path: '/ca-total', label: 'CA Total', icon: TrendingUp },
-  { path: '/clients', label: 'Clients', icon: Users },
-  { path: '/sms', label: 'SMS', icon: MessageSquare },
   { path: '/equipe', label: 'Équipe', icon: Users },
-  { path: '/agenda', label: 'Agenda', icon: Calendar },
+  { path: '/sms', label: 'SMS', icon: MessageSquare },
   { path: '/stocks', label: 'Stocks', icon: Package },
   { path: '/todo', label: 'To-Do', icon: CheckSquare },
   { path: '/rapports', label: 'Rapports', icon: Mail },
+  { path: '/ca-total', label: 'CA Total', icon: TrendingUp },
   { path: '/parametres', label: 'Paramètres', icon: SettingsIcon },
 ];
 
@@ -48,171 +53,137 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
     }
   }, [location.pathname]);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
+  const userInitials = (user?.email || 'U').slice(0, 2).toUpperCase();
+
+  const NavItem = ({ item }: { item: typeof PRIMARY_NAV[number] }) => {
+    const Icon = item.icon;
+    return (
+      <Link
+        to={item.path}
+        className={cn(
+          'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+          isActive(item.path)
+            ? 'bg-secondary text-foreground'
+            : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
+        )}
+      >
+        {isActive(item.path) && (
+          <span className="absolute -left-3.5 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r bg-primary" />
+        )}
+        <Icon className="h-4 w-4 shrink-0 opacity-80" />
+        <span>{item.label}</span>
+      </Link>
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Header */}
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="flex min-h-screen">
+        {/* Sidebar — desktop */}
+        {!isMobile && (
+          <aside className="sticky top-0 flex h-screen w-60 flex-col gap-1 border-r border-border bg-sidebar p-4">
+            <div className="mb-4 flex items-center gap-2.5 border-b border-border/40 px-2 pb-4">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground font-serif text-2xl italic leading-none">
+                a
+              </div>
+              <div className="flex flex-col leading-tight">
+                <strong className="text-sm font-semibold tracking-tight">{salonSettings?.salonName || "L'app du salon"}</strong>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">premium</span>
+              </div>
+            </div>
+
+            <div className="px-3 pb-1 pt-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">Principal</div>
+            {PRIMARY_NAV.map(item => <NavItem key={item.path} item={item} />)}
+
+            <div className="px-3 pb-1 pt-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">Gestion</div>
+            {SECONDARY_NAV.map(item => <NavItem key={item.path} item={item} />)}
+
+            <div className="mt-auto border-t border-border/40 pt-3">
+              <div className="flex items-center gap-2.5 rounded-lg bg-secondary px-2.5 py-2">
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary to-pos-card text-xs font-semibold text-primary-foreground">
+                  {userInitials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-medium">{user?.email?.split('@')[0]}</div>
+                  <div className="truncate font-mono text-[10px] text-muted-foreground">{user?.email}</div>
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => signOut()} title="Déconnexion">
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          </aside>
+        )}
+
+        {/* Main */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Top bar — actions globales (mobile menu trigger + cart + history) */}
+          <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur sm:px-6">
+            <div className="flex items-center gap-2">
+              {isMobile && (
+                <Button variant="outline" size="icon" onClick={() => setMobileMenuOpen(true)}>
+                  <Menu className="h-4 w-4" />
+                </Button>
+              )}
               {user?.email === 'demo@appdusalon.com' && (
-                <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-bold uppercase tracking-wide">
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
                   Mode Démo
                 </span>
               )}
-              <div>
-                <img src={logoImg} alt="L'app du salon" className="h-36 sm:h-42 w-auto" />
-                {!isMobile && (
-                  <p className="text-sm text-muted-foreground">
-                    {new Date().toLocaleDateString('fr-FR', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                )}
-              </div>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </span>
             </div>
-            
-            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-              {location.pathname === "/pos" && isMobile && onCartOpen && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={onCartOpen}
-                  className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
-                >
-                  <ShoppingCart className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
+
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {location.pathname === '/pos' && isMobile && onCartOpen && (
+                <Button variant="outline" size="sm" onClick={onCartOpen}>
+                  <ShoppingCart className="mr-1 h-4 w-4" />
                   <span className="text-xs">{cartItemsCount}</span>
                 </Button>
               )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate('/historique')} 
-                className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200 px-2 sm:px-3"
-              >
+              <Button variant="outline" size="sm" onClick={() => navigate('/historique')}>
                 <History className="h-4 w-4" />
-                <span className="hidden sm:inline">Historique</span>
+                <span className="ml-1.5 hidden sm:inline">Historique</span>
+              </Button>
+              <Button variant="ghost" size="icon" className="text-muted-foreground">
+                <Bell className="h-4 w-4" />
               </Button>
               {user?.email === 'dylan.cecius@gmail.com' && !isMobile && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/admin')} 
-                  className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200"
-                >
-                  <User className="h-4 w-4" />
-                  Admin
+                <Button variant="outline" size="sm" onClick={() => navigate('/admin')}>
+                  <User className="h-4 w-4" /> Admin
                 </Button>
               )}
-              {!isMobile && (
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Connecté en tant que:</p>
-                  <p className="text-sm font-medium">{user?.email}</p>
-                </div>
+              {isMobile && (
+                <Button variant="outline" size="icon" onClick={() => signOut()}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
               )}
-              <ThemeToggle />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                type="button"
-                onClick={() => signOut()} 
-                onTouchEnd={(e) => { e.preventDefault(); signOut(); }}
-                className="flex items-center gap-1 sm:gap-2 hover:scale-105 active:scale-95 transition-all duration-200 touch-manipulation px-2 sm:px-3"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Déconnexion</span>
-              </Button>
             </div>
-          </div>
+          </header>
+
+          {/* Mobile drawer */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetContent side="left" className="w-72 bg-sidebar p-0">
+              <SheetHeader className="border-b border-border p-4">
+                <SheetTitle>{salonSettings?.salonName || "L'app du salon"}</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-0.5 p-3">
+                <div className="px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">Principal</div>
+                {PRIMARY_NAV.map(item => <NavItem key={item.path} item={item} />)}
+                <div className="px-3 pb-1 pt-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">Gestion</div>
+                {SECONDARY_NAV.map(item => <NavItem key={item.path} item={item} />)}
+              </nav>
+            </SheetContent>
+          </Sheet>
+
+          <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-7 sm:py-6">
+            {children}
+          </main>
         </div>
-      </header>
-
-      {/* Navigation - Desktop: flex-wrap, Mobile: hamburger */}
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-[73px] z-40">
-        <div className="container mx-auto px-2 py-1.5 sm:px-4">
-          {/* Desktop: compact items that fit on one line */}
-          <div className="hidden md:flex flex-wrap items-center justify-center gap-0.5 rounded-md bg-muted p-0.5">
-            {allNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "inline-flex items-center gap-1 whitespace-nowrap rounded-sm px-1.5 lg:px-2 py-1 text-xs lg:text-sm font-medium transition-all duration-200",
-                    "hover:scale-105 active:scale-95",
-                    isActive(item.path)
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Mobile: hamburger button showing current page */}
-          <div className="flex md:hidden items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setMobileMenuOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Menu className="h-4 w-4" />
-              Menu
-            </Button>
-            <span className="text-sm font-medium text-foreground">
-              {allNavItems.find(item => isActive(item.path))?.label || 'Navigation'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile navigation drawer */}
-      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-64 p-0">
-          <SheetHeader className="p-4 border-b">
-            <SheetTitle>Menu</SheetTitle>
-          </SheetHeader>
-          <nav className="flex flex-col py-2">
-            {allNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
-                    isActive(item.path)
-                      ? "bg-accent text-accent-foreground border-l-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </SheetContent>
-      </Sheet>
-
-      {/* Contenu principal */}
-      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-screen-2xl">
-        {children}
       </div>
     </div>
   );

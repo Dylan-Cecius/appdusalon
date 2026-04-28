@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { DollarSign } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DollarSign, BarChart3, TrendingUp, Clock, Activity, PieChart } from 'lucide-react';
 import { useCombinedStats } from '@/hooks/useCombinedStats';
 import MainLayout from '@/components/MainLayout';
 import StatsOverview from '@/components/StatsOverview';
@@ -21,6 +21,17 @@ import { AverageDailyClientsStats } from '@/components/stats/AverageDailyClients
 import TransactionsManager from '@/components/TransactionsManager';
 import { FeatureGate } from '@/components/FeatureGate';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+const QUICK_LINKS = [
+  { id: 'stats-overview', label: "Vue d'ensemble", icon: BarChart3 },
+  { id: 'custom-date-range', label: 'CA période', icon: TrendingUp, highlight: true },
+  { id: 'barber-performance', label: 'Performance coiffeurs', icon: Activity },
+  { id: 'peak-hours', label: 'Heures de pointe', icon: Clock },
+  { id: 'service-profitability', label: 'Rentabilité services', icon: PieChart },
+  { id: 'occupancy-rate', label: "Taux d'occupation", icon: Activity },
+];
 
 const StatsPage = () => {
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
@@ -40,108 +51,76 @@ const StatsPage = () => {
     }, 100);
   }, []);
 
+  const scrollTo = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+
   return (
     <MainLayout>
-      <div className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <h2 className="text-xl sm:text-2xl font-bold">Statistiques & Analyses</h2>
-          <Button
-            onClick={() => setIsTransactionsManagerOpen(true)}
-            variant="outline"
-            className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 w-full sm:w-auto min-h-[44px]"
-          >
-            <DollarSign className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-            <span className="text-sm sm:text-base">Gérer les encaissements</span>
-          </Button>
-        </div>
-
-        {/* Raccourcis de navigation */}
-        <Card className="p-3 sm:p-4">
-          <h3 className="font-semibold mb-3 text-xs sm:text-sm text-muted-foreground">
-            ACCÈS RAPIDE
-          </h3>
-          <div className="flex flex-wrap gap-2">
+      <div className="space-y-5">
+        {/* Page header */}
+        <div className="flex flex-col gap-3 border-b border-border/50 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-medium tracking-tight">
+              Statistiques <span className="font-serif italic text-primary">& analyses</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Analyses de performance — {format(new Date(), 'MMMM yyyy', { locale: fr })}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground sm:flex">
+              <span className="live-dot" /> Live
+            </span>
             <Button
+              onClick={() => setIsTransactionsManagerOpen(true)}
               variant="outline"
               size="sm"
-              onClick={() =>
-                document
-                  .getElementById('stats-overview')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
+              className="gap-2"
             >
-              Vue d'ensemble
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('custom-date-range')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 min-h-[36px] px-3"
-            >
-              CA période personnalisée
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('barber-performance')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Performance coiffeurs
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('peak-hours')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Heures de pointe
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('service-profitability')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Rentabilité services
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('occupancy-rate')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Taux d'occupation
+              <DollarSign className="h-4 w-4" />
+              <span className="hidden sm:inline">Encaissements</span>
             </Button>
           </div>
+        </div>
+
+        {/* Quick navigation card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+              Accès rapide
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {QUICK_LINKS.map(link => {
+                const Icon = link.icon;
+                return (
+                  <Button
+                    key={link.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => scrollTo(link.id)}
+                    className={`gap-2 text-xs ${link.highlight ? 'bg-primary/15 border-primary/30 text-primary hover:bg-primary/25' : ''}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {link.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </CardContent>
         </Card>
 
         <div id="revenue-section">
-          <h3 className="text-lg sm:text-xl font-bold mb-4">Chiffre d'affaires</h3>
-          <StatsOverview stats={stats} />
+          <h3 className="mb-4 font-mono text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+            Chiffre d'affaires
+          </h3>
+          <div id="stats-overview">
+            <StatsOverview stats={stats} />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 sm:gap-6">
           <PaymentMethodStats paymentStats={stats.paymentStats} />
           <FeatureGate
             requiredFeature="canAccessAdvancedStats"
@@ -155,14 +134,14 @@ const StatsPage = () => {
 
         <RevenueChart />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 sm:gap-6">
           <AverageBasketStats />
           <AverageDailyClientsStats />
         </div>
 
         <EmployeeRevenueStats />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 sm:gap-6">
           <div id="custom-date-range">
             <CustomDateRangeStats />
           </div>
@@ -196,7 +175,9 @@ const StatsPage = () => {
           requiredFeature="canAccessAdvancedStats"
           onUpgrade={() => navigate('/abonnements')}
         >
-          <ServiceProfitabilityStats />
+          <div id="service-profitability">
+            <ServiceProfitabilityStats />
+          </div>
         </FeatureGate>
 
         <FeatureGate

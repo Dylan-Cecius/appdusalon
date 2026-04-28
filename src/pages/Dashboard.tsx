@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
 import {
   DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
-  ArrowRight, CalendarCheck, BarChart3, Target, Clock
+  ArrowRight, CalendarCheck, BarChart3, Target, Clock, Bell, Download, Plus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -21,9 +21,9 @@ import {
 } from 'recharts';
 
 const CHART_COLORS = [
-  'hsl(142, 71%, 45%)',  // completed - green
-  'hsl(45, 85%, 65%)',   // pending - gold
-  'hsl(0, 72%, 51%)',    // cancelled - red
+  'hsl(var(--primary))',
+  'hsl(45 90% 65%)',
+  'hsl(0 70% 60%)',
 ];
 
 const Dashboard = () => {
@@ -37,7 +37,6 @@ const Dashboard = () => {
   const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-  // --- KPI: Appointments this month (excl cancelled) ---
   const monthAppointments = useMemo(() =>
     appointments.filter(a => new Date(a.startTime) >= startOfMonth && a.status !== 'cancelled'),
     [appointments]
@@ -46,76 +45,55 @@ const Dashboard = () => {
     appointments.filter(a => {
       const d = new Date(a.startTime);
       return d >= startOfPrevMonth && d <= endOfPrevMonth && a.status !== 'cancelled';
-    }),
-    [appointments]
+    }), [appointments]
   );
 
-  // --- KPI: Clients encaissés aujourd'hui (distinct clients from today's transactions) ---
   const todayDistinctClients = useMemo(() => {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayTx = transactions.filter(tx => {
-      const txDate = new Date(tx.transactionDate);
-      return new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate()) >= startOfToday;
-    });
-    return todayTx.length;
+    return transactions.filter(tx => {
+      const d = new Date(tx.transactionDate);
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate()) >= startOfToday;
+    }).length;
   }, [transactions]);
 
-  // --- Previous day clients for comparison ---
   const yesterdayDistinctClients = useMemo(() => {
     const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterdayTx = transactions.filter(tx => {
-      const txDate = new Date(tx.transactionDate);
-      const txLocal = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
-      return txLocal >= startOfYesterday && txLocal < startOfToday;
-    });
-    return yesterdayTx.length;
+    return transactions.filter(tx => {
+      const d = new Date(tx.transactionDate);
+      const local = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      return local >= startOfYesterday && local < startOfToday;
+    }).length;
   }, [transactions]);
 
-  // --- Revenue chart: 6 months (from transactions + paid appointments) ---
   const revenueChartData = useMemo(() => {
     const months: { name: string; ca: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
       const label = format(mStart, 'MMM', { locale: fr });
-      // Revenue from transactions
       const txRevenue = transactions
-        .filter(tx => {
-          const d = new Date(tx.transactionDate);
-          return d >= mStart && d <= mEnd;
-        })
+        .filter(tx => { const d = new Date(tx.transactionDate); return d >= mStart && d <= mEnd; })
         .reduce((s, tx) => s + tx.totalAmount, 0);
-      // Revenue from paid appointments
       const aptRevenue = appointments
-        .filter(a => {
-          const d = new Date(a.startTime);
-          return d >= mStart && d <= mEnd && a.isPaid;
-        })
+        .filter(a => { const d = new Date(a.startTime); return d >= mStart && d <= mEnd && a.isPaid; })
         .reduce((s, a) => s + Number(a.totalPrice), 0);
       months.push({ name: label.charAt(0).toUpperCase() + label.slice(1), ca: Math.round(txRevenue + aptRevenue) });
     }
     return months;
   }, [transactions, appointments]);
 
-  // --- Pie: appointment statuses this month ---
   const statusData = useMemo(() => {
     const all = appointments.filter(a => new Date(a.startTime) >= startOfMonth);
     if (all.length === 0) return [];
-    const completed = all.filter(a => a.status === 'completed').length;
-    const pending = all.filter(a => a.status === 'scheduled').length;
-    const cancelled = all.filter(a => a.status === 'cancelled').length;
     const result = [
-      { name: 'Complétés', value: completed },
-      { name: 'En attente', value: pending },
-      { name: 'Annulés', value: cancelled },
+      { name: 'Complétés', value: all.filter(a => a.status === 'completed').length },
+      { name: 'En attente', value: all.filter(a => a.status === 'scheduled').length },
+      { name: 'Annulés', value: all.filter(a => a.status === 'cancelled').length },
     ].filter(d => d.value > 0);
-    // If total values sum to 0, return empty
-    if (result.reduce((s, d) => s + d.value, 0) === 0) return [];
-    return result;
+    return result.reduce((s, d) => s + d.value, 0) === 0 ? [] : result;
   }, [appointments]);
 
-  // --- Upcoming appointments ---
   const upcomingAppointments = useMemo(() =>
     appointments
       .filter(a => new Date(a.startTime) > now && a.status !== 'cancelled')
@@ -124,39 +102,44 @@ const Dashboard = () => {
     [appointments]
   );
 
-  // --- Progress: monthly goals ---
   const monthlyGoalCA = Math.max(stats.previousMonthRevenue, 1);
   const caProgress = Math.min(Math.round((stats.monthlyRevenue / monthlyGoalCA) * 100), 150);
   const rdvGoal = Math.max(prevMonthAppointments.length, 1);
   const rdvProgress = Math.min(Math.round((monthAppointments.length / rdvGoal) * 100), 150);
-
-  // --- Subscription alert ---
   const showSubscriptionAlert = subscribed && subscription_end &&
     new Date(subscription_end) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  // --- Variation helper ---
   const Variation = ({ current, previous, suffix = '' }: { current: number; previous: number; suffix?: string }) => {
-    if (previous === 0 && current === 0) return <span className="text-[10px] sm:text-xs text-muted-foreground">—</span>;
+    if (previous === 0 && current === 0) return <span className="text-xs text-muted-foreground">—</span>;
     const change = previous > 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : 0;
     const pos = change >= 0;
     return (
-      <span className={`text-[10px] sm:text-xs flex items-center gap-0.5 ${pos ? 'text-pos-success' : 'text-destructive'}`}>
+      <span className={`text-xs flex items-center gap-1 font-medium ${pos ? 'text-pos-success' : 'text-destructive'}`}>
         {pos ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-        {pos ? '+' : ''}{change.toFixed(0)}%{suffix && ` ${suffix}`}
+        {pos ? '+' : ''}{change.toFixed(0)}% {suffix}
       </span>
     );
   };
 
+  const kpiInitials = (name: string) => name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+
   return (
     <MainLayout>
-      <div className="space-y-5 sm:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="space-y-5">
+        {/* Page header */}
+        <div className="flex flex-col gap-3 border-b border-border/50 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tableau de bord</h1>
-            <p className="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
+            <h1 className="text-3xl font-medium tracking-tight">
+              Bonjour <span className="font-serif italic text-primary">— ça pousse ?</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Vue d'ensemble de votre activité — {format(now, 'EEEE d MMMM', { locale: fr })}
+            </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <span className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground sm:flex">
+              <span className="live-dot" /> Live
+            </span>
             <Button asChild variant="outline" size="sm">
               <Link to="/stats"><BarChart3 className="mr-2 h-4 w-4" />Stats</Link>
             </Button>
@@ -177,165 +160,157 @@ const Dashboard = () => {
           </Alert>
         )}
 
+        {/* Hero CA du jour */}
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="font-mono text-[11px] uppercase tracking-widest opacity-70">Chiffre d'affaires du jour</div>
+              <div className="mt-2 flex items-baseline gap-1 text-5xl font-medium tracking-tight leading-none">
+                {stats.todayRevenue.toFixed(0)}<span className="font-serif italic text-3xl">€</span>
+              </div>
+              <div className="mt-3 flex items-center gap-2 text-sm opacity-90">
+                <Variation current={stats.todayRevenue} previous={0} suffix="vs hier" />
+              </div>
+            </div>
+            <div className="text-right text-sm opacity-90">
+              <div className="font-mono text-[10px] uppercase tracking-widest opacity-70">Encaissements</div>
+              <div className="text-xl font-semibold">{transactions.filter(tx => {
+                const d = new Date(tx.transactionDate);
+                const today = new Date();
+                return d.toDateString() === today.toDateString();
+              }).length} transactions</div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* 4 KPI Cards */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-          {/* CA du jour */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du jour</CardTitle>
-              <div className="p-1.5 rounded-lg bg-pos-success/10">
-                <DollarSign className="h-4 w-4 text-pos-success" />
-              </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">CA hebdomadaire</CardTitle>
             </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{stats.todayRevenue.toFixed(0)} €</div>
+            <CardContent>
+              <div className="text-2xl font-medium tracking-tight">{stats.weeklyRevenue.toFixed(0)} <span className="text-sm text-muted-foreground">€</span></div>
             </CardContent>
           </Card>
 
-          {/* CA Hebdomadaire */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA hebdomadaire</CardTitle>
-              <div className="p-1.5 rounded-lg bg-primary/10">
-                <TrendingUp className="h-4 w-4 text-primary" />
-              </div>
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">CA mensuel</CardTitle>
             </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{stats.weeklyRevenue.toFixed(0)} €</div>
+            <CardContent>
+              <div className="text-2xl font-medium tracking-tight">{stats.monthlyRevenue.toFixed(0)} <span className="text-sm text-muted-foreground">€</span></div>
+              <Variation current={stats.monthlyRevenue} previous={stats.previousMonthRevenue} suffix="vs préc." />
             </CardContent>
           </Card>
 
-          {/* CA Mensuel */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Mensuel</CardTitle>
-              <div className="p-1.5 rounded-lg bg-accent/10">
-                <BarChart3 className="h-4 w-4 text-accent-foreground" />
-              </div>
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Clients du jour</CardTitle>
             </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{stats.monthlyRevenue.toFixed(0)} €</div>
-              <Variation current={stats.monthlyRevenue} previous={stats.previousMonthRevenue} suffix="vs mois préc." />
-            </CardContent>
-          </Card>
-
-          {/* Clients encaissés aujourd'hui */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Clients du jour</CardTitle>
-              <div className="p-1.5 rounded-lg bg-pos-card/10">
-                <Users className="h-4 w-4 text-pos-card" />
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{todayDistinctClients}</div>
+            <CardContent>
+              <div className="text-2xl font-medium tracking-tight">{todayDistinctClients}</div>
               <Variation current={todayDistinctClients} previous={yesterdayDistinctClients} suffix="vs hier" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">RDV à venir</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-medium tracking-tight">{upcomingAppointments.length}</div>
+              <span className="text-xs text-muted-foreground">cette semaine</span>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts row */}
         <div className="grid gap-4 lg:grid-cols-5">
-          {/* Revenue 6 months - AreaChart */}
           <Card className="lg:col-span-3">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-pos-success" />
-                CA sur 6 mois
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <TrendingUp className="h-4 w-4 text-primary" /> CA sur 6 mois
               </CardTitle>
             </CardHeader>
-            <CardContent className="pb-3">
-              <div className="h-[220px] sm:h-[260px]">
+            <CardContent>
+              <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={revenueChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="caGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0} />
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="name" className="text-xs fill-muted-foreground" tick={{ fontSize: 12 }} />
-                    <YAxis className="text-xs fill-muted-foreground" tick={{ fontSize: 11 }} tickFormatter={v => `${v}€`} />
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                    <XAxis dataKey="name" className="fill-muted-foreground" tick={{ fontSize: 11 }} />
+                    <YAxis className="fill-muted-foreground" tick={{ fontSize: 10 }} tickFormatter={v => `${v}€`} />
                     <RechartsTooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: 13 }}
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: 12 }}
                       formatter={(value: number) => [`${value} €`, 'CA']}
                     />
-                    <Area type="monotone" dataKey="ca" stroke="hsl(142, 71%, 45%)" strokeWidth={2} fill="url(#caGrad)" />
+                    <Area type="monotone" dataKey="ca" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#caGrad)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
 
-          {/* Statuts RDV - PieChart */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <CalendarCheck className="h-5 w-5 text-primary" />
-                Statuts RDV
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <CalendarCheck className="h-4 w-4 text-primary" /> Statuts RDV
               </CardTitle>
             </CardHeader>
-            <CardContent className="pb-3">
-              <div className="h-[220px] sm:h-[260px]">
-                {statusData.length > 1 ? (
+            <CardContent>
+              <div className="h-[260px]">
+                {statusData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={statusData}
-                        cx="50%"
-                        cy="42%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={4}
-                        dataKey="value"
-                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
-                      >
-                        {statusData.map((_, idx) => (
-                          <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
-                        ))}
+                      <Pie data={statusData} cx="50%" cy="42%" innerRadius={45} outerRadius={75} paddingAngle={4} dataKey="value"
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                        {statusData.map((_, idx) => <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />)}
                       </Pie>
                       <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Pas de rendez-vous prévus</div>
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Pas de rendez-vous prévus</div>
                 )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Bottom row: upcoming + progress */}
+        {/* Bottom: upcoming + progress */}
         <div className="grid gap-4 lg:grid-cols-5">
-          {/* Upcoming appointments */}
           <Card className="lg:col-span-3">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Clock className="h-5 w-5 text-accent-foreground" />
-                Prochains rendez-vous
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Clock className="h-4 w-4 text-primary" /> Prochains rendez-vous
               </CardTitle>
             </CardHeader>
             <CardContent>
               {upcomingAppointments.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8 text-sm">Aucun rendez-vous à venir</p>
+                <p className="py-8 text-center text-sm text-muted-foreground">Aucun rendez-vous à venir</p>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-border/50">
                   {upcomingAppointments.map(apt => (
-                    <div key={apt.id} className="flex items-center justify-between gap-3 p-3 border rounded-lg hover:bg-accent/30 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{apt.clientName}</p>
-                        <p className="text-xs text-muted-foreground">
+                    <div key={apt.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                        {kpiInitials(apt.clientName || 'XX')}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{apt.clientName}</p>
+                        <p className="font-mono text-[11px] text-muted-foreground">
                           {format(new Date(apt.startTime), 'EEE dd MMM • HH:mm', { locale: fr })}
                         </p>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-semibold text-sm">{Number(apt.totalPrice).toFixed(0)} €</p>
-                      </div>
+                      <div className="font-mono text-sm font-semibold">{Number(apt.totalPrice).toFixed(0)} €</div>
                     </div>
                   ))}
-                  <Button asChild variant="ghost" size="sm" className="w-full">
+                  <Button asChild variant="ghost" size="sm" className="mt-2 w-full">
                     <Link to="/agenda" className="flex items-center justify-center text-sm">
                       Voir l'agenda <ArrowRight className="ml-1 h-3 w-3" />
                     </Link>
@@ -345,40 +320,36 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Progression du mois */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Target className="h-5 w-5 text-pos-success" />
-                Progression du mois
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Target className="h-4 w-4 text-primary" /> Progression du mois
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm text-muted-foreground">CA généré</span>
-                  <span className="text-sm font-semibold">{stats.monthlyRevenue.toFixed(0)} € <span className="text-muted-foreground font-normal">/ {monthlyGoalCA.toFixed(0)} €</span></span>
+                <div className="mb-1.5 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">CA généré</span>
+                  <span className="font-mono font-medium">{stats.monthlyRevenue.toFixed(0)} € / {monthlyGoalCA.toFixed(0)} €</span>
                 </div>
-                <Progress value={Math.min(caProgress, 100)} className="h-2.5" />
-                <p className="text-[10px] text-muted-foreground mt-1">{caProgress}% du mois précédent</p>
+                <Progress value={Math.min(caProgress, 100)} className="h-2" />
+                <p className="mt-1 font-mono text-[10px] text-muted-foreground">{caProgress}% du mois précédent</p>
               </div>
-
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm text-muted-foreground">RDV réservés</span>
-                  <span className="text-sm font-semibold">{monthAppointments.length} <span className="text-muted-foreground font-normal">/ {rdvGoal}</span></span>
+                <div className="mb-1.5 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">RDV réservés</span>
+                  <span className="font-mono font-medium">{monthAppointments.length} / {rdvGoal}</span>
                 </div>
-                <Progress value={Math.min(rdvProgress, 100)} className="h-2.5" />
-                <p className="text-[10px] text-muted-foreground mt-1">{rdvProgress}% du mois précédent</p>
+                <Progress value={Math.min(rdvProgress, 100)} className="h-2" />
+                <p className="mt-1 font-mono text-[10px] text-muted-foreground">{rdvProgress}% du mois précédent</p>
               </div>
-
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm text-muted-foreground">Clients du jour</span>
-                  <span className="text-sm font-semibold">{todayDistinctClients}</span>
+                <div className="mb-1.5 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Clients du jour</span>
+                  <span className="font-mono font-medium">{todayDistinctClients}</span>
                 </div>
-                <Progress value={Math.min(todayDistinctClients * 10, 100)} className="h-2.5" />
-                <p className="text-[10px] text-muted-foreground mt-1">Encaissements aujourd'hui</p>
+                <Progress value={Math.min(todayDistinctClients * 10, 100)} className="h-2" />
+                <p className="mt-1 font-mono text-[10px] text-muted-foreground">Encaissements aujourd'hui</p>
               </div>
             </CardContent>
           </Card>

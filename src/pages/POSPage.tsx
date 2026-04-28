@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package } from 'lucide-react';
+import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface CartItem {
   id: string;
@@ -49,7 +50,8 @@ const POSPage = () => {
       const items = tx.items as any[];
       return sum + (items?.reduce((s: number, i: any) => s + (i.quantity || 1), 0) || 0);
     }, 0);
-    return { totalAmount, txCount: todayTx.length, servicesCount: totalServices };
+    const avgBasket = todayTx.length > 0 ? totalAmount / todayTx.length : 0;
+    return { totalAmount, txCount: todayTx.length, servicesCount: totalServices, avgBasket };
   }, [transactions]);
 
   const addToCart = (service: any) => {
@@ -57,32 +59,19 @@ const POSPage = () => {
       const existing = prev.find(item => item.id === service.id);
       if (existing) {
         return prev.map(item =>
-          item.id === service.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+          item.id === service.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
       return [
         ...prev,
-        {
-          id: service.id,
-          name: service.name,
-          price: service.price,
-          duration: service.duration,
-          quantity: 1,
-        },
+        { id: service.id, name: service.name, price: service.price, duration: service.duration, quantity: 1 },
       ];
     });
   };
 
   const updateQuantity = (id: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
-    setCartItems(prev =>
-      prev.map(item => (item.id === id ? { ...item, quantity } : item))
-    );
+    if (quantity <= 0) { removeFromCart(id); return; }
+    setCartItems(prev => prev.map(item => (item.id === id ? { ...item, quantity } : item)));
   };
 
   const removeFromCart = (id: string) => {
@@ -90,26 +79,13 @@ const POSPage = () => {
   };
 
   const handleCheckout = async (method: 'cash' | 'card', staffId?: string) => {
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     try {
-      await addTransaction({
-        items: cartItems,
-        totalAmount: total,
-        paymentMethod: method,
-        staffId,
-      });
-
+      await addTransaction({ items: cartItems, totalAmount: total, paymentMethod: method, staffId });
       setCartItems([]);
       setIsCartOpen(false);
     } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'enregistrer la transaction",
-        variant: 'destructive',
-      });
+      toast({ title: 'Erreur', description: "Impossible d'enregistrer la transaction", variant: 'destructive' });
     }
   };
 
@@ -158,241 +134,209 @@ const POSPage = () => {
   };
 
   return (
-    <MainLayout 
-      cartItemsCount={cartItems.length} 
-      onCartOpen={() => setIsCartOpen(true)}
-    >
-      {/* Header with action buttons */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAddServiceOpen(true)}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Ajouter un service
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAddProductOpen(true)}
-            className="gap-2"
-          >
-            <Package className="h-4 w-4" />
-            Ajouter un produit
-          </Button>
+    <MainLayout cartItemsCount={cartItems.length} onCartOpen={() => setIsCartOpen(true)}>
+      <div className="space-y-5">
+        {/* Page header */}
+        <div className="flex flex-col gap-3 border-b border-border/50 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-medium tracking-tight">
+              Encaissement <span className="font-serif italic text-primary">— caisse</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Sélectionnez les prestations puis encaissez · {cartItems.length} article{cartItems.length > 1 ? 's' : ''} en cours
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsTransactionsOpen(true)} className="gap-2">
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Encaissements</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsAddServiceOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Service
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsAddProductOpen(true)} className="gap-2">
+              <Package className="h-4 w-4" />
+              Produit
+            </Button>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsTransactionsOpen(true)}
-          className="gap-2"
-        >
-          <ClipboardList className="h-4 w-4" />
-          Gérer les encaissements
-        </Button>
-      </div>
 
-      {/* Session Summary Bar */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-          <div className="p-2 rounded-lg bg-green-500/20 hidden sm:block">
-            <Euro className="h-4 w-4 text-green-600" />
-          </div>
-          <div>
-            <p className="text-sm sm:text-xl font-bold text-green-600">{todayStats.totalAmount.toFixed(0)}€</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Encaissé</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-primary/10 border border-primary/20">
-          <div className="p-2 rounded-lg bg-primary/20 hidden sm:block">
-            <Receipt className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm sm:text-xl font-bold text-primary">{todayStats.txCount}</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Transactions</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-accent/10 border border-accent/20">
-          <div className="p-2 rounded-lg bg-accent/20 hidden sm:block">
-            <Scissors className="h-4 w-4 text-accent-foreground" />
-          </div>
-          <div>
-            <p className="text-sm sm:text-xl font-bold text-accent-foreground">{todayStats.servicesCount}</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Services</p>
-          </div>
-        </div>
-      </div>
-
-      <div className={cn("gap-4 sm:gap-6", isMobile ? "space-y-6" : "grid grid-cols-1 md:grid-cols-3")}>
-        {/* Services Section */}
-        <div className={cn(isMobile ? "space-y-4" : "md:col-span-2 space-y-6")}>
-          {servicesLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-6 bg-muted rounded w-1/4 mb-4"></div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[...Array(3)].map((_, j) => (
-                      <div key={j} className="h-32 bg-muted rounded"></div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        {/* Hero stat: encaissé aujourd'hui */}
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="font-mono text-[11px] uppercase tracking-widest opacity-70">Encaissé aujourd'hui</div>
+              <div className="mt-2 flex items-baseline gap-1 text-5xl font-medium tracking-tight leading-none">
+                {todayStats.totalAmount.toFixed(0)}<span className="font-serif italic text-3xl">€</span>
+              </div>
+              <div className="mt-3 font-mono text-[11px] uppercase tracking-widest opacity-70">
+                Panier moyen · <span className="font-sans normal-case tracking-normal text-sm font-medium opacity-100">{todayStats.avgBasket.toFixed(2).replace('.', ',')} €</span>
+              </div>
             </div>
-          ) : (
-            categories.map(category => {
-              const categoryServices = services.filter(
-                service => service.category === category.id
-              );
-              if (categoryServices.length === 0) return null;
-              return (
-                <div key={category.id}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-primary">
-                      {category.name}
-                    </h3>
-                    <Badge variant="secondary" className="bg-accent/10 text-accent-foreground">
-                      {categoryServices.length}{' '}
-                      {category.id === 'produit' ? 'produit' : 'service'}
-                      {categoryServices.length > 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {categoryServices.map(service => (
-                      <ServiceCard
-                        key={service.id}
-                        service={service as any}
-                        onAdd={addToCart}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })
-          )}
+            <div className="flex gap-6 text-right text-sm opacity-90">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-widest opacity-70">Transactions</div>
+                <div className="mt-1 text-2xl font-semibold">{todayStats.txCount}</div>
+              </div>
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-widest opacity-70">Services</div>
+                <div className="mt-1 text-2xl font-semibold">{todayStats.servicesCount}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {!servicesLoading && services.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-muted-foreground">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun service configuré</p>
-                <p className="text-sm">
-                  Ajoutez vos services dans l'onglet Paramètres
+        <div className={cn('gap-4 sm:gap-6', isMobile ? 'space-y-6' : 'grid grid-cols-1 md:grid-cols-3')}>
+          {/* Services Section */}
+          <div className={cn(isMobile ? 'space-y-4' : 'md:col-span-2 space-y-6')}>
+            {servicesLoading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="mb-4 h-5 w-1/4 rounded bg-muted"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {[...Array(3)].map((_, j) => (
+                        <div key={j} className="h-32 rounded-lg bg-muted"></div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              categories.map(category => {
+                const categoryServices = services.filter(service => service.category === category.id);
+                if (categoryServices.length === 0) return null;
+                return (
+                  <div key={category.id}>
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="font-mono text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                        {category.name}
+                      </h3>
+                      <Badge variant="secondary" className="bg-primary/15 text-primary border-0 font-mono text-[10px] uppercase tracking-widest">
+                        {categoryServices.length} {category.id === 'produit' ? 'produit' : 'service'}
+                        {categoryServices.length > 1 ? 's' : ''}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
+                      {categoryServices.map(service => (
+                        <ServiceCard key={service.id} service={service as any} onAdd={addToCart} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {!servicesLoading && services.length === 0 && (
+              <div className="py-16 text-center">
+                <ShoppingCart className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">Aucun service configuré</p>
+                <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground/70">
+                  Ajoutez vos services dans Paramètres
                 </p>
               </div>
+            )}
+          </div>
+
+          {/* Cart Sidebar - Desktop and Tablet */}
+          {!isMobile && (
+            <div className="md:col-span-1">
+              <div className="sticky top-24">
+                <CartSidebar
+                  items={cartItems}
+                  onUpdateQuantity={updateQuantity}
+                  onRemoveItem={removeFromCart}
+                  onCheckout={handleCheckout}
+                />
+              </div>
             </div>
           )}
         </div>
 
-        {/* Cart Sidebar - Desktop and Tablet */}
-        {!isMobile && (
-          <div className="md:col-span-1">
-            <div className="sticky top-24">
-              <CartSidebar
-                items={cartItems}
-                onUpdateQuantity={updateQuantity}
-                onRemoveItem={removeFromCart}
-                onCheckout={handleCheckout}
-              />
-            </div>
-          </div>
+        {/* Mobile Cart Drawer */}
+        {isMobile && (
+          <Drawer open={isCartOpen} onOpenChange={setIsCartOpen}>
+            <DrawerContent className="max-h-[80vh]">
+              <DrawerHeader>
+                <DrawerTitle>Panier</DrawerTitle>
+              </DrawerHeader>
+              <div className="px-4 pb-4">
+                <CartSidebar
+                  items={cartItems}
+                  onUpdateQuantity={updateQuantity}
+                  onRemoveItem={removeFromCart}
+                  onCheckout={method => { handleCheckout(method); setIsCartOpen(false); }}
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
         )}
+
+        {/* Transactions Manager Modal */}
+        <TransactionsManager isOpen={isTransactionsOpen} onClose={() => setIsTransactionsOpen(false)} />
+
+        {/* Add Service Modal */}
+        <Dialog open={isAddServiceOpen} onOpenChange={setIsAddServiceOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader><DialogTitle>Ajouter un service</DialogTitle></DialogHeader>
+            <form onSubmit={handleAddService} className="space-y-4">
+              <div>
+                <Label>Nom du service *</Label>
+                <Input value={serviceForm.name} onChange={e => setServiceForm({ ...serviceForm, name: e.target.value })} placeholder="Ex: Coupe homme" required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Prix (€) *</Label>
+                  <Input type="number" step="0.01" min="0" value={serviceForm.price} onChange={e => setServiceForm({ ...serviceForm, price: e.target.value })} placeholder="25" required />
+                </div>
+                <div>
+                  <Label>Durée (min)</Label>
+                  <Input type="number" min="5" step="5" value={serviceForm.duration} onChange={e => setServiceForm({ ...serviceForm, duration: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <Label>Catégorie</Label>
+                <Select value={serviceForm.category} onValueChange={v => setServiceForm({ ...serviceForm, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="coupe">Coupe</SelectItem>
+                    <SelectItem value="barbe">Barbe</SelectItem>
+                    <SelectItem value="combo">Formule</SelectItem>
+                    <SelectItem value="soin">Soin</SelectItem>
+                    <SelectItem value="couleur">Couleur</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsAddServiceOpen(false)} className="flex-1">Annuler</Button>
+                <Button type="submit" className="flex-1">Ajouter</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Product Modal */}
+        <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader><DialogTitle>Ajouter un produit</DialogTitle></DialogHeader>
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <div>
+                <Label>Nom du produit *</Label>
+                <Input value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} placeholder="Ex: Gel coiffant" required />
+              </div>
+              <div>
+                <Label>Prix de vente (€) *</Label>
+                <Input type="number" step="0.01" min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} placeholder="15" required />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsAddProductOpen(false)} className="flex-1">Annuler</Button>
+                <Button type="submit" className="flex-1">Ajouter</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Mobile Cart Drawer */}
-      {isMobile && (
-        <Drawer open={isCartOpen} onOpenChange={setIsCartOpen}>
-          <DrawerContent className="max-h-[80vh]">
-            <DrawerHeader>
-              <DrawerTitle>Panier</DrawerTitle>
-            </DrawerHeader>
-            <div className="px-4 pb-4">
-              <CartSidebar
-                items={cartItems}
-                onUpdateQuantity={updateQuantity}
-                onRemoveItem={removeFromCart}
-                onCheckout={method => {
-                  handleCheckout(method);
-                  setIsCartOpen(false);
-                }}
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
-      {/* Transactions Manager Modal */}
-      <TransactionsManager
-        isOpen={isTransactionsOpen}
-        onClose={() => setIsTransactionsOpen(false)}
-      />
-
-      {/* Add Service Modal */}
-      <Dialog open={isAddServiceOpen} onOpenChange={setIsAddServiceOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ajouter un service</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddService} className="space-y-4">
-            <div>
-              <Label>Nom du service *</Label>
-              <Input value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} placeholder="Ex: Coupe homme" required />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Prix (€) *</Label>
-                <Input type="number" step="0.01" min="0" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} placeholder="25" required />
-              </div>
-              <div>
-                <Label>Durée (min)</Label>
-                <Input type="number" min="5" step="5" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} />
-              </div>
-            </div>
-            <div>
-              <Label>Catégorie</Label>
-              <Select value={serviceForm.category} onValueChange={v => setServiceForm({...serviceForm, category: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="coupe">Coupe</SelectItem>
-                  <SelectItem value="barbe">Barbe</SelectItem>
-                  <SelectItem value="combo">Formule</SelectItem>
-                  <SelectItem value="soin">Soin</SelectItem>
-                  <SelectItem value="couleur">Couleur</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsAddServiceOpen(false)} className="flex-1">Annuler</Button>
-              <Button type="submit" className="flex-1">Ajouter</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Product Modal */}
-      <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ajouter un produit</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddProduct} className="space-y-4">
-            <div>
-              <Label>Nom du produit *</Label>
-              <Input value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} placeholder="Ex: Gel coiffant" required />
-            </div>
-            <div>
-              <Label>Prix de vente (€) *</Label>
-              <Input type="number" step="0.01" min="0" value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} placeholder="15" required />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsAddProductOpen(false)} className="flex-1">Annuler</Button>
-              <Button type="submit" className="flex-1">Ajouter</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </MainLayout>
   );
 };
