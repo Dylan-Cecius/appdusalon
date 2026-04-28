@@ -4,7 +4,7 @@ import MainLayout from '@/components/MainLayout';
 const AgendaPage = () => {
   return (
     <MainLayout>
-      <div className="flex h-[calc(100vh-7rem)] min-h-[600px] flex-col">
+      <div className="h-[calc(100vh-80px)]">
         <ProAgenda />
       </div>
     </MainLayout>
