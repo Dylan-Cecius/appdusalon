@@ -110,7 +110,6 @@ export const useSupabaseTransactions = () => {
       };
 
       setTransactions(prev => [newTransaction, ...prev]);
-      toast({ title: "Succès", description: "Transaction enregistrée avec succès" });
 
       return newTransaction;
     } catch (error) {
