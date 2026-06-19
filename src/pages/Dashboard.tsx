@@ -11,20 +11,14 @@ import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
 import {
   DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
-  ArrowRight, CalendarCheck, BarChart3, Target, Clock
+  ArrowRight, BarChart3, Target, Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer
 } from 'recharts';
-
-const CHART_COLORS = [
-  'hsl(142, 71%, 45%)',  // completed - green
-  'hsl(45, 85%, 65%)',   // pending - gold
-  'hsl(0, 72%, 51%)',    // cancelled - red
-];
 
 const Dashboard = () => {
   const { stats } = useCombinedStats();
