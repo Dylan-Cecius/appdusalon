@@ -272,8 +272,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4 sm:p-6">
-      <Card className="w-full max-w-md p-6 sm:p-8">
+    <div className="min-h-screen bg-card flex items-center justify-center p-4 sm:p-6">
+      <Card className="w-full max-w-md p-6 sm:p-8 shadow-medium">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           {mfaRequired ? (
             <div className="p-3 bg-accent rounded-lg mb-4">
@@ -435,7 +435,7 @@ const Auth = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full min-h-[48px] text-base touch-manipulation border-purple-400 text-purple-600 hover:bg-purple-50 dark:border-purple-500 dark:text-purple-400 dark:hover:bg-purple-950/30"
+                className="w-full min-h-[48px] text-base touch-manipulation border-primary text-primary hover:bg-accent"
                 disabled={loading}
                 onClick={handleDemoLogin}
               >
