@@ -111,6 +111,52 @@ const Dashboard = () => {
   const showSubscriptionAlert = subscribed && subscription_end &&
     new Date(subscription_end) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+  // --- Monthly CA Projection ---
+  const {
+    elapsedBusinessDays,
+    remainingBusinessDays,
+    totalBusinessDays,
+    dailyRate,
+    projectedCA,
+    projectionProgress,
+  } = useMemo(() => {
+    const countBusinessDays = (start: Date, end: Date) => {
+      let count = 0;
+      const d = new Date(start);
+      d.setHours(0, 0, 0, 0);
+      const endNorm = new Date(end);
+      endNorm.setHours(0, 0, 0, 0);
+      while (d <= endNorm) {
+        const day = d.getDay();
+        if (day !== 0 && day !== 6) count++;
+        d.setDate(d.getDate() + 1);
+      }
+      return count;
+    };
+
+    const startOfMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const elapsed = countBusinessDays(startOfMonthDate, now);
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const remaining = countBusinessDays(tomorrow, endOfMonthDate);
+    const total = elapsed + remaining;
+
+    const rate = elapsed > 0 ? stats.monthlyRevenue / elapsed : 0;
+    const projected = stats.monthlyRevenue + rate * remaining;
+    const progress = total > 0 ? Math.round((elapsed / total) * 100) : 0;
+
+    return {
+      elapsedBusinessDays: elapsed,
+      remainingBusinessDays: remaining,
+      totalBusinessDays: total,
+      dailyRate: rate,
+      projectedCA: projected,
+      projectionProgress: progress,
+    };
+  }, [now, stats.monthlyRevenue]);
+
   // --- Variation helper ---
   const Variation = ({ current, previous, suffix = '' }: { current: number; previous: number; suffix?: string }) => {
     if (previous === 0 && current === 0) return <span className="text-[10px] sm:text-xs text-muted-foreground">—</span>;
