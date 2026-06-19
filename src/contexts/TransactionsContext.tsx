@@ -82,10 +82,6 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
           transactionDate: toZonedTime(new Date(), 'Europe/Paris')
         };
         setTransactions(prev => [newTransaction, ...prev]);
-        toast({
-          title: "Succès",
-          description: "Transaction enregistrée (mode local)"
-        });
         return newTransaction;
       }
 
@@ -228,7 +224,8 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         );
         toast({
           title: "Succès",
-          description: "Transaction modifiée (mode local)"
+          description: "Transaction modifiée (mode local)",
+          duration: 2000
         });
         return;
       }
@@ -251,7 +248,8 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
       toast({
         title: "Succès",
-        description: "Transaction modifiée avec succès"
+        description: "Transaction modifiée avec succès",
+        duration: 2000
       });
     } catch (error) {
       console.error('Error updating transaction:', error);
@@ -270,7 +268,8 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         setTransactions(prev => prev.filter(tx => tx.id !== id));
         toast({
           title: "Succès",
-          description: "Transaction supprimée (mode local)"
+          description: "Transaction supprimée (mode local)",
+          duration: 2000
         });
         return;
       }
@@ -342,7 +341,8 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       
       toast({
         title: "Succès",
-        description: "Transaction supprimée avec succès"
+        description: "Transaction supprimée avec succès",
+        duration: 2000
       });
     } catch (error) {
       console.error('Error deleting transaction:', error);
