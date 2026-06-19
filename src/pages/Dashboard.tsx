@@ -228,78 +228,31 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Charts row */}
-        <div className="grid gap-4 lg:grid-cols-5">
-          {/* Revenue 6 months - AreaChart */}
-          <Card className="lg:col-span-3">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-pos-success" />
-                CA sur 6 mois
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="h-[220px] sm:h-[260px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="caGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="name" className="text-xs fill-muted-foreground" tick={{ fontSize: 12 }} />
-                    <YAxis className="text-xs fill-muted-foreground" tick={{ fontSize: 11 }} tickFormatter={v => `${v}€`} />
-                    <RechartsTooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: 13 }}
-                      formatter={(value: number) => [`${value} €`, 'CA']}
-                    />
-                    <Area type="monotone" dataKey="ca" stroke="hsl(142, 71%, 45%)" strokeWidth={2} fill="url(#caGrad)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Statuts RDV - PieChart */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <CalendarCheck className="h-5 w-5 text-primary" />
-                Statuts RDV
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="h-[220px] sm:h-[260px]">
-                {statusData.length > 1 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusData}
-                        cx="50%"
-                        cy="42%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={4}
-                        dataKey="value"
-                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
-                      >
-                        {statusData.map((_, idx) => (
-                          <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Pas de rendez-vous prévus</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Revenue chart - full width */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              CA sur 6 mois
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-3">
+            <div className="h-[220px] sm:h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                  <XAxis dataKey="name" className="text-xs fill-muted-foreground" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis className="text-xs fill-muted-foreground" tick={{ fontSize: 11 }} tickFormatter={v => `${v}€`} axisLine={false} tickLine={false} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: 13 }}
+                    formatter={(value: number) => [`${value} €`, 'CA']}
+                  />
+                  <Line type="monotone" dataKey="ca" stroke="hsl(243, 75%, 59%)" strokeWidth={2.5} dot={{ r: 3, fill: 'hsl(243, 75%, 59%)' }} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Bottom row: upcoming + progress */}
         <div className="grid gap-4 lg:grid-cols-5">
