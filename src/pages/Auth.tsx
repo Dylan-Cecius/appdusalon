@@ -272,8 +272,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4 sm:p-6">
-      <Card className="w-full max-w-md p-6 sm:p-8">
+    <div className="min-h-screen bg-card flex items-center justify-center p-4 sm:p-6">
+      <Card className="w-full max-w-md p-6 sm:p-8 shadow-medium">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           {mfaRequired ? (
             <div className="p-3 bg-accent rounded-lg mb-4">
