@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
 import {
   DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
-  ArrowRight, BarChart3, Target, Clock
+  ArrowRight, BarChart3, Target, Clock, Calculator
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
