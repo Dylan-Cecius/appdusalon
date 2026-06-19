@@ -66,7 +66,6 @@ export const useSupabaseTransactions = () => {
           transactionDate: toZonedTime(new Date(), 'Europe/Paris')
         };
         setTransactions(prev => [newTransaction, ...prev]);
-        toast({ title: "Succès", description: "Transaction enregistrée (mode local)" });
         return newTransaction;
       }
 
@@ -123,7 +122,7 @@ export const useSupabaseTransactions = () => {
     try {
       if (!isSupabaseConfigured) {
         setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx));
-        toast({ title: "Succès", description: "Transaction modifiée (mode local)" });
+        toast({ title: "Succès", description: "Transaction modifiée (mode local)", duration: 2000 });
         return;
       }
 
@@ -140,7 +139,7 @@ export const useSupabaseTransactions = () => {
       if (error) throw error;
 
       setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx));
-      toast({ title: "Succès", description: "Transaction modifiée avec succès" });
+      toast({ title: "Succès", description: "Transaction modifiée avec succès", duration: 2000 });
     } catch (error) {
       console.error('Error updating transaction:', error);
       toast({ title: "Erreur", description: "Impossible de modifier la transaction", variant: "destructive" });
@@ -151,7 +150,7 @@ export const useSupabaseTransactions = () => {
     try {
       if (!isSupabaseConfigured) {
         setTransactions(prev => prev.filter(tx => tx.id !== id));
-        toast({ title: "Succès", description: "Transaction supprimée (mode local)" });
+        toast({ title: "Succès", description: "Transaction supprimée (mode local)", duration: 2000 });
         return;
       }
 
@@ -163,7 +162,7 @@ export const useSupabaseTransactions = () => {
       if (error) throw error;
 
       setTransactions(prev => prev.filter(tx => tx.id !== id));
-      toast({ title: "Succès", description: "Transaction supprimée avec succès" });
+      toast({ title: "Succès", description: "Transaction supprimée avec succès", duration: 2000 });
     } catch (error) {
       console.error('Error deleting transaction:', error);
       toast({ title: "Erreur", description: "Impossible de supprimer la transaction", variant: "destructive" });
