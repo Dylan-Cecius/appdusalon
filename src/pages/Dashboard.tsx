@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
 import {
   DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
-  ArrowRight, BarChart3, Target, Clock
+  ArrowRight, BarChart3, Target, Clock, Calculator
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -110,6 +110,52 @@ const Dashboard = () => {
   // --- Subscription alert ---
   const showSubscriptionAlert = subscribed && subscription_end &&
     new Date(subscription_end) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  // --- Monthly CA Projection ---
+  const {
+    elapsedBusinessDays,
+    remainingBusinessDays,
+    totalBusinessDays,
+    dailyRate,
+    projectedCA,
+    projectionProgress,
+  } = useMemo(() => {
+    const countBusinessDays = (start: Date, end: Date) => {
+      let count = 0;
+      const d = new Date(start);
+      d.setHours(0, 0, 0, 0);
+      const endNorm = new Date(end);
+      endNorm.setHours(0, 0, 0, 0);
+      while (d <= endNorm) {
+        const day = d.getDay();
+        if (day !== 0 && day !== 6) count++;
+        d.setDate(d.getDate() + 1);
+      }
+      return count;
+    };
+
+    const startOfMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const elapsed = countBusinessDays(startOfMonthDate, now);
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const remaining = countBusinessDays(tomorrow, endOfMonthDate);
+    const total = elapsed + remaining;
+
+    const rate = elapsed > 0 ? stats.monthlyRevenue / elapsed : 0;
+    const projected = stats.monthlyRevenue + rate * remaining;
+    const progress = total > 0 ? Math.round((elapsed / total) * 100) : 0;
+
+    return {
+      elapsedBusinessDays: elapsed,
+      remainingBusinessDays: remaining,
+      totalBusinessDays: total,
+      dailyRate: rate,
+      projectedCA: projected,
+      projectionProgress: progress,
+    };
+  }, [now, stats.monthlyRevenue]);
 
   // --- Variation helper ---
   const Variation = ({ current, previous, suffix = '' }: { current: number; previous: number; suffix?: string }) => {
@@ -210,6 +256,52 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Projection CA mensuel */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-primary" />
+              Projection CA mensuel
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">CA réalisé ce mois</p>
+                <p className="text-lg font-bold">{stats.monthlyRevenue.toFixed(0)} €</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Jours ouvrés écoulés</p>
+                <p className="text-lg font-bold">{elapsedBusinessDays}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Jours ouvrés restants</p>
+                <p className="text-lg font-bold">{remainingBusinessDays}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Taux journalier moyen</p>
+                <p className="text-lg font-bold">{dailyRate.toFixed(0)} €</p>
+              </div>
+            </div>
+
+            <div className="text-center py-2">
+              <p className="text-xs text-muted-foreground mb-1">CA projeté fin de mois</p>
+              <p className="text-3xl sm:text-4xl font-bold text-primary">{projectedCA.toFixed(0)} €</p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm text-muted-foreground">Avancement du mois</span>
+                <span className="text-sm font-semibold">{projectionProgress}%</span>
+              </div>
+              <Progress value={projectionProgress} className="h-2.5" />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {elapsedBusinessDays} jours ouvrés écoulés sur {totalBusinessDays} au total
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Revenue chart - full width */}
         <Card>
