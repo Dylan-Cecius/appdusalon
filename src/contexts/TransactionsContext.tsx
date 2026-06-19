@@ -207,11 +207,6 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error logging transaction activity:', logError);
       }
       
-      toast({
-        title: "Succès",
-        description: "Transaction enregistrée avec succès"
-      });
-
       return newTransaction;
     } catch (error) {
       console.error('Error adding transaction:', error);
