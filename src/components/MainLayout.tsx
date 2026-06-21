@@ -85,7 +85,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[220px] flex-col border-r border-border bg-sidebar">
         <div className="flex items-center justify-center px-4 py-4 border-b border-border">
-          <img src={logoImg} alt="L'app du salon" className="h-20 w-auto" style={{ filter: 'drop-shadow(0 8px 32px rgba(0, 200, 210, 0.8))' }} />
+          <img src={logoImg} alt="L'app du salon" className="h-20 w-auto" style={{ filter: 'drop-shadow(0 0 0 1.5px rgba(79,70,229,0.2)) drop-shadow(0 4px 18px rgba(79,70,229,0.45))' }} />
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
@@ -145,7 +145,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         {/* Topbar */}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-sm sm:px-6">
           <div className="flex items-center gap-3 min-w-0">
-            <img src={logoImg} alt="L'app du salon" className="h-9 w-auto md:hidden" style={{ filter: 'drop-shadow(0 8px 32px rgba(0, 200, 210, 0.8))' }} />
+            <img src={logoImg} alt="L'app du salon" className="h-9 w-auto md:hidden" style={{ filter: 'drop-shadow(0 0 0 1.5px rgba(79,70,229,0.2)) drop-shadow(0 4px 18px rgba(79,70,229,0.45))' }} />
             <h1 className="truncate text-lg font-semibold text-foreground sm:text-xl">{pageTitle}</h1>
           </div>
           <div className="flex items-center gap-2">
