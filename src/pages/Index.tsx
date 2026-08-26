@@ -42,6 +42,7 @@ import AutomatedReports from '@/components/AutomatedReports';
 import SecurityAlert from '@/components/SecurityAlert';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useSubscription } from '@/hooks/useSubscription';
+import logoImg from '@/assets/logo-auth.png';
 
 interface CartItem {
   id: string;
