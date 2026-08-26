@@ -402,7 +402,7 @@ const Index = () => {
                 src={logoImg}
                 alt="L'app du salon"
                 className="h-8 w-auto"
-                style={{ filter: 'drop-shadow(0 0 0 3px rgba(15,23,42,0.65)) drop-shadow(0 0 0 6px rgba(15,23,42,0.3)) drop-shadow(0 4px 18px rgba(79,70,229,0.45))' }}
+                style={{ filter: 'drop-shadow(0 0 8px rgba(15,23,42,0.55)) drop-shadow(0 0 16px rgba(15,23,42,0.3)) drop-shadow(0 4px 18px rgba(79,70,229,0.45))' }}
               />
               <div>
                 <h1 className="text-lg sm:text-xl font-semibold text-primary font-dancing">
