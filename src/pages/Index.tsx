@@ -397,12 +397,17 @@ const Index = () => {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  
-                <div>
-                  <h1 className="text-lg sm:text-xl font-semibold text-primary font-dancing">
-                    L'app du salon
-                  </h1>
+            <div className="flex items-center gap-3">
+              <img
+                src={logoImg}
+                alt="L'app du salon"
+                className="h-8 w-auto"
+                style={{ filter: 'drop-shadow(0 0 0 1.5px rgba(79,70,229,0.2)) drop-shadow(0 4px 18px rgba(79,70,229,0.45))' }}
+              />
+              <div>
+                <h1 className="text-lg sm:text-xl font-semibold text-primary font-dancing">
+                  L'app du salon
+                </h1>
                   {!isMobile && <p className="text-sm text-muted-foreground">
                       {new Date().toLocaleDateString('fr-FR', {
                   weekday: 'long',
