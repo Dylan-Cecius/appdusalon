@@ -145,7 +145,6 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         {/* Topbar */}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-sm sm:px-6">
           <div className="flex items-center gap-3 min-w-0">
-            <img src={logoImg} alt="L'app du salon" className="h-9 w-auto md:hidden" />
             <h1 className="truncate text-lg font-semibold text-foreground sm:text-xl">{pageTitle}</h1>
           </div>
           <div className="flex items-center gap-2">
