@@ -299,7 +299,7 @@ Deno.serve(async (req) => {
       const monthsAgo = (now.getFullYear() - day.getFullYear()) * 12 + now.getMonth() - day.getMonth();
       const growth = 1 + (6 - monthsAgo) * 0.05; // gentle growth over time
       const weekendBoost = day.getDay() === 5 || day.getDay() === 6 ? 1.35 : 1;
-      const base = randInt(5, 10);
+      const base = randInt(3, 6);
       let count = Math.round(base * growth * weekendBoost);
       const isToday = day.toDateString() === now.toDateString();
       if (isToday) count = Math.min(count, Math.max(2, Math.floor((now.getHours() - 9) / 1.2)));
