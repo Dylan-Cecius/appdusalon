@@ -40,11 +40,21 @@ const Auth = () => {
         });
       } else {
         toast({
+          title: "Préparation de la démo",
+          description: "Génération d'un salon complet (agenda, clients, caisse)…",
+        });
+        try {
+          await supabase.functions.invoke('seed-demo-data');
+        } catch (seedError) {
+          console.error('[demo] seeding failed', seedError);
+        }
+        toast({
           title: "Mode démo activé",
           description: "Bienvenue dans la démonstration !",
         });
         navigate('/');
       }
+
     } catch {
       toast({
         title: "Erreur",
