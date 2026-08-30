@@ -306,9 +306,15 @@ Deno.serve(async (req) => {
       if (count <= 0) continue;
 
       for (let i = 0; i < count; i++) {
-        const hour = randInt(9, day.getDay() === 6 ? 16 : 18);
+        const maxHour = isToday
+          ? Math.max(9, Math.min(now.getHours() - 1, 18))
+          : day.getDay() === 6
+          ? 16
+          : 18;
+        const hour = randInt(9, maxHour);
         const when = at(day, hour, pick([0, 15, 30, 45]));
         if (when > now) continue;
+
 
         const nbItems = rnd() > 0.72 ? 2 : 1;
         const items: Record<string, unknown>[] = [];
