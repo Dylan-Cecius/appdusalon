@@ -67,6 +67,7 @@ const APPT_NOTES = [
 type Staff = { id: string; name: string; color: string };
 
 const isSunday = (d: Date) => d.getDay() === 0;
+const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
 
 const at = (day: Date, hour: number, minute: number) => {
   const d = new Date(day);
@@ -153,14 +154,18 @@ Deno.serve(async (req) => {
     await supabase.from("staff").delete().eq("salon_id", salonId);
     await supabase.from("barbers").delete().eq("salon_id", salonId);
 
-    // --- Opening hours (Mon-Sat) ---
+    // If the demo is opened on a Sunday, keep the salon open so the day is not empty
+    const openSunday = new Date().getDay() === 0;
+    const closedDay = (d: Date) => isSunday(d) && !(openSunday && sameDay(d, new Date()));
+
+    // --- Opening hours (Mon-Sat, + Sunday when the demo starts a Sunday) ---
     await supabase.from("opening_hours").insert(
       [0, 1, 2, 3, 4, 5, 6].map((day) => ({
         salon_id: salonId,
         day_of_week: day,
-        is_open: day !== 0,
-        open_time: day === 6 ? "09:00" : "09:00",
-        close_time: day === 6 ? "17:00" : "19:00",
+        is_open: day !== 0 || openSunday,
+        open_time: day === 0 ? "10:00" : "09:00",
+        close_time: day === 6 ? "17:00" : day === 0 ? "16:00" : "19:00",
         break_start: day === 0 ? null : "13:00",
         break_end: day === 0 ? null : "14:00",
       })),
@@ -289,7 +294,7 @@ Deno.serve(async (req) => {
     historyStart.setDate(1);
 
     for (let d = new Date(historyStart); d <= now; d.setDate(d.getDate() + 1)) {
-      if (isSunday(d)) continue;
+      if (closedDay(d)) continue;
       const day = new Date(d);
       const monthsAgo = (now.getFullYear() - day.getFullYear()) * 12 + now.getMonth() - day.getMonth();
       const growth = 1 + (6 - monthsAgo) * 0.05; // gentle growth over time
@@ -346,7 +351,7 @@ Deno.serve(async (req) => {
     apptEnd.setDate(apptEnd.getDate() + 28);
 
     for (let d = new Date(apptStart); d <= apptEnd; d.setDate(d.getDate() + 1)) {
-      if (isSunday(d)) continue;
+      if (closedDay(d)) continue;
       const day = new Date(d);
       const past = day < new Date(now.toDateString());
       const daysAhead = Math.round((day.getTime() - now.getTime()) / 86400000);
