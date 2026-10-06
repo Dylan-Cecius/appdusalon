@@ -35,6 +35,7 @@ interface TimeSlot {
   start_time: string;
   end_time: string;
   available: boolean;
+  staff_id?: string | null;
 }
 
 const STEP_LABELS = ['Prestation', 'Personnel', 'Date & Heure', 'Coordonnées'];
@@ -136,7 +137,7 @@ export default function BookingPage() {
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
         body: JSON.stringify({
           salon_id: salonId,
-          staff_id: noPreference ? null : selectedStaff?.id,
+          staff_id: noPreference ? (selectedSlot.staff_id || null) : selectedStaff?.id,
           service: { name: selectedService.name, price: selectedService.price },
           start_time: selectedSlot.start_time,
           end_time: selectedSlot.end_time,
@@ -167,7 +168,7 @@ export default function BookingPage() {
   if (notFound) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center">
+        <Card className="v2-panel max-w-md w-full text-center">
           <CardContent className="pt-8 pb-8 space-y-4">
             <Scissors className="h-12 w-12 text-muted-foreground mx-auto" />
             <h2 className="text-2xl font-bold text-foreground">Salon introuvable</h2>
@@ -211,7 +212,7 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b border-border/70 bg-card/90 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-1">
             <Scissors className="h-6 w-6 text-primary" />
