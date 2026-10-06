@@ -81,24 +81,19 @@ const Dashboard = () => {
       const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
       const label = format(mStart, 'MMM', { locale: fr });
-      // Revenue from transactions
       const txRevenue = transactions
         .filter(tx => {
           const d = new Date(tx.transactionDate);
           return d >= mStart && d <= mEnd;
         })
-        .reduce((s, tx) => s + tx.totalAmount, 0);
-      // Revenue from paid appointments
-      const aptRevenue = appointments
-        .filter(a => {
-          const d = new Date(a.startTime);
-          return d >= mStart && d <= mEnd && a.isPaid;
-        })
-        .reduce((s, a) => s + Number(a.totalPrice), 0);
-      months.push({ name: label.charAt(0).toUpperCase() + label.slice(1), ca: Math.round(txRevenue + aptRevenue) });
+        .reduce((sum, tx) => sum + tx.totalAmount, 0);
+      months.push({
+        name: label.charAt(0).toUpperCase() + label.slice(1),
+        ca: Math.round(txRevenue),
+      });
     }
     return months;
-  }, [transactions, appointments]);
+  }, [transactions]);
 
   // --- Upcoming appointments ---
   const upcomingAppointments = useMemo(() =>
