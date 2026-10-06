@@ -13,7 +13,6 @@ import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
-import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useAuth } from '@/hooks/useAuth';
 
 interface StatsData {
@@ -52,7 +51,6 @@ interface EmailReportsProps {
 const EmailReports = ({ statsData }: EmailReportsProps) => {
   const { user } = useAuth();
   const { transactions } = useSupabaseTransactions();
-  const { appointments } = useSupabaseAppointments();
   
   const [email, setEmail] = useState('');
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily');
@@ -104,27 +102,19 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
       return matchesDate && matchesPayment;
     });
 
-    // Filter appointments
-    const filteredAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.startTime);
-      const matchesDate = aptDate >= start && aptDate <= end && apt.isPaid;
-      return matchesDate; // Appointments don't have payment method in the data
-    });
-
     const cashCount = filteredTransactions.filter(tx => tx.paymentMethod === 'cash').length;
     const cardCount = filteredTransactions.filter(tx => tx.paymentMethod === 'card').length;
     const totalTransactions = filteredTransactions.length;
 
     return {
-      revenue: filteredTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0) +
-               filteredAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0),
-      clients: filteredTransactions.length + filteredAppointments.length,
+      revenue: filteredTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0),
+      clients: filteredTransactions.length,
       cash: cashCount,
       card: cardCount,
       cashPercent: totalTransactions > 0 ? (cashCount / totalTransactions) * 100 : 0,
       cardPercent: totalTransactions > 0 ? (cardCount / totalTransactions) * 100 : 0,
     };
-  }, [reportType, dateRangePreset, startDate, endDate, paymentMethod, transactions, appointments]);
+  }, [reportType, dateRangePreset, startDate, endDate, paymentMethod, transactions]);
 
   const generateReport = () => {
     const currentDate = new Date(selectedDate);
@@ -161,11 +151,6 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
         return txDate >= dayStart && txDate <= dayEnd;
       });
       
-      const dayAppointments = appointments.filter(apt => {
-        const aptDate = new Date(apt.startTime);
-        return aptDate >= dayStart && aptDate <= dayEnd && apt.isPaid;
-      });
-      
       const filteredTransactions = paymentMethod === 'all' 
         ? dayTransactions 
         : dayTransactions.filter(tx => tx.paymentMethod === paymentMethod);
@@ -178,16 +163,12 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
         .filter(tx => tx.paymentMethod === 'card')
         .reduce((sum, tx) => sum + tx.totalAmount, 0);
       
-      const appointmentAmount = paymentMethod === 'all' 
-        ? dayAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0)
-        : 0;
-      
       return {
         date: day,
-        transactions: filteredTransactions.length + (paymentMethod === 'all' ? dayAppointments.length : 0),
+        transactions: filteredTransactions.length,
         cashAmount,
         cardAmount,
-        totalAmount: cashAmount + cardAmount + appointmentAmount
+        totalAmount: cashAmount + cardAmount
       };
     });
     
@@ -249,7 +230,7 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
 📊 RAPPORT PERSONNALISÉ - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
-• Total CA : ${totals.totalAmount.toFixed(2)}€
+• CA encaissé : ${totals.totalAmount.toFixed(2)}€
 • Total Transactions : ${totals.transactions}
 ${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
 
@@ -258,7 +239,7 @@ ${tableContent}
 ${message ? `\n📝 NOTES :\n${message}` : ''}
 
 ---
-Rapport généré automatiquement par L'app du salon
+Rapport de caisse généré automatiquement par L'app du salon
 ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
         `;
         break;
@@ -269,7 +250,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 📊 RAPPORT JOURNALIER - ${formattedDate.toUpperCase()}
 
 💰 RÉSUMÉ
-• Total CA : ${totals.totalAmount.toFixed(2)}€
+• CA encaissé : ${totals.totalAmount.toFixed(2)}€
 • Total Transactions : ${totals.transactions}
 ${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
 
@@ -289,7 +270,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 📊 RAPPORT HEBDOMADAIRE - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
-• Total CA : ${totals.totalAmount.toFixed(2)}€
+• CA encaissé : ${totals.totalAmount.toFixed(2)}€
 • Moyenne journalière : ${(totals.totalAmount / dailyData.length).toFixed(2)}€
 • Total Transactions : ${totals.transactions}
 ${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
@@ -310,7 +291,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 📊 RAPPORT MENSUEL - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
 
 💰 RÉSUMÉ
-• Total CA : ${totals.totalAmount.toFixed(2)}€
+• CA encaissé : ${totals.totalAmount.toFixed(2)}€
 • Moyenne journalière : ${(totals.totalAmount / dailyData.length).toFixed(2)}€
 • Total Transactions : ${totals.transactions}
 ${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
