@@ -1,99 +1,82 @@
 import { Card } from '@/components/ui/card';
 import { Users, TrendingUp } from 'lucide-react';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
+import { useStaff } from '@/hooks/useStaff';
 import { useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
 
 export const EmployeeRevenueStats = () => {
   const { appointments } = useSupabaseAppointments();
-
-  // Fetch barbers data
-  const { data: barbers = [] } = useQuery({
-    queryKey: ['barbers'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data, error } = await supabase
-        .from('barbers')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  const { activeStaff } = useStaff();
 
   const employeeRevenue = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Filter appointments for current month (only paid ones)
-    const monthAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.startTime);
-      return aptDate >= startOfMonth && apt.isPaid;
+    const monthAppointments = appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.startTime);
+      return appointmentDate >= startOfMonth && appointment.isPaid;
     });
 
-    // Group by barber
-    const revenueByBarber: Record<string, { name: string; revenue: number; count: number }> = {};
+    const revenueByEmployee: Record<string, { name: string; revenue: number; count: number }> = {};
 
-    monthAppointments.forEach(apt => {
-      const barberId = apt.barberId || 'unknown';
-      if (!revenueByBarber[barberId]) {
-        const barber = barbers.find(b => b.id === barberId);
-        revenueByBarber[barberId] = {
-          name: barber?.name || 'Non assigné',
+    monthAppointments.forEach(appointment => {
+      const employeeId = appointment.staffId || appointment.barberId || 'unknown';
+
+      if (!revenueByEmployee[employeeId]) {
+        const member = activeStaff.find(staff => staff.id === employeeId);
+        revenueByEmployee[employeeId] = {
+          name: member?.name || 'Non assigné',
           revenue: 0,
           count: 0,
         };
       }
-      revenueByBarber[barberId].revenue += Number(apt.totalPrice);
-      revenueByBarber[barberId].count += 1;
+
+      revenueByEmployee[employeeId].revenue += Number(appointment.totalPrice);
+      revenueByEmployee[employeeId].count += 1;
     });
 
-    // Sort by revenue
-    return Object.values(revenueByBarber).sort((a, b) => b.revenue - a.revenue);
-  }, [appointments, barbers]);
+    return Object.values(revenueByEmployee).sort((a, b) => b.revenue - a.revenue);
+  }, [appointments, activeStaff]);
 
-  const totalRevenue = employeeRevenue.reduce((sum, emp) => sum + emp.revenue, 0);
+  const totalRevenue = employeeRevenue.reduce((sum, employee) => sum + employee.revenue, 0);
 
   return (
-    <Card className="p-6">
+    <Card className="v2-panel p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
-          CA par Coiffeur (mois)
+          CA par membre de l’équipe
         </h3>
         <TrendingUp className="h-5 w-5 text-muted-foreground" />
       </div>
-      
+
       {employeeRevenue.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <p>Aucune donnée pour ce mois</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {employeeRevenue.map((emp, index) => {
-            const percentage = totalRevenue > 0 ? (emp.revenue / totalRevenue) * 100 : 0;
+          {employeeRevenue.map((employee, index) => {
+            const percentage = totalRevenue > 0 ? (employee.revenue / totalRevenue) * 100 : 0;
+
             return (
-              <div key={index} className="space-y-2">
+              <div key={`${employee.name}-${index}`} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-xs font-bold text-primary">
-                        {emp.name.substring(0, 2).toUpperCase()}
+                        {employee.name.substring(0, 2).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{emp.name}</p>
-                      <p className="text-xs text-muted-foreground">{emp.count} client{emp.count > 1 ? 's' : ''}</p>
+                      <p className="font-medium text-sm">{employee.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {employee.count} rendez-vous encaissé{employee.count > 1 ? 's' : ''}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-primary">{emp.revenue.toFixed(2)}€</p>
+                    <p className="font-bold text-primary">{employee.revenue.toFixed(2)}€</p>
                     <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</p>
                   </div>
                 </div>
