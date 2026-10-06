@@ -23,6 +23,7 @@ import SMSPage from "./pages/SMSPage";
 import StocksPage from "./pages/StocksPage";
 import ServicesPage from "./pages/ServicesPage";
 import ProduitsPage from "./pages/ProduitsPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
@@ -51,7 +52,7 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin" element={<AuthGuard><Admin /></AuthGuard>} />
                 <Route path="/booking/:salonSlug" element={<BookingPage />} />
                 
                 <Route path="/" element={<AuthGuard><Dashboard /></AuthGuard>} />
@@ -68,8 +69,8 @@ const App = () => {
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
                 <Route path="/ca-total" element={<AuthGuard><CATotalPage /></AuthGuard>} />
-                <Route path="/abonnement" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/abonnements" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/abonnement" element={<AuthGuard><SubscriptionPage /></AuthGuard>} />
+                <Route path="/abonnements" element={<AuthGuard><SubscriptionPage /></AuthGuard>} />
                 
                 {/* Routes protégées par mot de passe */}
                 <Route 
