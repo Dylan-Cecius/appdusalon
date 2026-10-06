@@ -28,7 +28,7 @@ const ActivityLogViewer = () => {
 
   const fetchLogs = async () => {
     try {
-      let query = supabase
+      const query = supabase
         .from('activity_logs' as any)
         .select('*')
         .order('created_at', { ascending: false })
