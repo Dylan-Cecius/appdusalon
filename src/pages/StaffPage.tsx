@@ -11,6 +11,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useStaff, Staff, DailySchedules, ALL_DAYS } from '@/hooks/useStaff';
 import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent, Clock } from 'lucide-react';
 import { StaffPerformance } from '@/components/StaffPerformance';
+import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
+import { useNavigate } from 'react-router-dom';
 
 const roleBadgeColor: Record<string, string> = {
   'gérant': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -45,6 +47,10 @@ const dayLabelsShort: Record<string, string> = {
 
 const StaffPage = () => {
   const { staff, activeStaff, isLoading, createStaff, updateStaff, deleteStaff } = useStaff();
+  const { getLimit, isWithinLimit, subscriptionTier } = useSubscriptionRights();
+  const navigate = useNavigate();
+  const staffLimit = getLimit('maxBarbers');
+  const canAddStaff = isWithinLimit(activeStaff.length, 'maxBarbers');
   const [showInactive, setShowInactive] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
@@ -92,6 +98,10 @@ const StaffPage = () => {
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!canAddStaff) {
+      navigate('/abonnements');
+      return;
+    }
     const fd = new FormData(e.currentTarget);
     const name = (fd.get('name') as string || '').trim();
     if (!name) return;
@@ -156,14 +166,25 @@ const StaffPage = () => {
           <div>
             <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Organisation</p>
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Équipe</h2>
-            <p className="mt-2 text-sm text-muted-foreground">{activeStaff.length} membre{activeStaff.length > 1 ? 's' : ''} actif{activeStaff.length > 1 ? 's' : ''} · horaires, rôles et commissions.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {activeStaff.length} membre{activeStaff.length > 1 ? 's' : ''} actif{activeStaff.length > 1 ? 's' : ''} · horaires, rôles et commissions.
+              {staffLimit !== Infinity && (
+                <span className="ml-2">Plan {subscriptionTier} : {activeStaff.length}/{staffLimit}</span>
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Switch checked={showInactive} onCheckedChange={setShowInactive} />
               <Label className="text-sm">Voir inactifs</Label>
             </div>
-            <Button onClick={() => setIsCreateOpen(true)}><UserPlus className="h-4 w-4 mr-2" />Ajouter un membre</Button>
+            <Button
+              onClick={() => canAddStaff ? setIsCreateOpen(true) : navigate('/abonnements')}
+              variant={canAddStaff ? 'default' : 'outline'}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              {canAddStaff ? 'Ajouter un membre' : 'Augmenter la limite'}
+            </Button>
           </div>
         </div>
 
@@ -267,7 +288,7 @@ const StaffPage = () => {
                 <Label>Commission (%)</Label>
                 <Input name="commission" type="number" min={0} max={100} defaultValue="0" />
               </div>
-              <Button type="submit" className="w-full" disabled={createStaff.isPending}>
+              <Button type="submit" className="w-full" disabled={createStaff.isPending || !canAddStaff}>
                 {createStaff.isPending ? 'En cours...' : 'Ajouter'}
               </Button>
             </div>
