@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageSquare, Send, Bell, Cake, UserX, Plus, Settings, Zap, Eye } from 'lucide-react';
+import { MessageSquare, Send, Bell, Cake, UserX, Plus, Settings, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { FeatureGate } from '@/components/FeatureGate';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +25,7 @@ const SMSPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [salonId, setSalonId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('campaigns');
+  const [activeTab, setActiveTab] = useState('automations');
 
   // Campaign state
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -50,13 +50,6 @@ const SMSPage = () => {
     reactivation_message: 'Bonjour {prenom}, cela fait longtemps qu on ne vous a pas vu ! Revenez nous rendre visite.',
   });
   const [savingSettings, setSavingSettings] = useState(false);
-
-  // Twilio settings
-  const [twilioSid, setTwilioSid] = useState('');
-  const [twilioToken, setTwilioToken] = useState('');
-  const [twilioPhone, setTwilioPhone] = useState('');
-  const [savingTwilio, setSavingTwilio] = useState(false);
-  const [testingSms, setTestingSms] = useState(false);
 
   // Logs
   const [logs, setLogs] = useState<any[]>([]);
@@ -93,7 +86,7 @@ const SMSPage = () => {
   const loadSettings = async () => {
     const { data } = await supabase
       .from('sms_settings')
-      .select('*')
+      .select('reminder_enabled, reminder_hours_before, reminder_message, birthday_enabled, birthday_message, reactivation_enabled, reactivation_months, reactivation_message')
       .eq('salon_id', salonId!)
       .single();
     if (data) {
@@ -107,9 +100,6 @@ const SMSPage = () => {
         reactivation_months: data.reactivation_months ?? 3,
         reactivation_message: data.reactivation_message ?? settings.reactivation_message,
       });
-      setTwilioSid(data.twilio_account_sid ?? '');
-      setTwilioToken(data.twilio_auth_token ?? '');
-      setTwilioPhone(data.twilio_phone_number ?? '');
     }
   };
 
@@ -144,7 +134,6 @@ const SMSPage = () => {
     try {
       const { data, error } = await supabase.functions.invoke('send-sms-campaign', {
         body: {
-          salon_id: salonId,
           message: campaignMessage,
           recipient_type: recipientType,
           inactive_months: recipientType === 'inactive' ? parseInt(inactiveMonths) : undefined,
@@ -179,44 +168,6 @@ const SMSPage = () => {
       toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
     } finally {
       setSavingSettings(false);
-    }
-  };
-
-  const handleSaveTwilio = async () => {
-    setSavingTwilio(true);
-    try {
-      const { error } = await supabase.from('sms_settings').upsert({
-        salon_id: salonId!,
-        twilio_account_sid: twilioSid,
-        twilio_auth_token: twilioToken,
-        twilio_phone_number: twilioPhone,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'salon_id' });
-      if (error) throw error;
-      toast({ title: 'Paramètres Twilio sauvegardés' });
-    } catch (e: any) {
-      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
-    } finally {
-      setSavingTwilio(false);
-    }
-  };
-
-  const handleTestSms = async () => {
-    setTestingSms(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('send-sms-test', {
-        body: { salon_id: salonId },
-      });
-      if (error) throw error;
-      if (data.success) {
-        toast({ title: 'SMS test envoyé !' });
-      } else {
-        toast({ title: 'Erreur', description: data.error, variant: 'destructive' });
-      }
-    } catch (e: any) {
-      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
-    } finally {
-      setTestingSms(false);
     }
   };
 
@@ -524,31 +475,19 @@ const SMSPage = () => {
 
           {/* SETTINGS TAB */}
           <TabsContent value="settings" className="space-y-4">
-            <Card>
+            <Card className="v2-panel">
               <CardHeader>
-                <CardTitle>Connexion Twilio</CardTitle>
-                <CardDescription>Configurez votre compte Twilio pour envoyer des SMS</CardDescription>
+                <CardTitle>Service SMS</CardTitle>
+                <CardDescription>
+                  L’envoi est géré par L’App du Salon. Aucun identifiant Twilio n’est stocké dans votre navigateur ou dans les paramètres du salon.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Account SID</Label>
-                  <Input value={twilioSid} onChange={(e) => setTwilioSid(e.target.value)} placeholder="ACxxxxxxxxx" />
-                </div>
-                <div>
-                  <Label>Auth Token</Label>
-                  <Input type="password" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} placeholder="••••••••" />
-                </div>
-                <div>
-                  <Label>Numéro d'envoi</Label>
-                  <Input value={twilioPhone} onChange={(e) => setTwilioPhone(e.target.value)} placeholder="+33xxxxxxxxx" />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSaveTwilio} disabled={savingTwilio}>
-                    {savingTwilio ? 'Sauvegarde...' : 'Sauvegarder'}
-                  </Button>
-                  <Button variant="outline" onClick={handleTestSms} disabled={testingSms || !twilioSid}>
-                    {testingSms ? 'Envoi...' : 'Tester'}
-                  </Button>
+              <CardContent>
+                <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
+                  <p className="text-sm font-medium">Configuration sécurisée côté serveur</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Les clés du fournisseur SMS sont conservées dans les secrets du backend et ne sont jamais exposées aux comptes salons.
+                  </p>
                 </div>
               </CardContent>
             </Card>
