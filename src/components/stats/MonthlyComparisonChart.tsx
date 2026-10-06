@@ -1,74 +1,60 @@
 import { Card } from '@/components/ui/card';
 import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTransactions } from '@/contexts/TransactionsContext';
-import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+const countDistinctClients = (transactions: Array<{ clientId?: string }>) => {
+  const knownClients = new Set(transactions.map(transaction => transaction.clientId).filter(Boolean));
+  const anonymous = transactions.filter(transaction => !transaction.clientId).length;
+  return knownClients.size + anonymous;
+};
+
 export const MonthlyComparisonChart = () => {
   const { transactions } = useTransactions();
-  const { appointments } = useSupabaseAppointments();
 
   const comparisonData = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
+
     const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
     const startOfPreviousMonth = new Date(currentYear, currentMonth - 1, 1);
-    const endOfPreviousMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+    const endOfPreviousMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999);
 
-    // Current month transactions
-    const currentMonthTx = transactions.filter(tx => {
-      const txDate = new Date(tx.transactionDate);
-      return txDate >= startOfCurrentMonth;
-    });
-    const currentMonthApts = appointments.filter(apt => {
-      const aptDate = new Date(apt.startTime);
-      return aptDate >= startOfCurrentMonth && apt.isPaid;
+    const currentMonthTransactions = transactions.filter(transaction => {
+      const date = new Date(transaction.transactionDate);
+      return date >= startOfCurrentMonth;
     });
 
-    // Previous month transactions
-    const previousMonthTx = transactions.filter(tx => {
-      const txDate = new Date(tx.transactionDate);
-      return txDate >= startOfPreviousMonth && txDate <= endOfPreviousMonth;
-    });
-    const previousMonthApts = appointments.filter(apt => {
-      const aptDate = new Date(apt.startTime);
-      return aptDate >= startOfPreviousMonth && aptDate <= endOfPreviousMonth && apt.isPaid;
+    const previousMonthTransactions = transactions.filter(transaction => {
+      const date = new Date(transaction.transactionDate);
+      return date >= startOfPreviousMonth && date <= endOfPreviousMonth;
     });
 
-    // Calculate revenues
-    const currentRevenue = currentMonthTx.reduce((sum, tx) => sum + tx.totalAmount, 0) +
-                          currentMonthApts.reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
-    const previousRevenue = previousMonthTx.reduce((sum, tx) => sum + tx.totalAmount, 0) +
-                           previousMonthApts.reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
+    const currentRevenue = currentMonthTransactions.reduce(
+      (sum, transaction) => sum + transaction.totalAmount,
+      0
+    );
+    const previousRevenue = previousMonthTransactions.reduce(
+      (sum, transaction) => sum + transaction.totalAmount,
+      0
+    );
 
-    // Calculate clients
-    const currentClients = currentMonthTx.length + currentMonthApts.length;
-    const previousClients = previousMonthTx.length + previousMonthApts.length;
+    const currentClients = countDistinctClients(currentMonthTransactions);
+    const previousClients = countDistinctClients(previousMonthTransactions);
 
-    // Calculate difference
     const revenueDiff = currentRevenue - previousRevenue;
-    const revenuePercent = previousRevenue > 0 ? ((revenueDiff / previousRevenue) * 100) : 0;
+    const revenuePercent = previousRevenue > 0 ? (revenueDiff / previousRevenue) * 100 : 0;
 
-    // Month names
     const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
     const previousMonthName = monthNames[currentMonth === 0 ? 11 : currentMonth - 1];
     const currentMonthName = monthNames[currentMonth];
 
     return {
       chartData: [
-        {
-          name: previousMonthName,
-          CA: previousRevenue,
-          Clients: previousClients,
-        },
-        {
-          name: currentMonthName,
-          CA: currentRevenue,
-          Clients: currentClients,
-        },
+        { name: previousMonthName, CA: previousRevenue, Clients: previousClients },
+        { name: currentMonthName, CA: currentRevenue, Clients: currentClients },
       ],
       currentRevenue,
       previousRevenue,
@@ -76,21 +62,21 @@ export const MonthlyComparisonChart = () => {
       revenuePercent,
       isPositive: revenueDiff >= 0,
     };
-  }, [transactions, appointments]);
+  }, [transactions]);
 
   return (
-    <Card className="p-6">
+    <Card className="v2-panel p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-primary" />
-          Comparaison Mensuelle
+          Comparaison mensuelle
         </h3>
       </div>
 
-      <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+      <div className="mb-6 p-4 bg-muted/50 rounded-xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Évolution du CA</p>
+            <p className="text-sm text-muted-foreground">Évolution du CA encaissé</p>
             <p className="text-2xl font-bold text-primary mt-1">
               {comparisonData.revenueDiff >= 0 ? '+' : ''}{comparisonData.revenueDiff.toFixed(2)}€
             </p>
@@ -114,24 +100,17 @@ export const MonthlyComparisonChart = () => {
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={comparisonData.chartData}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis 
-            dataKey="name" 
-            className="text-xs"
-            tick={{ fill: 'hsl(var(--foreground))' }}
-          />
-          <YAxis 
-            className="text-xs"
-            tick={{ fill: 'hsl(var(--foreground))' }}
-          />
-          <Tooltip 
+          <XAxis dataKey="name" className="text-xs" tick={{ fill: 'hsl(var(--foreground))' }} />
+          <YAxis className="text-xs" tick={{ fill: 'hsl(var(--foreground))' }} />
+          <Tooltip
             contentStyle={{
               backgroundColor: 'hsl(var(--background))',
               border: '1px solid hsl(var(--border))',
               borderRadius: '8px',
             }}
             formatter={(value: number, name: string) => {
-              if (name === 'CA') return [`${value.toFixed(2)}€`, 'Chiffre d\'affaires'];
-              return [value, 'Nombre de clients'];
+              if (name === 'CA') return [`${value.toFixed(2)}€`, "Chiffre d'affaires"];
+              return [value, 'Clients encaissés'];
             }}
           />
           <Legend />
