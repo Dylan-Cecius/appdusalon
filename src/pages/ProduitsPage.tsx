@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useStocks, PRODUCT_CATEGORIES, getStockStatus } from '@/hooks/useStocks';
+import { useStocks, PRODUCT_CATEGORIES, getStockStatus, type Product } from '@/hooks/useStocks';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -127,7 +127,7 @@ const ProduitsPage = () => {
 
   // Product form modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '', category: 'capillaire', sell_price: '', purchase_price: '',
     current_stock: '', min_stock: '5', unit: 'unité', supplier: '', description: '', sku: '',
@@ -141,7 +141,7 @@ const ProduitsPage = () => {
     setEditingProduct(null);
   };
 
-  const handleOpenModal = (product?: any) => {
+  const handleOpenModal = (product?: Product) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -186,7 +186,7 @@ const ProduitsPage = () => {
     resetForm();
   };
 
-  const handleDelete = (product: any) => {
+  const handleDelete = (product: Product) => {
     const input = prompt(`⚠️ Supprimer "${product.name}" ?\n\nTapez "SUPPRIMER" pour confirmer :`);
     if (input !== 'SUPPRIMER') return;
     deleteProduct.mutate(product.id);
@@ -197,7 +197,13 @@ const ProduitsPage = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-4">
+      <div className="space-y-6">
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Catalogue</p>
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Produits</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Suivez les ventes produits, la valeur du stock et les alertes de réapprovisionnement.</p>
+          </div>
+
           {/* KPI Boxes - CA Produits */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-emerald-400/5 to-transparent p-5 shadow-lg backdrop-blur-sm">
@@ -242,7 +248,7 @@ const ProduitsPage = () => {
           </div>
 
           {/* Date range picker */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="v2-panel flex flex-wrap items-center gap-2 p-3 sm:p-4">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
@@ -272,7 +278,7 @@ const ProduitsPage = () => {
           </div>
 
           {/* Product sales history */}
-          <div className="rounded-lg border bg-card">
+          <div className="v2-panel overflow-hidden">
             <div className="p-4 border-b">
               <h3 className="font-semibold">Historique des dernières ventes produits</h3>
             </div>
