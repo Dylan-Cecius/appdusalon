@@ -124,7 +124,13 @@ const ServicesPage = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-4">
+      <div className="space-y-6">
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Catalogue</p>
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Services</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Analysez les prestations vendues, leur chiffre d’affaires et l’activité de l’équipe.</p>
+          </div>
+
           {/* KPI Boxes */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {[
@@ -149,7 +155,7 @@ const ServicesPage = () => {
           </div>
 
           {/* Date range picker */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="v2-panel flex flex-wrap items-center gap-2 p-3 sm:p-4">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className={cn("w-[160px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
@@ -179,7 +185,7 @@ const ServicesPage = () => {
           </div>
 
           {/* History table */}
-          <div className="rounded-lg border bg-card">
+          <div className="v2-panel overflow-hidden">
             <div className="p-4 border-b">
               <h3 className="font-semibold">Historique des derniers services</h3>
             </div>
