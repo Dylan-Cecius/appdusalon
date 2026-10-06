@@ -43,13 +43,13 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-sms-campaign]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-sms-automation]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-sms-test]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-appointment-reminders]
 verify_jwt = false
