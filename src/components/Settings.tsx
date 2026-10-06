@@ -106,101 +106,47 @@ const Settings = () => {
   };
 
   const handleSave = async () => {
-    console.log('🔍 [DEBUG] handleSave started', { 
-      statsPassword: statsPassword ? '[PASSWORD PROVIDED]' : '[NO PASSWORD]',
-      statsPasswordLength: statsPassword.length,
-      currentSalonSettings: salonSettings 
-    });
-    
     setIsSaving(true);
     try {
-      let processedPassword = null;
-      
-      // Only process password if user entered one
+      await saveSalonSettings({
+        name: salonSettings?.name || "L'app du salon",
+        logo_url: salonSettings?.logo_url || '',
+      });
+
       if (statsPassword.trim()) {
-        console.log('🔍 [DEBUG] Processing new password');
         const validation = validatePassword(statsPassword);
         if (!validation.isValid) {
-          console.log('🔍 [DEBUG] Password validation failed:', validation.message);
           toast({
-            title: "❌ Mot de passe invalide",
+            title: "Mot de passe invalide",
             description: validation.message,
             variant: "destructive",
           });
-          setIsSaving(false);
           return;
         }
 
-        // Hash the password using the secure database function
-        try {
-          console.log('🔍 [DEBUG] Calling hash_password RPC');
-          const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
-            password_text: statsPassword
-          });
-          
-          console.log('🔍 [DEBUG] hash_password result:', { 
-            hashedPassword: hashedPassword ? '[HASH GENERATED]' : null, 
-            hashError 
-          });
-          
-          if (hashError) {
-            throw new Error(`Erreur de chiffrement: ${hashError.message}`);
-          }
-          
-          processedPassword = hashedPassword;
-          console.log('🔍 [DEBUG] Password hashed successfully');
-        } catch (hashingError) {
-          console.error('🔍 [DEBUG] Password hashing error:', hashingError);
-          toast({
-            title: "❌ Erreur de sécurité",
-            description: "Impossible de sécuriser le mot de passe. Veuillez réessayer.",
-            variant: "destructive",
-          });
-          setIsSaving(false);
-          return;
-        }
-      } else {
-        console.log('🔍 [DEBUG] No new password provided, keeping existing');
+        const { error } = await (supabase as any).rpc('set_stats_password', {
+          password_text: statsPassword,
+        });
+        if (error) throw error;
+
+        setStatsPassword('');
       }
 
-      // Construire l'objet settings sans écraser le mot de passe existant
-      const settingsToSave: any = {
-        name: "L'app du salon"
-      };
-      
-      // N'inclure stats_password que si un nouveau mot de passe a été saisi
-      if (processedPassword) {
-        settingsToSave.stats_password = processedPassword;
-        console.log('🔍 [DEBUG] Including new password in save');
-      } else {
-        console.log('🔍 [DEBUG] NOT including password field in save - keeping existing');
-      }
-      
-      console.log('🔍 [DEBUG] Calling saveSalonSettings with:', { 
-        settingsToSave: { ...settingsToSave, stats_password: settingsToSave.stats_password ? '[HASH]' : 'undefined' } 
-      });
-
-      await saveSalonSettings(settingsToSave);
-      
-      console.log('🔍 [DEBUG] saveSalonSettings completed');
-      
-      // Clear the password input after successful save
-      setStatsPassword('');
-      
       toast({
-        title: "✅ Paramètres sauvegardés",
-        description: processedPassword ? "Mot de passe sécurisé mis à jour avec succès" : "Paramètres sauvegardés avec succès",
+        title: "Paramètres sauvegardés",
+        description: statsPassword.trim()
+          ? "Le mot de passe de protection a été mis à jour."
+          : "Les paramètres du salon ont été sauvegardés.",
       });
     } catch (error) {
-      console.error('🔍 [DEBUG] Settings save error:', error);
+      console.error('[Settings] save failed', error);
       toast({
-        title: "❌ Erreur",
+        title: "Erreur",
         description: "Impossible de sauvegarder les paramètres",
         variant: "destructive",
       });
     } finally {
       setIsSaving(false);
-      console.log('🔍 [DEBUG] handleSave completed');
     }
   };
 
@@ -211,22 +157,19 @@ const Settings = () => {
 
     setIsSaving(true);
     try {
-      // Explicitly set stats_password to null to disable it
-      const settingsToSave = {
-        name: "L'app du salon",
-        stats_password: null
-      };
-      
-      await saveSalonSettings(settingsToSave);
-      
+      const { error } = await (supabase as any).rpc('clear_stats_password');
+      if (error) throw error;
+
+      setStatsPassword('');
       toast({
-        title: "✅ Mot de passe désactivé",
+        title: "Mot de passe désactivé",
         description: "L'accès aux statistiques n'est plus protégé par mot de passe",
       });
+      window.location.reload();
     } catch (error) {
-      console.error('Error disabling password:', error);
+      console.error('[Settings] password disable failed', error);
       toast({
-        title: "❌ Erreur",
+        title: "Erreur",
         description: "Impossible de désactiver le mot de passe",
         variant: "destructive",
       });
@@ -477,7 +420,7 @@ const Settings = () => {
                 type={showPassword ? "text" : "password"}
                 value={statsPassword}
                 onChange={(e) => setStatsPassword(e.target.value)}
-                placeholder={salonSettings?.stats_password ? "Nouveau mot de passe (laisser vide pour conserver)" : "Définir un mot de passe sécurisé"}
+                placeholder={salonSettings?.has_stats_password ? "Nouveau mot de passe (laisser vide pour conserver)" : "Définir un mot de passe sécurisé"}
                 disabled={loading || isSaving}
                 className="pr-10"
               />
@@ -505,24 +448,17 @@ const Settings = () => {
               <p className="text-sm text-amber-700 dark:text-amber-400">
                 <strong>🛡️ Sécurité renforcée activée</strong>
               </p>
-              {salonSettings?.stats_password ? (
+              {salonSettings?.has_stats_password ? (
                 <div className="space-y-1">
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    ✅ Mot de passe sécurisé configuré ({salonSettings.stats_password.startsWith('$2') 
-                      ? "chiffré bcrypt" 
-                      : "migration requise"})
+                    ✅ Mot de passe configuré et vérifié côté serveur
                   </p>
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    ✅ Validation de complexité activée
+                    ✅ Le hash n’est jamais transmis au navigateur
                   </p>
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    ✅ Protection contre les attaques par force brute
+                    ✅ Les anciens formats sont migrés automatiquement après validation
                   </p>
-                  {!salonSettings.stats_password.startsWith('$2') && (
-                    <p className="text-xs text-red-600 dark:text-red-400 font-medium">
-                      ⚠️ Définissez un nouveau mot de passe pour finaliser la sécurisation
-                    </p>
-                  )}
                 </div>
               ) : (
                 <p className="text-xs text-amber-600 dark:text-amber-400">
@@ -541,7 +477,7 @@ const Settings = () => {
               {isSaving ? 'Sauvegarde...' : 'Sauvegarder la sécurité'}
             </Button>
             
-            {salonSettings && salonSettings.stats_password && (
+            {salonSettings?.has_stats_password && (
               <Button 
                 onClick={handleDisablePassword}
                 disabled={loading || isSaving}
