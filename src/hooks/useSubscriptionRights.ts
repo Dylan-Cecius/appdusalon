@@ -145,9 +145,23 @@ export const useSubscriptionRights = () => {
   const isDemo = user?.email === 'demo@appdusalon.com';
 
   const rights = useMemo((): SubscriptionRights => {
-    // Tout est débloqué gratuitement pour tous les utilisateurs
-    return SUBSCRIPTION_RIGHTS['Lifetime'];
-  }, []);
+    if (isDemo) {
+      return SUBSCRIPTION_RIGHTS['Lifetime'];
+    }
+
+    if (!subscribed) {
+      return SUBSCRIPTION_RIGHTS['none'];
+    }
+
+    const normalizedTier =
+      subscription_tier === 'Pro'
+        ? 'Equipe'
+        : subscription_tier === 'Enterprise'
+          ? 'Lifetime'
+          : subscription_tier;
+
+    return SUBSCRIPTION_RIGHTS[normalizedTier || 'none'] || SUBSCRIPTION_RIGHTS['none'];
+  }, [isDemo, subscribed, subscription_tier]);
 
   const canAccess = (feature: keyof SubscriptionRights) => {
     return rights[feature] as boolean;
@@ -173,7 +187,14 @@ export const useSubscriptionRights = () => {
 
   return {
     rights,
-    subscriptionTier: subscription_tier || 'none',
+    subscriptionTier:
+      isDemo
+        ? 'Lifetime'
+        : subscription_tier === 'Pro'
+          ? 'Equipe'
+          : subscription_tier === 'Enterprise'
+            ? 'Lifetime'
+            : subscription_tier || 'none',
     canAccess,
     getLimit,
     isWithinLimit,
