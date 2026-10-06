@@ -57,6 +57,47 @@ serve(async (req) => {
       );
     }
 
+    // Enforce online-booking entitlement server-side to prevent direct API bypass.
+    const { data: ownerResult } = await supabase.auth.admin.getUserById(salon.owner_user_id);
+    const ownerEmail = ownerResult?.user?.email?.toLowerCase() || '';
+
+    const [{ data: platformAdmin }, { data: subscriber }] = await Promise.all([
+      ownerEmail
+        ? supabase
+            .from('platform_admin_emails')
+            .select('email')
+            .eq('email', ownerEmail)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabase
+        .from('subscribers')
+        .select('subscribed, subscription_tier, subscription_end')
+        .eq('user_id', salon.owner_user_id)
+        .maybeSingle(),
+    ]);
+
+    const normalizedTier =
+      subscriber?.subscription_tier === 'Pro'
+        ? 'Equipe'
+        : subscriber?.subscription_tier === 'Enterprise'
+          ? 'Lifetime'
+          : subscriber?.subscription_tier;
+
+    const subscriptionStillValid =
+      subscriber?.subscribed === true &&
+      (!subscriber.subscription_end || new Date(subscriber.subscription_end).getTime() > Date.now());
+
+    const canUseOnlineBooking =
+      Boolean(platformAdmin) ||
+      (subscriptionStillValid && ['Solo', 'Equipe', 'Lifetime'].includes(normalizedTier || ''));
+
+    if (!canUseOnlineBooking) {
+      return new Response(
+        JSON.stringify({ error: 'online_booking_unavailable' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Verify staff belongs to this salon (if provided)
     if (staff_id) {
       const { data: staffMember } = await supabase
