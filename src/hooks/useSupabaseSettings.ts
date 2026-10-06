@@ -7,7 +7,8 @@ export interface SalonSettings {
   id?: string;
   name: string;
   logo_url?: string;
-  stats_password?: string;
+  stats_password?: string | null;
+  has_stats_password?: boolean;
   user_id?: string;
 }
 
@@ -27,7 +28,7 @@ export const useSupabaseSettings = () => {
   const [salonSettings, setSalonSettings] = useState<SalonSettings | null>({
     name: "L'app du salon",
     logo_url: '',
-    stats_password: ''
+    has_stats_password: false
   });
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ export const useSupabaseSettings = () => {
 
       const { data, error } = await supabase
         .from('salon_settings')
-        .select('*')
+        .select('id, name, logo_url, user_id')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false })
         .limit(1)
@@ -53,13 +54,13 @@ export const useSupabaseSettings = () => {
       }
 
       if (data) {
-        console.log('[Settings] fetched:', data.id, data.name);
+        const { data: hasPassword } = await (supabase as any).rpc('has_stats_password');
         setSalonSettings({
           id: data.id,
           name: data.name,
           logo_url: data.logo_url,
-          stats_password: data.stats_password,
-          user_id: data.user_id
+          user_id: data.user_id,
+          has_stats_password: hasPassword === true,
         });
       } else {
         setSalonSettings(null);
@@ -109,8 +110,9 @@ export const useSupabaseSettings = () => {
     }
 
     try {
+      const { has_stats_password: _ignoredPasswordFlag, ...persistedSettings } = settings;
       const dataToUpsert = {
-        ...settings,
+        ...persistedSettings,
         user_id: user.id,
         id: salonSettings?.id || settings.id
       };
@@ -118,7 +120,7 @@ export const useSupabaseSettings = () => {
       const { data, error } = await supabase
         .from('salon_settings')
         .upsert(dataToUpsert)
-        .select()
+        .select('id, name, logo_url, user_id')
         .single();
 
       if (error) {
@@ -131,12 +133,13 @@ export const useSupabaseSettings = () => {
         return;
       }
 
+      const { data: hasPassword } = await (supabase as any).rpc('has_stats_password');
       setSalonSettings({
         id: data.id,
         name: data.name,
         logo_url: data.logo_url,
-        stats_password: data.stats_password,
-        user_id: data.user_id
+        user_id: data.user_id,
+        has_stats_password: hasPassword === true,
       });
       
       toast({
