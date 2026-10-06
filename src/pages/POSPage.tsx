@@ -139,16 +139,15 @@ const POSPage = () => {
     e.preventDefault();
     if (!productForm.name.trim()) return;
     try {
-      await addService({
+      await createProduct({
         name: productForm.name.trim(),
-        price: parseFloat(productForm.price) || 0,
-        duration: 0,
+        sale_price: parseFloat(productForm.price) || 0,
+        purchase_price: 0,
+        current_stock: 0,
+        min_stock: 0,
         category: 'produit',
-        appointmentBuffer: 0,
-        isActive: true,
-        displayOrder: 0,
-        color: '#10B981',
-      });
+        is_active: true,
+      } as any);
       toast({ title: 'Succès', description: 'Produit ajouté avec succès' });
       setProductForm({ name: '', price: '', category: 'produit' });
       setIsAddProductOpen(false);
@@ -162,8 +161,16 @@ const POSPage = () => {
       cartItemsCount={cartItems.length} 
       onCartOpen={() => setIsCartOpen(true)}
     >
+      <div className="mb-5 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Encaissement</p>
+          <h2 className="text-3xl font-semibold tracking-tight">Caisse</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Ajoutez les prestations, vérifiez le panier et encaissez en quelques secondes.</p>
+        </div>
+      </div>
+
       {/* Header with action buttons */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -197,7 +204,7 @@ const POSPage = () => {
 
       {/* Session Summary Bar */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+        <div className="v2-kpi flex items-center gap-1.5 p-3 sm:gap-3 sm:p-4">
           <div className="p-2 rounded-lg bg-green-500/20 hidden sm:block">
             <Euro className="h-4 w-4 text-green-600" />
           </div>
@@ -206,7 +213,7 @@ const POSPage = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground">Encaissé</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-primary/10 border border-primary/20">
+        <div className="v2-kpi flex items-center gap-1.5 p-3 sm:gap-3 sm:p-4">
           <div className="p-2 rounded-lg bg-primary/20 hidden sm:block">
             <Receipt className="h-4 w-4 text-primary" />
           </div>
@@ -215,7 +222,7 @@ const POSPage = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground">Transactions</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-accent/10 border border-accent/20">
+        <div className="v2-kpi flex items-center gap-1.5 p-3 sm:gap-3 sm:p-4">
           <div className="p-2 rounded-lg bg-accent/20 hidden sm:block">
             <Scissors className="h-4 w-4 text-accent-foreground" />
           </div>
@@ -290,7 +297,7 @@ const POSPage = () => {
         {/* Cart Sidebar - Desktop and Tablet */}
         {!isMobile && (
           <div className="md:col-span-1">
-            <div className="sticky top-24">
+            <div className="sticky top-24 rounded-2xl">
               <CartSidebar
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
