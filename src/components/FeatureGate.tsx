@@ -27,7 +27,17 @@ export const FeatureGate = ({
   showUpgradePrompt = true,
   onUpgrade
 }: FeatureGateProps) => {
-  const { canAccess, isWithinLimit, subscriptionTier } = useSubscriptionRights();
+  const { canAccess, isWithinLimit, subscriptionTier, loading } = useSubscriptionRights();
+
+  if (loading) {
+    return (
+      <Card className="v2-panel">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Vérification de votre abonnement…
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Vérifier l'accès à une fonctionnalité
   const hasFeatureAccess = requiredFeature ? canAccess(requiredFeature) : true;
@@ -96,7 +106,7 @@ export const FeatureGate = ({
  * Hook pour utiliser FeatureGate de manière conditionnelle
  */
 export const useFeatureAccess = () => {
-  const { canAccess, isWithinLimit, subscriptionTier, rights } = useSubscriptionRights();
+  const { canAccess, isWithinLimit, subscriptionTier, rights, loading } = useSubscriptionRights();
 
   const checkFeature = (feature: keyof SubscriptionRights) => {
     return canAccess(feature);
@@ -117,6 +127,7 @@ export const useFeatureAccess = () => {
     checkLimit,
     requiresUpgrade,
     subscriptionTier,
-    rights
+    rights,
+    loading
   };
 };
