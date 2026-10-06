@@ -45,12 +45,12 @@ const PromoCodeRedemption = ({ onSuccess }: PromoCodeRedemptionProps) => {
         if (result.type === 'trial_month') {
           toast({
             title: "✨ Essai gratuit activé",
-            description: "Vous avez maintenant accès au plan Pro pendant 1 mois !",
+            description: "Vous avez maintenant accès au plan Équipe pendant 1 mois !",
           });
         } else if (result.type === 'lifetime_free') {
           toast({
             title: "👑 Abonnement à vie activé",
-            description: "Félicitations ! Vous avez maintenant un accès Enterprise à vie !",
+            description: "Félicitations ! Vous avez maintenant un accès complet à vie !",
           });
         }
         
@@ -126,7 +126,7 @@ const PromoCodeRedemption = ({ onSuccess }: PromoCodeRedemptionProps) => {
             <Ticket className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <div>
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Essai gratuit</p>
-              <p className="text-xs text-blue-600 dark:text-blue-300">1 mois d'accès Pro</p>
+              <p className="text-xs text-blue-600 dark:text-blue-300">1 mois de plan Équipe</p>
             </div>
           </div>
           
@@ -134,7 +134,7 @@ const PromoCodeRedemption = ({ onSuccess }: PromoCodeRedemptionProps) => {
             <Crown className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             <div>
               <p className="text-sm font-medium text-purple-800 dark:text-purple-200">Abonnement à vie</p>
-              <p className="text-xs text-purple-600 dark:text-purple-300">Accès Enterprise illimité</p>
+              <p className="text-xs text-purple-600 dark:text-purple-300">Accès complet à vie</p>
             </div>
           </div>
         </div>
