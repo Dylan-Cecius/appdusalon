@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, CalendarDays, BarChart3, Scissors, Sparkles } from 'lucide-react';
 import logoImg from '@/assets/logo-auth.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -282,8 +282,43 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-card flex items-center justify-center p-4 sm:p-6">
-      <Card className="w-full max-w-md p-6 sm:p-8 shadow-medium">
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[1.08fr_0.92fr]">
+      <section className="relative hidden overflow-hidden border-r border-border bg-foreground p-10 text-background lg:flex lg:flex-col lg:justify-between xl:p-14">
+        <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_20%_20%,hsl(var(--primary))_0,transparent_35%),radial-gradient(circle_at_80%_70%,white_0,transparent_28%)]" />
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium">
+            <Sparkles className="h-3.5 w-3.5" />
+            L’App du Salon V2
+          </div>
+          <div className="mt-10 max-w-xl">
+            <h1 className="text-4xl font-semibold leading-tight tracking-tight xl:text-5xl">
+              Pilotez votre salon depuis un seul espace.
+            </h1>
+            <p className="mt-5 max-w-lg text-base leading-7 text-white/65">
+              Encaissements, rendez-vous, clients, équipe et performances réunis dans une interface pensée pour le quotidien.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 grid max-w-xl grid-cols-2 gap-3">
+          {[
+            { icon: Scissors, label: 'Caisse rapide' },
+            { icon: CalendarDays, label: 'Agenda centralisé' },
+            { icon: BarChart3, label: 'Pilotage du CA' },
+            { icon: ShieldCheck, label: 'Accès sécurisé' },
+          ].map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="rounded-xl bg-white/10 p-2">
+                <Icon className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-medium text-white/85">{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-10">
+        <Card className="w-full max-w-md rounded-3xl border-border/70 p-6 shadow-medium sm:p-8">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           {mfaRequired ? (
             <div className="p-3 bg-accent rounded-lg mb-4">
@@ -291,7 +326,7 @@ const Auth = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center w-full">
-              <img src={logoImg} alt="L'app du salon" className="h-64 sm:h-80 w-auto mb-4" />
+              <img src={logoImg} alt="L'app du salon" className="h-24 sm:h-28 w-auto mb-5" />
               <p className="text-muted-foreground text-center text-sm sm:text-base">
                 {isForgotPassword 
                   ? 'Réinitialisez votre mot de passe' 
@@ -535,7 +570,8 @@ const Auth = () => {
             </Button>
           </div>
         )}
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
