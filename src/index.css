@@ -39,7 +39,7 @@ All colors MUST be HSL.
     --input: 214 32% 91%;
     --ring: 243 75% 59%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     /* Custom POS colors */
     --pos-success: 142 71% 45%;
@@ -53,8 +53,8 @@ All colors MUST be HSL.
     --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 40% 99%));
 
     /* Shadows */
-    --shadow-soft: 0 1px 3px hsl(222 47% 11% / 0.06), 0 1px 2px hsl(222 47% 11% / 0.04);
-    --shadow-medium: 0 4px 16px hsl(222 47% 11% / 0.08);
+    --shadow-soft: 0 1px 2px hsl(222 47% 11% / 0.04), 0 8px 24px hsl(222 47% 11% / 0.05);
+    --shadow-medium: 0 12px 32px hsl(222 47% 11% / 0.08);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -113,7 +113,7 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     /* Laisser le navigateur gérer le touch/scroll (plus fiable sur iOS/Capacitor) */
@@ -134,5 +134,20 @@ All colors MUST be HSL.
     input, select, textarea {
       font-size: 14px;
     }
+  }
+}
+
+@layer components {
+  .v2-panel {
+    @apply rounded-2xl border border-border/70 bg-card shadow-sm;
+  }
+
+  .v2-kpi {
+    @apply rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-200;
+  }
+
+  .v2-kpi:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-medium);
   }
 }
