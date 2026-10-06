@@ -8,8 +8,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const ALLOWED_ADMIN_EMAILS = new Set<string>(["dylan.cecius@gmail.com"]);
-
 function corsHeaders(origin?: string) {
   return {
     "Access-Control-Allow-Origin": origin || "*",
@@ -39,8 +37,14 @@ serve(async (req) => {
       });
     }
 
-    const requesterEmail = userResult.user.email ?? "";
-    if (!ALLOWED_ADMIN_EMAILS.has(requesterEmail)) {
+    const requesterEmail = (userResult.user.email ?? "").toLowerCase();
+    const { data: adminRecord, error: adminError } = await supabaseAdmin
+      .from("platform_admin_emails")
+      .select("email")
+      .eq("email", requesterEmail)
+      .maybeSingle();
+
+    if (adminError || !adminRecord) {
       return new Response(JSON.stringify({ error: "forbidden", message: "Not allowed" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
