@@ -15,6 +15,8 @@ export interface Transaction {
   totalAmount: number;
   paymentMethod: 'cash' | 'card';
   transactionDate: Date;
+  clientId?: string;
+  staffId?: string;
 }
 
 export const useSupabaseTransactions = () => {
@@ -45,7 +47,9 @@ export const useSupabaseTransactions = () => {
         items: tx.items as any,
         totalAmount: tx.total_amount,
         paymentMethod: tx.payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Paris')
+        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Paris'),
+        clientId: tx.client_id || undefined,
+        staffId: tx.staff_id || undefined
       })) || [];
 
       setTransactions(formattedTransactions);
@@ -93,6 +97,8 @@ export const useSupabaseTransactions = () => {
           user_id: user.id,
           salon_id: salonIdData,
           employee_id: employeeIdData || null,
+          client_id: transaction.clientId || null,
+          staff_id: transaction.staffId || employeeIdData || null,
           transaction_date: currentTimeUTC.toISOString()
         })
         .select()
@@ -105,7 +111,9 @@ export const useSupabaseTransactions = () => {
         items: (data as any).items as any,
         totalAmount: (data as any).total_amount,
         paymentMethod: (data as any).payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris')
+        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris'),
+        clientId: (data as any).client_id || undefined,
+        staffId: (data as any).staff_id || undefined
       };
 
       setTransactions(prev => [newTransaction, ...prev]);
@@ -130,6 +138,8 @@ export const useSupabaseTransactions = () => {
       if (updates.items) updateData.items = updates.items as any;
       if (updates.totalAmount !== undefined) updateData.total_amount = updates.totalAmount;
       if (updates.paymentMethod) updateData.payment_method = updates.paymentMethod;
+      if (updates.clientId !== undefined) updateData.client_id = updates.clientId || null;
+      if (updates.staffId !== undefined) updateData.staff_id = updates.staffId || null;
 
       const { error } = await supabase
         .from('transactions' as any)
