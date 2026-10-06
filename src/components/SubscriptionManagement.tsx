@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import PromoCodeManagement from './PromoCodeManagement';
 import PromoCodeRedemption from './PromoCodeRedemption';
-import { useAuth } from '@/hooks/useAuth';
+import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 
 const SubscriptionManagement = () => {
   const { 
@@ -21,8 +21,8 @@ const SubscriptionManagement = () => {
     openCustomerPortal 
   } = useSubscription();
   
-  const { user } = useAuth();
-  const canManagePromoCodes = user?.email === 'dylan.cecius@gmail.com';
+  const { isPlatformAdmin } = usePlatformAdmin();
+  const canManagePromoCodes = isPlatformAdmin;
 
   const plans = [
     {
