@@ -2,43 +2,48 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TIME_ZONE = 'Europe/Brussels';
+const TIME_ZONE = "Europe/Brussels";
 const SLOT_INTERVAL = 30;
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 const toMinutes = (time: string) => {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
 };
 
 const toTimeString = (minutes: number) =>
-  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+  `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 
 const zonedDateTimeToUtc = (date: string, time: string, timeZone = TIME_ZONE) => {
-  const [year, month, day] = date.split('-').map(Number);
-  const [hour, minute] = time.split(':').map(Number);
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
 
   const guess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
-  const formatter = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hourCycle: 'h23',
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
   });
 
   const parts = Object.fromEntries(
     formatter.formatToParts(guess)
-      .filter(part => part.type !== 'literal')
-      .map(part => [part.type, part.value])
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
   );
 
   const asUtc = Date.UTC(
@@ -50,33 +55,87 @@ const zonedDateTimeToUtc = (date: string, time: string, timeZone = TIME_ZONE) =>
     Number(parts.second)
   );
 
-  const offset = asUtc - guess.getTime();
-  return new Date(guess.getTime() - offset);
+  return new Date(guess.getTime() - (asUtc - guess.getTime()));
+};
+
+const normalizeTier = (tier?: string | null) => {
+  if (tier === "Pro") return "Equipe";
+  if (tier === "Enterprise") return "Lifetime";
+  return tier ?? null;
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
     const url = new URL(req.url);
-    const salonId = url.searchParams.get('salon_id');
-    const requestedStaffId = url.searchParams.get('staff_id');
-    const date = url.searchParams.get('date');
-    const duration = Math.max(5, parseInt(url.searchParams.get('duration') || '30', 10));
+    const salonId = url.searchParams.get("salon_id");
+    const serviceId = url.searchParams.get("service_id");
+    const requestedStaffId = url.searchParams.get("staff_id");
+    const date = url.searchParams.get("date");
 
-    if (!salonId || !date) {
-      return new Response(
-        JSON.stringify({ error: 'salon_id and date are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!salonId || !serviceId || !date) {
+      return jsonResponse({ error: "salon_id, service_id and date are required" }, 400);
     }
+
+    const { data: salon, error: salonError } = await supabase
+      .from("salons")
+      .select("owner_user_id")
+      .eq("id", salonId)
+      .maybeSingle();
+
+    if (salonError) throw salonError;
+    if (!salon?.owner_user_id) return jsonResponse({ error: "salon_not_found" }, 404);
+
+    const { data: ownerResult } = await supabase.auth.admin.getUserById(salon.owner_user_id);
+    const ownerEmail = ownerResult?.user?.email?.toLowerCase() || "";
+
+    const [{ data: platformAdmin }, { data: subscriber }, { data: service, error: serviceError }] =
+      await Promise.all([
+        ownerEmail
+          ? supabase.from("platform_admin_emails").select("email").eq("email", ownerEmail).maybeSingle()
+          : Promise.resolve({ data: null }),
+        supabase
+          .from("subscribers")
+          .select("subscribed, subscription_tier, subscription_end")
+          .eq("user_id", salon.owner_user_id)
+          .maybeSingle(),
+        supabase
+          .from("services")
+          .select("id, duration, appointment_buffer")
+          .eq("id", serviceId)
+          .eq("salon_id", salonId)
+          .eq("is_active", true)
+          .maybeSingle(),
+      ]);
+
+    if (serviceError) throw serviceError;
+    if (!service) return jsonResponse({ error: "service_not_found" }, 404);
+
+    const tier = normalizeTier(subscriber?.subscription_tier);
+    const subscriptionValid =
+      subscriber?.subscribed === true &&
+      (!subscriber.subscription_end ||
+        new Date(subscriber.subscription_end).getTime() > Date.now());
+
+    const canUseOnlineBooking =
+      Boolean(platformAdmin) ||
+      (subscriptionValid && ["Solo", "Equipe", "Lifetime"].includes(tier || ""));
+
+    if (!canUseOnlineBooking) {
+      return jsonResponse({ error: "online_booking_unavailable" }, 403);
+    }
+
+    const duration = Math.max(
+      5,
+      Number(service.duration || 30) + Number(service.appointment_buffer || 0)
+    );
 
     const dayProbe = new Date(`${date}T12:00:00Z`);
     const jsDay = dayProbe.getUTCDay();
@@ -85,83 +144,79 @@ serve(async (req) => {
 
     const [{ data: openingHours }, { data: staffRows, error: staffError }] = await Promise.all([
       supabase
-        .from('opening_hours')
-        .select('is_open, open_time, close_time, break_start, break_end')
-        .eq('salon_id', salonId)
-        .eq('day_of_week', openingDayIndex)
+        .from("opening_hours")
+        .select("is_open, open_time, close_time, break_start, break_end")
+        .eq("salon_id", salonId)
+        .eq("day_of_week", openingDayIndex)
         .maybeSingle(),
       supabase
-        .from('staff')
-        .select('id, name, daily_schedules, working_days, start_time, end_time')
-        .eq('salon_id', salonId)
-        .eq('is_active', true)
-        .order('name'),
+        .from("staff")
+        .select("id, name, daily_schedules, working_days, start_time, end_time")
+        .eq("salon_id", salonId)
+        .eq("is_active", true)
+        .order("name"),
     ]);
 
     if (staffError) throw staffError;
 
     if (openingHours && !openingHours.is_open) {
-      return new Response(
-        JSON.stringify({ date, slots: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ date, slots: [] });
     }
 
-    const salonOpen = toMinutes(openingHours?.open_time || '09:00');
-    const salonClose = toMinutes(openingHours?.close_time || '19:00');
-    const salonBreakStart = openingHours?.break_start ? toMinutes(openingHours.break_start) : null;
-    const salonBreakEnd = openingHours?.break_end ? toMinutes(openingHours.break_end) : null;
+    const salonOpen = toMinutes(openingHours?.open_time || "09:00");
+    const salonClose = toMinutes(openingHours?.close_time || "19:00");
+    const salonBreakStart = openingHours?.break_start
+      ? toMinutes(openingHours.break_start)
+      : null;
+    const salonBreakEnd = openingHours?.break_end
+      ? toMinutes(openingHours.break_end)
+      : null;
 
     const candidates = (staffRows || [])
-      .filter(member => !requestedStaffId || member.id === requestedStaffId)
-      .map(member => {
-        const schedules = (member.daily_schedules || {}) as Record<string, { start: string; end: string }>;
+      .filter((member) => !requestedStaffId || member.id === requestedStaffId)
+      .map((member) => {
+        const schedules = (member.daily_schedules || {}) as Record<
+          string,
+          { start: string; end: string }
+        >;
         const explicitSchedule = schedules[staffDayName];
         const workingDays = Array.isArray(member.working_days) ? member.working_days : [];
 
-        if (!explicitSchedule && !workingDays.includes(staffDayName)) {
-          return null;
-        }
+        if (!explicitSchedule && !workingDays.includes(staffDayName)) return null;
 
-        const start = toMinutes(explicitSchedule?.start || member.start_time || '09:00');
-        const end = toMinutes(explicitSchedule?.end || member.end_time || '19:00');
+        const start = toMinutes(explicitSchedule?.start || member.start_time || "09:00");
+        const end = toMinutes(explicitSchedule?.end || member.end_time || "19:00");
 
         return {
           id: member.id,
-          name: member.name,
           start: Math.max(start, salonOpen),
           end: Math.min(end, salonClose),
         };
       })
-      .filter((member): member is { id: string; name: string; start: number; end: number } =>
-        Boolean(member && member.end > member.start)
+      .filter(
+        (member): member is { id: string; start: number; end: number } =>
+          Boolean(member && member.end > member.start)
       );
 
-    if (candidates.length === 0) {
-      return new Response(
-        JSON.stringify({ date, slots: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    if (candidates.length === 0) return jsonResponse({ date, slots: [] });
 
-    const localDayStart = zonedDateTimeToUtc(date, '00:00');
+    const localDayStart = zonedDateTimeToUtc(date, "00:00");
     const nextDate = new Date(`${date}T12:00:00Z`);
     nextDate.setUTCDate(nextDate.getUTCDate() + 1);
-    const nextDateString = nextDate.toISOString().slice(0, 10);
-    const localDayEnd = zonedDateTimeToUtc(nextDateString, '00:00');
+    const localDayEnd = zonedDateTimeToUtc(nextDate.toISOString().slice(0, 10), "00:00");
 
     const { data: appointments, error: appointmentsError } = await supabase
-      .from('appointments')
-      .select('staff_id, start_time, end_time')
-      .eq('salon_id', salonId)
-      .neq('status', 'cancelled')
-      .gte('start_time', localDayStart.toISOString())
-      .lt('start_time', localDayEnd.toISOString());
+      .from("appointments")
+      .select("staff_id, start_time, end_time")
+      .eq("salon_id", salonId)
+      .neq("status", "cancelled")
+      .gte("start_time", localDayStart.toISOString())
+      .lt("start_time", localDayEnd.toISOString());
 
     if (appointmentsError) throw appointmentsError;
 
-    const firstMinute = Math.min(...candidates.map(member => member.start));
-    const lastMinute = Math.max(...candidates.map(member => member.end));
+    const firstMinute = Math.min(...candidates.map((member) => member.start));
+    const lastMinute = Math.max(...candidates.map((member) => member.end));
     const now = new Date();
 
     const slots: Array<{
@@ -184,17 +239,17 @@ serve(async (req) => {
         continue;
       }
 
+      const slotStart = zonedDateTimeToUtc(date, toTimeString(minute));
+      const slotEnd = zonedDateTimeToUtc(date, toTimeString(endMinute));
+
+      if (slotStart <= now) continue;
+
       let assignedStaffId: string | null = null;
 
       for (const member of candidates) {
         if (minute < member.start || endMinute > member.end) continue;
 
-        const slotStart = zonedDateTimeToUtc(date, toTimeString(minute));
-        const slotEnd = zonedDateTimeToUtc(date, toTimeString(endMinute));
-
-        if (slotStart <= now) continue;
-
-        const conflict = (appointments || []).some(appointment => {
+        const conflict = (appointments || []).some((appointment) => {
           if (appointment.staff_id !== member.id) return false;
           const appointmentStart = new Date(appointment.start_time);
           const appointmentEnd = new Date(appointment.end_time);
@@ -207,9 +262,6 @@ serve(async (req) => {
         }
       }
 
-      const slotStart = zonedDateTimeToUtc(date, toTimeString(minute));
-      const slotEnd = zonedDateTimeToUtc(date, toTimeString(endMinute));
-
       slots.push({
         time: toTimeString(minute),
         start_time: slotStart.toISOString(),
@@ -219,15 +271,9 @@ serve(async (req) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({ date, slots }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ date, slots });
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error("[BOOKING-SLOTS]", error);
+    return jsonResponse({ error: "internal_server_error" }, 500);
   }
 });
