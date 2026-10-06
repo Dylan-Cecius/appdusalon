@@ -4,6 +4,7 @@ import { useCombinedStats } from '@/hooks/useCombinedStats';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useOpeningHours } from '@/hooks/useOpeningHours';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,6 +26,7 @@ const Dashboard = () => {
   const { transactions } = useTransactions();
   const { appointments } = useSupabaseAppointments();
   const { subscription_end, subscribed } = useSubscription();
+  const { schedule, hasData: hasOpeningHours } = useOpeningHours();
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -44,26 +46,32 @@ const Dashboard = () => {
     [appointments]
   );
 
-  // --- KPI: Clients encaissés aujourd'hui (distinct clients from today's transactions) ---
+  const countDistinctClients = (txs: typeof transactions) => {
+    const knownClientIds = new Set(txs.map(tx => tx.clientId).filter(Boolean));
+    const anonymousTransactions = txs.filter(tx => !tx.clientId).length;
+    return knownClientIds.size + anonymousTransactions;
+  };
+
+  // --- KPI: Clients encaissés aujourd'hui ---
   const todayDistinctClients = useMemo(() => {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     const todayTx = transactions.filter(tx => {
       const txDate = new Date(tx.transactionDate);
-      return new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate()) >= startOfToday;
+      return txDate >= startOfToday && txDate <= endOfToday;
     });
-    return todayTx.length;
+    return countDistinctClients(todayTx);
   }, [transactions]);
 
   // --- Previous day clients for comparison ---
   const yesterdayDistinctClients = useMemo(() => {
     const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const yesterdayTx = transactions.filter(tx => {
       const txDate = new Date(tx.transactionDate);
-      const txLocal = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
-      return txLocal >= startOfYesterday && txLocal < startOfToday;
+      return txDate >= startOfYesterday && txDate < endOfYesterday;
     });
-    return yesterdayTx.length;
+    return countDistinctClients(yesterdayTx);
   }, [transactions]);
 
   // --- Revenue chart: 6 months (from transactions + paid appointments) ---
@@ -126,9 +134,14 @@ const Dashboard = () => {
       d.setHours(0, 0, 0, 0);
       const endNorm = new Date(end);
       endNorm.setHours(0, 0, 0, 0);
+
       while (d <= endNorm) {
-        const day = d.getDay();
-        if (day !== 0 && day !== 6) count++;
+        const jsDay = d.getDay();
+        const dayIndex = jsDay === 0 ? 6 : jsDay - 1;
+        const configuredDay = schedule.find(day => day.day_of_week === dayIndex);
+        const isOpen = hasOpeningHours ? configuredDay?.is_open === true : jsDay !== 0 && jsDay !== 6;
+
+        if (isOpen) count++;
         d.setDate(d.getDate() + 1);
       }
       return count;
@@ -155,7 +168,7 @@ const Dashboard = () => {
       projectedCA: projected,
       projectionProgress: progress,
     };
-  }, [now, stats.monthlyRevenue]);
+  }, [now, stats.monthlyRevenue, schedule, hasOpeningHours]);
 
   // --- Variation helper ---
   const Variation = ({ current, previous, suffix = '' }: { current: number; previous: number; suffix?: string }) => {
