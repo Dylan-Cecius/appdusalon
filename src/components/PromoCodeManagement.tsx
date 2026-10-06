@@ -240,8 +240,8 @@ const PromoCodeManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="trial_month">Essai gratuit 1 mois (Plan Pro)</SelectItem>
-                    <SelectItem value="lifetime_free">Abonnement à vie (Plan Enterprise)</SelectItem>
+                    <SelectItem value="trial_month">Essai gratuit 1 mois (Plan Équipe)</SelectItem>
+                    <SelectItem value="lifetime_free">Abonnement Lifetime</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
