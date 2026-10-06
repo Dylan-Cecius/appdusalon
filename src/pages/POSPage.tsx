@@ -139,15 +139,19 @@ const POSPage = () => {
     e.preventDefault();
     if (!productForm.name.trim()) return;
     try {
-      await createProduct({
+      await createProduct.mutateAsync({
         name: productForm.name.trim(),
-        sale_price: parseFloat(productForm.price) || 0,
+        description: null,
+        sku: null,
+        category: 'autre',
         purchase_price: 0,
+        sell_price: parseFloat(productForm.price) || 0,
         current_stock: 0,
         min_stock: 0,
-        category: 'produit',
+        unit: 'unité',
+        supplier: null,
         is_active: true,
-      } as any);
+      });
       toast({ title: 'Succès', description: 'Produit ajouté avec succès' });
       setProductForm({ name: '', price: '', category: 'produit' });
       setIsAddProductOpen(false);
