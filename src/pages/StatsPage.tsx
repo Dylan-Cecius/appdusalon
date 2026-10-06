@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DollarSign } from 'lucide-react';
@@ -27,28 +27,19 @@ const StatsPage = () => {
   const { stats } = useCombinedStats();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, []);
-
-  useEffect(() => {
-    setTimeout(() => {
-      const el = document.getElementById('revenue-section');
-      if (el) {
-        window.scrollTo({ top: el.offsetTop - 120, behavior: 'instant' as ScrollBehavior });
-      }
-    }, 100);
-  }, []);
-
   return (
     <MainLayout>
-      <div className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <h2 className="text-xl sm:text-2xl font-bold">Statistiques & Analyses</h2>
+      <div className="space-y-6 sm:space-y-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Pilotage</p>
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Statistiques</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Analysez le chiffre d’affaires, la fréquentation et les performances du salon.</p>
+          </div>
           <Button
             onClick={() => setIsTransactionsManagerOpen(true)}
             variant="outline"
-            className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 w-full sm:w-auto min-h-[44px]"
+            className="min-h-[44px] w-full rounded-xl sm:w-auto"
           >
             <DollarSign className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
             <span className="text-sm sm:text-base">Gérer les encaissements</span>
@@ -56,10 +47,8 @@ const StatsPage = () => {
         </div>
 
         {/* Raccourcis de navigation */}
-        <Card className="p-3 sm:p-4">
-          <h3 className="font-semibold mb-3 text-xs sm:text-sm text-muted-foreground">
-            ACCÈS RAPIDE
-          </h3>
+        <Card className="v2-panel p-4 sm:p-5">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Accès rapide</h3>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -137,7 +126,7 @@ const StatsPage = () => {
         </Card>
 
         <div id="revenue-section">
-          <h3 className="text-lg sm:text-xl font-bold mb-4">Chiffre d'affaires</h3>
+          <h3 className="mb-4 text-xl font-semibold tracking-tight">Chiffre d’affaires</h3>
           <StatsOverview stats={stats} />
         </div>
 
