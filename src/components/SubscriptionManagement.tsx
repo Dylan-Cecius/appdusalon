@@ -229,7 +229,7 @@ const SubscriptionManagement = () => {
                     </Button>
                   ) : (
                     <Button
-                      onClick={() => createCheckoutSession(plan.id as 'starter' | 'pro' | 'enterprise')}
+                      onClick={() => createCheckoutSession(plan.id as 'solo' | 'equipe')}
                       disabled={isCurrentPlan}
                       className={`w-full ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : `bg-gradient-to-r ${plan.color} hover:opacity-90`}`}
                     >
