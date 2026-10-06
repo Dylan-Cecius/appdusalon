@@ -85,7 +85,7 @@ const StaffPage = () => {
         working_days: workingDays,
         start_time: workingDays.length > 0 ? schedules[workingDays[0]].start : '09:00',
         end_time: workingDays.length > 0 ? schedules[workingDays[0]].end : '19:00',
-      } as any,
+      },
     });
     setScheduleStaff(null);
   };
@@ -152,10 +152,11 @@ const StaffPage = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2"><Users className="h-6 w-6" /> Mon équipe</h2>
-            <p className="text-sm text-muted-foreground">{activeStaff.length} membre{activeStaff.length > 1 ? 's' : ''} actif{activeStaff.length > 1 ? 's' : ''}</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Organisation</p>
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Équipe</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{activeStaff.length} membre{activeStaff.length > 1 ? 's' : ''} actif{activeStaff.length > 1 ? 's' : ''} · horaires, rôles et commissions.</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -168,7 +169,7 @@ const StaffPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedStaff.map((s) => (
-            <Card key={s.id} className={`transition-opacity ${!s.is_active ? 'opacity-60' : ''}`}>
+            <Card key={s.id} className={`v2-kpi transition-opacity ${!s.is_active ? 'opacity-60' : ''}`}>
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0" style={{ backgroundColor: s.color }}>
@@ -219,7 +220,7 @@ const StaffPage = () => {
             </div>
           )}
         </div>
-        <StaffPerformance />
+        <div className="v2-panel p-1 sm:p-2"><StaffPerformance /></div>
       </div>
 
       {/* Create Dialog */}
