@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
+import OnboardingChecklist from '@/components/OnboardingChecklist';
 import {
   DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
   ArrowRight, BarChart3, Target, Clock, Calculator
