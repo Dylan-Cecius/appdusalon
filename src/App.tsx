@@ -25,6 +25,7 @@ import ServicesPage from "./pages/ServicesPage";
 import ProduitsPage from "./pages/ProduitsPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SubscriptionGuard from "./components/SubscriptionGuard";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
 
@@ -62,8 +63,8 @@ const App = () => {
                 <Route path="/pos" element={<AuthGuard><POSPage /></AuthGuard>} />
                 <Route path="/clients" element={<AuthGuard><ClientsPage /></AuthGuard>} />
                 <Route path="/equipe" element={<AuthGuard><StaffPage /></AuthGuard>} />
-                <Route path="/sms" element={<AuthGuard><SMSPage /></AuthGuard>} />
-                <Route path="/stocks" element={<AuthGuard><StocksPage /></AuthGuard>} />
+                <Route path="/sms" element={<AuthGuard><SubscriptionGuard feature="canUseSmsAutomations"><SMSPage /></SubscriptionGuard></AuthGuard>} />
+                <Route path="/stocks" element={<AuthGuard><SubscriptionGuard feature="canManageInventory"><StocksPage /></SubscriptionGuard></AuthGuard>} />
                 <Route path="/services" element={<AuthGuard><ServicesPage /></AuthGuard>} />
                 <Route path="/produits" element={<AuthGuard><ProduitsPage /></AuthGuard>} />
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
@@ -88,7 +89,9 @@ const App = () => {
                   element={
                     <AuthGuard>
                       <ProtectedRoute section="reports">
-                        <ReportsPage />
+                        <SubscriptionGuard feature="canSendEmails">
+                          <ReportsPage />
+                        </SubscriptionGuard>
                       </ProtectedRoute>
                     </AuthGuard>
                   } 
