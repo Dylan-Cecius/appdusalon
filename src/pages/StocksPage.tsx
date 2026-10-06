@@ -187,10 +187,11 @@ const StocksPage = () => {
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2"><Package className="h-6 w-6" /> Gestion des stocks</h2>
-            <p className="text-sm text-muted-foreground">{products.length} produit{products.length > 1 ? 's' : ''} · {lowStockProducts.length} alerte{lowStockProducts.length > 1 ? 's' : ''}</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Inventaire</p>
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Stocks</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{products.length} produit{products.length > 1 ? 's' : ''} · {lowStockProducts.length} alerte{lowStockProducts.length > 1 ? 's' : ''} à surveiller.</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={openInventory}><ClipboardCheck className="h-4 w-4 mr-2" />Inventaire</Button>
@@ -200,26 +201,26 @@ const StocksPage = () => {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
+          <Card className="v2-kpi">
+            <CardContent className="p-4 sm:p-5">
               <p className="text-sm text-muted-foreground">Produits</p>
               <p className="text-2xl font-bold mt-1">{products.length}</p>
             </CardContent>
           </Card>
-          <Card className={criticalStockProducts.length > 0 ? 'border-destructive/50' : ''}>
+          <Card className={`v2-kpi ${criticalStockProducts.length > 0 ? 'border-destructive/50' : ''}`}>
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">Alertes stock</p>
               <p className={`text-2xl font-bold mt-1 ${criticalStockProducts.length > 0 ? 'text-destructive' : ''}`}>{lowStockProducts.length}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <Card className="v2-kpi">
+            <CardContent className="p-4 sm:p-5">
               <p className="text-sm text-muted-foreground">Valeur stock (achat)</p>
               <p className="text-2xl font-bold mt-1">{totalStockValue.toFixed(0)} €</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <Card className="v2-kpi">
+            <CardContent className="p-4 sm:p-5">
               <p className="text-sm text-muted-foreground">Valeur stock (vente)</p>
               <p className="text-2xl font-bold mt-1">{totalSellValue.toFixed(0)} €</p>
             </CardContent>
@@ -230,7 +231,7 @@ const StocksPage = () => {
         {categoryStats.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {categoryStats.map(cat => (
-              <Card key={cat.value} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => { setFilterCategory(cat.value); setTab('products'); }}>
+              <Card key={cat.value} className="v2-kpi cursor-pointer hover:border-primary/50" onClick={() => { setFilterCategory(cat.value); setTab('products'); }}>
                 <CardContent className="p-3 text-center">
                   <p className="text-xs text-muted-foreground">{cat.category}</p>
                   <p className="text-lg font-bold">{cat.count}</p>
