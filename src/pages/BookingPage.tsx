@@ -121,7 +121,7 @@ export default function BookingPage() {
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
         const staffParam = noPreference ? '' : `&staff_id=${selectedStaff?.id || ''}`;
         const response = await fetch(
-          `${SUPABASE_URL}/functions/v1/get-booking-slots?salon_id=${salonId}&date=${dateStr}&duration=${selectedService.duration}${staffParam}`,
+          `${SUPABASE_URL}/functions/v1/get-booking-slots?salon_id=${salonId}&date=${dateStr}&service_id=${selectedService.id}${staffParam}`,
           { headers: { apikey: SUPABASE_KEY } }
         );
         if (response.status === 403) {
@@ -154,9 +154,8 @@ export default function BookingPage() {
         body: JSON.stringify({
           salon_id: salonId,
           staff_id: noPreference ? (selectedSlot.staff_id || null) : selectedStaff?.id,
-          service: { name: selectedService.name, price: selectedService.price },
+          service_id: selectedService.id,
           start_time: selectedSlot.start_time,
-          end_time: selectedSlot.end_time,
           client_name: `${firstName.trim()} ${lastName.trim()}`,
           client_phone: phone.trim(),
         }),
