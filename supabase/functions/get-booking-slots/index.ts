@@ -6,6 +6,54 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const TIME_ZONE = 'Europe/Brussels';
+const SLOT_INTERVAL = 30;
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const toMinutes = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+const toTimeString = (minutes: number) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+
+const zonedDateTimeToUtc = (date: string, time: string, timeZone = TIME_ZONE) => {
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+
+  const guess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+
+  const parts = Object.fromEntries(
+    formatter.formatToParts(guess)
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  );
+
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second)
+  );
+
+  const offset = asUtc - guess.getTime();
+  return new Date(guess.getTime() - offset);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -19,9 +67,9 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const salonId = url.searchParams.get('salon_id');
-    const staffId = url.searchParams.get('staff_id'); // optional, null = any
-    const date = url.searchParams.get('date'); // YYYY-MM-DD
-    const duration = parseInt(url.searchParams.get('duration') || '30');
+    const requestedStaffId = url.searchParams.get('staff_id');
+    const date = url.searchParams.get('date');
+    const duration = Math.max(5, parseInt(url.searchParams.get('duration') || '30', 10));
 
     if (!salonId || !date) {
       return new Response(
@@ -30,81 +78,145 @@ serve(async (req) => {
       );
     }
 
-    // Get salon owner for appointment queries
-    const { data: salon } = await supabase
-      .from('salons')
-      .select('owner_user_id')
-      .eq('id', salonId)
-      .single();
+    const dayProbe = new Date(`${date}T12:00:00Z`);
+    const jsDay = dayProbe.getUTCDay();
+    const staffDayName = DAY_NAMES[jsDay];
+    const openingDayIndex = jsDay === 0 ? 6 : jsDay - 1;
 
-    if (!salon) {
+    const [{ data: openingHours }, { data: staffRows, error: staffError }] = await Promise.all([
+      supabase
+        .from('opening_hours')
+        .select('is_open, open_time, close_time, break_start, break_end')
+        .eq('salon_id', salonId)
+        .eq('day_of_week', openingDayIndex)
+        .maybeSingle(),
+      supabase
+        .from('staff')
+        .select('id, name, daily_schedules, working_days, start_time, end_time')
+        .eq('salon_id', salonId)
+        .eq('is_active', true)
+        .order('name'),
+    ]);
+
+    if (staffError) throw staffError;
+
+    if (openingHours && !openingHours.is_open) {
       return new Response(
-        JSON.stringify({ error: 'Salon not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ date, slots: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const targetDate = new Date(date + 'T00:00:00');
-    const startOfDay = new Date(date + 'T00:00:00.000Z');
-    const endOfDay = new Date(date + 'T23:59:59.999Z');
+    const salonOpen = toMinutes(openingHours?.open_time || '09:00');
+    const salonClose = toMinutes(openingHours?.close_time || '19:00');
+    const salonBreakStart = openingHours?.break_start ? toMinutes(openingHours.break_start) : null;
+    const salonBreakEnd = openingHours?.break_end ? toMinutes(openingHours.break_end) : null;
 
-    // Fetch existing appointments for this salon on this date
-    let apptQuery = supabase
+    const candidates = (staffRows || [])
+      .filter(member => !requestedStaffId || member.id === requestedStaffId)
+      .map(member => {
+        const schedules = (member.daily_schedules || {}) as Record<string, { start: string; end: string }>;
+        const explicitSchedule = schedules[staffDayName];
+        const workingDays = Array.isArray(member.working_days) ? member.working_days : [];
+
+        if (!explicitSchedule && !workingDays.includes(staffDayName)) {
+          return null;
+        }
+
+        const start = toMinutes(explicitSchedule?.start || member.start_time || '09:00');
+        const end = toMinutes(explicitSchedule?.end || member.end_time || '19:00');
+
+        return {
+          id: member.id,
+          name: member.name,
+          start: Math.max(start, salonOpen),
+          end: Math.min(end, salonClose),
+        };
+      })
+      .filter((member): member is { id: string; name: string; start: number; end: number } =>
+        Boolean(member && member.end > member.start)
+      );
+
+    if (candidates.length === 0) {
+      return new Response(
+        JSON.stringify({ date, slots: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const localDayStart = zonedDateTimeToUtc(date, '00:00');
+    const nextDate = new Date(`${date}T12:00:00Z`);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+    const nextDateString = nextDate.toISOString().slice(0, 10);
+    const localDayEnd = zonedDateTimeToUtc(nextDateString, '00:00');
+
+    const { data: appointments, error: appointmentsError } = await supabase
       .from('appointments')
       .select('staff_id, start_time, end_time')
       .eq('salon_id', salonId)
       .neq('status', 'cancelled')
-      .gte('start_time', startOfDay.toISOString())
-      .lte('start_time', endOfDay.toISOString());
+      .gte('start_time', localDayStart.toISOString())
+      .lt('start_time', localDayEnd.toISOString());
 
-    if (staffId) {
-      apptQuery = apptQuery.eq('staff_id', staffId);
-    }
+    if (appointmentsError) throw appointmentsError;
 
-    const { data: appointments } = await apptQuery;
-
-    // Generate slots from 9h to 18h, 30-min intervals
-    const WORK_START = 9;
-    const WORK_END = 18;
-    const SLOT_INTERVAL = 30;
-
-    const slots: Array<{ time: string; start_time: string; end_time: string; available: boolean }> = [];
+    const firstMinute = Math.min(...candidates.map(member => member.start));
+    const lastMinute = Math.max(...candidates.map(member => member.end));
     const now = new Date();
 
-    for (let hour = WORK_START; hour < WORK_END; hour++) {
-      for (let minute = 0; minute < 60; minute += SLOT_INTERVAL) {
-        const slotStart = new Date(targetDate);
-        slotStart.setHours(hour, minute, 0, 0);
-        const slotEnd = new Date(slotStart);
-        slotEnd.setMinutes(slotEnd.getMinutes() + duration);
+    const slots: Array<{
+      time: string;
+      start_time: string;
+      end_time: string;
+      available: boolean;
+      staff_id: string | null;
+    }> = [];
 
-        // Skip if slot end goes past work hours
-        if (slotEnd.getHours() > WORK_END || (slotEnd.getHours() === WORK_END && slotEnd.getMinutes() > 0)) {
-          continue;
-        }
+    for (let minute = firstMinute; minute + duration <= lastMinute; minute += SLOT_INTERVAL) {
+      const endMinute = minute + duration;
 
-        // Skip past slots
-        if (slotStart <= now) {
-          continue;
-        }
-
-        // Check conflicts
-        const hasConflict = appointments?.some(apt => {
-          if (staffId && apt.staff_id !== staffId) return false;
-          const aptStart = new Date(apt.start_time);
-          const aptEnd = new Date(apt.end_time);
-          return slotStart < aptEnd && slotEnd > aptStart;
-        }) || false;
-
-        const timeDisplay = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-
-        slots.push({
-          time: timeDisplay,
-          start_time: slotStart.toISOString(),
-          end_time: slotEnd.toISOString(),
-          available: !hasConflict
-        });
+      if (
+        salonBreakStart !== null &&
+        salonBreakEnd !== null &&
+        minute < salonBreakEnd &&
+        endMinute > salonBreakStart
+      ) {
+        continue;
       }
+
+      let assignedStaffId: string | null = null;
+
+      for (const member of candidates) {
+        if (minute < member.start || endMinute > member.end) continue;
+
+        const slotStart = zonedDateTimeToUtc(date, toTimeString(minute));
+        const slotEnd = zonedDateTimeToUtc(date, toTimeString(endMinute));
+
+        if (slotStart <= now) continue;
+
+        const conflict = (appointments || []).some(appointment => {
+          if (appointment.staff_id !== member.id) return false;
+          const appointmentStart = new Date(appointment.start_time);
+          const appointmentEnd = new Date(appointment.end_time);
+          return slotStart < appointmentEnd && slotEnd > appointmentStart;
+        });
+
+        if (!conflict) {
+          assignedStaffId = member.id;
+          break;
+        }
+      }
+
+      const slotStart = zonedDateTimeToUtc(date, toTimeString(minute));
+      const slotEnd = zonedDateTimeToUtc(date, toTimeString(endMinute));
+
+      slots.push({
+        time: toTimeString(minute),
+        start_time: slotStart.toISOString(),
+        end_time: slotEnd.toISOString(),
+        available: assignedStaffId !== null,
+        staff_id: assignedStaffId,
+      });
     }
 
     return new Response(
