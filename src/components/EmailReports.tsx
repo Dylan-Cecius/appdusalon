@@ -72,9 +72,10 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
         return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
       case 'current_month':
         return { start: startOfMonth(now), end: endOfMonth(now) };
-      case 'previous_month':
+      case 'previous_month': {
         const prevMonth = subMonths(now, 1);
         return { start: startOfMonth(prevMonth), end: endOfMonth(prevMonth) };
+      }
       case 'last_3_months':
         return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) };
       case 'custom':
