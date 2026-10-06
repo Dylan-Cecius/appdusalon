@@ -11,8 +11,8 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Clock, User, ArrowLeft, Loader2, Scissors } from 'lucide-react';
 import { toast } from 'sonner';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://vrawwiqeutbqqdzkhrax.supabase.co';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYXd3aXFldXRicXFkemtocmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxNjA0MDEsImV4cCI6MjA3MTczNjQwMX0.TnKumTl96ixa3D5hX0caknjh4DlwPU24PG9m-4hBJjY';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 interface Service {
   id: string;
@@ -49,6 +49,7 @@ export default function BookingPage() {
   const [salonName, setSalonName] = useState('');
   const [salonId, setSalonId] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [bookingUnavailable, setBookingUnavailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -72,6 +73,12 @@ export default function BookingPage() {
       return;
     }
     const fetchData = async () => {
+      if (!SUPABASE_URL || !SUPABASE_KEY) {
+        setBookingUnavailable(true);
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch(
           `${SUPABASE_URL}/functions/v1/get-salon-booking-data?slug=${encodeURIComponent(salonSlug)}`,
@@ -79,6 +86,10 @@ export default function BookingPage() {
         );
         if (response.status === 404) {
           setNotFound(true);
+          return;
+        }
+        if (response.status === 403) {
+          setBookingUnavailable(true);
           return;
         }
         const data = await response.json();
@@ -113,6 +124,11 @@ export default function BookingPage() {
           `${SUPABASE_URL}/functions/v1/get-booking-slots?salon_id=${salonId}&date=${dateStr}&duration=${selectedService.duration}${staffParam}`,
           { headers: { apikey: SUPABASE_KEY } }
         );
+        if (response.status === 403) {
+          setSlots([]);
+          setBookingUnavailable(true);
+          return;
+        }
         const data = await response.json();
         setSlots(data.slots || []);
       } catch (error) {
@@ -146,6 +162,10 @@ export default function BookingPage() {
         }),
       });
       const data = await response.json();
+      if (response.status === 403) {
+        setBookingUnavailable(true);
+        throw new Error("La réservation en ligne n'est pas disponible pour ce salon");
+      }
       if (!response.ok) {
         throw new Error(data.error || 'Erreur lors de la réservation');
       }
@@ -161,6 +181,22 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (bookingUnavailable) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="v2-panel max-w-md w-full text-center">
+          <CardContent className="pt-8 pb-8 space-y-4">
+            <Scissors className="h-12 w-12 text-muted-foreground mx-auto" />
+            <h2 className="text-2xl font-semibold text-foreground">Réservation en ligne indisponible</h2>
+            <p className="text-muted-foreground">
+              Ce salon n’a pas activé la réservation en ligne pour le moment.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
