@@ -3,22 +3,24 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { 
-  Shield, 
-  Users, 
-  Calendar, 
-  CreditCard, 
-  Scissors, 
-  BarChart3, 
-  Mail, 
-  Package, 
+import {
+  Shield,
+  Users,
+  Calendar,
+  CreditCard,
+  BarChart3,
+  Mail,
+  Package,
   Crown,
   AlertTriangle,
   CheckCircle,
-  XCircle
+  XCircle,
+  CalendarCheck,
+  MessageSquare,
+  Megaphone,
 } from "lucide-react";
 import { useSubscriptionRights } from "@/hooks/useSubscriptionRights";
-import { useSupabaseSettings } from "@/hooks/useSupabaseSettings";
+import { useStaff } from "@/hooks/useStaff";
 import { useSupabaseAppointments } from "@/hooks/useSupabaseAppointments";
 import { useSupabaseTransactions } from "@/hooks/useSupabaseTransactions";
 import { useMemo } from "react";
@@ -29,242 +31,226 @@ interface SubscriptionRightsDisplayProps {
   onUpgrade?: () => void;
 }
 
-export const SubscriptionRightsDisplay = ({ 
-  showUpgradeButton = true, 
-  onUpgrade 
+export const SubscriptionRightsDisplay = ({
+  showUpgradeButton = true,
+  onUpgrade,
 }: SubscriptionRightsDisplayProps) => {
-  const { rights, subscriptionTier, canAccess, getLimit, isWithinLimit, getRemainingUsage } = useSubscriptionRights();
-  const { barbers } = useSupabaseSettings();
+  const {
+    rights,
+    subscriptionTier,
+    canAccess,
+    getLimit,
+    loading,
+  } = useSubscriptionRights();
+  const { activeStaff } = useStaff();
   const { appointments } = useSupabaseAppointments();
   const { transactions } = useSupabaseTransactions();
 
-  // Calcul des utilisations actuelles
   const currentUsage = useMemo(() => {
     const now = new Date();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
-    const monthlyAppointments = appointments.filter(apt => 
-      apt.startTime >= monthStart && apt.startTime <= monthEnd
+    const monthlyAppointments = appointments.filter(
+      appointment =>
+        appointment.startTime >= monthStart &&
+        appointment.startTime <= monthEnd &&
+        appointment.status !== "cancelled"
     ).length;
 
-    const monthlyTransactions = transactions.filter(trans => 
-      new Date(trans.transactionDate) >= monthStart && 
-      new Date(trans.transactionDate) <= monthEnd
-    ).length;
-
-    const activeBarbers = barbers.filter(b => b.is_active);
-    const maxServicesPerBarber = activeBarbers.length > 0 
-      ? Math.max(...activeBarbers.map(b => 
-          appointments.filter(apt => apt.barberId === b.id).length
-        ))
-      : 0;
+    const monthlyTransactions = transactions.filter(transaction => {
+      const date = new Date(transaction.transactionDate);
+      return date >= monthStart && date <= monthEnd;
+    }).length;
 
     return {
-      barbers: activeBarbers.length,
+      staff: activeStaff.length,
       monthlyAppointments,
       monthlyTransactions,
-      servicesPerBarber: maxServicesPerBarber
     };
-  }, [barbers, appointments, transactions]);
+  }, [activeStaff, appointments, transactions]);
 
-  const formatLimit = (limit: number) => {
-    return limit === Number.POSITIVE_INFINITY ? "Illimité" : limit.toString();
-  };
+  const formatLimit = (limit: number) =>
+    limit === Number.POSITIVE_INFINITY ? "Illimité" : String(limit);
 
-  const getUsageColor = (current: number, max: number) => {
+  const usageColor = (current: number, max: number) => {
     if (max === Number.POSITIVE_INFINITY) return "text-green-600";
-    const percentage = (current / max) * 100;
+    const percentage = max > 0 ? (current / max) * 100 : 100;
     if (percentage >= 90) return "text-red-600";
     if (percentage >= 75) return "text-orange-600";
     return "text-green-600";
   };
 
-  const getProgressValue = (current: number, max: number) => {
+  const progressValue = (current: number, max: number) => {
     if (max === Number.POSITIVE_INFINITY) return 0;
-    return Math.min((current / max) * 100, 100);
+    return Math.min(max > 0 ? (current / max) * 100 : 100, 100);
   };
 
-  const tierColors = {
-    'none': 'bg-gray-100 text-gray-800',
-    'Basic': 'bg-blue-100 text-blue-800',
-    'Premium': 'bg-purple-100 text-purple-800',
-    'Enterprise': 'bg-green-100 text-green-800',
-    'Lifetime': 'bg-gradient-to-r from-gold-400 to-gold-600 text-white'
-  };
+  const staffLimit = getLimit("maxBarbers");
+  const isNearStaffLimit =
+    staffLimit !== Number.POSITIVE_INFINITY &&
+    staffLimit > 0 &&
+    currentUsage.staff / staffLimit >= 0.8;
 
-  const isNearLimit = (current: number, limit: number) => {
-    if (limit === Number.POSITIVE_INFINITY) return false;
-    return (current / limit) >= 0.8;
-  };
+  const tierClass =
+    subscriptionTier === "Lifetime"
+      ? "bg-primary text-primary-foreground"
+      : subscriptionTier === "Equipe"
+        ? "bg-violet-500/10 text-violet-700 dark:text-violet-300"
+        : subscriptionTier === "Solo"
+          ? "bg-blue-500/10 text-blue-700 dark:text-blue-300"
+          : "bg-muted text-muted-foreground";
 
-  const isUnlimited = (limit: number) => {
-    return limit === Number.POSITIVE_INFINITY;
-  };
+  const featureRows = [
+    { key: "canAccessOnlineBooking", label: "Réservation en ligne", icon: CalendarCheck },
+    { key: "canUseSmsAutomations", label: "Rappels SMS automatiques", icon: MessageSquare },
+    { key: "canAccessTargetedMarketing", label: "Campagnes marketing ciblées", icon: Megaphone },
+    { key: "canAccessAdvancedStats", label: "Statistiques avancées", icon: BarChart3 },
+    { key: "canExportReports", label: "Rapports avancés & automatisés", icon: Package },
+    { key: "canSendEmails", label: "Envoi de rapports par email", icon: Mail },
+    { key: "canManageInventory", label: "Gestion complète des stocks", icon: Package },
+    { key: "canAccessMultiSalon", label: "Multi-salons", icon: Users },
+  ] as const;
+
+  if (loading) {
+    return (
+      <Card className="v2-panel">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Chargement de votre abonnement…
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec tier actuel */}
-      <Card>
+      <Card className="v2-panel">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <Shield className="h-6 w-6 text-primary" />
+              <div className="rounded-xl bg-primary/10 p-2">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
               <div>
-                <CardTitle>Droits d'abonnement</CardTitle>
-                <CardDescription>Plan actuel et limitations</CardDescription>
+                <CardTitle>Votre plan</CardTitle>
+                <CardDescription>Limites et fonctionnalités actuellement actives</CardDescription>
               </div>
             </div>
-            <Badge className={tierColors[subscriptionTier as keyof typeof tierColors]}>
-              {subscriptionTier === 'none' ? 'Aucun abonnement' : `Plan ${subscriptionTier}`}
+            <Badge className={tierClass}>
+              {subscriptionTier === "none" ? "Plan Gratuit" : `Plan ${subscriptionTier}`}
             </Badge>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Alertes si proche des limites */}
-      {isNearLimit(currentUsage.barbers, getLimit('maxBarbers')) && (
-        <Alert className="border-orange-200 bg-orange-50">
+      {isNearStaffLimit && (
+        <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
           <AlertTriangle className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800">
-            Vous approchez de la limite de coiffeurs ({currentUsage.barbers}/{formatLimit(getLimit('maxBarbers'))}).
+          <AlertDescription className="text-orange-800 dark:text-orange-300">
+            Vous approchez de la limite d’équipe ({currentUsage.staff}/{formatLimit(staffLimit)}).
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Limites d'utilisation */}
-      <Card>
+      <Card className="v2-panel">
         <CardHeader>
-          <CardTitle className="text-lg">Limites d'utilisation</CardTitle>
+          <CardTitle className="text-lg">Utilisation</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Coiffeurs */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Coiffeurs</span>
+                <span className="text-sm font-medium">Membres actifs</span>
               </div>
-              <span className={`text-sm font-medium ${getUsageColor(currentUsage.barbers, getLimit('maxBarbers'))}`}>
-                {currentUsage.barbers} / {formatLimit(getLimit('maxBarbers'))}
+              <span className={`text-sm font-medium ${usageColor(currentUsage.staff, staffLimit)}`}>
+                {currentUsage.staff} / {formatLimit(staffLimit)}
               </span>
             </div>
-            {!isUnlimited(getLimit('maxBarbers')) && (
-              <Progress 
-                value={getProgressValue(currentUsage.barbers, getLimit('maxBarbers'))} 
-                className="h-2" 
-              />
+            {staffLimit !== Number.POSITIVE_INFINITY && (
+              <Progress value={progressValue(currentUsage.staff, staffLimit)} className="h-2" />
             )}
           </div>
 
-          {/* RDV mensuels */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">RDV ce mois</span>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                Rendez-vous ce mois
               </div>
-              <span className={`text-sm font-medium ${getUsageColor(currentUsage.monthlyAppointments, getLimit('maxAppointmentsPerMonth'))}`}>
-                {currentUsage.monthlyAppointments} / {formatLimit(getLimit('maxAppointmentsPerMonth'))}
-              </span>
+              <p className="mt-2 text-2xl font-semibold">{currentUsage.monthlyAppointments}</p>
             </div>
-            {!isUnlimited(getLimit('maxAppointmentsPerMonth')) && (
-              <Progress 
-                value={getProgressValue(currentUsage.monthlyAppointments, getLimit('maxAppointmentsPerMonth'))} 
-                className="h-2" 
-              />
-            )}
-          </div>
-
-          {/* Transactions mensuelles */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Transactions ce mois</span>
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CreditCard className="h-4 w-4" />
+                Transactions ce mois
               </div>
-              <span className={`text-sm font-medium ${getUsageColor(currentUsage.monthlyTransactions, getLimit('maxTransactionsPerMonth'))}`}>
-                {currentUsage.monthlyTransactions} / {formatLimit(getLimit('maxTransactionsPerMonth'))}
-              </span>
+              <p className="mt-2 text-2xl font-semibold">{currentUsage.monthlyTransactions}</p>
             </div>
-            {!isUnlimited(getLimit('maxTransactionsPerMonth')) && (
-              <Progress 
-                value={getProgressValue(currentUsage.monthlyTransactions, getLimit('maxTransactionsPerMonth'))} 
-                className="h-2" 
-              />
-            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Fonctionnalités disponibles */}
-      <Card>
+      <Card className="v2-panel">
         <CardHeader>
-          <CardTitle className="text-lg">Fonctionnalités disponibles</CardTitle>
+          <CardTitle className="text-lg">Fonctionnalités</CardTitle>
+          <CardDescription>Les accès réellement appliqués par votre plan.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { key: 'canAccessAdvancedStats', label: 'Statistiques avancées', icon: BarChart3 },
-              { key: 'canExportReports', label: 'Export de rapports', icon: Package },
-              { key: 'canSendEmails', label: 'Envoi d\'emails', icon: Mail },
-              { key: 'canManageInventory', label: 'Gestion des stocks', icon: Package },
-              { key: 'canAccessMultiSalon', label: 'Multi-salons', icon: Users },
-              { key: 'canAccessAPI', label: 'Accès API', icon: Crown },
-              { key: 'canRemoveBranding', label: 'Retrait du branding', icon: Crown },
-              { key: 'canCustomizeDomain', label: 'Domaine personnalisé', icon: Crown },
-            ].map(({ key, label, icon: Icon }) => (
-              <div key={key} className="flex items-center gap-3 p-3 rounded-lg border bg-card/50">
-                <Icon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm flex-1">{label}</span>
-                {canAccess(key as any) ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-red-600" />
-                )}
-              </div>
-            ))}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {featureRows.map(({ key, label, icon: Icon }) => {
+              const enabled = canAccess(key);
+              return (
+                <div key={key} className="flex items-center gap-3 rounded-xl border bg-card/60 p-3">
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                  <span className="flex-1 text-sm">{label}</span>
+                  {enabled ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-muted-foreground/60" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* Support */}
-      <Card>
+      <Card className="v2-panel">
         <CardHeader>
           <CardTitle className="text-lg">Support inclus</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-medium capitalize">{rights.supportLevel}</p>
+            <div className="flex-1">
+              <p className="font-medium">
+                {rights.supportLevel === "community" && "Support standard"}
+                {rights.supportLevel === "email" && "Support par email"}
+                {rights.supportLevel === "priority" && "Support prioritaire"}
+                {rights.supportLevel === "dedicated" && "Support dédié"}
+              </p>
               <p className="text-sm text-muted-foreground">
-                {rights.supportLevel === 'community' && 'Support communautaire'}
-                {rights.supportLevel === 'email' && 'Support par email'}
-                {rights.supportLevel === 'priority' && 'Support prioritaire'}
-                {rights.supportLevel === 'dedicated' && 'Support dédié'}
+                Le niveau de support suit automatiquement votre abonnement.
               </p>
             </div>
-            {rights.hasCustomTraining && (
-              <Badge variant="secondary">Formation incluse</Badge>
-            )}
+            {rights.hasCustomTraining && <Badge variant="secondary">Formation incluse</Badge>}
           </div>
         </CardContent>
       </Card>
 
-      {/* Bouton d'upgrade */}
-      {showUpgradeButton && subscriptionTier !== 'Lifetime' && subscriptionTier !== 'Enterprise' && (
-        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-          <CardContent className="p-6 text-center space-y-4">
-            <Crown className="h-8 w-8 text-primary mx-auto" />
+      {showUpgradeButton && subscriptionTier !== "Lifetime" && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="space-y-4 p-6 text-center">
+            <Crown className="mx-auto h-8 w-8 text-primary" />
             <div>
-              <h3 className="font-semibold text-lg">Débloquez plus de fonctionnalités</h3>
-              <p className="text-muted-foreground">
-                Passez à un plan supérieur pour accéder à plus de fonctionnalités et augmenter vos limites.
+              <h3 className="text-lg font-semibold">Besoin de plus ?</h3>
+              <p className="text-sm text-muted-foreground">
+                Comparez les plans pour débloquer davantage de fonctionnalités.
               </p>
             </div>
             <Button onClick={onUpgrade} className="w-full">
-              Voir les plans d'abonnement
+              Voir les plans
             </Button>
           </CardContent>
         </Card>
