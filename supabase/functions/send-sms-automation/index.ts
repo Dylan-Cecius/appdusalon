@@ -1,63 +1,73 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getAuthenticatedUser, resolveSalonAndCheckEntitlement, sendSms } from "../_shared/sms.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
   try {
-    const { salon_id, type, client_id, phone, message } = await req.json()
+    const { admin, user } = await getAuthenticatedUser(req);
+    const { salonId } = await resolveSalonAndCheckEntitlement(admin, user, "automation");
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
+    const { type, client_id, message } = await req.json();
+    const allowedTypes = new Set(["reminder", "birthday", "reactivation"]);
 
-    const { data: settings } = await supabase
-      .from('sms_settings')
-      .select('twilio_account_sid, twilio_auth_token, twilio_phone_number')
-      .eq('salon_id', salon_id)
-      .single()
-
-    if (!settings?.twilio_account_sid) {
-      return new Response(JSON.stringify({ error: 'Twilio non configuré' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    if (!allowedTypes.has(String(type)) || !client_id || !String(message || "").trim()) {
+      return jsonResponse({ error: "validation_error" }, 400);
     }
 
-    const auth = btoa(`${settings.twilio_account_sid}:${settings.twilio_auth_token}`)
-    const res = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${settings.twilio_account_sid}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          To: phone,
-          From: settings.twilio_phone_number,
-          Body: message,
-        }),
-      }
-    )
-    const result = await res.json()
+    const { data: client, error: clientError } = await admin
+      .from("clients")
+      .select("id, phone, sms_opt_out")
+      .eq("id", client_id)
+      .eq("salon_id", salonId)
+      .maybeSingle();
 
-    await supabase.from('sms_logs').insert({
-      salon_id,
-      client_id,
-      phone_number: phone,
-      message,
-      type,
-      status: res.ok ? 'sent' : 'failed',
-      twilio_sid: result.sid || null,
-    })
+    if (clientError) throw clientError;
+    if (!client?.phone || client.sms_opt_out) {
+      return jsonResponse({ error: "client_not_eligible" }, 400);
+    }
 
-    return new Response(JSON.stringify({ success: res.ok, error: res.ok ? undefined : result.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const cleanMessage = String(message).trim();
+    if (cleanMessage.length > 1000) {
+      return jsonResponse({ error: "input_too_long" }, 400);
+    }
+
+    const result = await sendSms(client.phone, cleanMessage);
+
+    await admin.from("sms_logs").insert({
+      salon_id: salonId,
+      client_id: client.id,
+      phone_number: client.phone,
+      message: cleanMessage,
+      type: String(type),
+      status: result.ok ? "sent" : "failed",
+      twilio_sid: result.sid,
+    });
+
+    return jsonResponse({
+      success: result.ok,
+      error: result.error || undefined,
+    }, result.ok ? 200 : 502);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "internal_error";
+    const status =
+      message === "not_authenticated" ? 401 :
+      message === "subscription_required" || message === "upgrade_required" ? 403 :
+      message === "salon_not_found" ? 404 :
+      message === "sms_provider_not_configured" ? 503 : 500;
+
+    console.error("[SMS-AUTOMATION]", error);
+    return jsonResponse({ error: message }, status);
   }
-})
+});
