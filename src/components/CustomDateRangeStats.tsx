@@ -1,131 +1,104 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Euro, Users, TrendingUp, Scissors } from 'lucide-react';
+import { Euro, Users, TrendingUp, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 
-interface CustomStats {
-  totalRevenue: number;
-  totalClients: number;
-  transactionRevenue: number;
-  appointmentRevenue: number;
-  transactions: any[];
-  appointments: any[];
-}
+type PaymentFilter = 'all' | 'cash' | 'card';
 
 const CustomDateRangeStats = () => {
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
-  
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'transactions' | 'appointments'>('all');
-  const [customStats, setCustomStats] = useState<CustomStats | null>(null);
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
+  const [appliedRange, setAppliedRange] = useState<{ start: Date; end: Date } | null>(null);
 
-  const getCustomStats = (start: Date, end: Date): CustomStats => {
-    // Filter transactions
-    const filteredTransactions = transactions.filter(tx => {
-      const txDate = new Date(tx.transactionDate);
-      return txDate >= start && txDate <= end;
+  const periodData = useMemo(() => {
+    if (!appliedRange) return null;
+
+    const filteredTransactions = transactions.filter(transaction => {
+      const date = new Date(transaction.transactionDate);
+      const matchesDate = date >= appliedRange.start && date <= appliedRange.end;
+      const matchesPayment =
+        paymentFilter === 'all' || transaction.paymentMethod === paymentFilter;
+      return matchesDate && matchesPayment;
     });
 
-    // Filter appointments
-    const filteredAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.startTime);
-      return aptDate >= start && aptDate <= end && apt.isPaid;
+    const filteredAppointments = appointments.filter(appointment => {
+      const date = new Date(appointment.startTime);
+      return (
+        appointment.status !== 'cancelled' &&
+        date >= appliedRange.start &&
+        date <= appliedRange.end
+      );
     });
 
-    // Calculate revenues
-    const transactionRevenue = filteredTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const appointmentRevenue = filteredAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0);
-    
+    const knownClients = new Set(
+      filteredTransactions.map(transaction => transaction.clientId).filter(Boolean)
+    );
+    const anonymousTransactions = filteredTransactions.filter(
+      transaction => !transaction.clientId
+    ).length;
+
+    const revenue = filteredTransactions.reduce(
+      (sum, transaction) => sum + transaction.totalAmount,
+      0
+    );
+
     return {
-      totalRevenue: transactionRevenue + appointmentRevenue,
-      totalClients: filteredTransactions.length + filteredAppointments.length,
-      transactionRevenue,
-      appointmentRevenue,
+      revenue,
+      transactionCount: filteredTransactions.length,
+      appointmentCount: filteredAppointments.length,
+      distinctClients: knownClients.size + anonymousTransactions,
       transactions: filteredTransactions,
-      appointments: filteredAppointments
     };
-  };
+  }, [appliedRange, transactions, appointments, paymentFilter]);
 
   const handleCalculate = () => {
-    if (!startDate || !endDate) {
-      return;
-    }
+    if (!startDate || !endDate) return;
 
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T23:59:59.999`);
 
-    if (start > end) {
-      return;
-    }
-
-    const stats = getCustomStats(start, end);
-    setCustomStats(stats);
+    if (start > end) return;
+    setAppliedRange({ start, end });
   };
 
   const resetStats = () => {
     setStartDate('');
     setEndDate('');
-    setFilterType('all');
-    setCustomStats(null);
+    setPaymentFilter('all');
+    setAppliedRange(null);
   };
-
-  const getDisplayData = () => {
-    if (!customStats) return null;
-    
-    switch (filterType) {
-      case 'transactions':
-        return {
-          revenue: customStats.transactionRevenue,
-          count: customStats.transactions.length,
-          items: customStats.transactions,
-          type: 'transactions'
-        };
-      case 'appointments':
-        return {
-          revenue: customStats.appointmentRevenue,
-          count: customStats.appointments.length,
-          items: customStats.appointments,
-          type: 'appointments'
-        };
-      default:
-        return {
-          revenue: customStats.totalRevenue,
-          count: customStats.totalClients,
-          items: [...customStats.transactions, ...customStats.appointments],
-          type: 'all'
-        };
-    }
-  };
-
-  const displayData = getDisplayData();
 
   return (
-    <Card className="p-6 space-y-4">
-      <div className="flex items-center gap-2 mb-4">
+    <Card className="v2-panel p-6 space-y-5">
+      <div className="flex items-center gap-2">
         <TrendingUp className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">CA Période Personnalisée</h3>
+        <div>
+          <h3 className="text-lg font-semibold">Période personnalisée</h3>
+          <p className="text-xs text-muted-foreground">
+            Le CA correspond uniquement aux encaissements réellement enregistrés en caisse.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
           <Label htmlFor="startDate">Date de début</Label>
           <Input
             id="startDate"
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={event => setStartDate(event.target.value)}
           />
         </div>
         <div>
@@ -134,125 +107,89 @@ const CustomDateRangeStats = () => {
             id="endDate"
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={event => setEndDate(event.target.value)}
             min={startDate}
           />
         </div>
         <div>
-          <Label htmlFor="filterType">Type de données</Label>
-          <Select value={filterType} onValueChange={(value: 'all' | 'transactions' | 'appointments') => setFilterType(value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner..." />
+          <Label htmlFor="paymentFilter">Paiement</Label>
+          <Select
+            value={paymentFilter}
+            onValueChange={(value: PaymentFilter) => setPaymentFilter(value)}
+          >
+            <SelectTrigger id="paymentFilter">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tout (Ventes + RDV)</SelectItem>
-              <SelectItem value="transactions">Ventes directes uniquement</SelectItem>
-              <SelectItem value="appointments">Rendez-vous uniquement</SelectItem>
+              <SelectItem value="all">Tous les paiements</SelectItem>
+              <SelectItem value="cash">Espèces</SelectItem>
+              <SelectItem value="card">Bancontact / Carte</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="flex gap-2">
-        <Button 
-          onClick={handleCalculate} 
-          disabled={!startDate || !endDate}
-          className="flex-1"
-        >
+        <Button onClick={handleCalculate} disabled={!startDate || !endDate} className="flex-1">
           Calculer
         </Button>
-        <Button 
-          variant="outline" 
-          onClick={resetStats}
-          disabled={!customStats}
-        >
-          Reset
+        <Button variant="outline" onClick={resetStats} disabled={!appliedRange}>
+          Réinitialiser
         </Button>
       </div>
 
-      {customStats && displayData && (
-        <div className="space-y-4 mt-6">
-          <div className="text-center p-4 bg-primary/5 rounded-lg">
-            <h4 className="font-medium text-primary mb-2">
-              Période: {format(new Date(startDate), 'dd/MM/yyyy', { locale: fr })} - {format(new Date(endDate), 'dd/MM/yyyy', { locale: fr })}
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              {filterType === 'all' ? 'Ventes directes + Rendez-vous' : 
-               filterType === 'transactions' ? 'Ventes directes uniquement' : 
-               'Rendez-vous uniquement'}
+      {periodData && appliedRange && (
+        <div className="space-y-5 pt-2">
+          <div className="rounded-xl bg-primary/5 p-4 text-center">
+            <p className="text-sm font-medium text-primary">
+              {format(appliedRange.start, 'dd/MM/yyyy', { locale: fr })} —{' '}
+              {format(appliedRange.end, 'dd/MM/yyyy', { locale: fr })}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-4 text-center">
-              <div className="flex justify-center mb-2">
-                <div className="p-2 rounded-lg bg-accent/10 text-accent-foreground">
-                  <Euro className="h-6 w-6" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-primary mb-1">
-                {displayData.revenue.toFixed(2)}€
-              </p>
-              <p className="text-sm text-muted-foreground">Chiffre d'affaires</p>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Card className="v2-kpi p-4 text-center">
+              <Euro className="mx-auto mb-2 h-5 w-5 text-primary" />
+              <p className="text-2xl font-bold">{periodData.revenue.toFixed(2)}€</p>
+              <p className="text-xs text-muted-foreground">CA encaissé</p>
             </Card>
 
-            <Card className="p-4 text-center">
-              <div className="flex justify-center mb-2">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <Users className="h-6 w-6" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-primary mb-1">
-                {displayData.count}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {filterType === 'all' ? 'Total opérations' : 
-                 filterType === 'transactions' ? 'Ventes' : 'Rendez-vous'}
-              </p>
+            <Card className="v2-kpi p-4 text-center">
+              <TrendingUp className="mx-auto mb-2 h-5 w-5 text-primary" />
+              <p className="text-2xl font-bold">{periodData.transactionCount}</p>
+              <p className="text-xs text-muted-foreground">Transactions</p>
             </Card>
 
-            {filterType === 'all' && (
-              <Card className="p-4 text-center">
-                <div className="flex justify-center mb-2">
-                  <div className="p-2 rounded-lg bg-secondary/10 text-secondary-foreground">
-                    <Scissors className="h-6 w-6" />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Ventes: {customStats.transactionRevenue.toFixed(2)}€</p>
-                  <p className="text-sm font-medium">RDV: {customStats.appointmentRevenue.toFixed(2)}€</p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Répartition</p>
-              </Card>
-            )}
+            <Card className="v2-kpi p-4 text-center">
+              <Users className="mx-auto mb-2 h-5 w-5 text-primary" />
+              <p className="text-2xl font-bold">{periodData.distinctClients}</p>
+              <p className="text-xs text-muted-foreground">Clients encaissés</p>
+            </Card>
+
+            <Card className="v2-kpi p-4 text-center">
+              <CalendarDays className="mx-auto mb-2 h-5 w-5 text-primary" />
+              <p className="text-2xl font-bold">{periodData.appointmentCount}</p>
+              <p className="text-xs text-muted-foreground">RDV planifiés</p>
+            </Card>
           </div>
 
-          {displayData.items.length > 0 && (
-            <div className="mt-4">
-              <h5 className="font-medium mb-3">
-                Détail ({displayData.items.length} {filterType === 'appointments' ? 'rendez-vous' : filterType === 'transactions' ? 'ventes' : 'opérations'})
-              </h5>
-              <div className="max-h-40 overflow-y-auto space-y-2">
-                {displayData.items.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-2 bg-muted/30 rounded text-sm">
-                    <div className="flex items-center gap-2">
-                      <span>
-                        {format(new Date(item.transactionDate || item.startTime), 'dd/MM à HH:mm', { locale: fr })}
-                      </span>
-                      {item.client_name && (
-                        <span className="text-xs text-muted-foreground">- {item.client_name}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {(item.totalAmount || item.totalPrice).toFixed(2)}€
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.paymentMethod ? 
-                          `(${item.paymentMethod === 'cash' ? 'Espèces' : 'Carte'})` : 
-                          '(RDV)'
-                        }
-                      </span>
+          {periodData.transactions.length > 0 && (
+            <div>
+              <h5 className="mb-3 font-medium">Derniers encaissements de la période</h5>
+              <div className="max-h-52 space-y-2 overflow-y-auto">
+                {periodData.transactions.slice(0, 30).map(transaction => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between rounded-xl bg-muted/40 p-3 text-sm"
+                  >
+                    <span className="text-muted-foreground">
+                      {format(new Date(transaction.transactionDate), 'dd/MM à HH:mm', { locale: fr })}
+                    </span>
+                    <div className="text-right">
+                      <p className="font-semibold">{transaction.totalAmount.toFixed(2)}€</p>
+                      <p className="text-xs text-muted-foreground">
+                        {transaction.paymentMethod === 'cash' ? 'Espèces' : 'Carte'}
+                      </p>
                     </div>
                   </div>
                 ))}
