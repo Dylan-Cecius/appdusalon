@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
@@ -14,87 +13,79 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const { salonSettings, loading: settingsLoading } = useSupabaseSettings();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (settingsLoading) return;
-    
-    // Vérifier si un mot de passe est configuré
-    if (!salonSettings?.stats_password) {
-      // Pas de mot de passe configuré, accès libre
-      setIsUnlocked(true);
-      setIsChecking(false);
-      return;
-    }
+    let cancelled = false;
 
-    // Vérifier si la section est déjà déverrouillée dans la session
-    const sessionKey = `unlocked_${section}`;
-    const isSessionUnlocked = sessionStorage.getItem(sessionKey) === 'true';
-    
-    if (isSessionUnlocked) {
-      setIsUnlocked(true);
-      setIsChecking(false);
-    } else {
-      // Afficher le modal de mot de passe
-      setShowPasswordModal(true);
-      setIsChecking(false);
-    }
-  }, [salonSettings, section, settingsLoading]);
+    const checkProtection = async () => {
+      setIsChecking(true);
+
+      const sessionKey = `unlocked_${section}`;
+      const alreadyUnlocked = sessionStorage.getItem(sessionKey) === 'true';
+
+      try {
+        const { data, error } = await (supabase as any).rpc('has_stats_password');
+        if (error) throw error;
+
+        if (cancelled) return;
+
+        const hasPassword = data === true;
+        if (!hasPassword || alreadyUnlocked) {
+          setIsUnlocked(true);
+          setShowPasswordModal(false);
+        } else {
+          setIsUnlocked(false);
+          setShowPasswordModal(true);
+        }
+      } catch (error) {
+        console.error('[ProtectedRoute] protection check failed', error);
+        if (!cancelled) {
+          toast({
+            title: 'Erreur de sécurité',
+            description: "Impossible de vérifier la protection de cette section.",
+            variant: 'destructive',
+          });
+          navigate('/pos', { replace: true });
+        }
+      } finally {
+        if (!cancelled) setIsChecking(false);
+      }
+    };
+
+    void checkProtection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [section, navigate, toast]);
 
   const verifyPassword = async (inputPassword: string): Promise<boolean> => {
-    if (!salonSettings?.stats_password) {
-      toast({
-        title: "❌ Aucun mot de passe configuré",
-        description: "Définissez un mot de passe sécurisé dans les paramètres.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Pour les paramètres, permettre l'accès avec ancien mot de passe pour migration
-    if (section === 'settings' && !salonSettings.stats_password.startsWith('$2')) {
-      if (inputPassword === salonSettings.stats_password) {
-        toast({
-          title: "⚠️ Accès temporaire accordé",
-          description: "Veuillez définir un nouveau mot de passe sécurisé immédiatement.",
-          variant: "destructive",
-        });
-        return true;
-      } else {
-        toast({
-          title: "❌ Mot de passe incorrect",
-          description: "Mot de passe invalide.",
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-
-    // Pour les autres sections, seulement les mots de passe hashés
-    if (!salonSettings.stats_password.startsWith('$2')) {
-      toast({
-        title: "🔒 Mot de passe non sécurisé détecté",
-        description: "Veuillez définir un nouveau mot de passe sécurisé dans les paramètres.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     try {
-      const { data, error } = await supabase.rpc('verify_password', {
+      const { data, error } = await (supabase as any).rpc('verify_stats_password', {
         password_text: inputPassword,
-        password_hash: salonSettings.stats_password
       });
-      
-      if (error) {
-        console.error('Password verification error:', error);
+
+      if (error) throw error;
+
+      if (data !== true) {
+        toast({
+          title: 'Mot de passe incorrect',
+          description: 'Le mot de passe saisi est invalide.',
+          variant: 'destructive',
+        });
         return false;
       }
-      return data === true;
+
+      return true;
     } catch (error) {
-      console.error('Password verification error:', error);
+      console.error('[ProtectedRoute] password verification failed', error);
+      toast({
+        title: 'Erreur de sécurité',
+        description: 'Impossible de vérifier le mot de passe.',
+        variant: 'destructive',
+      });
       return false;
     }
   };
@@ -102,18 +93,20 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
   const handlePasswordSuccess = () => {
     setIsUnlocked(true);
     setShowPasswordModal(false);
-    // Sauvegarder dans sessionStorage pour cette session
     sessionStorage.setItem(`unlocked_${section}`, 'true');
   };
 
   const handlePasswordClose = () => {
     setShowPasswordModal(false);
-    // Rediriger vers /pos si l'utilisateur annule
     navigate('/pos');
   };
 
   if (isChecking) {
-    return null;
+    return (
+      <div className="min-h-[30vh] flex items-center justify-center text-sm text-muted-foreground">
+        Vérification de l’accès…
+      </div>
+    );
   }
 
   if (!isUnlocked) {
