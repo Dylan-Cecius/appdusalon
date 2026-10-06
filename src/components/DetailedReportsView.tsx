@@ -10,7 +10,6 @@ import { Calendar, Euro, Users, TrendingUp } from 'lucide-react';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
-import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 
 type PeriodType = 'daily' | 'weekly' | 'monthly' | 'custom';
 type PaymentFilter = 'all' | 'cash' | 'card';
@@ -25,7 +24,6 @@ interface DailyData {
 
 const DetailedReportsView = () => {
   const { transactions } = useSupabaseTransactions();
-  const { appointments } = useSupabaseAppointments();
   
   const [periodType, setPeriodType] = useState<PeriodType>('daily');
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
@@ -75,12 +73,6 @@ const DetailedReportsView = () => {
         return txDate >= dayStart && txDate <= dayEnd;
       });
       
-      // Filter appointments for this day
-      const dayAppointments = appointments.filter(apt => {
-        const aptDate = new Date(apt.startTime);
-        return aptDate >= dayStart && aptDate <= dayEnd && apt.isPaid;
-      });
-      
       // Apply payment filter
       const filteredTransactions = paymentFilter === 'all' 
         ? dayTransactions 
@@ -94,20 +86,15 @@ const DetailedReportsView = () => {
         .filter(tx => tx.paymentMethod === 'card')
         .reduce((sum, tx) => sum + tx.totalAmount, 0);
       
-      // Add appointments revenue (they don't have payment method in data)
-      const appointmentAmount = paymentFilter === 'all' 
-        ? dayAppointments.reduce((sum, apt) => sum + Number(apt.totalPrice), 0)
-        : 0;
-      
       return {
         date: day,
-        transactions: filteredTransactions.length + (paymentFilter === 'all' ? dayAppointments.length : 0),
+        transactions: filteredTransactions.length,
         cashAmount,
         cardAmount,
-        totalAmount: cashAmount + cardAmount + appointmentAmount
+        totalAmount: cashAmount + cardAmount
       };
     });
-  }, [dateRange, transactions, appointments, paymentFilter]);
+  }, [dateRange, transactions, paymentFilter]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -122,7 +109,7 @@ const DetailedReportsView = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Filters Card */}
-      <Card className="p-4 sm:p-6">
+      <Card className="v2-panel p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <TrendingUp className="h-5 w-5 text-primary" />
           <h3 className="text-base sm:text-lg font-semibold">Rapports Détaillés</h3>
@@ -227,7 +214,7 @@ const DetailedReportsView = () => {
           <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">
             {totals.totalAmount.toFixed(2)}€
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground">Chiffre d'Affaires Total</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">CA encaissé</p>
         </Card>
 
         <Card className="p-4 sm:p-6 text-center">
