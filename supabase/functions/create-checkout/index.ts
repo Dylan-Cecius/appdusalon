@@ -81,8 +81,14 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/?subscription=success&plan=${plan}`,
-      cancel_url: `${origin}/?subscription=cancelled`,
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          plan,
+        },
+      },
+      success_url: `${origin}/abonnements?subscription=success&plan=${plan}`,
+      cancel_url: `${origin}/abonnements?subscription=cancelled`,
       metadata: {
         user_id: user.id,
         plan: plan
