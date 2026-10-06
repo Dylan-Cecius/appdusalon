@@ -1,117 +1,133 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getAuthenticatedUser, resolveSalonAndCheckEntitlement, sendSms } from "../_shared/sms.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
   try {
-    const { salon_id, message, recipient_type, inactive_months, campaign_name } = await req.json()
-    
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
+    const { admin, user } = await getAuthenticatedUser(req);
+    const { salonId } = await resolveSalonAndCheckEntitlement(admin, user, "marketing");
 
-    // Get Twilio credentials
-    const { data: settings } = await supabase
-      .from('sms_settings')
-      .select('twilio_account_sid, twilio_auth_token, twilio_phone_number')
-      .eq('salon_id', salon_id)
-      .single()
-
-    if (!settings?.twilio_account_sid || !settings?.twilio_auth_token || !settings?.twilio_phone_number) {
-      return new Response(JSON.stringify({ error: 'Twilio non configuré' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    }
-
-    // Get clients
-    let query = supabase
-      .from('clients')
-      .select('id, name, phone')
-      .eq('salon_id', salon_id)
-      .neq('sms_opt_out', true)
-      .not('phone', 'is', null)
-
-    if (recipient_type === 'inactive' && inactive_months) {
-      const cutoffDate = new Date()
-      cutoffDate.setMonth(cutoffDate.getMonth() - inactive_months)
-      // Get clients whose last transaction is before cutoff
-      const { data: activeClientIds } = await supabase
-        .from('transactions')
-        .select('client_id')
-        .eq('salon_id', salon_id)
-        .gte('transaction_date', cutoffDate.toISOString())
-      
-      const activeIds = [...new Set((activeClientIds || []).map(t => t.client_id).filter(Boolean))]
-      if (activeIds.length > 0) {
-        query = query.not('id', 'in', `(${activeIds.join(',')})`)
-      }
-    }
-
-    const { data: clients } = await query
-    if (!clients || clients.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, failed: 0, error: 'Aucun client trouvé' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    }
-
-    // Create campaign record
-    const { data: campaign } = await supabase.from('sms_campaigns').insert({
-      salon_id,
-      name: campaign_name,
+    const {
       message,
       recipient_type,
-      inactive_months: recipient_type === 'inactive' ? inactive_months : null,
-      recipients_count: clients.length,
-    }).select('id').single()
+      inactive_months,
+      campaign_name,
+    } = await req.json();
 
-    let sent = 0, failed = 0
-    const auth = btoa(`${settings.twilio_account_sid}:${settings.twilio_auth_token}`)
+    const cleanMessage = String(message || "").trim();
+    const cleanName = String(campaign_name || "").trim();
+    const recipientType = recipient_type === "inactive" ? "inactive" : "all";
 
-    for (const client of clients) {
-      const nameParts = (client.name || '').split(' ')
-      const personalizedMsg = message
-        .replace(/{prenom}/g, nameParts[0] || '')
-        .replace(/{nom}/g, nameParts.slice(1).join(' ') || '')
+    if (!cleanMessage || !cleanName) {
+      return jsonResponse({ error: "validation_error" }, 400);
+    }
 
-      try {
-        const res = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${settings.twilio_account_sid}/Messages.json`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Basic ${auth}`,
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              To: client.phone,
-              From: settings.twilio_phone_number,
-              Body: personalizedMsg,
-            }),
-          }
-        )
-        const result = await res.json()
+    if (cleanMessage.length > 1000 || cleanName.length > 120) {
+      return jsonResponse({ error: "input_too_long" }, 400);
+    }
 
-        await supabase.from('sms_logs').insert({
-          salon_id,
-          client_id: client.id,
-          phone_number: client.phone,
-          message: personalizedMsg,
-          type: 'campaign',
-          campaign_id: campaign?.id,
-          status: res.ok ? 'sent' : 'failed',
-          twilio_sid: result.sid || null,
-        })
+    let query = admin
+      .from("clients")
+      .select("id, name, phone")
+      .eq("salon_id", salonId)
+      .neq("sms_opt_out", true)
+      .not("phone", "is", null);
 
-        if (res.ok) sent++; else failed++
-      } catch {
-        failed++
+    if (recipientType === "inactive") {
+      const months = Math.min(Math.max(Number(inactive_months) || 3, 1), 24);
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - months);
+
+      const { data: activeClientIds } = await admin
+        .from("transactions")
+        .select("client_id")
+        .eq("salon_id", salonId)
+        .gte("transaction_date", cutoffDate.toISOString());
+
+      const activeIds = [
+        ...new Set((activeClientIds || []).map((row) => row.client_id).filter(Boolean)),
+      ];
+
+      if (activeIds.length > 0) {
+        query = query.not("id", "in", `(${activeIds.join(",")})`);
       }
     }
 
-    return new Response(JSON.stringify({ sent, failed }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-  } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const { data: clients, error: clientsError } = await query;
+    if (clientsError) throw clientsError;
+
+    if (!clients || clients.length === 0) {
+      return jsonResponse({ sent: 0, failed: 0, error: "no_recipients" });
+    }
+
+    const { data: campaignRecord, error: campaignError } = await admin
+      .from("sms_campaigns")
+      .insert({
+        salon_id: salonId,
+        name: cleanName,
+        message: cleanMessage,
+        recipient_type: recipientType,
+        inactive_months: recipientType === "inactive" ? Number(inactive_months) || 3 : null,
+        recipients_count: clients.length,
+      })
+      .select("id")
+      .single();
+
+    if (campaignError) throw campaignError;
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const client of clients) {
+      const nameParts = String(client.name || "").split(" ");
+      const personalizedMessage = cleanMessage
+        .replace(/{prenom}/g, nameParts[0] || "")
+        .replace(/{nom}/g, nameParts.slice(1).join(" ") || "");
+
+      try {
+        const result = await sendSms(client.phone, personalizedMessage);
+
+        await admin.from("sms_logs").insert({
+          salon_id: salonId,
+          client_id: client.id,
+          phone_number: client.phone,
+          message: personalizedMessage,
+          type: "campaign",
+          campaign_id: campaignRecord.id,
+          status: result.ok ? "sent" : "failed",
+          twilio_sid: result.sid,
+        });
+
+        if (result.ok) sent += 1;
+        else failed += 1;
+      } catch (error) {
+        console.error("[SMS-CAMPAIGN] send failed", error);
+        failed += 1;
+      }
+    }
+
+    return jsonResponse({ sent, failed });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "internal_error";
+    const status =
+      message === "not_authenticated" ? 401 :
+      message === "subscription_required" || message === "upgrade_required" ? 403 :
+      message === "salon_not_found" ? 404 :
+      message === "sms_provider_not_configured" ? 503 : 500;
+
+    console.error("[SMS-CAMPAIGN]", error);
+    return jsonResponse({ error: message }, status);
   }
-})
+});
