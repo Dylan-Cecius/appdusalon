@@ -24,6 +24,7 @@ export const useSupabaseAppointments = () => {
         .select(`
           id,
           barber_id,
+          staff_id,
           client_name,
           client_phone,
           start_time,
@@ -52,7 +53,8 @@ export const useSupabaseAppointments = () => {
         totalPrice: apt.total_price,
         notes: apt.notes,
         isPaid: apt.is_paid,
-        barberId: apt.barber_id
+        barberId: apt.barber_id || undefined,
+        staffId: apt.staff_id || undefined
       })) || [];
 
       console.log('[Appointments] fetch success', formattedAppointments.length);
@@ -122,7 +124,7 @@ export const useSupabaseAppointments = () => {
           user_id: user.id,
           salon_id: salonId
         })
-        .select(`id, barber_id, start_time, end_time, services, total_price, status, is_paid, notes`)
+        .select(`id, barber_id, staff_id, start_time, end_time, services, total_price, status, is_paid, notes`)
         .single();
 
       if (error) throw error;
@@ -138,7 +140,8 @@ export const useSupabaseAppointments = () => {
         totalPrice: (data as any).total_price,
         notes: (data as any).notes,
         isPaid: (data as any).is_paid,
-        barberId: (data as any).barber_id
+        barberId: (data as any).barber_id || undefined,
+        staffId: (data as any).staff_id || undefined
       };
 
       setAppointments(prev => [...prev, newAppointment]);
@@ -165,6 +168,7 @@ export const useSupabaseAppointments = () => {
       if (updates.notes !== undefined) updateData.notes = updates.notes;
       if (updates.isPaid !== undefined) updateData.is_paid = updates.isPaid;
       if (updates.barberId !== undefined) updateData.barber_id = updates.barberId;
+      if (updates.staffId !== undefined) updateData.staff_id = updates.staffId;
 
       const { error } = await supabase
         .from('appointments' as any)
