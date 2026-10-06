@@ -174,7 +174,7 @@ export const useSubscription = () => {
     }
   };
 
-  const createCheckoutSession = async (plan: 'starter' | 'pro' | 'enterprise') => {
+  const createCheckoutSession = async (plan: 'solo' | 'equipe') => {
     if (!user) {
       toast({
         title: "Erreur",
@@ -200,7 +200,7 @@ export const useSubscription = () => {
       }
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        window.location.assign(data.url);
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
