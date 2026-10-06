@@ -185,12 +185,13 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-5 sm:space-y-6">
+      <div className="space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tableau de bord</h1>
-            <p className="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Vue d’ensemble</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Tableau de bord</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Les indicateurs essentiels de votre salon, en temps réel.</p>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
@@ -216,7 +217,7 @@ const Dashboard = () => {
         {/* 4 KPI Cards */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           {/* CA du jour */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
+          <Card className="v2-kpi overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-success/10">
@@ -229,7 +230,7 @@ const Dashboard = () => {
           </Card>
 
           {/* CA Hebdomadaire */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
+          <Card className="v2-kpi overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA hebdomadaire</CardTitle>
               <div className="p-1.5 rounded-lg bg-primary/10">
@@ -242,7 +243,7 @@ const Dashboard = () => {
           </Card>
 
           {/* CA Mensuel */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
+          <Card className="v2-kpi overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Mensuel</CardTitle>
               <div className="p-1.5 rounded-lg bg-accent/10">
@@ -256,7 +257,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Clients encaissés aujourd'hui */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
+          <Card className="v2-kpi overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Clients du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-card/10">
