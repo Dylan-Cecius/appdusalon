@@ -127,10 +127,11 @@ const ClientsPage = () => {
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gestion des Clients</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Gérez vos clients et leur historique</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Relation client</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Clients</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Retrouvez rapidement les coordonnées, notes et historiques de vos clients.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {permissions.isAdmin && (
@@ -212,7 +213,7 @@ const ClientsPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="v2-panel flex flex-col gap-3 p-3 sm:flex-row sm:p-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -235,9 +236,11 @@ const ClientsPage = () => {
           </Select>
         </div>
 
-        <p className="text-sm text-muted-foreground">
-          {clients.length} client{clients.length !== 1 ? 's' : ''} enregistré{clients.length !== 1 ? 's' : ''}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {filteredAndSortedClients.length} affiché{filteredAndSortedClients.length !== 1 ? 's' : ''} sur {clients.length} client{clients.length !== 1 ? 's' : ''}
+          </p>
+        </div>
 
         {loading ? (
           <div className="text-center py-12">
@@ -257,7 +260,7 @@ const ClientsPage = () => {
             {filteredAndSortedClients.map((client) => (
               <Card
                 key={client.id}
-                className="cursor-pointer hover:bg-accent/50 transition-colors active:scale-98 min-h-[80px]"
+                className="v2-kpi min-h-[96px] cursor-pointer hover:border-primary/20 active:scale-[0.99]"
                 onClick={() => setSelectedClient(client)}
               >
                 <CardHeader>
