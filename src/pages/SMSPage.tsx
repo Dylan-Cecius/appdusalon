@@ -16,11 +16,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { MessageSquare, Send, Bell, Cake, UserX, Plus, Settings, Zap, Eye } from 'lucide-react';
 import { format } from 'date-fns';
+import { FeatureGate } from '@/components/FeatureGate';
+import { useNavigate } from 'react-router-dom';
 import { fr } from 'date-fns/locale';
 
 const SMSPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [salonId, setSalonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('campaigns');
 
@@ -222,12 +225,10 @@ const SMSPage = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <MessageSquare className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Campagnes SMS</h1>
-            <p className="text-muted-foreground">Gérez vos campagnes et automatisations SMS</p>
-          </div>
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Communication</p>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">SMS & automatisations</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Rappels de rendez-vous, relances clients et campagnes ciblées.</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -247,7 +248,12 @@ const SMSPage = () => {
           </TabsList>
 
           {/* CAMPAIGNS TAB */}
-          <TabsContent value="campaigns" className="space-y-4">
+          <TabsContent value="campaigns">
+            <FeatureGate
+              requiredFeature="canAccessTargetedMarketing"
+              onUpgrade={() => navigate('/abonnements')}
+            >
+              <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Campagnes envoyées</h2>
               <Button onClick={() => setShowNewCampaign(true)} className="flex items-center gap-2">
@@ -374,6 +380,8 @@ const SMSPage = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+              </div>
+            </FeatureGate>
           </TabsContent>
 
           {/* AUTOMATIONS TAB */}
