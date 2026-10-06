@@ -59,7 +59,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         items: tx.items as any,
         totalAmount: tx.total_amount,
         paymentMethod: tx.payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Paris')
+        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Paris'),
+        clientId: tx.client_id || undefined,
+        staffId: tx.staff_id || undefined
       })) || [];
 
       console.log('[Transactions] fetch success', formattedTransactions.length, 'transactions');
@@ -131,7 +133,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         items: (data as any).items as any,
         totalAmount: (data as any).total_amount,
         paymentMethod: (data as any).payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris')
+        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris'),
+        clientId: (data as any).client_id || undefined,
+        staffId: (data as any).staff_id || undefined
       };
 
       // Update state immediately for live stats
@@ -393,7 +397,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
             items: newRecord.items,
             totalAmount: newRecord.total_amount,
             paymentMethod: newRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Paris')
+            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Paris'),
+            clientId: newRecord.client_id || undefined,
+            staffId: newRecord.staff_id || undefined
           };
           setTransactions(prev => {
             if (prev.some(tx => tx.id === newTransaction.id)) return prev;
@@ -411,7 +417,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
             items: updatedRecord.items,
             totalAmount: updatedRecord.total_amount,
             paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Paris')
+            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Paris'),
+            clientId: updatedRecord.client_id || undefined,
+            staffId: updatedRecord.staff_id || undefined
           };
           setTransactions(prev => 
             prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
