@@ -27,38 +27,42 @@ const Auth = () => {
 
   const handleDemoLogin = async () => {
     setLoading(true);
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: 'demo@appdusalon.com',
-        password: 'Demo2024!',
-      });
-      if (error) {
-        toast({
-          title: "Erreur",
-          description: "Le compte démo n'est pas disponible pour le moment",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Préparation de la démo",
-          description: "Génération d'un salon complet (agenda, clients, caisse)…",
-        });
-        try {
-          await supabase.functions.invoke('seed-demo-data');
-        } catch (seedError) {
-          console.error('[demo] seeding failed', seedError);
-        }
-        toast({
-          title: "Mode démo activé",
-          description: "Bienvenue dans la démonstration !",
-        });
-        navigate('/');
+      const { data, error } = await supabase.functions.invoke('demo-login');
+
+      if (error || !data?.access_token || !data?.refresh_token) {
+        throw error || new Error('demo_unavailable');
       }
 
-    } catch {
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (sessionError) throw sessionError;
+
       toast({
-        title: "Erreur",
-        description: "Impossible de se connecter au compte démo",
+        title: "Préparation de la démo",
+        description: "Génération d'un salon complet (agenda, clients, caisse)…",
+      });
+
+      try {
+        await supabase.functions.invoke('seed-demo-data');
+      } catch (seedError) {
+        console.error('[demo] seeding failed', seedError);
+      }
+
+      toast({
+        title: "Mode démo activé",
+        description: "Bienvenue dans la démonstration !",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('[demo] login failed', error);
+      toast({
+        title: "Démo indisponible",
+        description: "Le compte de démonstration n'est pas disponible pour le moment.",
         variant: "destructive",
       });
     } finally {
