@@ -10,6 +10,7 @@ export interface SubscriptionRights {
   canAccessAdvancedStats: boolean;
   canExportReports: boolean;
   canSendEmails: boolean;
+  canUseSmsAutomations: boolean;
   canManageInventory: boolean;
   canAccessCustomerPortal: boolean;
   canSetCustomPricing: boolean;
@@ -39,6 +40,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessBasicStats: true,
     canExportReports: false,
     canSendEmails: false,
+    canUseSmsAutomations: false,
     canManageInventory: false,
     canAccessCustomerPortal: false,
     canSetCustomPricing: false,
@@ -66,6 +68,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessBasicStats: true,
     canExportReports: false,
     canSendEmails: true,
+    canUseSmsAutomations: true,
     canManageInventory: false,
     canAccessCustomerPortal: false,
     canSetCustomPricing: false,
@@ -93,6 +96,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessBasicStats: true,
     canExportReports: true,
     canSendEmails: true,
+    canUseSmsAutomations: true,
     canManageInventory: true,
     canAccessCustomerPortal: true,
     canSetCustomPricing: true,
@@ -120,6 +124,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessBasicStats: true,
     canExportReports: true,
     canSendEmails: true,
+    canUseSmsAutomations: true,
     canManageInventory: true,
     canAccessCustomerPortal: true,
     canSetCustomPricing: true,
@@ -139,7 +144,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
 };
 
 export const useSubscriptionRights = () => {
-  const { subscribed, subscription_tier } = useSubscription();
+  const { subscribed, subscription_tier, loading } = useSubscription();
   const { user } = useAuth();
 
   const isDemo = user?.email === 'demo@appdusalon.com';
@@ -187,6 +192,7 @@ export const useSubscriptionRights = () => {
 
   return {
     rights,
+    loading,
     subscriptionTier:
       isDemo
         ? 'Lifetime'
