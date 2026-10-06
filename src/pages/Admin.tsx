@@ -1,33 +1,26 @@
-import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Shield, Users, Settings, BarChart3, Gift, RefreshCw } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import PromoCodeManagement from '@/components/PromoCodeManagement';
 import SubscriptionManagement from '@/components/SubscriptionManagement';
 import { useAdminStats } from '@/hooks/useAdminStats';
+import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 
 const Admin = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { stats, refreshStats } = useAdminStats();
+  const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
 
-  // Check admin access
-  React.useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
+  useEffect(() => {
+    if (!adminLoading && !isPlatformAdmin) {
+      navigate('/', { replace: true });
     }
-    
-    if (user.email !== 'dylan.cecius@gmail.com') {
-      navigate('/');
-      return;
-    }
-  }, [user, navigate]);
+  }, [adminLoading, isPlatformAdmin, navigate]);
 
-  if (!user || user.email !== 'dylan.cecius@gmail.com') {
+  if (adminLoading || !isPlatformAdmin) {
     return null;
   }
 
