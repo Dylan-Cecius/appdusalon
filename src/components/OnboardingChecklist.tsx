@@ -19,9 +19,10 @@ const OnboardingChecklist = () => {
   if (staffLoading || servicesLoading || settingsLoading || permissionsLoading) return null;
   if (!permissions.isAdmin) return null;
 
+  const normalizedSalonName = salonSettings?.name?.trim().toLowerCase() || '';
   const hasSalonIdentity =
-    Boolean(salonSettings?.name?.trim()) &&
-    salonSettings?.name?.trim().toLowerCase() !== "l'app du salon";
+    Boolean(normalizedSalonName) &&
+    !["l'app du salon", 'mon salon'].includes(normalizedSalonName);
 
   const steps = [
     {
