@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { isDemoOnlyPreview } from '@/lib/previewSafety';
 
 export interface DaySchedule {
   start: string;
@@ -126,6 +127,10 @@ export const useStaff = () => {
       displayName: string;
       color: string;
     }) => {
+      if (isDemoOnlyPreview) {
+        throw new Error('Les invitations employés sont désactivées dans la preview sécurisée.');
+      }
+
       const { data, error } = await supabase.functions.invoke('create-employee', {
         body: {
           staff_id: staffId,
@@ -150,6 +155,10 @@ export const useStaff = () => {
 
   const revokeStaffAccess = useMutation({
     mutationFn: async (staffId: string) => {
+      if (isDemoOnlyPreview) {
+        throw new Error('La révocation des comptes employés est désactivée dans la preview sécurisée.');
+      }
+
       const { data, error } = await supabase.functions.invoke('revoke-employee-access', {
         body: { staff_id: staffId },
       });
