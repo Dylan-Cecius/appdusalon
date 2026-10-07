@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Shield, Users, Settings, BarChart3, Gift, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Shield, Users, BarChart3, Gift, RefreshCw } from 'lucide-react';
 import PromoCodeManagement from '@/components/PromoCodeManagement';
-import SubscriptionManagement from '@/components/SubscriptionManagement';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 
@@ -46,10 +45,10 @@ const Admin = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-semibold text-primary">
-                    Administration Salon Pro
+                    Administration L’App du Salon
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    Gestion des abonnements et utilisateurs
+                    Pilotage plateforme et codes promotionnels
                   </p>
                 </div>
               </div>
@@ -60,22 +59,14 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 sm:px-6 py-6">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Vue d'ensemble
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Utilisateurs
-            </TabsTrigger>
             <TabsTrigger value="promos" className="flex items-center gap-2">
               <Gift className="h-4 w-4" />
               Codes promo
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Paramètres
             </TabsTrigger>
           </TabsList>
 
@@ -164,17 +155,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des abonnements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SubscriptionManagement />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="promos" className="space-y-6">
             <Card>
               <CardHeader>
@@ -186,32 +166,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Paramètres système</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium">Configuration générale</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Gérez les paramètres globaux de l'application
-                    </p>
-                  </div>
-                  <Button variant="outline">
-                    Configurer les notifications
-                  </Button>
-                  <Button variant="outline">
-                    Gérer les sauvegardes
-                  </Button>
-                  <Button variant="outline">
-                    Logs système
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </div>
