@@ -22,6 +22,13 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     // Auth: either a valid user JWT or a CRON secret
     const cronSecret = Deno.env.get("CRON_SECRET");
@@ -91,13 +98,25 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("salon_name")
-      .eq("id", reportConfig.user_id)
-      .single();
+    const { data: salonId, error: salonIdError } = await supabase.rpc(
+      "get_user_salon_id",
+      { _user_id: reportConfig.user_id },
+    );
 
-    const salonName = profile?.salon_name || "Salon";
+    if (salonIdError || !salonId) {
+      return new Response(JSON.stringify({ error: "Salon not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: salon } = await supabase
+      .from("salons")
+      .select("name")
+      .eq("id", salonId)
+      .maybeSingle();
+
+    const salonName = salon?.name || "Salon";
 
     // Build report content
     let reportContent = `
@@ -122,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: transactions } = await supabase
         .from("transactions")
         .select("total_amount, transaction_date")
-        .eq("user_id", reportConfig.user_id)
+        .eq("salon_id", salonId)
         .gte("transaction_date", startDate.toISOString())
         .lte("transaction_date", endDate.toISOString());
 
@@ -144,7 +163,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: appointments } = await supabase
         .from("appointments")
         .select("id, status, total_price, start_time")
-        .eq("user_id", reportConfig.user_id)
+        .eq("salon_id", salonId)
         .gte("start_time", startDate.toISOString())
         .lte("start_time", endDate.toISOString());
 
@@ -168,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: appointments } = await supabase
         .from("appointments")
         .select("client_name, client_phone")
-        .eq("user_id", reportConfig.user_id)
+        .eq("salon_id", salonId)
         .gte("start_time", startDate.toISOString())
         .lte("start_time", endDate.toISOString());
 
@@ -185,8 +204,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     reportContent += `
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; text-align: center; color: #6c757d; font-size: 12px;">
-          <p>Ce rapport a été généré automatiquement le ${new Date().toLocaleString("fr-FR")}</p>
-          <p>SalonPOS - Gestion de salon de coiffure</p>
+          <p>Ce rapport a été généré automatiquement le ${new Intl.DateTimeFormat("fr-BE", {
+            timeZone: "Europe/Brussels",
+            dateStyle: "short",
+            timeStyle: "short",
+          }).format(new Date())}</p>
+          <p>L'App du Salon - Gestion de salon de coiffure</p>
         </div>
       </div>
     `;
