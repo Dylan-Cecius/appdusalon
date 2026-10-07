@@ -54,7 +54,10 @@ export const StaffPerformance = () => {
     queryKey: ['staff-perf-appts', user?.id, period],
     queryFn: async () => {
       if (!user) return [];
-      let q = supabase.from('appointments').select('staff_id, start_time');
+      let q = supabase
+        .from('appointments')
+        .select('staff_id, start_time')
+        .neq('status', 'cancelled');
       if (dateRange) {
         q = q.gte('start_time', dateRange.from).lte('start_time', dateRange.to);
       }
