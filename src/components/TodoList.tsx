@@ -112,7 +112,10 @@ const TodoList = () => {
                     {activeStaff.map(member => (
                       <SelectItem key={member.id} value={member.id}>
                         <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded ${member.color}`}></div>
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{ backgroundColor: member.color }}
+                          />
                           {member.name}
                         </div>
                       </SelectItem>
@@ -188,7 +191,7 @@ const TodoList = () => {
         </Card>
       ) : (
       <Tabs defaultValue={activeStaff[0]?.id} className="space-y-4">
-        <TabsList className="grid grid-cols-3 max-w-md bg-card">
+        <TabsList className="flex h-auto max-w-full flex-wrap justify-start gap-1 bg-card p-1">
           {activeStaff.map(member => {
             const staffTodos = filterTodosByStaff(member.id);
             const completedCount = staffTodos.filter(t => t.is_completed).length;
@@ -214,7 +217,10 @@ const TodoList = () => {
               <Card className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className={`w-4 h-4 rounded ${member.color}`}></div>
+                    <div
+                      className="h-4 w-4 rounded-full"
+                      style={{ backgroundColor: member.color }}
+                    />
                     <h3 className="text-lg font-semibold">Tâches de {member.name}</h3>
                     <Badge variant="outline">
                       {staffTodos.filter(t => !t.is_completed).length} en cours
