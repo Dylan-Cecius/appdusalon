@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useStaff, Staff, DailySchedules, ALL_DAYS } from '@/hooks/useStaff';
-import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent, Clock } from 'lucide-react';
+import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent, Clock, KeyRound, UserCheck, UserX } from 'lucide-react';
 import { StaffPerformance } from '@/components/StaffPerformance';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 import { useNavigate } from 'react-router-dom';
@@ -46,11 +46,22 @@ const dayLabelsShort: Record<string, string> = {
 };
 
 const StaffPage = () => {
-  const { staff, activeStaff, isLoading, createStaff, updateStaff, deleteStaff } = useStaff();
+  const {
+    staff,
+    activeStaff,
+    isLoading,
+    createStaff,
+    updateStaff,
+    deleteStaff,
+    inviteStaffAccess,
+    revokeStaffAccess,
+  } = useStaff();
   const { getLimit, isWithinLimit, subscriptionTier } = useSubscriptionRights();
   const navigate = useNavigate();
   const staffLimit = getLimit('maxBarbers');
   const canAddStaff = isWithinLimit(activeStaff.length, 'maxBarbers');
+  const canInviteAppAccess =
+    subscriptionTier === 'Equipe' || subscriptionTier === 'Lifetime';
   const [showInactive, setShowInactive] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
@@ -171,6 +182,9 @@ const StaffPage = () => {
               {staffLimit !== Infinity && (
                 <span className="ml-2">Plan {subscriptionTier} : {activeStaff.length}/{staffLimit}</span>
               )}
+              {!canInviteAppAccess && (
+                <span className="ml-2">Accès employés disponible avec le plan Équipe.</span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -198,7 +212,15 @@ const StaffPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold truncate">{s.name}</h3>
-                    <Badge className={`mt-1 ${roleBadgeColor[s.role] || roleBadgeColor['assistant']}`}>{s.role}</Badge>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <Badge className={roleBadgeColor[s.role] || roleBadgeColor['assistant']}>{s.role}</Badge>
+                      {s.auth_user_id && (
+                        <Badge variant="outline" className="gap-1 text-emerald-700 dark:text-emerald-300">
+                          <UserCheck className="h-3 w-3" />
+                          Accès app actif
+                        </Badge>
+                      )}
+                    </div>
                     {s.phone && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><Phone className="h-3 w-3" />{s.phone}</p>}
                     {s.email && <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{s.email}</p>}
                     {s.commission_rate > 0 && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Percent className="h-3 w-3" />{s.commission_rate}% commission</p>}
@@ -208,6 +230,57 @@ const StaffPage = () => {
                     </p>
                   </div>
                   <div className="flex flex-col gap-1">
+                    {canInviteAppAccess && !s.auth_user_id && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={!s.email || inviteStaffAccess.isPending}
+                        onClick={() => {
+                          if (!s.email) return;
+                          inviteStaffAccess.mutate({
+                            staffId: s.id,
+                            email: s.email,
+                            displayName: s.name,
+                            color: s.color,
+                          });
+                        }}
+                        title={s.email ? "Inviter à l’application" : "Ajoutez d’abord un email"}
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {s.auth_user_id && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 text-orange-600 hover:text-orange-600"
+                            title="Révoquer l’accès application"
+                          >
+                            <UserX className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Révoquer l’accès de {s.name} ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Son compte de connexion sera supprimé. Sa fiche équipe, son historique et ses rendez-vous resteront conservés.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => revokeStaffAccess.mutate(s.id)}
+                              disabled={revokeStaffAccess.isPending}
+                            >
+                              Révoquer l’accès
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openScheduleDialog(s)} title="Horaires">
                       <Clock className="h-3.5 w-3.5" />
                     </Button>
