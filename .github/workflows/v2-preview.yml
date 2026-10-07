@@ -1,9 +1,6 @@
 name: V2 Preview
 
 on:
-  push:
-    branches:
-      - v2/chatgpt-rebuild
   workflow_dispatch:
 
 permissions:
