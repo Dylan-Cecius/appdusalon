@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import { resolveAppOrigin } from "../_shared/app-origin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,24 +72,8 @@ serve(async (req) => {
       return jsonResponse({ error: "stripe_customer_not_found" }, 404);
     }
 
-    const configuredAppUrl = Deno.env.get("APP_URL");
-    const requestOrigin = req.headers.get("origin");
-    const returnBase = configuredAppUrl || requestOrigin;
-
-    if (!returnBase) {
-      return jsonResponse({ error: "return_url_not_configured" }, 503);
-    }
-
-    let returnUrl: string;
-    try {
-      const parsed = new URL(returnBase);
-      if (!["https:", "http:"].includes(parsed.protocol)) {
-        throw new Error("invalid_protocol");
-      }
-      returnUrl = new URL("/abonnements", parsed.origin).toString();
-    } catch {
-      return jsonResponse({ error: "invalid_return_url" }, 400);
-    }
+    const returnBase = resolveAppOrigin(req);
+    const returnUrl = new URL("/abonnements", returnBase).toString();
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
