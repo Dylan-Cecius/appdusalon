@@ -232,8 +232,8 @@ const ProAgenda = () => {
     const map: Record<string, any[]> = {};
     agendaMembers.forEach(m => { map[m.id] = []; });
     dayAppointments.forEach(apt => {
-      const bid = apt.barberId || '';
-      if (map[bid]) map[bid].push(apt);
+      const memberId = apt.staffId || apt.barberId || '';
+      if (map[memberId]) map[memberId].push(apt);
     });
     return map;
   }, [dayAppointments, agendaMembers]);
@@ -266,7 +266,7 @@ const ProAgenda = () => {
     const dropData = over.data.current;
     if (!dropData?.barberId) return;
 
-    const newBarberId = dropData.barberId as string;
+    const newStaffId = dropData.barberId as string;
     const newHour = dropData.hour as number;
     const newMinute = dropData.minute as number;
 
@@ -278,16 +278,19 @@ const ProAgenda = () => {
     newStart.setHours(newHour, newMinute, 0, 0);
     const newEnd = new Date(newStart.getTime() + durationMs);
 
-    if (newStart.getTime() === oldStart.getTime() && newBarberId === apt.barberId) return;
+    if (
+      newStart.getTime() === oldStart.getTime() &&
+      newStaffId === (apt.staffId || apt.barberId)
+    ) return;
 
-    const targetMember = agendaMembers.find(m => m.id === newBarberId);
+    const targetMember = agendaMembers.find(m => m.id === newStaffId);
     if (targetMember && !isStaffWorking(targetMember, selectedDate, newHour, newMinute)) {
       toast({ title: "Impossible", description: `${targetMember.name} est absent à cet horaire`, variant: "destructive" });
       return;
     }
 
     try {
-      await updateAppointment(apt.id, { startTime: newStart, endTime: newEnd, barberId: newBarberId });
+      await updateAppointment(apt.id, { startTime: newStart, endTime: newEnd, staffId: newStaffId });
       await refreshAppointments();
       toast({ title: "RDV déplacé", description: `${apt.clientName} → ${format(newStart, 'HH:mm')}` });
     } catch {
@@ -338,7 +341,7 @@ const ProAgenda = () => {
           {(appointmentsByMember[selectedBarberId] || [])
             .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             .map((apt: any) => {
-              const color = getAppointmentColor(apt.services, apt.barberId);
+              const color = getAppointmentColor(apt.services, apt.staffId || apt.barberId);
               const st = new Date(apt.startTime);
               const et = new Date(apt.endTime);
               return (
@@ -363,7 +366,7 @@ const ProAgenda = () => {
             <div className="text-center text-white/30 text-sm py-12">Aucun rendez-vous</div>
           )}
         </div>
-        <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
+        <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} staffId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
         {selectedAppointment && (
           <EditAppointmentModal
             isOpen={isEditModalOpen}
@@ -371,7 +374,11 @@ const ProAgenda = () => {
             appointment={selectedAppointment}
             onUpdate={() => { setIsEditModalOpen(false); setSelectedAppointment(null); }}
             onDelete={(id) => { deleteAppointment(id); setIsEditModalOpen(false); setSelectedAppointment(null); }}
-            onPay={(id) => { markAsPaid(id); setIsEditModalOpen(false); setSelectedAppointment(null); }}
+            onPay={async (id, method) => {
+              await markAsPaid(id, method);
+              setIsEditModalOpen(false);
+              setSelectedAppointment(null);
+            }}
           />
         )}
       </div>
@@ -600,7 +607,7 @@ const ProAgenda = () => {
                         appointment={apt}
                         slotHeight={SLOT_HEIGHT}
                         startHour={startHour}
-                        color={getAppointmentColor(apt.services, apt.barberId)}
+                        color={getAppointmentColor(apt.services, apt.staffId || apt.barberId)}
                         onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
                       />
                     ))}
@@ -622,7 +629,7 @@ const ProAgenda = () => {
               appointment={draggedAppointment}
               slotHeight={SLOT_HEIGHT}
               startHour={startHour}
-              color={getAppointmentColor(draggedAppointment.services, draggedAppointment.barberId)}
+              color={getAppointmentColor(draggedAppointment.services, draggedAppointment.staffId || draggedAppointment.barberId)}
               onClick={() => {}}
               isDragOverlay
             />
@@ -630,7 +637,7 @@ const ProAgenda = () => {
         </DragOverlay>
 
         {/* Modals */}
-        <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
+        <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} staffId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
         {selectedAppointment && (
           <EditAppointmentModal
             isOpen={isEditModalOpen}
@@ -643,11 +650,10 @@ const ProAgenda = () => {
               setSelectedAppointment(null);
               toast({ title: "Rendez-vous supprimé", description: "Le rendez-vous a été supprimé avec succès" });
             }}
-            onPay={(id, method) => {
-              markAsPaid(id);
+            onPay={async (id, method) => {
+              await markAsPaid(id, method);
               setIsEditModalOpen(false);
               setSelectedAppointment(null);
-              toast({ title: "Paiement enregistré", description: `Paiement de ${selectedAppointment.totalPrice}€ par ${method}` });
             }}
           />
         )}
