@@ -22,7 +22,7 @@ interface AppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date;
-  barberId?: string;
+  staffId?: string;
   selectedTimeSlot?: string;
 }
 
@@ -36,7 +36,7 @@ const appointmentTypes = [
   { value: 'autre', label: 'Autre', color: 'bg-orange-500' }
 ];
 
-const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTimeSlot }: AppointmentModalProps) => {
+const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTimeSlot }: AppointmentModalProps) => {
   const [appointmentType, setAppointmentType] = useState('client');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -51,9 +51,10 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
 
   // Pre-fill time when selectedTimeSlot is provided
   useEffect(() => {
-    if (selectedTimeSlot && isOpen) {
-      setStartTime(selectedTimeSlot);
-    } else if (!isOpen) {
+    if (isOpen) {
+      if (selectedTimeSlot) setStartTime(selectedTimeSlot);
+      if (staffId) setSelectedStaffId(staffId);
+    } else {
       setAppointmentType('client');
       setStartTime('');
       setClientName('');
@@ -62,7 +63,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
       setNotes('');
       setSelectedStaffId('');
     }
-  }, [selectedTimeSlot, isOpen]);
+  }, [selectedTimeSlot, isOpen, staffId]);
 
   const totalDuration = selectedServices.reduce((total, service) => 
     total + service.duration, 0
@@ -115,10 +116,11 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     const displayDuration = selectedServices.reduce((total, service) => total + service.duration, 0);
     appointmentEnd.setMinutes(appointmentEnd.getMinutes() + displayDuration);
 
-    if (!barberId) {
+    const effectiveStaffId = selectedStaffId || staffId;
+    if (!effectiveStaffId) {
       toast({
         title: "Erreur",
-        description: "Aucun coiffeur sélectionné",
+        description: "Aucun membre de l’équipe sélectionné",
         variant: "destructive",
       });
       return;
@@ -139,8 +141,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
         totalPrice: appointmentType === 'client' ? totalPrice : 0,
         notes: notes || undefined,
         isPaid: false,
-        barberId: barberId,
-        staffId: selectedStaffId || undefined
+        staffId: effectiveStaffId
       });
 
       toast({
@@ -160,7 +161,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     } catch {
       // addAppointment gère déjà le toast d'erreur
     }
-  }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, barberId, totalPrice, addAppointment, onClose, selectedStaffId]);
+  }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, staffId, totalPrice, addAppointment, onClose, selectedStaffId]);
 
   return (
     <>
