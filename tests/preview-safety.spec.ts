@@ -15,7 +15,9 @@ test('demo-only preview refuses credential sign-in before any network auth', asy
   await page.getByRole('button', { name: /^se connecter$/i }).click();
 
   await expect(
-    page.getByText(/utilisez le bouton de démonstration pour tester cette version/i)
+    page
+      .getByText(/utilisez le bouton de démonstration pour tester cette version/i)
+      .first()
   ).toBeVisible();
 });
 
