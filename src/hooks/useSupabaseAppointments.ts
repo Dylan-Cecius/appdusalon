@@ -122,7 +122,7 @@ export const useSupabaseAppointments = () => {
           total_price: appointment.totalPrice,
           notes: appointment.notes,
           is_paid: appointment.isPaid,
-          barber_id: appointment.barberId,
+          barber_id: appointment.barberId || null,
           staff_id: appointment.staffId || null,
           user_id: user.id,
           salon_id: salonId
@@ -208,8 +208,52 @@ export const useSupabaseAppointments = () => {
     }
   };
 
-  const markAsPaid = async (id: string) => {
-    await updateAppointment(id, { isPaid: true, status: 'completed' });
+  const markAsPaid = async (id: string, method: 'cash' | 'card') => {
+    try {
+      const { error } = await (supabase as any).rpc('settle_appointment', {
+        appointment_id_param: id,
+        payment_method_param: method,
+      });
+
+      if (error) throw error;
+
+      setAppointments(prev =>
+        prev.map(appointment =>
+          appointment.id === id
+            ? { ...appointment, isPaid: true, status: 'completed' }
+            : appointment
+        )
+      );
+
+      toast({
+        title: "Paiement enregistré",
+        description: `Le rendez-vous a été encaissé par ${method === 'cash' ? 'espèces' : 'carte'}.`,
+      });
+    } catch (error) {
+      console.error('Error settling appointment:', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as { message?: unknown }).message || '')
+            : '';
+
+      let description = "Impossible d’encaisser ce rendez-vous";
+      if (message.includes('appointment_already_paid')) {
+        description = "Ce rendez-vous a déjà été encaissé.";
+      } else if (message.includes('appointment_cancelled')) {
+        description = "Un rendez-vous annulé ne peut pas être encaissé.";
+      } else if (message.includes('appointment_not_billable')) {
+        description = "Ce rendez-vous ne contient aucune prestation facturable.";
+      }
+
+      toast({
+        title: "Encaissement impossible",
+        description,
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   const getAppointmentsForDate = (date: Date) => {
