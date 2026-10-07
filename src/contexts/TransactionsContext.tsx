@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { toZonedTime } from 'date-fns-tz';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export interface Transaction {
   id: string;
@@ -34,15 +35,17 @@ const TransactionsContext = createContext<TransactionsContextType | undefined>(u
 
 export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
   const { user, isReady } = useAuth();
+  const { permissions } = usePermissions();
+  const salonId = permissions.salonId;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const userIdRef = useRef<string | null>(null);
 
   // Fetch transactions from Supabase
   const fetchTransactions = async () => {
-    console.log('[Transactions] fetch start', { userId: user?.id });
+    console.log('[Transactions] fetch start', { salonId });
     try {
-      if (!isSupabaseConfigured || !user) {
+      if (!isSupabaseConfigured || !user || !salonId) {
         setTransactions([]);
         setLoading(false);
         return;
@@ -51,7 +54,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from('transactions' as any)
         .select('*')
-        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
@@ -266,8 +269,8 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    if (!user) {
-      console.log('[Transactions] effect: no user — clearing state');
+    if (!user || !salonId) {
+      console.log('[Transactions] effect: no salon — clearing state');
       setTransactions([]);
       setLoading(false);
       userIdRef.current = null;
@@ -280,19 +283,18 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     }
     userIdRef.current = user.id;
 
-    console.log('[Transactions] effect trigger — fetching for user', user.id);
+    console.log('[Transactions] effect trigger — fetching for salon', salonId);
     setLoading(true);
     fetchTransactions();
 
     if (!isSupabaseConfigured) return;
 
     const channel = supabase
-      .channel('transactions-realtime')
+      .channel(`transactions-realtime-${salonId}`)
       .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'transactions' },
+        { event: 'INSERT', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
         (payload) => {
           const newRecord = payload.new as any;
-          if (newRecord.user_id !== user.id) return;
           const newTransaction: Transaction = {
             id: newRecord.id,
             items: newRecord.items,
@@ -309,10 +311,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         }
       )
       .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'transactions' },
+        { event: 'UPDATE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
         (payload) => {
           const updatedRecord = payload.new as any;
-          if (updatedRecord.user_id !== user.id) return;
           const updatedTransaction: Transaction = {
             id: updatedRecord.id,
             items: updatedRecord.items,
@@ -328,10 +329,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         }
       )
       .on('postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'transactions' },
+        { event: 'DELETE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
         (payload) => {
           const deletedRecord = payload.old as any;
-          if (deletedRecord.user_id !== user.id) return;
           setTransactions(prev => prev.filter(tx => tx.id !== deletedRecord.id));
         }
       )
@@ -340,7 +340,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isReady, user?.id]);
+  }, [isReady, user?.id, salonId]);
 
   return (
     <TransactionsContext.Provider
