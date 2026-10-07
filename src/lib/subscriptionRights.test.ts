@@ -55,7 +55,9 @@ describe('subscription rights policy', () => {
     });
 
     expect(resolved.tier).toBe('Lifetime');
-    expect(resolved.rights.canAccessAPI).toBe(true);
+    expect(resolved.rights.canAccessAPI).toBe(false);
+    expect(resolved.rights.canAccessMultiSalon).toBe(false);
+    expect(resolved.rights.canCustomizeDomain).toBe(false);
     expect(resolved.rights.maxBarbers).toBe(-1);
   });
 
