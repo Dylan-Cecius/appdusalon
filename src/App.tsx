@@ -47,6 +47,9 @@ const LazyPage = ({ children }: { children: ReactNode }) => (
   <Suspense fallback={<PageFallback />}>{children}</Suspense>
 );
 
+const PreviewExternalActionGuard = ({ children }: { children: ReactNode }) =>
+  isDemoOnlyPreview ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+
 const AuthGuard = ({ children }: { children: ReactNode }) => {
   const { user, loading, signOut } = useAuth();
   const { permissions, isLoading: permissionsLoading } = usePermissions();
@@ -142,7 +145,9 @@ const App = () => {
                     <AuthGuard>
                       <PermissionGuard permission="canAccessSettings">
                         <SubscriptionGuard feature="canUseSmsAutomations">
-                          <LazyPage><SMSPage /></LazyPage>
+                          <PreviewExternalActionGuard>
+                            <LazyPage><SMSPage /></LazyPage>
+                          </PreviewExternalActionGuard>
                         </SubscriptionGuard>
                       </PermissionGuard>
                     </AuthGuard>
@@ -190,7 +195,9 @@ const App = () => {
                   element={
                     <AuthGuard>
                       <PermissionGuard permission="canAccessSettings">
-                        <LazyPage><SubscriptionPage /></LazyPage>
+                        <PreviewExternalActionGuard>
+                          <LazyPage><SubscriptionPage /></LazyPage>
+                        </PreviewExternalActionGuard>
                       </PermissionGuard>
                     </AuthGuard>
                   }
@@ -223,7 +230,9 @@ const App = () => {
                       <PermissionGuard permission="canAccessReports">
                         <ProtectedRoute section="reports">
                           <SubscriptionGuard feature="canExportReports">
-                            <LazyPage><ReportsPage /></LazyPage>
+                            <PreviewExternalActionGuard>
+                              <LazyPage><ReportsPage /></LazyPage>
+                            </PreviewExternalActionGuard>
                           </SubscriptionGuard>
                         </ProtectedRoute>
                       </PermissionGuard>
