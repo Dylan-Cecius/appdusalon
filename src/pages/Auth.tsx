@@ -13,6 +13,9 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isPasswordSetup, setIsPasswordSetup] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [salonName, setSalonName] = useState('');
@@ -71,14 +74,40 @@ const Auth = () => {
     }
   };
   useEffect(() => {
-    // Check if user is already logged in
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const searchParams = new URLSearchParams(window.location.search);
+    const linkType = hashParams.get('type') || searchParams.get('type');
+    const isPasswordFlowLink = linkType === 'invite' || linkType === 'recovery';
+
+    if (isPasswordFlowLink) {
+      setIsPasswordSetup(true);
+      setIsForgotPassword(false);
+    }
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordSetup(true);
+        setIsForgotPassword(false);
+      }
+
+      if (event === 'SIGNED_IN' && isPasswordFlowLink) {
+        setIsPasswordSetup(true);
+        setIsForgotPassword(false);
+      }
+    });
+
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      if (session && !isPasswordFlowLink) {
         navigate('/');
       }
     };
-    checkUser();
+
+    void checkUser();
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
@@ -249,6 +278,53 @@ const Auth = () => {
     }
   };
 
+  const handleSetPassword = async (e?: FormEvent) => {
+    e?.preventDefault();
+
+    if (newPassword.length < 8) {
+      toast({
+        title: "Mot de passe trop court",
+        description: "Utilisez au moins 8 caractères.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Confirmation incorrecte",
+        description: "Les deux mots de passe ne correspondent pas.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      window.history.replaceState({}, document.title, '/auth');
+      toast({
+        title: "Mot de passe enregistré",
+        description: "Votre compte est prêt.",
+      });
+      navigate('/', { replace: true });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d’enregistrer le mot de passe.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleMfaVerify = async () => {
     if (mfaCode.length !== 6 || !mfaFactorId) return;
 
@@ -337,9 +413,11 @@ const Auth = () => {
             <div className="flex flex-col items-center w-full">
               <img src={logoImg} alt="L'app du salon" className="h-24 sm:h-28 w-auto mb-5" />
               <p className="text-muted-foreground text-center text-sm sm:text-base">
-                {isForgotPassword 
-                  ? 'Réinitialisez votre mot de passe' 
-                  : isLogin 
+                {isPasswordSetup
+                  ? 'Définissez votre nouveau mot de passe'
+                  : isForgotPassword 
+                    ? 'Réinitialisez votre mot de passe' 
+                    : isLogin 
                     ? 'Connectez-vous à votre compte' 
                     : 'Créez votre compte salon'}
               </p>
@@ -393,6 +471,50 @@ const Auth = () => {
               Retour à la connexion
             </Button>
           </div>
+        ) : isPasswordSetup ? (
+          <form onSubmit={handleSetPassword} className="space-y-4">
+            <div>
+              <Label htmlFor="new-password">Nouveau mot de passe</Label>
+              <Input
+                id="new-password"
+                type={showPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+                className="min-h-[48px] text-base"
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+              <Input
+                id="confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+                className="min-h-[48px] text-base"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={showPassword}
+                onChange={(e) => setShowPassword(e.target.checked)}
+              />
+              Afficher le mot de passe
+            </label>
+            <Button
+              type="submit"
+              className="w-full min-h-[48px] text-base"
+              disabled={loading}
+            >
+              {loading ? 'Enregistrement...' : 'Enregistrer le mot de passe'}
+            </Button>
+          </form>
         ) : isForgotPassword ? (
           <form ref={forgotFormRef} onSubmit={handleForgotPassword} className="space-y-4">
             <div>
@@ -515,7 +637,7 @@ const Auth = () => {
           </form>
         )}
 
-        {!isForgotPassword && !mfaRequired && (
+        {!isForgotPassword && !isPasswordSetup && !mfaRequired && (
           <>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
@@ -573,7 +695,7 @@ const Auth = () => {
           </>
         )}
 
-        {!mfaRequired && (
+        {!mfaRequired && !isPasswordSetup && (
           <div className="mt-6 text-center">
             <Button
               variant="link"
