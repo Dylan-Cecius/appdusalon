@@ -176,7 +176,7 @@ export const useClients = () => {
 
       return {
         totalSpent,
-        visitCount: appointments?.length || transactions?.length || 0,
+        visitCount: Math.max(appointments?.length || 0, transactions?.length || 0),
         lastVisit,
       };
     } catch (error) {
