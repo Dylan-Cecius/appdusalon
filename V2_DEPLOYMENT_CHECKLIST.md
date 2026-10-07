@@ -20,6 +20,17 @@ For the GitHub Pages V2 preview, configure these GitHub secrets:
 
 The preview workflow fails closed when those secrets are absent and refuses to deploy if the preview Supabase URL matches the tracked default `.env`.
 
+### Isolated staging backend workflow
+
+The manual `.github/workflows/v2-staging-backend.yml` workflow requires:
+
+- `V2_STAGING_SUPABASE_ACCESS_TOKEN`
+- `V2_STAGING_SUPABASE_PROJECT_REF`
+- `V2_STAGING_DB_PASSWORD`
+- manual confirmation text `STAGING_ONLY`
+
+It refuses to run when the staging project ref matches the tracked default Supabase project. It performs a migration dry-run, applies pending migrations without seed data, deploys Edge Functions explicitly to the staging project ref, then lists remote migration history.
+
 Required application origin variables:
 
 - `APP_URL` — canonical deployed app origin, e.g. `https://app.example.com`
