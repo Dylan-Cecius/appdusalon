@@ -25,7 +25,7 @@ interface ClientDetailModalProps {
 }
 
 const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) => {
-  const { updateClient, deleteClient, getClientStats } = useClients();
+  const { updateClient, getClientStats, refreshClients } = useClients();
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
   const { permissions } = usePermissions();
@@ -61,28 +61,31 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
     setIsEditing(false);
   };
 
-  const handleDelete = async () => {
-    await deleteClient(client.id);
-    onClose();
-  };
-
   const handleRgpdDelete = async () => {
     setIsRgpdDeleting(true);
     try {
-      // Delete associated transactions first
-      await supabase.from('transactions').delete().eq('client_id', client.id);
-      await deleteClient(client.id);
-      await logActivity('CLIENT_DELETED', { client_name: client.name });
+      const { error } = await supabase.rpc('erase_client_personal_data', {
+        client_id_param: client.id,
+      });
+      if (error) throw error;
+
+      await logActivity('CLIENT_DELETED', {
+        erased_client_id: client.id,
+        mode: 'rgpd_erasure',
+      });
+      await refreshClients();
+
       toast({
-        title: "Données supprimées conformément au RGPD",
-        description: `Toutes les données de ${client.name} ont été définitivement supprimées.`,
+        title: "Données personnelles effacées",
+        description: "La fiche client a été supprimée. Les écritures comptables sont conservées sans lien vers le client.",
       });
       setRgpdDialogOpen(false);
       onClose();
     } catch (error) {
+      console.error('RGPD client erasure failed:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer les données",
+        description: "Impossible d’effacer les données personnelles",
         variant: "destructive",
       });
     } finally {
@@ -90,10 +93,8 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
     }
   };
 
-  const clientTransactions = transactions.filter(t => (t as any).client_id === client.id);
-  const clientAppointments = appointments.filter(apt => 
-    (apt as any).client_phone === client.phone
-  );
+  const clientTransactions = transactions.filter(t => t.clientId === client.id);
+  const clientAppointments = appointments.filter(apt => apt.clientPhone === client.phone);
 
   const allVisits = [
     ...clientTransactions.map(t => ({
@@ -136,10 +137,6 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                   <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
                     <Edit2 className="h-4 w-4 mr-1" />
                     Modifier
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={handleDelete}>
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Supprimer
                   </Button>
                 </>
               )}
@@ -300,7 +297,7 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                 <span className="font-semibold text-sm">Droit à l'oubli — RGPD Article 17</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Suppression définitive et irréversible de toutes les données personnelles de ce client.
+                Effacement définitif des données personnelles. Les écritures comptables sont conservées mais dissociées du client.
               </p>
               <AlertDialog open={rgpdDialogOpen} onOpenChange={setRgpdDialogOpen}>
                 <AlertDialogTrigger asChild>
@@ -317,7 +314,7 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                     </AlertDialogTitle>
                     <AlertDialogDescription className="space-y-3">
                       <span className="block">
-                        Cette action est irréversible. Toutes les données personnelles de <strong>{client.name}</strong> seront supprimées définitivement : profil, historique de visites, transactions associées. Êtes-vous certain ?
+                        Cette action est irréversible. La fiche de <strong>{client.name}</strong>, les coordonnées présentes dans les rendez-vous et les journaux SMS seront effacés. Les transactions financières resteront conservées mais ne seront plus liées au client.
                       </span>
                       <span className="block text-sm">
                         Pour confirmer, tapez <strong>{client.name}</strong> ci-dessous :
