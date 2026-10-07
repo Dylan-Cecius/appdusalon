@@ -3,10 +3,21 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { getAuthenticatedUserId, hasReportAccess } from "../_shared/report-access.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const reportFromEmail =
+  Deno.env.get("REPORT_FROM_EMAIL") || "L'App du Salon <onboarding@resend.dev>";
+const resend = new Resend(resendApiKey);
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,6 +45,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    if (!resendApiKey) {
+      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const userId = await getAuthenticatedUserId(
       supabaseUrl,
       anonKey,
@@ -82,7 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Convert plain text content to HTML with proper formatting
-    const htmlContent = content
+    const htmlContent = escapeHtml(content)
       .replace(/\n/g, '<br>')
       .replace(/📊 RAPPORT ([A-Z\s\-À-ÿ]+)/g, '<h2 style="color: #2563eb; margin: 20px 0 15px 0;">📊 $1</h2>')
       .replace(/💰 CHIFFRE D'AFFAIRES/g, '<h3 style="color: #059669; margin: 15px 0 10px 0;">💰 CHIFFRE D\'AFFAIRES</h3>')
@@ -98,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>${subject}</title>
+      <title>${escapeHtml(subject)}</title>
     </head>
     <body style="
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -116,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       ">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #1f2937; margin: 0;">SalonPOS</h1>
+          <h1 style="color: #1f2937; margin: 0;">L'App du Salon</h1>
           <p style="color: #6b7280; margin: 5px 0 0 0;">Système de gestion pour salon de coiffure</p>
         </div>
         
@@ -135,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
             font-size: 14px;
             margin: 0;
           ">
-            Ce rapport a été généré automatiquement par SalonPOS
+            Ce rapport a été généré automatiquement par L'App du Salon
           </p>
         </div>
       </div>
@@ -146,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${reportType} report email to: ${to}`);
 
     const emailResponse = await resend.emails.send({
-      from: "L'app du salon <onboarding@resend.dev>",
+      from: reportFromEmail,
       to: [to],
       subject: subject,
       html: fullHtmlContent,
