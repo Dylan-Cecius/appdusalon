@@ -1,4 +1,5 @@
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import { resolveBillingOwner } from "./billing-owner.ts";
 
 const normalizeTier = (tier: string | null) => {
   if (tier === "Pro") return "Equipe";
@@ -7,24 +8,56 @@ const normalizeTier = (tier: string | null) => {
 };
 
 export const hasReportAccess = async (
-  supabaseAdmin: SupabaseClient,
+  supabaseAdmin: any,
   userId: string,
 ): Promise<boolean> => {
-  const { data, error } = await supabaseAdmin
-    .from("subscribers")
-    .select("subscribed, subscription_tier, subscription_end")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: userData, error: userError } =
+    await supabaseAdmin.auth.admin.getUserById(userId);
 
-  if (error || !data?.subscribed) return false;
+  if (userError || !userData.user?.email) return false;
 
-  const tier = normalizeTier(data.subscription_tier);
+  const billingOwner = await resolveBillingOwner(supabaseAdmin, userData.user);
+  if (!billingOwner.salonId) return false;
+
+  const requesterEmail = userData.user.email.toLowerCase();
+
+  const [{ data: requesterPlatformAdmin }, { data: ownerPlatformAdmin }, { data: isSalonAdmin }, { data: subscriber, error }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("platform_admin_emails")
+        .select("email")
+        .eq("email", requesterEmail)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("platform_admin_emails")
+        .select("email")
+        .eq("email", billingOwner.ownerEmail)
+        .maybeSingle(),
+      supabaseAdmin.rpc("has_role_in_salon", {
+        _user_id: userId,
+        _salon_id: billingOwner.salonId,
+        _role: "admin",
+      }),
+      supabaseAdmin
+        .from("subscribers")
+        .select("subscribed, subscription_tier, subscription_end")
+        .or(`user_id.eq.${billingOwner.ownerUserId},email.eq.${billingOwner.ownerEmail}`)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+  if (requesterPlatformAdmin || ownerPlatformAdmin) return true;
+  if (isSalonAdmin !== true) return false;
+  if (error || !subscriber?.subscribed) return false;
+
+  const tier = normalizeTier(subscriber.subscription_tier);
   if (!["Solo", "Equipe", "Lifetime"].includes(tier || "")) return false;
 
   if (tier === "Lifetime") return true;
-  if (!data.subscription_end) return true;
+  if (!subscriber.subscription_end) return true;
 
-  return new Date(data.subscription_end).getTime() > Date.now();
+  return new Date(subscriber.subscription_end).getTime() > Date.now();
 };
 
 export const getAuthenticatedUserId = async (
@@ -34,7 +67,6 @@ export const getAuthenticatedUserId = async (
 ): Promise<string | null> => {
   if (!authorization?.startsWith("Bearer ")) return null;
 
-  const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.56.0");
   const client = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authorization } },
   });
