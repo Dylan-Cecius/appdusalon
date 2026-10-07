@@ -11,6 +11,7 @@ export interface Transaction {
     name: string;
     price: number;
     quantity: number;
+    kind?: 'service' | 'product';
   }>;
   totalAmount: number;
   paymentMethod: 'cash' | 'card';
@@ -154,9 +155,12 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
           const lowStockAlerts: string[] = [];
 
           for (const item of transaction.items) {
-            const matchingProduct = (products as any[]).find(
-              (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
-            );
+            const matchingProduct = (products as any[]).find((p: any) => p.id === item.id) ||
+              (item.kind === 'product'
+                ? (products as any[]).find(
+                    (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+                  )
+                : undefined);
             if (matchingProduct) {
               const qty = item.quantity || 1;
               const newStock = Math.max(0, matchingProduct.current_stock - qty);
@@ -304,9 +308,12 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
             const restoredItems: string[] = [];
 
             for (const item of txToDelete.items) {
-              const matchingProduct = (products as any[]).find(
-                (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
-              );
+              const matchingProduct = (products as any[]).find((p: any) => p.id === item.id) ||
+                (item.kind === 'product'
+                  ? (products as any[]).find(
+                      (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+                    )
+                  : undefined);
               if (matchingProduct) {
                 const qty = item.quantity || 1;
                 const newStock = matchingProduct.current_stock + qty;
