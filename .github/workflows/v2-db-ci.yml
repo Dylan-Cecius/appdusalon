@@ -39,7 +39,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Test exact recovery migration against disposable fixtures
+      - name: Test exact legacy migrations against disposable fixtures
         shell: bash
         env:
           POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
@@ -47,11 +47,12 @@ jobs:
           set -euo pipefail
           # No published port, remote database URL, or production credentials.
           root=/tmp/appdusalon-regression
-          migration=20250831223354_cb1556da-c701-4854-8f98-82e73c539897.sql
           docker exec "$POSTGRES_CONTAINER" mkdir -p "$root/tests/sql" "$root/supabase/migrations"
-          docker cp tests/sql/legacy-appointment-recovery.sql "$POSTGRES_CONTAINER:$root/tests/sql/"
-          docker cp "supabase/migrations/$migration" "$POSTGRES_CONTAINER:$root/supabase/migrations/"
-          docker exec "$POSTGRES_CONTAINER" psql -X --username postgres --dbname legacy_recovery_tests --set ON_ERROR_STOP=1 --file "$root/tests/sql/legacy-appointment-recovery.sql"
+          docker cp tests/sql/. "$POSTGRES_CONTAINER:$root/tests/sql/"
+          docker cp supabase/migrations/. "$POSTGRES_CONTAINER:$root/supabase/migrations/"
+          for test in tests/sql/*.sql; do
+            docker exec "$POSTGRES_CONTAINER" psql -X --username postgres --dbname legacy_recovery_tests --set ON_ERROR_STOP=1 --file "$root/$test"
+          done
 
   migrations:
     runs-on: ubuntu-latest

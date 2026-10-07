@@ -85,5 +85,7 @@ FROM public.barbers barber
 JOIN public.staff staff
   ON lower(trim(staff.name)) = lower(trim(barber.name))
 WHERE appointment.staff_id IS NULL
-  AND appointment.barber_id = barber.id
+  -- Legacy appointment references are text, whereas barbers.id is UUID.
+  -- Convert the UUID to text rather than casting arbitrary legacy values to UUID.
+  AND appointment.barber_id = barber.id::text
   AND appointment.salon_id = staff.salon_id;
