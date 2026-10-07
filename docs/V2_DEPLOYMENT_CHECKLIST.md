@@ -24,6 +24,8 @@ Pour le workflow GitHub Pages de la V2, configurer les secrets GitHub suivants :
 
 Le workflow refuse désormais de déployer si ces secrets sont absents ou si l'URL Supabase de preview correspond à l'URL par défaut suivie dans `.env`.
 
+Tant que le workflow V2 n'existe que sur `v2/chatgpt-rebuild`, un déploiement de preview est volontairement déclenché uniquement par un commit dont le message contient `[deploy-preview]`. Les commits ordinaires ne font que créer un job preview ignoré. Le déclenchement manuel `workflow_dispatch` restera disponible une fois le workflow présent sur la branche par défaut.
+
 ### Workflow backend de recette isolé
 
 Le workflow manuel `.github/workflows/v2-staging-backend.yml` nécessite :
@@ -34,6 +36,8 @@ Le workflow manuel `.github/workflows/v2-staging-backend.yml` nécessite :
 - la confirmation manuelle exacte `STAGING_ONLY`
 
 Il refuse de s'exécuter si la référence du projet staging correspond au projet Supabase par défaut suivi dans `.env`. Il effectue d'abord un dry-run des migrations, applique ensuite les migrations en attente sans données de seed, déploie explicitement les Edge Functions vers le projet staging, puis vérifie l'historique des migrations.
+
+Tant que la V2 reste isolée de la branche par défaut, le backend staging ne se déploie que sur un commit dont le message contient `[deploy-staging]`. Les commits ordinaires ignorent le job staging. Le déclenchement manuel `workflow_dispatch` restera disponible après présence du workflow sur la branche par défaut.
 
 ## 2. Secrets Edge Functions
 
