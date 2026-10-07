@@ -4,6 +4,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { hasReportAccess } from "../_shared/report-access.ts";
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -134,12 +142,14 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
 
     const salonName = salon?.name || "Salon";
+    const safeSalonName = escapeHtml(salonName);
+    const safeReportName = escapeHtml(String(reportConfig.report_name || "Rapport"));
 
     // Build report content
     let reportContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
-          ${reportConfig.report_name} - ${salonName}
+          ${safeReportName} - ${safeSalonName}
         </h1>
         ${isTest ? '<div style="background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 20px;"><strong>⚠️ Ceci est un rapport de test</strong></div>' : ""}
     `;
