@@ -66,12 +66,15 @@ export const supabase = createClient<Database>(
   SUPABASE_URL || 'https://invalid.supabase.co',
   SUPABASE_PUBLISHABLE_KEY || 'invalid-publishable-key',
   {
-  auth: {
-    storage: safeStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+    auth: {
+      storage: safeStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
   }
-});
+);
 
 // Check if Supabase is properly configured
-export const isSupabaseConfigured = !!(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
+export const isSupabaseConfigured = Boolean(
+  SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY
+);
