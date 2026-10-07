@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package } from 'lucide-react';
+import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package, Boxes } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface CartItem {
   id: string;
@@ -24,6 +25,8 @@ interface CartItem {
   price: number;
   duration: number;
   quantity: number;
+  kind?: 'service' | 'product';
+  stock?: number;
 }
 
 const POSPage = () => {
@@ -36,7 +39,7 @@ const POSPage = () => {
   const [productForm, setProductForm] = useState({ name: '', price: '', category: 'produit' });
   const { toast } = useToast();
   const { services, loading: servicesLoading, categories, addService, fetchServices } = useSupabaseServices();
-  const { createProduct } = useStocks();
+  const { products, createProduct } = useStocks();
   const { addTransaction, transactions } = useTransactions();
   const isMobile = useIsMobile();
 
@@ -70,6 +73,51 @@ const POSPage = () => {
           price: service.price,
           duration: service.duration,
           quantity: 1,
+          kind: 'service',
+        },
+      ];
+    });
+  };
+
+  const addProductToCart = (product: (typeof products)[number]) => {
+    if (product.current_stock <= 0) {
+      toast({
+        title: 'Rupture de stock',
+        description: `${product.name} n’est plus disponible.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCartItems(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        if (existing.quantity >= product.current_stock) {
+          toast({
+            title: 'Stock insuffisant',
+            description: `Stock disponible : ${product.current_stock}`,
+            variant: 'destructive',
+          });
+          return prev;
+        }
+
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1, stock: product.current_stock }
+            : item
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          price: product.sell_price,
+          duration: 0,
+          quantity: 1,
+          kind: 'product',
+          stock: product.current_stock,
         },
       ];
     });
@@ -283,6 +331,46 @@ const POSPage = () => {
                 </div>
               );
             })
+          )}
+
+          {products.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-primary">
+                  <Boxes className="h-5 w-5" />
+                  Produits
+                </h3>
+                <Badge variant="secondary">{products.length} produit{products.length > 1 ? 's' : ''}</Badge>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map(product => (
+                  <Card
+                    key={product.id}
+                    className={cn(
+                      'v2-kpi cursor-pointer transition-all',
+                      product.current_stock <= 0 && 'cursor-not-allowed opacity-50'
+                    )}
+                    onClick={() => product.current_stock > 0 && addProductToCart(product)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{product.name}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Stock : {product.current_stock} {product.unit}
+                          </p>
+                        </div>
+                        <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </div>
+                      <p className="mt-4 text-lg font-semibold text-primary">
+                        {product.sell_price.toFixed(2)}€
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           )}
 
           {!servicesLoading && services.length === 0 && (
