@@ -1,3 +1,4 @@
+import { isTrustedAppOrigin } from "../_shared/app-origin.ts";
 import { getAuthenticatedUser, resolveSalonAndCheckEntitlement, sendSms } from "../_shared/sms.ts";
 
 const corsHeaders = {
@@ -12,6 +13,13 @@ const jsonResponse = (body: unknown, status = 200) =>
   });
 
 Deno.serve(async (req) => {
+  if (!isTrustedAppOrigin(req)) {
+    return new Response(JSON.stringify({ error: "origin_not_allowed" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
