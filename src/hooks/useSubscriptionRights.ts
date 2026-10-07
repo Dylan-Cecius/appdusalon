@@ -1,147 +1,13 @@
 import { useMemo } from 'react';
 import { useSubscription } from './useSubscription';
 import { useAuth } from './useAuth';
+import {
+  normalizeLimit,
+  resolveSubscriptionRights,
+  type SubscriptionRights,
+} from '@/lib/subscriptionRights';
 
-export interface SubscriptionRights {
-  maxBarbers: number;
-  maxAppointmentsPerMonth: number;
-  maxTransactionsPerMonth: number;
-  maxServicesPerBarber: number;
-  canAccessAdvancedStats: boolean;
-  canExportReports: boolean;
-  canSendEmails: boolean;
-  canUseSmsAutomations: boolean;
-  canManageInventory: boolean;
-  canAccessCustomerPortal: boolean;
-  canSetCustomPricing: boolean;
-  canAccessMultiSalon: boolean;
-  canAccessAPI: boolean;
-  canAccessWhiteLabel: boolean;
-  supportLevel: 'community' | 'email' | 'priority' | 'dedicated';
-  hasCustomTraining: boolean;
-  canUseThirdPartyIntegrations: boolean;
-  canUseAdvancedBookingFeatures: boolean;
-  canRemoveBranding: boolean;
-  canCustomizeDomain: boolean;
-  canAccessFullClientNotes: boolean;
-  canAccessOnlineBooking: boolean;
-  canAccessTargetedMarketing: boolean;
-  canAccessBasicStats: boolean;
-}
-
-const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
-  // Plan Gratuit (0€/mois)
-  'none': {
-    maxBarbers: 1,
-    maxAppointmentsPerMonth: -1,
-    maxTransactionsPerMonth: -1,
-    maxServicesPerBarber: 5,
-    canAccessAdvancedStats: false,
-    canAccessBasicStats: true,
-    canExportReports: false,
-    canSendEmails: false,
-    canUseSmsAutomations: false,
-    canManageInventory: false,
-    canAccessCustomerPortal: false,
-    canSetCustomPricing: false,
-    canAccessMultiSalon: false,
-    canAccessAPI: false,
-    canAccessWhiteLabel: false,
-    supportLevel: 'community',
-    hasCustomTraining: false,
-    canUseThirdPartyIntegrations: false,
-    canUseAdvancedBookingFeatures: false,
-    canRemoveBranding: false,
-    canCustomizeDomain: false,
-    canAccessFullClientNotes: false,
-    canAccessOnlineBooking: false,
-    canAccessTargetedMarketing: false,
-  },
-
-  // Plan Solo (19€/mois)
-  'Solo': {
-    maxBarbers: 1,
-    maxAppointmentsPerMonth: -1, // Illimité
-    maxTransactionsPerMonth: -1,
-    maxServicesPerBarber: -1,
-    canAccessAdvancedStats: false,
-    canAccessBasicStats: true,
-    canExportReports: false,
-    canSendEmails: true,
-    canUseSmsAutomations: true,
-    canManageInventory: false,
-    canAccessCustomerPortal: false,
-    canSetCustomPricing: false,
-    canAccessMultiSalon: false,
-    canAccessAPI: false,
-    canAccessWhiteLabel: false,
-    supportLevel: 'email',
-    hasCustomTraining: false,
-    canUseThirdPartyIntegrations: false,
-    canUseAdvancedBookingFeatures: true,
-    canRemoveBranding: false,
-    canCustomizeDomain: false,
-    canAccessFullClientNotes: true,
-    canAccessOnlineBooking: true,
-    canAccessTargetedMarketing: false,
-  },
-
-  // Plan Équipe (59€/mois)
-  'Equipe': {
-    maxBarbers: 5,
-    maxAppointmentsPerMonth: -1,
-    maxTransactionsPerMonth: -1,
-    maxServicesPerBarber: -1,
-    canAccessAdvancedStats: true,
-    canAccessBasicStats: true,
-    canExportReports: true,
-    canSendEmails: true,
-    canUseSmsAutomations: true,
-    canManageInventory: true,
-    canAccessCustomerPortal: true,
-    canSetCustomPricing: true,
-    canAccessMultiSalon: true,
-    canAccessAPI: false,
-    canAccessWhiteLabel: false,
-    supportLevel: 'priority',
-    hasCustomTraining: false,
-    canUseThirdPartyIntegrations: true,
-    canUseAdvancedBookingFeatures: true,
-    canRemoveBranding: true,
-    canCustomizeDomain: false,
-    canAccessFullClientNotes: true,
-    canAccessOnlineBooking: true,
-    canAccessTargetedMarketing: true,
-  },
-
-  // Accès à vie (legacy / promo)
-  'Lifetime': {
-    maxBarbers: -1,
-    maxAppointmentsPerMonth: -1,
-    maxTransactionsPerMonth: -1,
-    maxServicesPerBarber: -1,
-    canAccessAdvancedStats: true,
-    canAccessBasicStats: true,
-    canExportReports: true,
-    canSendEmails: true,
-    canUseSmsAutomations: true,
-    canManageInventory: true,
-    canAccessCustomerPortal: true,
-    canSetCustomPricing: true,
-    canAccessMultiSalon: true,
-    canAccessAPI: true,
-    canAccessWhiteLabel: true,
-    supportLevel: 'priority',
-    hasCustomTraining: true,
-    canUseThirdPartyIntegrations: true,
-    canUseAdvancedBookingFeatures: true,
-    canRemoveBranding: true,
-    canCustomizeDomain: true,
-    canAccessFullClientNotes: true,
-    canAccessOnlineBooking: true,
-    canAccessTargetedMarketing: true,
-  },
-};
+export type { SubscriptionRights } from '@/lib/subscriptionRights';
 
 export const useSubscriptionRights = () => {
   const { subscribed, subscription_tier, loading } = useSubscription();
@@ -149,32 +15,24 @@ export const useSubscriptionRights = () => {
 
   const isDemo = user?.email === 'demo@appdusalon.com';
 
-  const rights = useMemo((): SubscriptionRights => {
-    if (isDemo) {
-      return SUBSCRIPTION_RIGHTS['Lifetime'];
-    }
+  const resolved = useMemo(
+    () =>
+      resolveSubscriptionRights({
+        subscribed,
+        tier: subscription_tier,
+        isDemo,
+      }),
+    [isDemo, subscribed, subscription_tier]
+  );
 
-    if (!subscribed) {
-      return SUBSCRIPTION_RIGHTS['none'];
-    }
-
-    const normalizedTier =
-      subscription_tier === 'Pro'
-        ? 'Equipe'
-        : subscription_tier === 'Enterprise'
-          ? 'Lifetime'
-          : subscription_tier;
-
-    return SUBSCRIPTION_RIGHTS[normalizedTier || 'none'] || SUBSCRIPTION_RIGHTS['none'];
-  }, [isDemo, subscribed, subscription_tier]);
+  const rights = resolved.rights;
 
   const canAccess = (feature: keyof SubscriptionRights) => {
     return rights[feature] as boolean;
   };
 
   const getLimit = (limit: keyof SubscriptionRights) => {
-    const value = rights[limit] as number;
-    return value === -1 ? Infinity : value;
+    return normalizeLimit(rights[limit] as number);
   };
 
   const isWithinLimit = (currentCount: number, limitKey: keyof SubscriptionRights) => {
@@ -193,14 +51,7 @@ export const useSubscriptionRights = () => {
   return {
     rights,
     loading,
-    subscriptionTier:
-      isDemo
-        ? 'Lifetime'
-        : subscription_tier === 'Pro'
-          ? 'Equipe'
-          : subscription_tier === 'Enterprise'
-            ? 'Lifetime'
-            : subscription_tier || 'none',
+    subscriptionTier: resolved.tier,
     canAccess,
     getLimit,
     isWithinLimit,
