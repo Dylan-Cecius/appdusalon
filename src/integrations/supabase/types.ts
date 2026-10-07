@@ -1388,7 +1388,6 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["transactions"]["Row"]
       }
-      reset_demo_data: { Args: never; Returns: undefined }
       use_promo_code: {
         Args: { code_text: string; user_id_param: string }
         Returns: Json
