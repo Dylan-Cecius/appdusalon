@@ -950,6 +950,7 @@ export type Database = {
       }
       staff: {
         Row: {
+          auth_user_id: string | null
           color: string
           commission_rate: number | null
           created_at: string | null
@@ -966,6 +967,7 @@ export type Database = {
           working_days: string[] | null
         }
         Insert: {
+          auth_user_id?: string | null
           color?: string
           commission_rate?: number | null
           created_at?: string | null
@@ -982,6 +984,7 @@ export type Database = {
           working_days?: string[] | null
         }
         Update: {
+          auth_user_id?: string | null
           color?: string
           commission_rate?: number | null
           created_at?: string | null
@@ -998,6 +1001,13 @@ export type Database = {
           working_days?: string[] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_auth_user_id_fkey"
+            columns: ["auth_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_salon_id_fkey"
             columns: ["salon_id"]
