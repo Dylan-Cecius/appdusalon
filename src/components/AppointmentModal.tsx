@@ -113,7 +113,10 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
     appointmentStart.setHours(hours, minutes, 0, 0);
     
     const appointmentEnd = new Date(appointmentStart);
-    const displayDuration = selectedServices.reduce((total, service) => total + service.duration, 0);
+    const displayDuration =
+      appointmentType === 'client'
+        ? selectedServices.reduce((total, service) => total + service.duration, 0)
+        : 30;
     appointmentEnd.setMinutes(appointmentEnd.getMinutes() + displayDuration);
 
     const effectiveStaffId = selectedStaffId || staffId;
