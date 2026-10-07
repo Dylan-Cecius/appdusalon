@@ -96,6 +96,7 @@ serve(async (req) => {
         .select('id, name, price, duration, category, color')
         .eq('salon_id', salon.id)
         .eq('is_active', true)
+        .neq('category', 'produit')
         .order('display_order'),
       supabase
         .from('staff')
