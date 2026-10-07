@@ -62,7 +62,7 @@ export const SUBSCRIPTION_RIGHTS: Record<SubscriptionTier, SubscriptionRights> =
     canAccessAdvancedStats: false,
     canAccessBasicStats: true,
     canExportReports: false,
-    canSendEmails: true,
+    canSendEmails: false,
     canUseSmsAutomations: true,
     canManageInventory: false,
     canAccessCustomerPortal: false,
