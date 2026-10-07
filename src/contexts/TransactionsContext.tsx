@@ -169,9 +169,32 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       return newTransaction;
     } catch (error) {
       console.error('Error adding transaction:', error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as { message?: unknown }).message || '')
+            : '';
+
+      let description = "Impossible d'enregistrer la transaction";
+
+      if (message.includes('price_changed')) {
+        description = "Un prix a changé depuis l’ajout au panier. Actualisez la caisse puis réessayez.";
+      } else if (message.includes('insufficient_stock')) {
+        description = "Stock insuffisant pour l’un des produits du panier.";
+      } else if (
+        message.includes('product_not_found') ||
+        message.includes('service_not_found')
+      ) {
+        description = "Un article du panier n’est plus disponible.";
+      } else if (message.includes('invalid_staff')) {
+        description = "Le prestataire sélectionné n’est plus disponible.";
+      }
+
       toast({
-        title: "Erreur",
-        description: "Impossible d'enregistrer la transaction",
+        title: "Encaissement impossible",
+        description,
         variant: "destructive"
       });
       throw error;
