@@ -11,6 +11,7 @@ Required frontend variables:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_PREVIEW_DEMO_ONLY=true` on the public V2 preview
+- `VITE_DEMO_ACCOUNT_EMAIL` (optional; defaults to `demo@appdusalon.com` and must match the Edge `DEMO_ACCOUNT_EMAIL` when customized)
 
 For the GitHub Pages V2 preview, configure these GitHub secrets:
 
