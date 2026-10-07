@@ -15,6 +15,9 @@ verify_jwt = false
 [functions.create-employee]
 verify_jwt = true
 
+[functions.revoke-employee-access]
+verify_jwt = true
+
 [functions.send-report-email]
 verify_jwt = true
 
