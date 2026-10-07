@@ -78,54 +78,58 @@ const StatsPage = () => {
             >
               CA période personnalisée
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('barber-performance')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Performance coiffeurs
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('peak-hours')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Heures de pointe
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('service-profitability')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Rentabilité services
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('occupancy-rate')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-xs min-h-[36px] px-3"
-            >
-              Taux d'occupation
-            </Button>
+            {permissions.isAdmin && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    document
+                      .getElementById('barber-performance')
+                      ?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                  className="text-xs min-h-[36px] px-3"
+                >
+                  Performance équipe
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    document
+                      .getElementById('peak-hours')
+                      ?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                  className="text-xs min-h-[36px] px-3"
+                >
+                  Heures de pointe
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    document
+                      .getElementById('service-profitability')
+                      ?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                  className="text-xs min-h-[36px] px-3"
+                >
+                  Performance services
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    document
+                      .getElementById('occupancy-rate')
+                      ?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                  className="text-xs min-h-[36px] px-3"
+                >
+                  Taux d'occupation
+                </Button>
+              </>
+            )}
           </div>
         </Card>
 
