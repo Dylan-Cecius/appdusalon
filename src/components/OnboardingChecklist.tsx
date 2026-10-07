@@ -7,14 +7,17 @@ import { useStaff } from '@/hooks/useStaff';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useOpeningHours } from '@/hooks/useOpeningHours';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const OnboardingChecklist = () => {
   const { activeStaff, isLoading: staffLoading } = useStaff();
   const { services, loading: servicesLoading } = useSupabaseServices();
   const { hasData: hasOpeningHours } = useOpeningHours();
   const { salonSettings, loading: settingsLoading } = useSupabaseSettings();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
 
-  if (staffLoading || servicesLoading || settingsLoading) return null;
+  if (staffLoading || servicesLoading || settingsLoading || permissionsLoading) return null;
+  if (!permissions.isAdmin) return null;
 
   const hasSalonIdentity =
     Boolean(salonSettings?.name?.trim()) &&
