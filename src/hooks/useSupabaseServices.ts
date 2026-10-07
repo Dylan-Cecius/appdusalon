@@ -34,6 +34,7 @@ export const useSupabaseServices = () => {
         .select('*')
         .eq('salon_id', salonId)
         .eq('is_active', true)
+        .neq('category', 'produit')
         .order('display_order');
 
       if (error) {
@@ -191,8 +192,7 @@ export const useSupabaseServices = () => {
     { id: 'barbe', name: 'Barbe' },
     { id: 'combo', name: 'Formules' },
     { id: 'soin', name: 'Soins' },
-    { id: 'couleur', name: 'Couleurs' },
-    { id: 'produit', name: 'Produits' }
+    { id: 'couleur', name: 'Couleurs' }
   ];
 
   return {
