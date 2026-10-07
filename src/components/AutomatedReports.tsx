@@ -386,9 +386,9 @@ export const AutomatedReports = () => {
   const { checkFeature } = useFeatureAccess();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const canSendEmails = checkFeature('canSendEmails');
+  const canExportReports = checkFeature('canExportReports');
 
-  if (!canSendEmails) {
+  if (!canExportReports) {
     return (
       <Card>
         <CardHeader>
@@ -397,7 +397,7 @@ export const AutomatedReports = () => {
             Rapports automatisés
           </CardTitle>
           <CardDescription>
-            Cette fonctionnalité nécessite un plan Premium ou supérieur.
+            Cette fonctionnalité est disponible avec le plan Équipe.
           </CardDescription>
         </CardHeader>
       </Card>
