@@ -10,6 +10,14 @@ Required frontend variables:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_PREVIEW_DEMO_ONLY=true` on the public V2 preview
+
+For the GitHub Pages V2 preview, configure these GitHub secrets:
+
+- `V2_PREVIEW_SUPABASE_URL`
+- `V2_PREVIEW_SUPABASE_PUBLISHABLE_KEY`
+
+The preview workflow fails closed when those secrets are absent and refuses to deploy if the preview Supabase URL matches the tracked default `.env`.
 
 Required application origin variables:
 
