@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface CartItem {
   id: string;
@@ -41,6 +42,7 @@ const POSPage = () => {
   const { services, loading: servicesLoading, categories, addService, fetchServices } = useSupabaseServices();
   const { products, createProduct } = useStocks();
   const { addTransaction, transactions } = useTransactions();
+  const { permissions } = usePermissions();
   const isMobile = useIsMobile();
 
   const todayStats = useMemo(() => {
@@ -243,15 +245,17 @@ const POSPage = () => {
             Ajouter un produit
           </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsTransactionsOpen(true)}
-          className="gap-2"
-        >
-          <ClipboardList className="h-4 w-4" />
-          Gérer les encaissements
-        </Button>
+        {permissions.canManageTransactions && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsTransactionsOpen(true)}
+            className="gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Gérer les encaissements
+          </Button>
+        )}
       </div>
 
       {/* Session Summary Bar */}
