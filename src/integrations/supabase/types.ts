@@ -1371,6 +1371,13 @@ export type Database = {
       }
       hash_password: { Args: { password_text: string }; Returns: string }
       is_salon_admin: { Args: { _user_id: string }; Returns: boolean }
+      settle_appointment: {
+        Args: {
+          appointment_id_param: string
+          payment_method_param: string
+        }
+        Returns: Database["public"]["Tables"]["transactions"]["Row"]
+      }
       reset_demo_data: { Args: never; Returns: undefined }
       use_promo_code: {
         Args: { code_text: string; user_id_param: string }
