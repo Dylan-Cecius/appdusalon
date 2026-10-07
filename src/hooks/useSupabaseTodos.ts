@@ -5,7 +5,8 @@ import { useAuth } from './useAuth';
 
 export interface TodoItem {
   id: string;
-  barber_id: string;
+  staff_id: string | null;
+  barber_id?: string | null;
   title: string;
   description?: string;
   is_completed: boolean;
@@ -22,6 +23,13 @@ export const useSupabaseTodos = () => {
   const [loading, setLoading] = useState(true);
   const userIdRef = useRef<string | null>(null);
 
+  const getSalonId = async () => {
+    if (!user) return null;
+    const { data, error } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
+    if (error) throw error;
+    return data as string | null;
+  };
+
   const fetchTodos = async () => {
     if (!user) {
       setTodos([]);
@@ -32,10 +40,16 @@ export const useSupabaseTodos = () => {
     try {
       setLoading(true);
 
+      const salonId = await getSalonId();
+      if (!salonId) {
+        setTodos([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('todo_items')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -60,9 +74,12 @@ export const useSupabaseTodos = () => {
     }
 
     try {
+      const salonId = await getSalonId();
+      if (!salonId) throw new Error('Salon introuvable');
+
       const { data, error } = await supabase
         .from('todo_items')
-        .insert({ ...todo, user_id: user.id })
+        .insert({ ...todo, user_id: user.id, salon_id: salonId })
         .select()
         .single();
 
