@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, type ReactNode } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionGuard from "./components/SubscriptionGuard";
+import PermissionGuard from "./components/PermissionGuard";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
 
@@ -78,7 +79,16 @@ const App = () => {
 
                 <Route path="/pos" element={<AuthGuard><LazyPage><POSPage /></LazyPage></AuthGuard>} />
                 <Route path="/clients" element={<AuthGuard><LazyPage><ClientsPage /></LazyPage></AuthGuard>} />
-                <Route path="/equipe" element={<AuthGuard><LazyPage><StaffPage /></LazyPage></AuthGuard>} />
+                <Route
+                  path="/equipe"
+                  element={
+                    <AuthGuard>
+                      <PermissionGuard permission="canAccessEmployeeManagement">
+                        <LazyPage><StaffPage /></LazyPage>
+                      </PermissionGuard>
+                    </AuthGuard>
+                  }
+                />
                 <Route
                   path="/sms"
                   element={
@@ -104,8 +114,26 @@ const App = () => {
                 <Route path="/agenda" element={<AuthGuard><LazyPage><AgendaPage /></LazyPage></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><LazyPage><TodoPage /></LazyPage></AuthGuard>} />
                 <Route path="/ca-total" element={<AuthGuard><LazyPage><CATotalPage /></LazyPage></AuthGuard>} />
-                <Route path="/abonnement" element={<AuthGuard><LazyPage><SubscriptionPage /></LazyPage></AuthGuard>} />
-                <Route path="/abonnements" element={<AuthGuard><LazyPage><SubscriptionPage /></LazyPage></AuthGuard>} />
+                <Route
+                  path="/abonnement"
+                  element={
+                    <AuthGuard>
+                      <PermissionGuard permission="canAccessSettings">
+                        <LazyPage><SubscriptionPage /></LazyPage>
+                      </PermissionGuard>
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/abonnements"
+                  element={
+                    <AuthGuard>
+                      <PermissionGuard permission="canAccessSettings">
+                        <LazyPage><SubscriptionPage /></LazyPage>
+                      </PermissionGuard>
+                    </AuthGuard>
+                  }
+                />
 
                 <Route
                   path="/stats"
@@ -121,11 +149,13 @@ const App = () => {
                   path="/rapports"
                   element={
                     <AuthGuard>
-                      <ProtectedRoute section="reports">
-                        <SubscriptionGuard feature="canSendEmails">
-                          <LazyPage><ReportsPage /></LazyPage>
-                        </SubscriptionGuard>
-                      </ProtectedRoute>
+                      <PermissionGuard permission="canAccessReports">
+                        <ProtectedRoute section="reports">
+                          <SubscriptionGuard feature="canSendEmails">
+                            <LazyPage><ReportsPage /></LazyPage>
+                          </SubscriptionGuard>
+                        </ProtectedRoute>
+                      </PermissionGuard>
                     </AuthGuard>
                   }
                 />
@@ -133,15 +163,35 @@ const App = () => {
                   path="/parametres"
                   element={
                     <AuthGuard>
-                      <ProtectedRoute section="settings">
-                        <LazyPage><SettingsPage /></LazyPage>
-                      </ProtectedRoute>
+                      <PermissionGuard permission="canAccessSettings">
+                        <ProtectedRoute section="settings">
+                          <LazyPage><SettingsPage /></LazyPage>
+                        </ProtectedRoute>
+                      </PermissionGuard>
                     </AuthGuard>
                   }
                 />
 
-                <Route path="/historique" element={<AuthGuard><LazyPage><TransactionHistory /></LazyPage></AuthGuard>} />
-                <Route path="/encaissements" element={<AuthGuard><LazyPage><TransactionHistory /></LazyPage></AuthGuard>} />
+                <Route
+                  path="/historique"
+                  element={
+                    <AuthGuard>
+                      <PermissionGuard permission="canManageTransactions">
+                        <LazyPage><TransactionHistory /></LazyPage>
+                      </PermissionGuard>
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/encaissements"
+                  element={
+                    <AuthGuard>
+                      <PermissionGuard permission="canManageTransactions">
+                        <LazyPage><TransactionHistory /></LazyPage>
+                      </PermissionGuard>
+                    </AuthGuard>
+                  }
+                />
 
                 <Route path="*" element={<LazyPage><NotFound /></LazyPage>} />
               </Routes>
