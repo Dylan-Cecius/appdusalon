@@ -12,6 +12,8 @@ interface CartItem {
   price: number;
   duration: number;
   quantity: number;
+  kind?: 'service' | 'product';
+  stock?: number;
 }
 
 interface CartSidebarProps {
@@ -25,7 +27,10 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
   const { activeStaff } = useStaff();
   const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const totalDuration = items.reduce((sum, item) => sum + (item.duration * item.quantity), 0);
+  const totalDuration = items.reduce(
+    (sum, item) => sum + (item.kind === 'product' ? 0 : item.duration * item.quantity),
+    0
+  );
 
   if (items.length === 0) {
     return (
@@ -37,7 +42,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
             </div>
           </div>
           <p className="text-lg font-medium">Panier vide</p>
-          <p className="text-sm">Sélectionnez des services</p>
+          <p className="text-sm">Sélectionnez des services ou produits</p>
         </div>
       </Card>
     );
@@ -59,7 +64,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
                 </p>
                 <span className="text-xs text-muted-foreground">•</span>
                 <p className="text-sm text-muted-foreground">
-                  {item.duration} min
+                  {item.kind === 'product' ? 'Produit' : `${item.duration} min`}
                 </p>
               </div>
             </div>
@@ -78,6 +83,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
                   variant="ghost"
                   size="sm"
                   onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                  disabled={item.kind === 'product' && item.stock !== undefined && item.quantity >= item.stock}
                   className="h-7 w-7 p-0 hover:bg-primary/10 hover:scale-110 active:scale-95 transition-all duration-200"
                 >
                   +
@@ -102,7 +108,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Total:</span>
-            <span className="font-medium">{totalDuration} minutes</span>
+            <span className="font-medium">{totalDuration > 0 ? `${totalDuration} minutes` : '—'}</span>
           </div>
           <div className="flex justify-between items-center text-xl font-bold">
             <span>Prix:</span>
