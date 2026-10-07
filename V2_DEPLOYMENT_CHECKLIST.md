@@ -20,6 +20,8 @@ For the GitHub Pages V2 preview, configure these GitHub secrets:
 
 The preview workflow fails closed when those secrets are absent and refuses to deploy if the preview Supabase URL matches the tracked default `.env`.
 
+While the V2 workflow exists only on `v2/chatgpt-rebuild`, a preview deployment is intentionally triggered by a commit whose message contains `[deploy-preview]`. Ordinary branch commits only create a skipped preview job. The `workflow_dispatch` trigger remains available once the workflow exists on the default branch.
+
 ### Isolated staging backend workflow
 
 The manual `.github/workflows/v2-staging-backend.yml` workflow requires:
@@ -30,6 +32,8 @@ The manual `.github/workflows/v2-staging-backend.yml` workflow requires:
 - manual confirmation text `STAGING_ONLY`
 
 It refuses to run when the staging project ref matches the tracked default Supabase project. It performs a migration dry-run, applies pending migrations without seed data, deploys Edge Functions explicitly to the staging project ref, then lists remote migration history.
+
+While V2 remains isolated from the default branch, staging deployment is intentionally triggered only by a commit whose message contains `[deploy-staging]`. Ordinary commits skip the staging job. Manual `workflow_dispatch` remains available after the workflow exists on the default branch.
 
 Required application origin variables:
 
