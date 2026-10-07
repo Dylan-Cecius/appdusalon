@@ -1,3 +1,4 @@
+import { isTrustedAppOrigin } from "../_shared/app-origin.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
@@ -32,6 +33,13 @@ interface ReportEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  if (!isTrustedAppOrigin(req)) {
+    return new Response(JSON.stringify({ error: "origin_not_allowed" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
