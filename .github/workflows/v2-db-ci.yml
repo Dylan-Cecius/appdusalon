@@ -8,6 +8,7 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/config.toml"
+      - "tests/sql/**"
       - ".github/workflows/v2-db-ci.yml"
 
 permissions:
@@ -18,6 +19,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  legacy-appointment-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: legacy_recovery_tests
+          POSTGRES_PASSWORD: local-ci-only
+        options: >-
+          --health-cmd "pg_isready -U postgres -d legacy_recovery_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Test exact recovery migration against disposable fixtures
+        shell: bash
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          # No published port, remote database URL, or production credentials.
+          root=/tmp/appdusalon-regression
+          migration=20250831223354_cb1556da-c701-4854-8f98-82e73c539897.sql
+          docker exec "$POSTGRES_CONTAINER" mkdir -p "$root/tests/sql" "$root/supabase/migrations"
+          docker cp tests/sql/legacy-appointment-recovery.sql "$POSTGRES_CONTAINER:$root/tests/sql/"
+          docker cp "supabase/migrations/$migration" "$POSTGRES_CONTAINER:$root/supabase/migrations/"
+          docker exec "$POSTGRES_CONTAINER" psql -X --username postgres --dbname legacy_recovery_tests --set ON_ERROR_STOP=1 --file "$root/tests/sql/legacy-appointment-recovery.sql"
+
   migrations:
     runs-on: ubuntu-latest
     timeout-minutes: 15
