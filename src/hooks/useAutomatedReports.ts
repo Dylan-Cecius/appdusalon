@@ -183,7 +183,6 @@ export const useAutomatedReports = () => {
 
   const testReport = async (reportId: string) => {
     try {
-      console.log('Sending test report for:', reportId);
       toast({
         title: "Envoi en cours...",
         description: "Envoi du rapport de test",
@@ -193,7 +192,6 @@ export const useAutomatedReports = () => {
         body: { reportId, isTest: true }
       });
 
-      console.log('Test report response:', { data, error });
 
       if (error) {
         console.error('Edge function error:', error);
@@ -220,7 +218,6 @@ export const useAutomatedReports = () => {
       return;
     }
 
-    console.log('[AutomatedReports] effect trigger', { userId: user?.id ?? null });
 
     if (!user) {
       setReports([]);
