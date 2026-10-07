@@ -162,7 +162,7 @@ const App = () => {
                     <AuthGuard>
                       <PermissionGuard permission="canAccessReports">
                         <ProtectedRoute section="reports">
-                          <SubscriptionGuard feature="canSendEmails">
+                          <SubscriptionGuard feature="canExportReports">
                             <LazyPage><ReportsPage /></LazyPage>
                           </SubscriptionGuard>
                         </ProtectedRoute>
