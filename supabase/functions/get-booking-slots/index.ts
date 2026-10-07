@@ -66,6 +66,7 @@ const normalizeTier = (tier?: string | null) => {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "GET") return jsonResponse({ error: "method_not_allowed" }, 405);
 
   try {
     const supabase = createClient(
