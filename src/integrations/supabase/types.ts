@@ -1087,7 +1087,6 @@ export type Database = {
       todo_items: {
         Row: {
           barber_id: string | null
-          staff_id: string | null | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -1151,13 +1150,6 @@ export type Database = {
             columns: ["salon_id"]
             isOneToOne: false
             referencedRelation: "salons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "todo_items_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
