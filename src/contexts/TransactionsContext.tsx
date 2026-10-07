@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface Transaction {
@@ -97,105 +97,56 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const currentTimeUTC = fromZonedTime(new Date(), 'Europe/Paris');
-      
-      const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
-      const { data: employeeIdData } = await supabase.rpc('get_user_employee_id', { _user_id: user.id });
-      
-      if (!salonIdData) {
-        toast({
-          title: "Erreur",
-          description: "Aucun salon associé à votre compte",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('transactions' as any)
-        .insert({
-          items: transaction.items as any,
-          total_amount: transaction.totalAmount,
-          payment_method: transaction.paymentMethod,
-          user_id: user.id,
-          salon_id: salonIdData,
-          employee_id: employeeIdData || null,
-          client_id: transaction.clientId || null,
-          staff_id: transaction.staffId || null,
-          transaction_date: currentTimeUTC.toISOString()
-        })
-        .select()
-        .single();
+      const { data: rpcData, error } = await (supabase as any).rpc('record_pos_transaction', {
+        items_param: transaction.items,
+        total_amount_param: transaction.totalAmount,
+        payment_method_param: transaction.paymentMethod,
+        client_id_param: transaction.clientId || null,
+        staff_id_param: transaction.staffId || null,
+      });
 
       if (error) throw error;
 
+      const data = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      if (!data) throw new Error('Transaction non créée');
+
       const newTransaction: Transaction = {
-        id: (data as any).id,
-        items: (data as any).items as any,
-        totalAmount: (data as any).total_amount,
-        paymentMethod: (data as any).payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris'),
-        clientId: (data as any).client_id || undefined,
-        staffId: (data as any).staff_id || undefined
+        id: data.id,
+        items: data.items as Transaction['items'],
+        totalAmount: Number(data.total_amount),
+        paymentMethod: data.payment_method as 'cash' | 'card',
+        transactionDate: toZonedTime(new Date(data.transaction_date), 'Europe/Paris'),
+        clientId: data.client_id || undefined,
+        staffId: data.staff_id || undefined,
       };
 
-      // Update state immediately for live stats
       setTransactions(prev => [newTransaction, ...prev]);
-      console.log('[Transactions] added, new count:', transactions.length + 1);
 
-      // Auto-décrémentation du stock pour les produits correspondants
-      try {
-        const { data: products } = await supabase
-          .from('products' as any)
-          .select('id, name, current_stock, min_stock')
-          .eq('salon_id', salonIdData)
-          .eq('is_active', true);
+      const { data: lowStockProducts } = await supabase
+        .from('products' as any)
+        .select('id, name, current_stock, min_stock')
+        .in(
+          'id',
+          transaction.items
+            .filter(item => item.kind === 'product')
+            .map(item => item.id)
+        );
 
-        if (products && products.length > 0) {
-          const lowStockAlerts: string[] = [];
+      const alerts = (lowStockProducts || [])
+        .filter((product: any) => product.current_stock <= product.min_stock)
+        .map((product: any) =>
+          `${product.name} (${product.current_stock} restant${product.current_stock > 1 ? 's' : ''})`
+        );
 
-          for (const item of transaction.items) {
-            const matchingProduct = (products as any[]).find((p: any) => p.id === item.id) ||
-              (item.kind === 'product'
-                ? (products as any[]).find(
-                    (p: any) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
-                  )
-                : undefined);
-            if (matchingProduct) {
-              const qty = item.quantity || 1;
-              const newStock = Math.max(0, matchingProduct.current_stock - qty);
-              await supabase.from('products' as any)
-                .update({ current_stock: newStock, updated_at: new Date().toISOString() } as any)
-                .eq('id', matchingProduct.id);
-              
-              await supabase.from('stock_movements' as any).insert({
-                salon_id: salonIdData,
-                product_id: matchingProduct.id,
-                type: 'out',
-                quantity: -qty,
-                previous_stock: matchingProduct.current_stock,
-                new_stock: newStock,
-                reason: 'Vente POS automatique',
-                created_by: user.id,
-              } as any);
-
-              if (newStock <= matchingProduct.min_stock) {
-                lowStockAlerts.push(`${matchingProduct.name} (${newStock} restant${newStock > 1 ? 's' : ''})`);
-              }
-            }
-          }
-
-          if (lowStockAlerts.length > 0) {
-            toast({
-              title: "⚠️ Stock bas",
-              description: lowStockAlerts.join(', '),
-              variant: "destructive",
-            });
-          }
-        }
-      } catch (stockError) {
-        console.error('Error updating stock after sale:', stockError);
+      if (alerts.length > 0) {
+        toast({
+          title: "⚠️ Stock bas",
+          description: alerts.join(', '),
+          variant: "destructive",
+        });
       }
+
+      const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
 
       // Log activity
       try {
