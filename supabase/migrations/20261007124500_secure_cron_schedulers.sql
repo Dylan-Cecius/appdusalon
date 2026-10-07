@@ -1,7 +1,8 @@
 -- V2: secure scheduled Edge Function invocations through Supabase Vault.
 -- Required Vault secrets:
---   cron_secret      -> same value as Edge secret CRON_SECRET
---   sms_cron_secret  -> same value as Edge secret SMS_CRON_SECRET
+--   functions_base_url -> e.g. https://<project-ref>.supabase.co
+--   cron_secret        -> same value as Edge secret CRON_SECRET
+--   sms_cron_secret    -> same value as Edge secret SMS_CRON_SECRET
 
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
@@ -29,7 +30,10 @@ SELECT cron.schedule(
   '*/15 * * * *',
   $cron$
   SELECT net.http_post(
-    url := 'https://vrawwiqeutbqqdzkhrax.supabase.co/functions/v1/process-scheduled-reports',
+    url := COALESCE(
+      (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'functions_base_url' LIMIT 1),
+      ''
+    ) || '/functions/v1/process-scheduled-reports',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', COALESCE(
@@ -49,7 +53,10 @@ SELECT cron.schedule(
   '5 * * * *',
   $cron$
   SELECT net.http_post(
-    url := 'https://vrawwiqeutbqqdzkhrax.supabase.co/functions/v1/process-sms-automations',
+    url := COALESCE(
+      (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'functions_base_url' LIMIT 1),
+      ''
+    ) || '/functions/v1/process-sms-automations',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', COALESCE(
