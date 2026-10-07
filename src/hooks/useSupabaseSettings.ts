@@ -10,6 +10,7 @@ export interface SalonSettings {
   has_stats_password?: boolean;
   user_id?: string;
   salon_id?: string;
+  slug?: string;
 }
 
 export const useSupabaseSettings = () => {
@@ -38,7 +39,7 @@ export const useSupabaseSettings = () => {
         salonId
           ? supabase
               .from('salons')
-              .select('id, name, owner_user_id')
+              .select('id, name, owner_user_id, slug')
               .eq('id', salonId)
               .maybeSingle()
           : Promise.resolve({ data: null, error: null }),
@@ -66,6 +67,7 @@ export const useSupabaseSettings = () => {
         logo_url: settings?.logo_url || '',
         user_id: salon?.owner_user_id || settings?.user_id || user.id,
         salon_id: salon?.id || settings?.salon_id || undefined,
+        slug: salon?.slug || undefined,
         has_stats_password: passwordResult.data === true,
       });
     } catch (error) {
@@ -126,6 +128,7 @@ export const useSupabaseSettings = () => {
         logo_url: data.logo_url,
         user_id: data.user_id,
         salon_id: data.salon_id,
+        slug: salonSettings?.slug,
         has_stats_password: hasPassword === true,
       });
 
