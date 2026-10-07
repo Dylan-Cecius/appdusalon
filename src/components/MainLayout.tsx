@@ -54,7 +54,7 @@ const navGroups: NavGroup[] = [
     items: [
       { path: '/ca-total', label: 'Chiffre d’affaires', icon: TrendingUp, adminOnly: true },
       { path: '/equipe', label: 'Équipe', icon: Users, adminOnly: true },
-      { path: '/sms', label: 'SMS', icon: MessageSquare },
+      { path: '/sms', label: 'SMS', icon: MessageSquare, adminOnly: true },
       { path: '/todo', label: 'To-do', icon: CheckSquare },
       { path: '/rapports', label: 'Rapports', icon: Mail, adminOnly: true },
       { path: '/abonnements', label: 'Abonnement', icon: Crown, adminOnly: true },
