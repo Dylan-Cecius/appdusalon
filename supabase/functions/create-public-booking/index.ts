@@ -78,6 +78,7 @@ serve(async (req) => {
 
     const cleanClientName = String(client_name || "").trim();
     const cleanClientPhone = String(client_phone || "").trim();
+    const normalizedClientPhone = cleanClientPhone.replace(/[\s().-]/g, "");
 
     if (
       !salon_id ||
@@ -92,6 +93,10 @@ serve(async (req) => {
 
     if (cleanClientName.length > 100 || cleanClientPhone.length > 20) {
       return jsonResponse({ error: "invalid_input_length" }, 400);
+    }
+
+    if (!/^\+?\d{8,15}$/.test(normalizedClientPhone)) {
+      return jsonResponse({ error: "invalid_phone" }, 400);
     }
 
     const appointmentStart = new Date(start_time);
@@ -233,6 +238,20 @@ serve(async (req) => {
       }
     }
 
+    const rateLimitSince = new Date(Date.now() - 10 * 60_000).toISOString();
+    const { count: recentBookingCount, error: rateLimitError } = await supabase
+      .from("appointments")
+      .select("id", { count: "exact", head: true })
+      .eq("salon_id", salon_id)
+      .eq("client_phone", normalizedClientPhone)
+      .gte("created_at", rateLimitSince);
+
+    if (rateLimitError) throw rateLimitError;
+
+    if ((recentBookingCount || 0) >= 3) {
+      return jsonResponse({ error: "too_many_booking_attempts" }, 429);
+    }
+
     const { data: conflicts, error: conflictError } = await supabase
       .from("appointments")
       .select("id")
@@ -255,7 +274,7 @@ serve(async (req) => {
         salon_id,
         staff_id,
         client_name: cleanClientName,
-        client_phone: cleanClientPhone,
+        client_phone: normalizedClientPhone,
         services: [
           {
             id: service.id,
