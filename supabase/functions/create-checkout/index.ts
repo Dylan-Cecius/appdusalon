@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveAppOrigin } from "../_shared/app-origin.ts";
+import { resolveBillingOwner } from "../_shared/billing-owner.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,10 +32,16 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error("billing_not_configured");
+    }
+
+    const supabaseClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -44,7 +51,18 @@ serve(async (req) => {
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id });
+
+    const billingOwner = await resolveBillingOwner(supabaseClient, user);
+    if (!billingOwner.isOwner) {
+      return new Response(JSON.stringify({ error: "billing_owner_required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const billingEmail = billingOwner.ownerEmail;
+    const billingUserId = billingOwner.ownerUserId;
+    logStep("Billing owner authenticated", { userId: billingUserId });
 
     const { plan } = await req.json();
     if (!plan || !['solo', 'equipe'].includes(plan)) {
@@ -62,7 +80,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: billingEmail, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -90,7 +108,7 @@ serve(async (req) => {
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : billingEmail,
       line_items: [
         {
           price_data: {
@@ -108,14 +126,14 @@ serve(async (req) => {
       mode: "subscription",
       subscription_data: {
         metadata: {
-          user_id: user.id,
+          user_id: billingUserId,
           plan,
         },
       },
       success_url: `${origin}/abonnements?subscription=success&plan=${plan}`,
       cancel_url: `${origin}/abonnements?subscription=cancelled`,
       metadata: {
-        user_id: user.id,
+        user_id: billingUserId,
         plan: plan
       }
     });
