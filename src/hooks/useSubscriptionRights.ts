@@ -6,6 +6,7 @@ import {
   resolveSubscriptionRights,
   type SubscriptionRights,
 } from '@/lib/subscriptionRights';
+import { DEMO_ACCOUNT_EMAIL } from '@/lib/previewSafety';
 
 export type { SubscriptionRights } from '@/lib/subscriptionRights';
 
@@ -13,7 +14,8 @@ export const useSubscriptionRights = () => {
   const { subscribed, subscription_tier, loading } = useSubscription();
   const { user } = useAuth();
 
-  const isDemo = user?.email === 'demo@appdusalon.com';
+  const isDemo =
+    String(user?.email || '').trim().toLowerCase() === DEMO_ACCOUNT_EMAIL;
 
   const resolved = useMemo(
     () =>
