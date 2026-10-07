@@ -46,7 +46,7 @@ const PromoCodeManagement = () => {
     if (!user) return;
     
     try {
-      // Seul Dylan peut voir tous les codes promo grâce aux RLS policies
+      // Les administrateurs plateforme peuvent voir et gérer les codes promo
       const { data, error } = await supabase
         .from('promo_codes')
         .select('*')
@@ -90,8 +90,6 @@ const PromoCodeManagement = () => {
       });
       if (error) throw error as any;
       if ((data as any)?.error) throw new Error((data as any).error);
-      
-      if (error) throw error;
       
       toast({
         title: "Code promo créé",
