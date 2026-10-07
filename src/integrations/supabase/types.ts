@@ -1334,6 +1334,10 @@ export type Database = {
             }
             Returns: string
           }
+      erase_client_personal_data: {
+        Args: { client_id_param: string }
+        Returns: boolean
+      }
       get_appointment_client_details: {
         Args: { appointment_id: string }
         Returns: {
