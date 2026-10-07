@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, RotateCcw, Sparkles } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, RotateCcw, Sparkles, ShoppingBag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -12,7 +12,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import ServiceManagement from './ServiceManagement';
 import OpeningHoursSettings from './OpeningHoursSettings';
-import ProductManagement from './ProductManagement';
 import ActivityLogViewer from './ActivityLogViewer';
 import TwoFactorSettings from './TwoFactorSettings';
 
@@ -351,8 +350,25 @@ const Settings = () => {
       {/* Gestion des services */}
       <ServiceManagement />
       
-      {/* Gestion des produits */}
-      <ProductManagement />
+      {/* Produits — source unique V2 */}
+      <Card className="v2-panel p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-secondary/10 p-2">
+              <ShoppingBag className="h-5 w-5 text-secondary-foreground sm:h-6 sm:w-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold sm:text-xl">Produits</h3>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Le catalogue, les prix et le stock sont gérés depuis l’écran Produits.
+              </p>
+            </div>
+          </div>
+          <Button asChild variant="outline" className="w-full rounded-xl sm:w-auto">
+            <Link to="/produits">Gérer les produits</Link>
+          </Button>
+        </div>
+      </Card>
       
       
 
