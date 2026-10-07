@@ -17,6 +17,8 @@ describe('subscription rights policy', () => {
     expect(SUBSCRIPTION_RIGHTS.Solo.maxBarbers).toBe(1);
     expect(SUBSCRIPTION_RIGHTS.Solo.canAccessOnlineBooking).toBe(true);
     expect(SUBSCRIPTION_RIGHTS.Solo.canUseSmsAutomations).toBe(true);
+    expect(SUBSCRIPTION_RIGHTS.Solo.canExportReports).toBe(false);
+    expect(SUBSCRIPTION_RIGHTS.Solo.canSendEmails).toBe(false);
     expect(SUBSCRIPTION_RIGHTS.Solo.canManageInventory).toBe(false);
     expect(SUBSCRIPTION_RIGHTS.Solo.canAccessTargetedMarketing).toBe(false);
   });
@@ -25,6 +27,8 @@ describe('subscription rights policy', () => {
     expect(SUBSCRIPTION_RIGHTS.Equipe.maxBarbers).toBe(5);
     expect(SUBSCRIPTION_RIGHTS.Equipe.canManageInventory).toBe(true);
     expect(SUBSCRIPTION_RIGHTS.Equipe.canAccessAdvancedStats).toBe(true);
+    expect(SUBSCRIPTION_RIGHTS.Equipe.canExportReports).toBe(true);
+    expect(SUBSCRIPTION_RIGHTS.Equipe.canSendEmails).toBe(true);
     expect(SUBSCRIPTION_RIGHTS.Equipe.canAccessTargetedMarketing).toBe(true);
   });
 
