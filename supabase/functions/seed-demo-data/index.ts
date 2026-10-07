@@ -4,6 +4,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 // Deterministic-ish pseudo random so the demo stays coherent
@@ -78,6 +79,13 @@ const at = (day: Date, hour: number, minute: number) => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -325,7 +333,7 @@ Deno.serve(async (req) => {
         // occasional retail product
         if (rnd() > 0.82 && productList.length) {
           const p = pick(productList.filter((x) => Number(x.sell_price) > 0));
-          if (p) items.push({ id: p.id, name: p.name, price: Number(p.sell_price), quantity: 1, type: "product" });
+          if (p) items.push({ id: p.id, name: p.name, price: Number(p.sell_price), quantity: 1, kind: "product", type: "product" });
         }
         const total = items.reduce((sum, it) => sum + Number(it.price) * Number(it.quantity), 0);
         const member = pick(team);
@@ -404,7 +412,8 @@ Deno.serve(async (req) => {
 
     // --- Todos ---
     const todoBarber = barberIds[0] ?? null;
-    if (todoBarber) {
+    const todoStaff = team[0]?.id ?? null;
+    if (todoBarber && todoStaff) {
       const todo = (title: string, priority: string, days: number, done = false) => {
         const due = new Date();
         due.setDate(due.getDate() + days);
@@ -412,6 +421,7 @@ Deno.serve(async (req) => {
           salon_id: salonId,
           user_id: userId,
           barber_id: todoBarber,
+          staff_id: todoStaff,
           title,
           priority,
           due_date: due.toISOString(),
