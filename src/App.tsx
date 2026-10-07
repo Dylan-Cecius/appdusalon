@@ -130,9 +130,11 @@ const App = () => {
                   path="/stocks"
                   element={
                     <AuthGuard>
-                      <SubscriptionGuard feature="canManageInventory">
-                        <LazyPage><StocksPage /></LazyPage>
-                      </SubscriptionGuard>
+                      <PermissionGuard permission="canAccessSettings">
+                        <SubscriptionGuard feature="canManageInventory">
+                          <LazyPage><StocksPage /></LazyPage>
+                        </SubscriptionGuard>
+                      </PermissionGuard>
                     </AuthGuard>
                   }
                 />
@@ -141,9 +143,11 @@ const App = () => {
                   path="/produits"
                   element={
                     <AuthGuard>
-                      <SubscriptionGuard feature="canManageInventory">
-                        <LazyPage><ProduitsPage /></LazyPage>
-                      </SubscriptionGuard>
+                      <PermissionGuard permission="canAccessSettings">
+                        <SubscriptionGuard feature="canManageInventory">
+                          <LazyPage><ProduitsPage /></LazyPage>
+                        </SubscriptionGuard>
+                      </PermissionGuard>
                     </AuthGuard>
                   }
                 />
