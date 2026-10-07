@@ -12,7 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔍 [create-employee] Function invoked');
     
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -27,10 +26,8 @@ serve(async (req) => {
 
     // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization');
-    console.log('🔍 [create-employee] Auth header present:', !!authHeader);
     
     if (!authHeader) {
-      console.error('🔍 [create-employee] No authorization header');
       throw new Error('No authorization header');
     }
 
@@ -46,10 +43,8 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    console.log('🔍 [create-employee] User:', user?.id, 'Error:', userError);
     
     if (userError || !user) {
-      console.error('🔍 [create-employee] User error:', userError);
       throw new Error('Unauthorized');
     }
 
@@ -60,37 +55,30 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    console.log('🔍 [create-employee] Role data:', roleData, 'Error:', roleError);
-
     if (!roleData || roleData.role !== 'admin') {
-      console.error('🔍 [create-employee] User is not admin or has no role');
       throw new Error('Only admins can create employees');
     }
 
     const salonId = roleData.salon_id;
-    console.log('🔍 [create-employee] Salon ID:', salonId);
 
     // Parse request body
     const { email, display_name, color, role } = await req.json();
-    console.log('🔍 [create-employee] Request data:', { email, display_name, color, role });
 
     // Validate input
     if (!email || !display_name || !color || !role) {
-      console.error('🔍 [create-employee] Missing required fields');
       throw new Error('Missing required fields');
     }
 
-    // Create Supabase auth user with a temporary password
-    const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
-    
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: tempPassword,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: {
-        display_name,
-      },
-    });
+    // Create the account through Supabase's invitation flow.
+    // No temporary password is generated or stored by the application.
+    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      normalizedEmail,
+      {
+        data: {
+          display_name: normalizedName,
+        },
+      }
+    );
 
     if (createError || !newUser.user) {
       console.error('Error creating user:', createError);
@@ -103,7 +91,7 @@ serve(async (req) => {
       .insert({
         salon_id: salonId,
         user_id: newUser.user.id,
-        display_name,
+        display_name: normalizedName,
         color,
         is_active: true,
       })
@@ -123,7 +111,7 @@ serve(async (req) => {
       .insert({
         user_id: newUser.user.id,
         salon_id: salonId,
-        role: role,
+        role: 'employee',
       });
 
     if (roleError) {
@@ -134,21 +122,11 @@ serve(async (req) => {
       throw new Error(`Failed to create user role: ${roleError.message}`);
     }
 
-    // Send password reset email so user can set their own password
-    const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-    });
-
-    if (resetError) {
-      console.warn('Warning: Could not send invitation email:', resetError);
-    }
-
     return new Response(
       JSON.stringify({
         success: true,
         employee,
-        message: 'Employé créé avec succès. Un email d\'invitation a été envoyé.',
+        message: 'Employé créé avec succès. Une invitation sécurisée a été envoyée par email.',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
