@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { hasReportAccess } from "../_shared/report-access.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -78,6 +79,13 @@ const handler = async (req: Request): Promise<Response> => {
     // If called by a user, verify they own the report
     if (callerUserId && reportConfig.user_id !== callerUserId) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!(await hasReportAccess(supabase, reportConfig.user_id))) {
+      return new Response(JSON.stringify({ error: "Subscription required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
