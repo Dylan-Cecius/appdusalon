@@ -282,10 +282,10 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
     if (!report.next_send_at) return 'Non planifié';
     
     try {
-      // Utiliser formatInTimeZone pour afficher correctement en heure française
+      // Utiliser formatInTimeZone pour afficher correctement en heure belge
       return formatInTimeZone(
         new Date(report.next_send_at), 
-        'Europe/Paris', 
+        'Europe/Brussels', 
         "dd MMMM yyyy 'à' HH:mm", 
         { locale: fr }
       );
