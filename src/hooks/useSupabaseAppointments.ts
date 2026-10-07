@@ -5,6 +5,40 @@ import { Appointment } from '@/data/appointments';
 import { useAuth } from './useAuth';
 import { usePermissions } from './usePermissions';
 
+const appointmentErrorDescription = (error: unknown, action: 'add' | 'update') => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message?: unknown }).message || '')
+        : '';
+
+  if (message.includes('appointment_conflict') || message.includes('23P01')) {
+    return 'Ce créneau est déjà occupé pour ce membre de l’équipe.';
+  }
+
+  if (message.includes('service_not_found')) {
+    return 'Une prestation sélectionnée n’est plus disponible.';
+  }
+
+  if (message.includes('invalid_service_id')) {
+    return 'Une prestation sélectionnée est invalide.';
+  }
+
+  if (message.includes('invalid_service_duration')) {
+    return 'La durée de la prestation est invalide.';
+  }
+
+  if (message.includes('salon_access_denied')) {
+    return 'Votre accès à ce salon n’est plus actif.';
+  }
+
+  return action === 'add'
+    ? "Impossible d'ajouter le rendez-vous"
+    : 'Impossible de mettre à jour le rendez-vous';
+};
+
+
 export const useSupabaseAppointments = () => {
   const { user, isReady } = useAuth();
   const { permissions } = usePermissions();
@@ -153,7 +187,11 @@ export const useSupabaseAppointments = () => {
       return newAppointment;
     } catch (error) {
       console.error('Error adding appointment:', error);
-      toast({ title: "Erreur", description: "Impossible d'ajouter le rendez-vous", variant: "destructive" });
+      toast({
+        title: "Rendez-vous impossible",
+        description: appointmentErrorDescription(error, 'add'),
+        variant: "destructive"
+      });
       throw error;
     }
   };
@@ -187,7 +225,11 @@ export const useSupabaseAppointments = () => {
       toast({ title: "Succès", description: "Rendez-vous mis à jour avec succès" });
     } catch (error) {
       console.error('Error updating appointment:', error);
-      toast({ title: "Erreur", description: "Impossible de mettre à jour le rendez-vous", variant: "destructive" });
+      toast({
+        title: "Modification impossible",
+        description: appointmentErrorDescription(error, 'update'),
+        variant: "destructive"
+      });
       throw error;
     }
   };
