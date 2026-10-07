@@ -230,16 +230,18 @@ const POSPage = () => {
       {/* Header with action buttons */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6">
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAddServiceOpen(true)}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Ajouter un service
-          </Button>
-          {canManageInventory && (
+          {permissions.isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddServiceOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter un service
+            </Button>
+          )}
+          {permissions.isAdmin && canManageInventory && (
             <Button
               variant="outline"
               size="sm"
@@ -439,6 +441,7 @@ const POSPage = () => {
       />
 
       {/* Add Service Modal */}
+      {permissions.isAdmin && (
       <Dialog open={isAddServiceOpen} onOpenChange={setIsAddServiceOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -479,9 +482,10 @@ const POSPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+      )}
 
       {/* Add Product Modal */}
-      {canManageInventory && (
+      {permissions.isAdmin && canManageInventory && (
       <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
