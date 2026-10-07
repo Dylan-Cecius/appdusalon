@@ -39,6 +39,12 @@ const handler = async (req: Request): Promise<Response> => {
       headers: { "Content-Type": "application/json" },
     });
   }
+  if (!isTrustedAppOrigin(req)) {
+    return new Response(JSON.stringify({ error: "origin_not_allowed" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
