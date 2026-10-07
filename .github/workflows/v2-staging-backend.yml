@@ -7,6 +7,9 @@ on:
         description: "Type STAGING_ONLY to deploy migrations and Edge Functions to isolated staging"
         required: true
         type: string
+  push:
+    branches:
+      - v2/chatgpt-rebuild
 
 permissions:
   contents: read
@@ -17,6 +20,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy-staging]') }}
     runs-on: ubuntu-latest
     environment: v2-staging
     env:
@@ -34,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${{ inputs.confirmation }}" != "STAGING_ONLY" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "${{ inputs.confirmation }}" != "STAGING_ONLY" ]]; then
             echo "::error::Deployment confirmation must be exactly STAGING_ONLY."
             exit 1
           fi
