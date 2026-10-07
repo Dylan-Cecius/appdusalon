@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSubscriptionRights } from "@/hooks/useSubscriptionRights";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
+import { isAllowedPreviewUser, isDemoOnlyPreview } from "@/lib/previewSafety";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -62,6 +63,11 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
+  if (!isAllowedPreviewUser(user.email)) {
+    void signOut();
+    return <Navigate to="/auth" replace />;
+  }
+
   const employeeAccessUnavailable =
     permissions.role === 'employee' &&
     (
@@ -106,7 +112,14 @@ const App = () => {
               <Routes>
                 <Route path="/auth" element={<LazyPage><Auth /></LazyPage>} />
                 <Route path="/admin" element={<AuthGuard><LazyPage><Admin /></LazyPage></AuthGuard>} />
-                <Route path="/booking/:salonSlug" element={<LazyPage><BookingPage /></LazyPage>} />
+                <Route
+                  path="/booking/:salonSlug"
+                  element={
+                    isDemoOnlyPreview
+                      ? <Navigate to="/auth" replace />
+                      : <LazyPage><BookingPage /></LazyPage>
+                  }
+                />
 
                 <Route path="/" element={<AuthGuard><LazyPage><Dashboard /></LazyPage></AuthGuard>} />
                 <Route path="/dashboard" element={<AuthGuard><LazyPage><Dashboard /></LazyPage></AuthGuard>} />
