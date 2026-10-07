@@ -9,6 +9,7 @@ on:
       - "supabase/migrations/**"
       - "supabase/config.toml"
       - "tests/sql/**"
+      - "tests/database/**"
       - ".github/workflows/v2-db-ci.yml"
 
 permissions:
@@ -76,6 +77,20 @@ jobs:
 
       - name: Lint database schema
         run: supabase db lint --local --level error --fail-on error
+
+      - name: Test password crypto in the rebuilt local database
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Address only the local container just created in this CI job.
+          mapfile -t containers < <(docker ps --filter name=supabase_db_ --format '{{.ID}}')
+          if [ "${#containers[@]}" -ne 1 ]; then
+            echo "Expected exactly one disposable Supabase database container" >&2
+            exit 1
+          fi
+          database_container="${containers[0]}"
+          docker cp tests/database/password-crypto.sql "$database_container:/tmp/password-crypto.sql"
+          docker exec "$database_container" psql -X --username postgres --dbname postgres --set ON_ERROR_STOP=1 --file /tmp/password-crypto.sql
 
       - name: Stop local Supabase
         if: always()
