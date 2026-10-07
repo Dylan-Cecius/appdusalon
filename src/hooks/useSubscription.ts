@@ -174,6 +174,17 @@ export const useSubscription = () => {
     }
   };
 
+  const requestCustomerPortalUrl = async (): Promise<string | null> => {
+    const { data, error } = await supabase.functions.invoke('customer-portal');
+
+    if (error) {
+      console.error('Error opening customer portal:', error);
+      return null;
+    }
+
+    return data?.url || null;
+  };
+
   const createCheckoutSession = async (plan: 'solo' | 'equipe') => {
     if (!user) {
       toast({
@@ -200,11 +211,22 @@ export const useSubscription = () => {
       }
 
       if (data?.already_subscribed) {
+        const portalUrl = await requestCustomerPortalUrl();
+
+        if (portalUrl) {
+          toast({
+            title: "Abonnement Stripe existant",
+            description: "Ouverture du portail pour gérer votre abonnement ou votre moyen de paiement.",
+          });
+          window.open(portalUrl, '_blank');
+          return;
+        }
+
         toast({
-          title: "Abonnement déjà actif",
-          description: "Votre abonnement Stripe est déjà actif. Le statut va être actualisé.",
+          title: "Abonnement Stripe existant",
+          description: "Impossible d’ouvrir le portail de facturation pour le moment.",
+          variant: "destructive",
         });
-        await checkSubscription(true);
         return;
       }
 
@@ -232,10 +254,9 @@ export const useSubscription = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      const portalUrl = await requestCustomerPortalUrl();
 
-      if (error) {
-        console.error('Error opening customer portal:', error);
+      if (!portalUrl) {
         toast({
           title: "Erreur",
           description: "Impossible d'ouvrir le portail client",
@@ -244,9 +265,7 @@ export const useSubscription = () => {
         return;
       }
 
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
+      window.open(portalUrl, '_blank');
     } catch (error) {
       console.error('Error opening customer portal:', error);
       toast({
