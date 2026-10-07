@@ -555,6 +555,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          salon_id: string | null
           logo_url: string | null
           salon_name: string | null
           stats_password: string | null
@@ -571,6 +572,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          salon_id?: string | null
           logo_url?: string | null
           salon_name?: string | null
           stats_password?: string | null
@@ -665,6 +667,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          salon_id?: string | null
           logo_url?: string | null
           name?: string
           stats_password?: string | null
@@ -680,7 +683,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "salon_settings_salon_id_fkey"
+            columns: ["salon_id"]
+            isOneToOne: false
+            referencedRelation: "salons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       salons: {
         Row: {
