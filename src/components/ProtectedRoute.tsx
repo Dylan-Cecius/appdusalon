@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import StatsPasswordModal from '@/components/StatsPasswordModal';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,7 +24,7 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
     const checkProtection = async () => {
       setIsChecking(true);
 
-      const sessionKey = `unlocked_${section}`;
+      const sessionKey = `unlocked_${user?.id || 'anonymous'}_${section}`;
       const alreadyUnlocked = sessionStorage.getItem(sessionKey) === 'true';
 
       try {
@@ -59,7 +61,7 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
     return () => {
       cancelled = true;
     };
-  }, [section, navigate, toast]);
+  }, [section, navigate, toast, user?.id]);
 
   const verifyPassword = async (inputPassword: string): Promise<boolean> => {
     try {
@@ -93,7 +95,10 @@ const ProtectedRoute = ({ children, section }: ProtectedRouteProps) => {
   const handlePasswordSuccess = () => {
     setIsUnlocked(true);
     setShowPasswordModal(false);
-    sessionStorage.setItem(`unlocked_${section}`, 'true');
+    sessionStorage.setItem(
+      `unlocked_${user?.id || 'anonymous'}_${section}`,
+      'true'
+    );
   };
 
   const handlePasswordClose = () => {
