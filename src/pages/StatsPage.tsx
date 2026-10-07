@@ -21,10 +21,12 @@ import { AverageDailyClientsStats } from '@/components/stats/AverageDailyClients
 import TransactionsManager from '@/components/TransactionsManager';
 import { FeatureGate } from '@/components/FeatureGate';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const StatsPage = () => {
   const [isTransactionsManagerOpen, setIsTransactionsManagerOpen] = useState(false);
   const { stats } = useCombinedStats();
+  const { permissions } = usePermissions();
   const navigate = useNavigate();
 
   return (
@@ -36,14 +38,16 @@ const StatsPage = () => {
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Statistiques</h2>
             <p className="mt-2 text-sm text-muted-foreground">Analysez le chiffre d’affaires, la fréquentation et les performances du salon.</p>
           </div>
-          <Button
-            onClick={() => setIsTransactionsManagerOpen(true)}
-            variant="outline"
-            className="min-h-[44px] w-full rounded-xl sm:w-auto"
-          >
-            <DollarSign className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
-            <span className="text-sm sm:text-base">Gérer les encaissements</span>
-          </Button>
+          {permissions.canManageTransactions && (
+            <Button
+              onClick={() => setIsTransactionsManagerOpen(true)}
+              variant="outline"
+              className="min-h-[44px] w-full rounded-xl sm:w-auto"
+            >
+              <DollarSign className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
+              <span className="text-sm sm:text-base">Gérer les encaissements</span>
+            </Button>
+          )}
         </div>
 
         {/* Raccourcis de navigation */}
@@ -132,12 +136,14 @@ const StatsPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <PaymentMethodStats paymentStats={stats.paymentStats} />
-          <FeatureGate
-            requiredFeature="canAccessAdvancedStats"
-            onUpgrade={() => navigate('/abonnements')}
-          >
-            <ClientRetentionStats />
-          </FeatureGate>
+          {permissions.isAdmin && (
+            <FeatureGate
+              requiredFeature="canAccessAdvancedStats"
+              onUpgrade={() => navigate('/abonnements')}
+            >
+              <ClientRetentionStats />
+            </FeatureGate>
+          )}
         </div>
 
         <CustomPaymentStats />
@@ -149,53 +155,59 @@ const StatsPage = () => {
           <AverageDailyClientsStats />
         </div>
 
-        <EmployeeRevenueStats />
+        {permissions.isAdmin && <EmployeeRevenueStats />}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div id="custom-date-range">
             <CustomDateRangeStats />
           </div>
-          <FeatureGate
-            requiredFeature="canAccessAdvancedStats"
-            onUpgrade={() => navigate('/abonnements')}
-          >
-            <CancellationRateStats />
-          </FeatureGate>
+          {permissions.isAdmin && (
+            <FeatureGate
+              requiredFeature="canAccessAdvancedStats"
+              onUpgrade={() => navigate('/abonnements')}
+            >
+              <CancellationRateStats />
+            </FeatureGate>
+          )}
         </div>
 
-        <FeatureGate
-          requiredFeature="canAccessAdvancedStats"
-          onUpgrade={() => navigate('/abonnements')}
-        >
-          <div id="barber-performance">
-            <BarberPerformanceStats />
-          </div>
-        </FeatureGate>
+        {permissions.isAdmin && (
+          <>
+            <FeatureGate
+              requiredFeature="canAccessAdvancedStats"
+              onUpgrade={() => navigate('/abonnements')}
+            >
+              <div id="barber-performance">
+                <BarberPerformanceStats />
+              </div>
+            </FeatureGate>
 
-        <FeatureGate
-          requiredFeature="canAccessAdvancedStats"
-          onUpgrade={() => navigate('/abonnements')}
-        >
-          <div id="peak-hours">
-            <PeakHoursStats />
-          </div>
-        </FeatureGate>
+            <FeatureGate
+              requiredFeature="canAccessAdvancedStats"
+              onUpgrade={() => navigate('/abonnements')}
+            >
+              <div id="peak-hours">
+                <PeakHoursStats />
+              </div>
+            </FeatureGate>
 
-        <FeatureGate
-          requiredFeature="canAccessAdvancedStats"
-          onUpgrade={() => navigate('/abonnements')}
-        >
-          <ServiceProfitabilityStats />
-        </FeatureGate>
+            <FeatureGate
+              requiredFeature="canAccessAdvancedStats"
+              onUpgrade={() => navigate('/abonnements')}
+            >
+              <ServiceProfitabilityStats />
+            </FeatureGate>
 
-        <FeatureGate
-          requiredFeature="canAccessAdvancedStats"
-          onUpgrade={() => navigate('/abonnements')}
-        >
-          <div id="occupancy-rate">
-            <OccupancyRateStats />
-          </div>
-        </FeatureGate>
+            <FeatureGate
+              requiredFeature="canAccessAdvancedStats"
+              onUpgrade={() => navigate('/abonnements')}
+            >
+              <div id="occupancy-rate">
+                <OccupancyRateStats />
+              </div>
+            </FeatureGate>
+          </>
+        )}
       </div>
 
       <TransactionsManager
