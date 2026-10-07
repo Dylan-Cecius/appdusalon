@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { resolveBillingOwner } from "../_shared/billing-owner.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,20 +50,24 @@ serve(async (req) => {
     }
 
     const user = userData.user;
-    const email = String(user.email).toLowerCase();
+    const requesterEmail = String(user.email).toLowerCase();
+    const billingOwner = await resolveBillingOwner(supabaseClient, user);
+    const billingEmail = billingOwner.ownerEmail;
+    const billingUserId = billingOwner.ownerUserId;
 
-    // Platform administrators receive lifetime product access through the
-    // server-side registry instead of a hard-coded email in this function.
+    // Platform administrators and salons owned by a platform administrator
+    // receive lifetime product access through the server-side registry.
     const { data: platformAdmin } = await supabaseClient
       .from("platform_admin_emails")
       .select("email")
-      .eq("email", email)
+      .in("email", Array.from(new Set([requesterEmail, billingEmail])))
+      .limit(1)
       .maybeSingle();
 
     if (platformAdmin) {
       await supabaseClient.from("subscribers").upsert({
-        email,
-        user_id: user.id,
+        email: billingEmail,
+        user_id: billingUserId,
         subscribed: true,
         subscription_tier: "Lifetime",
         subscription_end: null,
@@ -79,7 +84,7 @@ serve(async (req) => {
     const { data: existingSubscriber } = await supabaseClient
       .from("subscribers")
       .select("subscribed, subscription_tier, subscription_end, stripe_customer_id")
-      .eq("email", email)
+      .eq("email", billingEmail)
       .maybeSingle();
 
     const existingTier = normalizeTier(existingSubscriber?.subscription_tier);
@@ -104,7 +109,7 @@ serve(async (req) => {
         await supabaseClient
           .from("subscribers")
           .update({ subscription_tier: existingTier, updated_at: new Date().toISOString() })
-          .eq("email", email);
+          .eq("email", billingEmail);
       }
 
       return jsonResponse({
@@ -124,14 +129,14 @@ serve(async (req) => {
     let customerId = existingSubscriber?.stripe_customer_id || null;
 
     if (!customerId) {
-      const customers = await stripe.customers.list({ email, limit: 1 });
+      const customers = await stripe.customers.list({ email: billingEmail, limit: 1 });
       customerId = customers.data[0]?.id ?? null;
     }
 
     if (!customerId) {
       await supabaseClient.from("subscribers").upsert({
-        email,
-        user_id: user.id,
+        email: billingEmail,
+        user_id: billingUserId,
         stripe_customer_id: null,
         subscribed: false,
         subscription_tier: null,
@@ -157,8 +162,8 @@ serve(async (req) => {
 
     if (!activeSubscription) {
       await supabaseClient.from("subscribers").upsert({
-        email,
-        user_id: user.id,
+        email: billingEmail,
+        user_id: billingUserId,
         stripe_customer_id: customerId,
         subscribed: false,
         subscription_tier: null,
@@ -191,8 +196,8 @@ serve(async (req) => {
     ).toISOString();
 
     await supabaseClient.from("subscribers").upsert({
-      email,
-      user_id: user.id,
+      email: billingEmail,
+      user_id: billingUserId,
       stripe_customer_id: customerId,
       subscribed: true,
       subscription_tier: subscriptionTier,
