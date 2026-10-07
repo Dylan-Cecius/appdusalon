@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveBillingOwner } from "../_shared/billing-owner.ts";
+import { resolveAppOrigin } from "../_shared/app-origin.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -136,6 +137,7 @@ serve(async (req) => {
 
     const { data: newUser, error: createError } =
       await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
+        redirectTo: new URL('/auth', resolveAppOrigin(req)).toString(),
         data: {
           display_name: normalizedName,
           account_type: 'employee',
