@@ -40,6 +40,17 @@ interface TimeSlot {
 
 const STEP_LABELS = ['Prestation', 'Personnel', 'Date & Heure', 'Coordonnées'];
 
+const BOOKING_ERROR_MESSAGES: Record<string, string> = {
+  invalid_phone: 'Veuillez indiquer un numéro de téléphone valide.',
+  slot_no_longer_available: 'Ce créneau vient d’être réservé. Choisissez-en un autre.',
+  too_many_booking_attempts: 'Trop de tentatives en peu de temps. Réessayez dans quelques minutes.',
+  outside_staff_schedule: 'Ce créneau n’est plus disponible avec ce membre.',
+  staff_not_working: 'Ce membre ne travaille pas à cette date.',
+  salon_closed: 'Le salon est fermé à cette date.',
+  salon_break: 'Ce créneau tombe pendant une pause du salon.',
+  online_booking_unavailable: 'La réservation en ligne n’est pas disponible pour ce salon.',
+};
+
 export default function BookingPage() {
   const { salonSlug } = useParams<{ salonSlug: string }>();
 
@@ -163,10 +174,13 @@ export default function BookingPage() {
       const data = await response.json();
       if (response.status === 403) {
         setBookingUnavailable(true);
-        throw new Error("La réservation en ligne n'est pas disponible pour ce salon");
+        throw new Error(BOOKING_ERROR_MESSAGES.online_booking_unavailable);
       }
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la réservation');
+        const errorCode = String(data.error || '');
+        throw new Error(
+          BOOKING_ERROR_MESSAGES[errorCode] || 'Impossible de confirmer la réservation. Réessayez.'
+        );
       }
       setConfirmed(true);
     } catch (error: any) {
