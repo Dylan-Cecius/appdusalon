@@ -11,6 +11,8 @@ export interface Transaction {
     name: string;
     price: number;
     quantity: number;
+    kind?: 'service' | 'product';
+    type?: 'service' | 'product';
   }>;
   totalAmount: number;
   paymentMethod: 'cash' | 'card';
