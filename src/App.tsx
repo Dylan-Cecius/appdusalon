@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionGuard from "./components/SubscriptionGuard";
 import PermissionGuard from "./components/PermissionGuard";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -45,14 +46,38 @@ const LazyPage = ({ children }: { children: ReactNode }) => (
 );
 
 const AuthGuard = ({ children }: { children: ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
 
-  if (loading) {
+  if (loading || (user && permissionsLoading)) {
     return <PageFallback />;
   }
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  const employeeAccessUnavailable =
+    permissions.role === 'employee' && !permissions.employeeId;
+
+  if (employeeAccessUnavailable) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-2xl border bg-card p-6 text-center shadow-sm">
+          <h1 className="text-xl font-semibold">Accès employé indisponible</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            L’accès des employés nécessite un plan Équipe actif et un compte employé autorisé par le salon.
+          </p>
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="mt-5 inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground"
+          >
+            Se déconnecter
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
