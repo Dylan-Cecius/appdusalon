@@ -74,13 +74,14 @@ const DemoResetSection = () => {
 const Settings = () => {
   const { salonSettings, loading, saveSalonSettings } = useSupabaseSettings();
   const { permissions } = usePermissions();
+  const [salonName, setSalonName] = useState('');
   const [statsPassword, setStatsPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   useEffect(() => {
-    // Never load existing password into the input field for security
-    // Password field stays empty and users must enter a new password to change it
+    setSalonName(salonSettings?.name || '');
+    // Never load existing password into the input field for security.
     setStatsPassword('');
   }, [salonSettings]);
 
@@ -94,8 +95,17 @@ const Settings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      if (!salonName.trim()) {
+        toast({
+          title: "Nom requis",
+          description: "Veuillez indiquer le nom du salon.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       await saveSalonSettings({
-        name: salonSettings?.name || "L'app du salon",
+        name: salonName.trim(),
         logo_url: salonSettings?.logo_url || '',
       });
 
@@ -195,6 +205,21 @@ const Settings = () => {
         </div>
 
         <div className="space-y-4">
+          <div>
+            <Label htmlFor="salonName">Nom du salon</Label>
+            <Input
+              id="salonName"
+              value={salonName}
+              onChange={(e) => setSalonName(e.target.value)}
+              placeholder="Ex. Studio Barber"
+              maxLength={100}
+              disabled={loading || isSaving}
+              className="mt-1"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ce nom est utilisé dans l’application et pour identifier votre établissement.
+            </p>
+          </div>
 
           <Button 
             onClick={handleSave}
