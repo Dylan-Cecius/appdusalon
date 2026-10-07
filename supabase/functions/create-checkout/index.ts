@@ -74,7 +74,7 @@ serve(async (req) => {
         limit: 20,
       });
 
-      const hasLiveSubscription = existingSubscriptions.data.some(subscription =>
+      const hasLiveSubscription = existingSubscriptions.data.some((subscription: Stripe.Subscription) =>
         ["active", "trialing", "past_due", "unpaid", "paused"].includes(subscription.status)
       );
 
