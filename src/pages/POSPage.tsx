@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 
 interface CartItem {
   id: string;
@@ -43,6 +44,8 @@ const POSPage = () => {
   const { products, createProduct } = useStocks();
   const { addTransaction, transactions } = useTransactions();
   const { permissions } = usePermissions();
+  const { rights } = useSubscriptionRights();
+  const canManageInventory = rights.canManageInventory;
   const isMobile = useIsMobile();
 
   const todayStats = useMemo(() => {
@@ -236,15 +239,17 @@ const POSPage = () => {
             <Plus className="h-4 w-4" />
             Ajouter un service
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAddProductOpen(true)}
-            className="gap-2"
-          >
-            <Package className="h-4 w-4" />
-            Ajouter un produit
-          </Button>
+          {canManageInventory && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddProductOpen(true)}
+              className="gap-2"
+            >
+              <Package className="h-4 w-4" />
+              Ajouter un produit
+            </Button>
+          )}
         </div>
         {permissions.canManageTransactions && (
           <Button
@@ -338,7 +343,7 @@ const POSPage = () => {
             })
           )}
 
-          {products.length > 0 && (
+          {canManageInventory && products.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="flex items-center gap-2 text-lg font-semibold text-primary">
@@ -476,6 +481,7 @@ const POSPage = () => {
       </Dialog>
 
       {/* Add Product Modal */}
+      {canManageInventory && (
       <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -497,6 +503,7 @@ const POSPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+      )}
     </MainLayout>
   );
 };
