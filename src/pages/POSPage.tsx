@@ -160,11 +160,7 @@ const POSPage = () => {
       setCartItems([]);
       setIsCartOpen(false);
     } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'enregistrer la transaction",
-        variant: 'destructive',
-      });
+      console.error('Checkout failed:', error);
     }
   };
 
