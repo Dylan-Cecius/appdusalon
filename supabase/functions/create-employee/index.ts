@@ -6,140 +6,129 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+  if (req.method !== 'POST') {
+    return jsonResponse({ error: 'method_not_allowed' }, 405);
+  }
 
-    // Get the authorization header from the request
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
     const authHeader = req.headers.get('Authorization');
-    
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return jsonResponse({ error: 'unauthorized' }, 401);
     }
 
-    // Get the current user
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
+    const supabaseClient = createClient(supabaseUrl, anonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    });
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
+
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      return jsonResponse({ error: 'unauthorized' }, 401);
     }
 
-    // Check if user is admin in their salon
-    const { data: roleData, error: roleError } = await supabaseAdmin
+    const { data: roleData, error: roleLookupError } = await supabaseAdmin
       .from('user_roles')
       .select('role, salon_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (!roleData || roleData.role !== 'admin') {
-      throw new Error('Only admins can create employees');
+    if (roleLookupError) throw roleLookupError;
+
+    if (!roleData || roleData.role !== 'admin' || !roleData.salon_id) {
+      return jsonResponse({ error: 'forbidden' }, 403);
     }
 
-    const salonId = roleData.salon_id;
+    const { email, display_name, color } = await req.json();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedName = String(display_name || '').trim();
+    const normalizedColor = String(color || '').trim();
 
-    // Parse request body
-    const { email, display_name, color, role } = await req.json();
-
-    // Validate input
-    if (!email || !display_name || !color || !role) {
-      throw new Error('Missing required fields');
+    if (!normalizedEmail || !normalizedName || !normalizedColor) {
+      return jsonResponse({ error: 'missing_required_fields' }, 400);
     }
 
-    // Create the account through Supabase's invitation flow.
-    // No temporary password is generated or stored by the application.
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      normalizedEmail,
-      {
+    if (
+      normalizedEmail.length > 254 ||
+      normalizedName.length > 100 ||
+      normalizedColor.length > 50
+    ) {
+      return jsonResponse({ error: 'invalid_input_length' }, 400);
+    }
+
+    const { data: newUser, error: createError } =
+      await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
         data: {
           display_name: normalizedName,
         },
-      }
-    );
+      });
 
     if (createError || !newUser.user) {
-      console.error('Error creating user:', createError);
-      throw new Error(`Failed to create user: ${createError?.message}`);
+      console.error('[CREATE-EMPLOYEE] invitation failed', createError?.message);
+      return jsonResponse({ error: 'invitation_failed' }, 400);
     }
 
-    // Create employee record
     const { data: employee, error: employeeError } = await supabaseAdmin
       .from('employees')
       .insert({
-        salon_id: salonId,
+        salon_id: roleData.salon_id,
         user_id: newUser.user.id,
         display_name: normalizedName,
-        color,
+        color: normalizedColor,
         is_active: true,
       })
       .select()
       .single();
 
     if (employeeError) {
-      console.error('Error creating employee:', employeeError);
-      // Rollback: delete the auth user
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
-      throw new Error(`Failed to create employee: ${employeeError.message}`);
+      throw employeeError;
     }
 
-    // Create user role
-    const { error: roleError } = await supabaseAdmin
+    const { error: insertRoleError } = await supabaseAdmin
       .from('user_roles')
       .insert({
         user_id: newUser.user.id,
-        salon_id: salonId,
+        salon_id: roleData.salon_id,
         role: 'employee',
       });
 
-    if (roleError) {
-      console.error('Error creating role:', roleError);
-      // Rollback
-      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+    if (insertRoleError) {
       await supabaseAdmin.from('employees').delete().eq('id', employee.id);
-      throw new Error(`Failed to create user role: ${roleError.message}`);
+      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+      throw insertRoleError;
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        employee,
-        message: 'Employé créé avec succès. Une invitation sécurisée a été envoyée par email.',
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  } catch (error: any) {
-    console.error('Error in create-employee function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      {
-        status: error.message === 'Unauthorized' || error.message === 'Only admins can create employees' ? 403 : 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return jsonResponse({
+      success: true,
+      employee,
+      message: 'Employé créé avec succès. Une invitation sécurisée a été envoyée par email.',
+    });
+  } catch (error) {
+    console.error('[CREATE-EMPLOYEE]', error);
+    return jsonResponse({ error: 'internal_server_error' }, 500);
   }
 });
