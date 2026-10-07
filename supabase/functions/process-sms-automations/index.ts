@@ -27,10 +27,12 @@ const brusselsDateParts = (date = new Date()) => {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
   }).formatToParts(date);
 
   const get = (type: string) => parts.find(part => part.type === type)?.value || "";
-  return { year: get("year"), month: get("month"), day: get("day") };
+  return { year: get("year"), month: get("month"), day: get("day"), hour: get("hour") };
 };
 
 Deno.serve(async (req) => {
@@ -47,6 +49,13 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const currentLocal = brusselsDateParts();
+    const forceRun = new URL(req.url).searchParams.get("force") === "1";
+
+    if (!forceRun && currentLocal.hour !== "08") {
+      return jsonResponse({ message: "outside_send_window" });
+    }
+
     const admin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -70,7 +79,7 @@ Deno.serve(async (req) => {
     let failed = 0;
     let skippedNoEntitlement = 0;
 
-    const today = brusselsDateParts();
+    const today = currentLocal;
 
     for (const settings of settingsRows) {
       const { data: salon } = await admin
