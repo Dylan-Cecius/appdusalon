@@ -46,3 +46,27 @@ export const resolveAppOrigin = (req: Request): string => {
 
   return configuredOrigin;
 };
+
+
+export const isTrustedAppOrigin = (req: Request): boolean => {
+  const rawOrigin = req.headers.get("origin");
+  if (!rawOrigin) return true;
+
+  const requestOrigin = normalizeOrigin(rawOrigin);
+  if (!requestOrigin) return false;
+
+  const configuredOrigin =
+    normalizeOrigin(Deno.env.get("APP_URL")) ??
+    normalizeOrigin(DEFAULT_APP_URL)!;
+
+  const extraOrigins = String(Deno.env.get("ALLOWED_APP_ORIGINS") || "")
+    .split(",")
+    .map(origin => normalizeOrigin(origin))
+    .filter((origin): origin is string => Boolean(origin));
+
+  return (
+    requestOrigin === configuredOrigin ||
+    extraOrigins.includes(requestOrigin) ||
+    isLocalDevelopmentOrigin(requestOrigin)
+  );
+};
