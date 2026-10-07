@@ -660,6 +660,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          salon_id: string | null
           stats_password: string | null
           updated_at: string
           user_id: string | null
@@ -667,9 +668,9 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          salon_id?: string | null
           logo_url?: string | null
           name?: string
+          salon_id?: string | null
           stats_password?: string | null
           updated_at?: string
           user_id?: string | null
@@ -679,6 +680,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          salon_id?: string | null
           stats_password?: string | null
           updated_at?: string
           user_id?: string | null
@@ -687,7 +689,7 @@ export type Database = {
           {
             foreignKeyName: "salon_settings_salon_id_fkey"
             columns: ["salon_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "salons"
             referencedColumns: ["id"]
           },
