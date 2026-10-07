@@ -52,6 +52,7 @@ const ServicesPage = () => {
 
         const staffMap = new Map((staffData || []).map((s: any) => [s.id, s.name]));
         const clientMap = new Map((clientsData || []).map((c: any) => [c.id, c.name]));
+        const serviceIds = new Set(services.map(s => s.id));
         const serviceNames = new Set(services.map(s => s.name.toLowerCase().trim()));
 
         const rows: HistoryRow[] = [];
@@ -60,7 +61,16 @@ const ServicesPage = () => {
           const items = tx.items as any[];
           items?.forEach((item: any) => {
             const name = item.name?.toLowerCase().trim();
-            if (!name || !serviceNames.has(name)) return;
+            const isCanonicalService = item.id && serviceIds.has(item.id);
+            const isExplicitProduct = item.kind === 'product' || item.type === 'product';
+            const isLegacyService =
+              !isCanonicalService &&
+              !isExplicitProduct &&
+              name &&
+              serviceNames.has(name);
+
+            if (!isCanonicalService && !isLegacyService) return;
+
             const qty = item.quantity || 1;
             for (let q = 0; q < qty; q++) {
               rows.push({
