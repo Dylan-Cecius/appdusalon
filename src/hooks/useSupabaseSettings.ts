@@ -36,37 +36,52 @@ export const useSupabaseSettings = () => {
 
   const fetchSettings = async () => {
     if (!user) return;
-    console.log('[Settings] fetch start');
+
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from('salon_settings')
-        .select('id, name, logo_url, user_id')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data: salonId, error: salonIdError } = await supabase.rpc('get_user_salon_id', {
+        _user_id: user.id,
+      });
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching salon settings:', error);
-        return;
+      if (salonIdError) throw salonIdError;
+
+      const [salonResult, settingsResult, passwordResult] = await Promise.all([
+        salonId
+          ? supabase
+              .from('salons')
+              .select('id, name')
+              .eq('id', salonId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        supabase
+          .from('salon_settings')
+          .select('id, name, logo_url, user_id')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        (supabase as any).rpc('has_stats_password'),
+      ]);
+
+      if (salonResult.error) throw salonResult.error;
+      if (settingsResult.error && settingsResult.error.code !== 'PGRST116') {
+        throw settingsResult.error;
       }
 
-      if (data) {
-        const { data: hasPassword } = await (supabase as any).rpc('has_stats_password');
-        setSalonSettings({
-          id: data.id,
-          name: data.name,
-          logo_url: data.logo_url,
-          user_id: data.user_id,
-          has_stats_password: hasPassword === true,
-        });
-      } else {
-        setSalonSettings(null);
-      }
+      const settings = settingsResult.data;
+      const salon = salonResult.data;
+
+      setSalonSettings({
+        id: settings?.id,
+        name: salon?.name || settings?.name || 'Mon Salon',
+        logo_url: settings?.logo_url || '',
+        user_id: user.id,
+        has_stats_password: passwordResult.data === true,
+      });
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching salon settings:', error);
+      setSalonSettings(null);
     } finally {
       setLoading(false);
     }
@@ -74,7 +89,6 @@ export const useSupabaseSettings = () => {
 
   const fetchBarbers = async () => {
     if (!user) return;
-    console.log('[Barbers] fetch start');
 
     try {
       const { data, error } = await supabase
@@ -101,20 +115,34 @@ export const useSupabaseSettings = () => {
 
   const saveSalonSettings = async (settings: SalonSettings) => {
     if (!user) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour sauvegarder",
-        variant: "destructive"
-      });
-      return;
+      throw new Error('Vous devez être connecté pour sauvegarder');
+    }
+
+    const cleanName = settings.name.trim();
+    if (!cleanName) {
+      throw new Error('Le nom du salon est requis');
     }
 
     try {
-      const { has_stats_password: _ignoredPasswordFlag, ...persistedSettings } = settings;
+      const { data: salonId, error: salonIdError } = await supabase.rpc('get_user_salon_id', {
+        _user_id: user.id,
+      });
+
+      if (salonIdError) throw salonIdError;
+      if (!salonId) throw new Error('Salon introuvable');
+
+      const { error: salonUpdateError } = await supabase
+        .from('salons')
+        .update({ name: cleanName })
+        .eq('id', salonId);
+
+      if (salonUpdateError) throw salonUpdateError;
+
       const dataToUpsert = {
-        ...persistedSettings,
+        id: salonSettings?.id || settings.id,
+        name: cleanName,
+        logo_url: settings.logo_url || '',
         user_id: user.id,
-        id: salonSettings?.id || settings.id
       };
 
       const { data, error } = await supabase
@@ -123,33 +151,23 @@ export const useSupabaseSettings = () => {
         .select('id, name, logo_url, user_id')
         .single();
 
-      if (error) {
-        console.error('Error saving settings:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de sauvegarder les paramètres",
-          variant: "destructive"
-        });
-        return;
-      }
+      if (error) throw error;
 
-      const { data: hasPassword } = await (supabase as any).rpc('has_stats_password');
+      const { data: hasPassword, error: passwordError } = await (supabase as any).rpc('has_stats_password');
+      if (passwordError) throw passwordError;
+
       setSalonSettings({
         id: data.id,
-        name: data.name,
+        name: cleanName,
         logo_url: data.logo_url,
         user_id: data.user_id,
         has_stats_password: hasPassword === true,
       });
-      
-      toast({
-        title: "Succès",
-        description: "Paramètres du salon sauvegardés"
-      });
-      
+
       await fetchSettings();
     } catch (error) {
       console.error('Error saving settings:', error);
+      throw error;
     }
   };
 
@@ -266,7 +284,6 @@ export const useSupabaseSettings = () => {
     if (userIdRef.current === user.id) return;
     userIdRef.current = user.id;
 
-    console.log('[Settings] effect trigger — fetching for user', user.id);
     fetchSettings();
     fetchBarbers();
   }, [isReady, user?.id]);
