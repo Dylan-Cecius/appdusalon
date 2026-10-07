@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { resolveBillingOwner } from "../_shared/billing-owner.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,7 +47,7 @@ serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
-    if (userError || !user) {
+    if (userError || !user?.email) {
       return jsonResponse({ error: 'unauthorized' }, 401);
     }
 
@@ -62,12 +63,51 @@ serve(async (req) => {
       return jsonResponse({ error: 'forbidden' }, 403);
     }
 
-    const { email, display_name, color } = await req.json();
+    const billingOwner = await resolveBillingOwner(supabaseAdmin, user);
+    const requesterEmail = user.email.toLowerCase();
+
+    const [{ data: platformAdmin }, { data: subscriber }] = await Promise.all([
+      supabaseAdmin
+        .from('platform_admin_emails')
+        .select('email')
+        .in('email', Array.from(new Set([requesterEmail, billingOwner.ownerEmail])))
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('subscribers')
+        .select('subscribed, subscription_tier, subscription_end')
+        .or(`user_id.eq.${billingOwner.ownerUserId},email.eq.${billingOwner.ownerEmail}`)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const normalizedTier =
+      subscriber?.subscription_tier === 'Pro'
+        ? 'Equipe'
+        : subscriber?.subscription_tier === 'Enterprise'
+          ? 'Lifetime'
+          : subscriber?.subscription_tier;
+
+    const subscriptionValid =
+      subscriber?.subscribed === true &&
+      (!subscriber.subscription_end ||
+        new Date(subscriber.subscription_end).getTime() > Date.now());
+
+    if (
+      !platformAdmin &&
+      (!subscriptionValid || !['Equipe', 'Lifetime'].includes(normalizedTier || ''))
+    ) {
+      return jsonResponse({ error: 'upgrade_required' }, 403);
+    }
+
+    const { email, display_name, color, staff_id } = await req.json();
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const normalizedName = String(display_name || '').trim();
     const normalizedColor = String(color || '').trim();
+    const staffId = String(staff_id || '').trim();
 
-    if (!normalizedEmail || !normalizedName || !normalizedColor) {
+    if (!normalizedEmail || !normalizedName || !normalizedColor || !staffId) {
       return jsonResponse({ error: 'missing_required_fields' }, 400);
     }
 
@@ -79,11 +119,27 @@ serve(async (req) => {
       return jsonResponse({ error: 'invalid_input_length' }, 400);
     }
 
+    const { data: staffMember, error: staffError } = await supabaseAdmin
+      .from('staff')
+      .select('id, auth_user_id, is_active')
+      .eq('id', staffId)
+      .eq('salon_id', roleData.salon_id)
+      .maybeSingle();
+
+    if (staffError) throw staffError;
+    if (!staffMember || !staffMember.is_active) {
+      return jsonResponse({ error: 'staff_not_found' }, 404);
+    }
+    if (staffMember.auth_user_id) {
+      return jsonResponse({ error: 'staff_access_already_linked' }, 409);
+    }
+
     const { data: newUser, error: createError } =
       await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
         data: {
           display_name: normalizedName,
           account_type: 'employee',
+          staff_id: staffId,
         },
       });
 
@@ -123,10 +179,31 @@ serve(async (req) => {
       throw insertRoleError;
     }
 
+    const { data: linkedStaff, error: linkError } = await supabaseAdmin
+      .from('staff')
+      .update({
+        auth_user_id: newUser.user.id,
+        email: normalizedEmail,
+        name: normalizedName,
+        color: normalizedColor,
+      })
+      .eq('id', staffId)
+      .eq('salon_id', roleData.salon_id)
+      .is('auth_user_id', null)
+      .select('id')
+      .maybeSingle();
+
+    if (linkError || !linkedStaff) {
+      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+      if (linkError) throw linkError;
+      return jsonResponse({ error: 'staff_access_link_failed' }, 409);
+    }
+
     return jsonResponse({
       success: true,
       employee,
-      message: 'Employé créé avec succès. Une invitation sécurisée a été envoyée par email.',
+      staff_id: linkedStaff.id,
+      message: 'Invitation envoyée. Le compte est lié au membre de l’équipe.',
     });
   } catch (error) {
     console.error('[CREATE-EMPLOYEE]', error);
