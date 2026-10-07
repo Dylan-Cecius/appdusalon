@@ -41,14 +41,12 @@ export const useEmployees = () => {
       color: string;
       role: 'admin' | 'employee';
     }) => {
-      console.log('🔍 Creating employee with data:', employeeData);
       
       // Call edge function to create employee + auth account
       const { data, error } = await supabase.functions.invoke('create-employee', {
         body: employeeData,
       });
 
-      console.log('🔍 Edge function response:', { data, error });
 
       if (error) {
         console.error('🔍 Edge function error:', error);
