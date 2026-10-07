@@ -55,3 +55,6 @@ verify_jwt = true
 verify_jwt = false
 [functions.seed-demo-data]
 verify_jwt = true
+
+[functions.process-sms-automations]
+verify_jwt = false
