@@ -12,6 +12,7 @@ export interface Transaction {
     price: number;
     quantity: number;
     kind?: 'service' | 'product';
+    type?: 'service' | 'product';
   }>;
   totalAmount: number;
   paymentMethod: 'cash' | 'card';
