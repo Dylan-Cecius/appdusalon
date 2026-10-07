@@ -48,5 +48,8 @@ jobs:
       - name: Browser smoke tests
         run: npm run test:e2e
 
+      - name: Preview safety smoke tests
+        run: npm run test:e2e:preview
+
       - name: Lint
         run: npm run lint
