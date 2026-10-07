@@ -31,6 +31,13 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders(origin) });
   }
 
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+    });
+  }
+
   try {
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace("Bearer ", "");
