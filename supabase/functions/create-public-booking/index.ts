@@ -136,6 +136,7 @@ serve(async (req) => {
         .eq("id", service_id)
         .eq("salon_id", salon_id)
         .eq("is_active", true)
+        .neq("category", "produit")
         .maybeSingle(),
       supabase
         .from("staff")
