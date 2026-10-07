@@ -15,7 +15,9 @@ interface ReportRequest {
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const reportFromEmail =
+  Deno.env.get("REPORT_FROM_EMAIL") || "L'App du Salon <onboarding@resend.dev>";
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -30,6 +32,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    if (!resendApiKey) {
+      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Auth: either a valid user JWT or a CRON secret
     const cronSecret = Deno.env.get("CRON_SECRET");
     const cronHeader = req.headers.get("x-cron-secret");
@@ -216,7 +225,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailPromises = reportConfig.recipient_emails.map(async (email: string) => {
       return resend.emails.send({
-        from: "L'app du salon <onboarding@resend.dev>",
+        from: reportFromEmail,
         to: [email],
         subject: `${isTest ? "[TEST] " : ""}${reportConfig.report_name} - ${salonName}`,
         html: reportContent,
