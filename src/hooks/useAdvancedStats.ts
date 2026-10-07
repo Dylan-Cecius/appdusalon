@@ -248,6 +248,7 @@ export const useAdvancedStats = () => {
   }, [appointments]);
 
   const serviceProfitabilityStats = useMemo((): ServiceProfitabilityData[] => {
+    const serviceIds = new Set(services.map(service => service.id));
     const serviceNames = new Set(services.map(service => service.name.toLowerCase().trim()));
     const transactionStats = new Map<string, { count: number; revenue: number; displayName: string }>();
     const appointmentStats = new Map<string, { count: number; revenue: number; displayName: string }>();
@@ -255,7 +256,14 @@ export const useAdvancedStats = () => {
     transactions.forEach(transaction => {
       transaction.items?.forEach(item => {
         const normalizedName = item.name?.toLowerCase().trim();
-        if (!normalizedName || !serviceNames.has(normalizedName)) return;
+        const isCanonicalService = Boolean(item.id && serviceIds.has(item.id));
+        const isExplicitProduct = item.kind === 'product' || item.type === 'product';
+        const isLegacyService =
+          !isCanonicalService &&
+          !isExplicitProduct &&
+          Boolean(normalizedName && serviceNames.has(normalizedName));
+
+        if (!normalizedName || (!isCanonicalService && !isLegacyService)) return;
 
         const existing = transactionStats.get(normalizedName) || {
           count: 0,
