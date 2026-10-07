@@ -14,6 +14,14 @@ Configurer côté frontend de recette :
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SUPABASE_PROJECT_ID`
+- `VITE_PREVIEW_DEMO_ONLY=true` pour la preview publique V2
+
+Pour le workflow GitHub Pages de la V2, configurer les secrets GitHub suivants :
+
+- `V2_PREVIEW_SUPABASE_URL`
+- `V2_PREVIEW_SUPABASE_PUBLISHABLE_KEY`
+
+Le workflow refuse désormais de déployer si ces secrets sont absents ou si l'URL Supabase de preview correspond à l'URL par défaut suivie dans `.env`.
 
 ## 2. Secrets Edge Functions
 
