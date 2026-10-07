@@ -49,7 +49,7 @@ serve(async (req) => {
     }
 
     const user = userData.user;
-    const email = user.email.toLowerCase();
+    const email = String(user.email).toLowerCase();
 
     // Platform administrators receive lifetime product access through the
     // server-side registry instead of a hard-coded email in this function.
@@ -153,7 +153,7 @@ serve(async (req) => {
     });
 
     const activeSubscription = subscriptions.data
-      .sort((a, b) => b.created - a.created)[0];
+      .sort((a: Stripe.Subscription, b: Stripe.Subscription) => b.created - a.created)[0];
 
     if (!activeSubscription) {
       await supabaseClient.from("subscribers").upsert({
