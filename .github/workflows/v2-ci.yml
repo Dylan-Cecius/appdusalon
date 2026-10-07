@@ -42,6 +42,15 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Preview environment build
+        env:
+          VITE_SUPABASE_URL: https://preview-ci.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci-public-publishable-key
+          VITE_PREVIEW_DEMO_ONLY: "true"
+        run: |
+          npm run build -- --mode pages
+          grep -R --fixed-strings 'https://preview-ci.supabase.co' dist >/dev/null
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
