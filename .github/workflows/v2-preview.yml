@@ -45,7 +45,43 @@ jobs:
           fi
 
           tracked_url="$(grep -E '^VITE_SUPABASE_URL=' .env | head -n1 | cut -d= -f2- || true)"
-          tracked_url="${tracked_url%$'\r'}"
+          tracked_url="${tracked_url%            echo "::error::Preview Supabase URL matches the tracked default .env. Use a dedicated isolated preview project."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Build V2
+        run: npm run build -- --mode pages
+
+      - name: SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy preview
+        id: deployment
+        uses: actions/deploy-pages@v4
+\r'}"
+          tracked_url="${tracked_url#\"}"
+          tracked_url="${tracked_url%\"}"
+          tracked_url="${tracked_url#\'}"
+          tracked_url="${tracked_url%\'}"
 
           if [[ -n "${tracked_url}" && "${VITE_SUPABASE_URL%/}" == "${tracked_url%/}" ]]; then
             echo "::error::Preview Supabase URL matches the tracked default .env. Use a dedicated isolated preview project."
