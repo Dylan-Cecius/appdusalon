@@ -100,7 +100,15 @@ serve(async (req) => {
     }
 
     const appointmentStart = new Date(start_time);
-    if (Number.isNaN(appointmentStart.getTime()) || appointmentStart <= new Date()) {
+    const now = new Date();
+    const maxAppointmentStart = new Date(now);
+    maxAppointmentStart.setUTCDate(maxAppointmentStart.getUTCDate() + 366);
+
+    if (
+      Number.isNaN(appointmentStart.getTime()) ||
+      appointmentStart <= now ||
+      appointmentStart > maxAppointmentStart
+    ) {
       return jsonResponse({ error: "invalid_start_time" }, 400);
     }
 
