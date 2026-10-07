@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, CheckSquare, Square, Calendar, AlertCircle, Trash2, Clock } from 'lucide-react';
+import { Plus, CheckSquare, Calendar, AlertCircle, Trash2, Clock, Users } from 'lucide-react';
 import { useSupabaseTodos } from '@/hooks/useSupabaseTodos';
 import { useStaff } from '@/hooks/useStaff';
 import { format } from 'date-fns';
@@ -20,6 +20,12 @@ const TodoList = () => {
   const { activeStaff } = useStaff();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState('');
+  useEffect(() => {
+    if (!selectedStaffId && activeStaff.length > 0) {
+      setSelectedStaffId(activeStaff[0].id);
+    }
+  }, [activeStaff, selectedStaffId]);
+
   const [newTodo, setNewTodo] = useState({
     title: '',
     description: '',
@@ -98,7 +104,7 @@ const TodoList = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="barber-select">Membre de l’équipe</Label>
-                <Select value={selectedStaffId} onValueChange={setSelectedBarberId}>
+                <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un membre" />
                   </SelectTrigger>
@@ -172,6 +178,15 @@ const TodoList = () => {
         </Dialog>
       </div>
 
+      {activeStaff.length === 0 ? (
+        <Card className="v2-panel p-8 text-center">
+          <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+          <p className="font-medium">Aucun membre actif</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ajoutez d’abord un membre dans l’écran Équipe pour pouvoir lui assigner des tâches.
+          </p>
+        </Card>
+      ) : (
       <Tabs defaultValue={activeStaff[0]?.id} className="space-y-4">
         <TabsList className="grid grid-cols-3 max-w-md bg-card">
           {activeStaff.map(member => {
@@ -283,6 +298,7 @@ const TodoList = () => {
           );
         })}
       </Tabs>
+      )}
     </div>
   );
 };
