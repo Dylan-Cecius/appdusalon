@@ -10,6 +10,7 @@ export interface SalonSettings {
   stats_password?: string | null;
   has_stats_password?: boolean;
   user_id?: string;
+  salon_id?: string;
 }
 
 export interface Barber {
@@ -50,17 +51,17 @@ export const useSupabaseSettings = () => {
         salonId
           ? supabase
               .from('salons')
-              .select('id, name')
+              .select('id, name, owner_user_id')
               .eq('id', salonId)
               .maybeSingle()
           : Promise.resolve({ data: null, error: null }),
-        supabase
-          .from('salon_settings')
-          .select('id, name, logo_url, user_id')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+        salonId
+          ? supabase
+              .from('salon_settings')
+              .select('id, name, logo_url, user_id, salon_id')
+              .eq('salon_id', salonId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
         (supabase as any).rpc('has_stats_password'),
       ]);
 
@@ -76,7 +77,8 @@ export const useSupabaseSettings = () => {
         id: settings?.id,
         name: salon?.name || settings?.name || 'Mon Salon',
         logo_url: settings?.logo_url || '',
-        user_id: user.id,
+        user_id: salon?.owner_user_id || settings?.user_id || user.id,
+        salon_id: salon?.id || settings?.salon_id || undefined,
         has_stats_password: passwordResult.data === true,
       });
     } catch (error) {
@@ -142,13 +144,14 @@ export const useSupabaseSettings = () => {
         id: salonSettings?.id || settings.id,
         name: cleanName,
         logo_url: settings.logo_url || '',
-        user_id: user.id,
+        user_id: salonSettings?.user_id || user.id,
+        salon_id: salonId,
       };
 
       const { data, error } = await supabase
         .from('salon_settings')
         .upsert(dataToUpsert)
-        .select('id, name, logo_url, user_id')
+        .select('id, name, logo_url, user_id, salon_id')
         .single();
 
       if (error) throw error;
@@ -161,6 +164,7 @@ export const useSupabaseSettings = () => {
         name: cleanName,
         logo_url: data.logo_url,
         user_id: data.user_id,
+        salon_id: data.salon_id,
         has_stats_password: hasPassword === true,
       });
 
