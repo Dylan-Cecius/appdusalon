@@ -58,6 +58,7 @@ const ProduitsPage = () => {
 
         const staffMap = new Map((staffData || []).map((s: any) => [s.id, s.name]));
         const clientMap = new Map((clientsData || []).map((c: any) => [c.id, c.name]));
+        const productIds = new Set(products.map(p => p.id));
         const productNames = new Set(products.map(p => p.name.toLowerCase().trim()));
 
         const rows: ProductRow[] = [];
@@ -66,7 +67,15 @@ const ProduitsPage = () => {
           const items = tx.items as any[];
           items?.forEach((item: any) => {
             const name = item.name?.toLowerCase().trim();
-            if (!name || !productNames.has(name)) return;
+            const isCanonicalProduct = item.id && productIds.has(item.id);
+            const isLegacyProduct =
+              !isCanonicalProduct &&
+              name &&
+              productNames.has(name) &&
+              (item.kind === 'product' || item.type === 'product');
+
+            if (!isCanonicalProduct && !isLegacyProduct) return;
+
             const qty = item.quantity || 1;
             rows.push({
               date: txDate,
