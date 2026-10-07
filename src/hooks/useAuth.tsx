@@ -60,7 +60,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
           if (event === 'INITIAL_SESSION') {
             applySession(currentSession, 'INITIAL_SESSION');
-          } else {
           }
 
           return;
@@ -73,8 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             sessionRef.current = null;
             setUser(null);
             explicitSignOut.current = false;
-          } else if (withinGracePeriod) {
-          } else {
+          } else if (!withinGracePeriod) {
             sessionRef.current = null;
             setUser(null);
           }
