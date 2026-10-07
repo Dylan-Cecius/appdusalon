@@ -1,4 +1,7 @@
-import type { SupabaseClient, User } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+export type BillingUser = {
+  id: string;
+  email?: string | null;
+};
 
 export type BillingOwner = {
   salonId: string | null;
@@ -8,8 +11,8 @@ export type BillingOwner = {
 };
 
 export const resolveBillingOwner = async (
-  admin: SupabaseClient,
-  requester: User,
+  admin: any,
+  requester: BillingUser,
 ): Promise<BillingOwner> => {
   const requesterEmail = String(requester.email || "").trim().toLowerCase();
   if (!requesterEmail) throw new Error("billing_email_missing");
