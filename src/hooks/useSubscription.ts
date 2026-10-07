@@ -199,6 +199,15 @@ export const useSubscription = () => {
         return;
       }
 
+      if (data?.already_subscribed) {
+        toast({
+          title: "Abonnement déjà actif",
+          description: "Votre abonnement Stripe est déjà actif. Le statut va être actualisé.",
+        });
+        await checkSubscription(true);
+        return;
+      }
+
       if (data?.url) {
         window.location.assign(data.url);
       }
