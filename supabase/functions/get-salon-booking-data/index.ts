@@ -11,6 +11,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'GET') {
+    return new Response(JSON.stringify({ error: 'method_not_allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -111,8 +118,7 @@ serve(async (req) => {
         salon_id: salon.id,
         services: servicesRes.data || [],
         staff: staffRes.data || [],
-        salon: { id: salon.id, name: salon.name },
-        owner_user_id: salon.owner_user_id
+        salon: { id: salon.id, name: salon.name }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
