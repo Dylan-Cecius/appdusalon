@@ -283,6 +283,17 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("[PUBLIC-BOOKING]", error);
+
+    const message = error instanceof Error ? error.message : String(error || "");
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code || "")
+        : "";
+
+    if (message.includes("appointment_conflict") || code === "23P01") {
+      return jsonResponse({ error: "slot_no_longer_available" }, 409);
+    }
+
     return jsonResponse({ error: "internal_server_error" }, 500);
   }
 });
