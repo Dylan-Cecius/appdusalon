@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { usePermissions } from './usePermissions';
 
 export interface Client {
   id: string;
@@ -24,16 +25,18 @@ export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { permissions } = usePermissions();
   const { toast } = useToast();
+  const salonId = permissions.salonId;
 
   const fetchClients = async () => {
-    if (!user) return;
+    if (!user || !salonId) return;
 
     try {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
         .order('name');
 
       if (error) throw error;
@@ -51,12 +54,12 @@ export const useClients = () => {
   };
 
   const addClient = async (client: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) return null;
+    if (!user || !salonId) return null;
 
     try {
       const { data, error } = await supabase
         .from('clients')
-        .insert([{ ...client, user_id: user.id }])
+        .insert([{ ...client, user_id: user.id, salon_id: salonId }])
         .select()
         .single();
 
@@ -132,43 +135,48 @@ export const useClients = () => {
   };
 
   const getClientStats = async (clientId: string): Promise<ClientStats> => {
-    if (!user) return { totalSpent: 0, visitCount: 0, lastVisit: null };
+    if (!user || !salonId) return { totalSpent: 0, visitCount: 0, lastVisit: null };
 
     try {
-      // Récupérer les transactions du client
-      const { data: transactions } = await supabase
-        .from('transactions')
-        .select('total_amount, transaction_date')
-        .eq('client_id', clientId)
-        .eq('user_id', user.id);
-
-      // Récupérer les rendez-vous du client
-      const { data: appointments } = await supabase
-        .from('appointments')
-        .select('total_price, start_time, is_paid')
-        .eq('user_id', user.id);
-
       const client = clients.find(c => c.id === clientId);
-      const clientAppointments = appointments?.filter(
-        apt => apt.start_time && client && 
-        (apt as any).client_phone === client.phone
+      if (!client) return { totalSpent: 0, visitCount: 0, lastVisit: null };
+
+      const [{ data: transactions }, { data: appointments }] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('total_amount, transaction_date')
+          .eq('client_id', clientId)
+          .eq('salon_id', salonId),
+        supabase
+          .from('appointments')
+          .select('start_time, status')
+          .eq('salon_id', salonId)
+          .eq('client_phone', client.phone)
+          .neq('status', 'cancelled')
+          .lte('start_time', new Date().toISOString()),
+      ]);
+
+      // Accounting revenue is canonical from POS transactions only.
+      const totalSpent = transactions?.reduce(
+        (sum, transaction) => sum + Number(transaction.total_amount),
+        0
+      ) || 0;
+
+      const transactionDates = transactions?.map(
+        transaction => new Date(transaction.transaction_date)
       ) || [];
-
-      const totalFromTransactions = transactions?.reduce((sum, t) => sum + Number(t.total_amount), 0) || 0;
-      const totalFromAppointments = clientAppointments
-        .filter(apt => apt.is_paid)
-        .reduce((sum, apt) => sum + Number(apt.total_price), 0);
-
-      const transactionDates = transactions?.map(t => new Date(t.transaction_date)) || [];
-      const appointmentDates = clientAppointments.map(apt => new Date(apt.start_time));
+      const appointmentDates = appointments?.map(
+        appointment => new Date(appointment.start_time)
+      ) || [];
       const allDates = [...transactionDates, ...appointmentDates];
-      const lastVisit = allDates.length > 0 
+
+      const lastVisit = allDates.length > 0
         ? allDates.sort((a, b) => b.getTime() - a.getTime())[0].toISOString()
         : null;
 
       return {
-        totalSpent: totalFromTransactions + totalFromAppointments,
-        visitCount: (transactions?.length || 0) + clientAppointments.length,
+        totalSpent,
+        visitCount: appointments?.length || transactions?.length || 0,
         lastVisit,
       };
     } catch (error) {
@@ -178,21 +186,27 @@ export const useClients = () => {
   };
 
   useEffect(() => {
-    fetchClients();
+    if (!user || !salonId) {
+      setClients([]);
+      setLoading(false);
+      return;
+    }
 
-    // Real-time subscription
+    setLoading(true);
+    void fetchClients();
+
     const channel = supabase
-      .channel('clients-changes')
+      .channel(`clients-changes-${salonId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'clients',
-          filter: `user_id=eq.${user?.id}`,
+          filter: `salon_id=eq.${salonId}`,
         },
         () => {
-          fetchClients();
+          void fetchClients();
         }
       )
       .subscribe();
@@ -200,7 +214,7 @@ export const useClients = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id, salonId]);
 
   return {
     clients,
