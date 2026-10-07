@@ -188,6 +188,7 @@ export const useSupabaseAppointments = () => {
     } catch (error) {
       console.error('Error updating appointment:', error);
       toast({ title: "Erreur", description: "Impossible de mettre à jour le rendez-vous", variant: "destructive" });
+      throw error;
     }
   };
 
@@ -205,6 +206,7 @@ export const useSupabaseAppointments = () => {
     } catch (error) {
       console.error('Error deleting appointment:', error);
       toast({ title: "Erreur", description: "Impossible de supprimer le rendez-vous", variant: "destructive" });
+      throw error;
     }
   };
 
