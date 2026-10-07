@@ -31,6 +31,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "method_not_allowed" }, 405);
+  }
+
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -84,7 +88,9 @@ serve(async (req) => {
     const { data: existingSubscriber } = await supabaseClient
       .from("subscribers")
       .select("subscribed, subscription_tier, subscription_end, stripe_customer_id")
-      .eq("email", billingEmail)
+      .or(`user_id.eq.${billingUserId},email.eq.${billingEmail}`)
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     const existingTier = normalizeTier(existingSubscriber?.subscription_tier);
