@@ -109,7 +109,6 @@ export const SubscriptionRightsDisplay = ({
     { key: "canExportReports", label: "Rapports avancés & automatisés", icon: Package },
     { key: "canSendEmails", label: "Envoi de rapports par email", icon: Mail },
     { key: "canManageInventory", label: "Gestion complète des stocks", icon: Package },
-    { key: "canAccessMultiSalon", label: "Multi-salons", icon: Users },
   ] as const;
 
   if (loading) {
