@@ -1,26 +1,26 @@
 import { Card } from '@/components/ui/card';
 import { Users, TrendingUp } from 'lucide-react';
-import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
+import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useStaff } from '@/hooks/useStaff';
 import { useMemo } from 'react';
 
 export const EmployeeRevenueStats = () => {
-  const { appointments } = useSupabaseAppointments();
+  const { transactions } = useSupabaseTransactions();
   const { activeStaff } = useStaff();
 
   const employeeRevenue = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const monthAppointments = appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.startTime);
-      return appointmentDate >= startOfMonth && appointment.isPaid;
+    const monthTransactions = transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.transactionDate);
+      return transactionDate >= startOfMonth;
     });
 
     const revenueByEmployee: Record<string, { name: string; revenue: number; count: number }> = {};
 
-    monthAppointments.forEach(appointment => {
-      const employeeId = appointment.staffId || appointment.barberId || 'unknown';
+    monthTransactions.forEach(transaction => {
+      const employeeId = transaction.staffId || 'unknown';
 
       if (!revenueByEmployee[employeeId]) {
         const member = activeStaff.find(staff => staff.id === employeeId);
@@ -31,12 +31,12 @@ export const EmployeeRevenueStats = () => {
         };
       }
 
-      revenueByEmployee[employeeId].revenue += Number(appointment.totalPrice);
+      revenueByEmployee[employeeId].revenue += Number(transaction.totalAmount);
       revenueByEmployee[employeeId].count += 1;
     });
 
     return Object.values(revenueByEmployee).sort((a, b) => b.revenue - a.revenue);
-  }, [appointments, activeStaff]);
+  }, [transactions, activeStaff]);
 
   const totalRevenue = employeeRevenue.reduce((sum, employee) => sum + employee.revenue, 0);
 
@@ -71,7 +71,7 @@ export const EmployeeRevenueStats = () => {
                     <div>
                       <p className="font-medium text-sm">{employee.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {employee.count} rendez-vous encaissé{employee.count > 1 ? 's' : ''}
+                        {employee.count} encaissement{employee.count > 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>
