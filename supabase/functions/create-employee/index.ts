@@ -83,6 +83,7 @@ serve(async (req) => {
       await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
         data: {
           display_name: normalizedName,
+          account_type: 'employee',
         },
       });
 
