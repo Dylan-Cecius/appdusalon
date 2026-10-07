@@ -79,3 +79,16 @@ test('auth screen has no uncaught browser errors', async ({ page }) => {
 
   expect(errors).toEqual([]);
 });
+
+
+test('invite link shows password setup form', async ({ page }) => {
+  await page.goto('/auth?type=invite');
+  await expect(page.getByText(/définissez votre nouveau mot de passe/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /enregistrer le mot de passe/i })).toBeVisible();
+});
+
+test('recovery link shows password setup form', async ({ page }) => {
+  await page.goto('/auth?type=recovery');
+  await expect(page.getByText(/définissez votre nouveau mot de passe/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /enregistrer le mot de passe/i })).toBeVisible();
+});
