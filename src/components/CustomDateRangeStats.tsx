@@ -9,12 +9,14 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
+import { usePermissions } from '@/hooks/usePermissions';
 
 type PaymentFilter = 'all' | 'cash' | 'card';
 
 const CustomDateRangeStats = () => {
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
+  const { permissions } = usePermissions();
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -34,7 +36,12 @@ const CustomDateRangeStats = () => {
 
     const filteredAppointments = appointments.filter(appointment => {
       const date = new Date(appointment.startTime);
+      const belongsToViewer =
+        permissions.isAdmin ||
+        (permissions.employeeId && appointment.staffId === permissions.employeeId);
+
       return (
+        belongsToViewer &&
         appointment.status !== 'cancelled' &&
         date >= appliedRange.start &&
         date <= appliedRange.end
@@ -60,7 +67,14 @@ const CustomDateRangeStats = () => {
       distinctClients: knownClients.size + anonymousTransactions,
       transactions: filteredTransactions,
     };
-  }, [appliedRange, transactions, appointments, paymentFilter]);
+  }, [
+    appliedRange,
+    transactions,
+    appointments,
+    paymentFilter,
+    permissions.isAdmin,
+    permissions.employeeId,
+  ]);
 
   const handleCalculate = () => {
     if (!startDate || !endDate) return;
