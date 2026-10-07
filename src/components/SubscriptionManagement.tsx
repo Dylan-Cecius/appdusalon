@@ -50,7 +50,7 @@ const SubscriptionManagement = () => {
       icon: <Sparkles className="h-6 w-6" />,
       features: [
         'Rendez-vous illimités',
-        'Notifications SMS/email automatiques',
+        'Notifications SMS automatiques',
         'Fiche client complète + notes',
         'Statistiques de base',
         'Réservation en ligne',
