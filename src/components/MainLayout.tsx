@@ -7,6 +7,7 @@ import {
   TrendingUp, Home, MoreHorizontal, Crown, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -18,7 +19,19 @@ interface MainLayoutProps {
   onCartOpen?: () => void;
 }
 
-const navGroups = [
+type NavItem = {
+  path: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const navGroups: NavGroup[] = [
   {
     label: 'Principal',
     items: [
@@ -39,13 +52,13 @@ const navGroups = [
   {
     label: 'Pilotage',
     items: [
-      { path: '/ca-total', label: 'Chiffre d’affaires', icon: TrendingUp },
-      { path: '/equipe', label: 'Équipe', icon: Users },
+      { path: '/ca-total', label: 'Chiffre d’affaires', icon: TrendingUp, adminOnly: true },
+      { path: '/equipe', label: 'Équipe', icon: Users, adminOnly: true },
       { path: '/sms', label: 'SMS', icon: MessageSquare },
       { path: '/todo', label: 'To-do', icon: CheckSquare },
-      { path: '/rapports', label: 'Rapports', icon: Mail },
-      { path: '/abonnements', label: 'Abonnement', icon: Crown },
-      { path: '/parametres', label: 'Paramètres', icon: SettingsIcon },
+      { path: '/rapports', label: 'Rapports', icon: Mail, adminOnly: true },
+      { path: '/abonnements', label: 'Abonnement', icon: Crown, adminOnly: true },
+      { path: '/parametres', label: 'Paramètres', icon: SettingsIcon, adminOnly: true },
     ],
   },
 ];
@@ -61,6 +74,7 @@ const bottomNavItems = [
 
 const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProps) => {
   const { user, signOut } = useAuth();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -77,11 +91,22 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
     setMoreOpen(false);
   }, [location.pathname]);
 
+  const visibleNavGroups = navGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.adminOnly || permissions.isAdmin),
+    }))
+    .filter(group => group.items.length > 0);
+
+  const visibleNavItems = visibleNavGroups.flatMap(group => group.items);
+
   const isActive = (path: string) =>
     location.pathname === path ||
     (path === '/abonnements' && location.pathname === '/abonnement');
 
-  const pageTitle = allNavItems.find((item) => isActive(item.path))?.label || 'Tableau de bord';
+  const pageTitle = visibleNavItems.find((item) => isActive(item.path))?.label
+    || allNavItems.find((item) => isActive(item.path))?.label
+    || 'Tableau de bord';
   const isDemo = user?.email === 'demo@appdusalon.com';
   const initials = user?.email?.slice(0, 2).toUpperCase() || 'US';
 
@@ -102,7 +127,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
 
         <nav className="flex-1 overflow-y-auto px-3 pb-5">
           <div className="space-y-6">
-            {navGroups.map((group) => (
+            {visibleNavGroups.map((group) => (
               <div key={group.label} className="space-y-1.5">
                 <p className="px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80">
                   {group.label}
@@ -172,15 +197,17 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                   {cartItemsCount}
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/historique')}
-                className="rounded-xl bg-card/80"
-              >
-                <History className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Historique</span>
-              </Button>
+              {!permissionsLoading && permissions.canManageTransactions && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/historique')}
+                  className="rounded-xl bg-card/80"
+                >
+                  <History className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Historique</span>
+                </Button>
+              )}
             </div>
           </div>
         </header>
@@ -229,7 +256,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
           </SheetHeader>
           <div className="h-[calc(100vh-72px)] overflow-y-auto px-3 py-4">
             <div className="space-y-5">
-              {navGroups.map((group) => (
+              {visibleNavGroups.map((group) => (
                 <div key={group.label}>
                   <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                     {group.label}
