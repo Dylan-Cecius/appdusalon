@@ -207,7 +207,9 @@ const App = () => {
                   element={
                     <AuthGuard>
                       <PermissionGuard permission="canAccessSettings">
-                        <LazyPage><SubscriptionPage /></LazyPage>
+                        <PreviewExternalActionGuard>
+                          <LazyPage><SubscriptionPage /></LazyPage>
+                        </PreviewExternalActionGuard>
                       </PermissionGuard>
                     </AuthGuard>
                   }
