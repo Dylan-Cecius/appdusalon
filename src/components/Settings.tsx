@@ -4,12 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, Plus, Edit, Trash2, Clock, RotateCcw, Sparkles } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, RotateCcw, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useSupabaseSettings, type Barber } from '@/hooks/useSupabaseSettings';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,24 +72,12 @@ const DemoResetSection = () => {
 };
 
 const Settings = () => {
-  const { salonSettings, barbers, loading, saveSalonSettings, addBarber, updateBarber, deleteBarber } = useSupabaseSettings();
+  const { salonSettings, loading, saveSalonSettings } = useSupabaseSettings();
   const { permissions } = usePermissions();
   const [statsPassword, setStatsPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // États pour la gestion des coiffeurs
-  const [showAddBarber, setShowAddBarber] = useState(false);
-  const [editingBarber, setEditingBarber] = useState<Barber | null>(null);
-  const [newBarber, setNewBarber] = useState({
-    name: '',
-    start_time: '09:00',
-    end_time: '18:00',
-    color: 'bg-blue-600',
-    working_days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as string[],
-    is_active: true
-  });
-
   useEffect(() => {
     // Never load existing password into the input field for security
     // Password field stays empty and users must enter a new password to change it
@@ -177,185 +162,6 @@ const Settings = () => {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleAddBarber = async () => {
-    if (!newBarber.name.trim()) {
-      toast({
-        title: "❌ Erreur",
-        description: "Le nom du coiffeur est obligatoire",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const addedBarber = await addBarber(newBarber);
-    
-    // Créer automatiquement les créneaux indisponibles pour les heures hors service
-    if (addedBarber) {
-      await createUnavailableSlots(addedBarber.id, newBarber.start_time, newBarber.end_time, newBarber.working_days);
-    }
-    
-    setNewBarber({
-      name: '',
-      start_time: '09:00',
-      end_time: '18:00',
-      color: 'bg-blue-600',
-      working_days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-      is_active: true
-    });
-    setShowAddBarber(false);
-  };
-
-  const createUnavailableSlots = async (barberId: string, startTime: string, endTime: string, workingDays: string[]) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Créer des blocs pour les heures avant et après le service
-      const salonStart = '08:00';
-      const salonEnd = '20:00';
-      
-      const blocksToCreate = [];
-      
-      // Bloc avant l'heure de début (si nécessaire)
-      if (startTime > salonStart) {
-        blocksToCreate.push({
-          barber_id: barberId,
-          start_time: salonStart,
-          end_time: startTime,
-          title: 'Indisponible',
-          block_type: 'unavailable',
-          notes: 'Créé automatiquement - hors horaires de service',
-          user_id: user.id
-        });
-      }
-      
-      // Bloc après l'heure de fin (si nécessaire)
-      if (endTime < salonEnd) {
-        blocksToCreate.push({
-          barber_id: barberId,
-          start_time: endTime,
-          end_time: salonEnd,
-          title: 'Indisponible',
-          block_type: 'unavailable',
-          notes: 'Créé automatiquement - hors horaires de service',
-          user_id: user.id
-        });
-      }
-
-      // Créer des blocs pour les jours non travaillés
-      const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      const nonWorkingDays = allDays.filter(day => !workingDays.includes(day));
-      
-      if (nonWorkingDays.length > 0) {
-        blocksToCreate.push({
-          barber_id: barberId,
-          start_time: salonStart,
-          end_time: salonEnd,
-          title: 'Jour de repos',
-          block_type: 'unavailable',
-          notes: `Créé automatiquement - jours non travaillés: ${nonWorkingDays.map(day => {
-            const labels: { [key: string]: string } = {
-              'Monday': 'Lun', 'Tuesday': 'Mar', 'Wednesday': 'Mer',
-              'Thursday': 'Jeu', 'Friday': 'Ven', 'Saturday': 'Sam', 'Sunday': 'Dim'
-            };
-            return labels[day];
-          }).join(', ')}`,
-          user_id: user.id
-        });
-      }
-
-      if (blocksToCreate.length > 0) {
-        // Insérer tous les blocs pour une semaine type (on peut étendre plus tard)
-        const today = new Date();
-        for (let i = 0; i < 7; i++) {
-          const date = new Date(today);
-          date.setDate(today.getDate() + i);
-          
-          for (const block of blocksToCreate) {
-            // Pour les jours de repos, ne créer que pour les jours non travaillés
-            if (block.title === 'Jour de repos') {
-              const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
-              if (!workingDays.includes(dayName)) {
-                await supabase
-                  .from('custom_blocks')
-                  .insert({
-                    ...block,
-                    block_date: date.toISOString().split('T')[0]
-                  });
-              }
-            } else {
-              // Pour les créneaux avant/après, créer tous les jours travaillés
-              const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
-              if (workingDays.includes(dayName)) {
-                await supabase
-                  .from('custom_blocks')
-                  .insert({
-                    ...block,
-                    block_date: date.toISOString().split('T')[0]
-                  });
-              }
-            }
-          }
-        }
-        
-        toast({
-          title: "✅ Créneaux configurés",
-          description: "Les créneaux indisponibles ont été créés automatiquement",
-        });
-      }
-    } catch (error) {
-      console.error('Error creating unavailable slots:', error);
-      toast({
-        title: "⚠️ Attention",
-        description: "Coiffeur ajouté, mais impossible de créer les créneaux automatiques",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleUpdateBarber = async (barber: Barber) => {
-    await updateBarber(barber.id, barber);
-    setEditingBarber(null);
-  };
-
-  const handleDeleteBarber = async (barberId: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce coiffeur ?')) {
-      await deleteBarber(barberId);
-    }
-  };
-
-  const toggleWorkingDay = (day: string, isEditing = false) => {
-    if (isEditing && editingBarber) {
-      const workingDays = editingBarber.working_days || [];
-      const newWorkingDays = workingDays.includes(day)
-        ? workingDays.filter(d => d !== day)
-        : [...workingDays, day];
-      setEditingBarber({ ...editingBarber, working_days: newWorkingDays });
-    } else {
-      const workingDays = newBarber.working_days;
-      const newWorkingDays = workingDays.includes(day)
-        ? workingDays.filter(d => d !== day)
-        : [...workingDays, day];
-      setNewBarber({ ...newBarber, working_days: newWorkingDays });
-    }
-  };
-
-  const colors = [
-    'bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-red-600', 
-    'bg-yellow-600', 'bg-pink-600', 'bg-indigo-600', 'bg-orange-600'
-  ];
-
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const daysLabels: { [key: string]: string } = {
-    'Monday': 'Lun',
-    'Tuesday': 'Mar', 
-    'Wednesday': 'Mer',
-    'Thursday': 'Jeu',
-    'Friday': 'Ven',
-    'Saturday': 'Sam',
-    'Sunday': 'Dim'
   };
 
   if (loading) {
