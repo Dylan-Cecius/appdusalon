@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { resolveAppOrigin } from "../_shared/app-origin.ts";
+import { resolveBillingOwner } from "../_shared/billing-owner.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,12 +50,18 @@ serve(async (req) => {
       return jsonResponse({ error: "unauthorized" }, 401);
     }
 
-    const email = user.email.toLowerCase();
+    const billingOwner = await resolveBillingOwner(supabase, user);
+    if (!billingOwner.isOwner) {
+      return jsonResponse({ error: "billing_owner_required" }, 403);
+    }
+
+    const billingEmail = billingOwner.ownerEmail;
+    const billingUserId = billingOwner.ownerUserId;
 
     const { data: subscriber } = await supabase
       .from("subscribers")
       .select("stripe_customer_id")
-      .or(`user_id.eq.${user.id},email.eq.${email}`)
+      .or(`user_id.eq.${billingUserId},email.eq.${billingEmail}`)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -64,7 +71,7 @@ serve(async (req) => {
     let customerId = subscriber?.stripe_customer_id || null;
 
     if (!customerId) {
-      const customers = await stripe.customers.list({ email, limit: 1 });
+      const customers = await stripe.customers.list({ email: billingEmail, limit: 1 });
       customerId = customers.data[0]?.id ?? null;
     }
 
