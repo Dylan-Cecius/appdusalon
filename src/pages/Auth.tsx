@@ -15,6 +15,7 @@ const Auth = () => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [salonName, setSalonName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mfaRequired, setMfaRequired] = useState(false);
@@ -110,7 +111,7 @@ const Auth = () => {
 
   const handleAuth = async (e?: FormEvent) => {
     e?.preventDefault();
-    if (!email || !password) {
+    if (!email || !password || (!isLogin && !salonName.trim())) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs",
@@ -166,7 +167,11 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: redirectUrl
+            emailRedirectTo: redirectUrl,
+            data: {
+              salon_name: salonName.trim(),
+              display_name: salonName.trim(),
+            },
           }
         });
 
@@ -415,6 +420,22 @@ const Auth = () => {
           </form>
         ) : (
           <form ref={authFormRef} onSubmit={handleAuth} className="space-y-4">
+            {!isLogin && (
+              <div>
+                <Label htmlFor="salon-name">Nom du salon</Label>
+                <Input
+                  id="salon-name"
+                  value={salonName}
+                  onChange={(e) => setSalonName(e.target.value)}
+                  placeholder="Ex. Studio Barber"
+                  required
+                  maxLength={100}
+                  className="min-h-[48px] text-base"
+                  autoComplete="organization"
+                />
+              </div>
+            )}
+
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
