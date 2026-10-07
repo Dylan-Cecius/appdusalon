@@ -47,7 +47,7 @@ export const useSupabaseTransactions = () => {
         items: tx.items as any,
         totalAmount: tx.total_amount,
         paymentMethod: tx.payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Paris'),
+        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Brussels'),
         clientId: tx.client_id || undefined,
         staffId: tx.staff_id || undefined
       })) || [];
@@ -67,7 +67,7 @@ export const useSupabaseTransactions = () => {
         const newTransaction: Transaction = {
           ...transaction,
           id: Date.now().toString(),
-          transactionDate: toZonedTime(new Date(), 'Europe/Paris')
+          transactionDate: toZonedTime(new Date(), 'Europe/Brussels')
         };
         setTransactions(prev => [newTransaction, ...prev]);
         return newTransaction;
@@ -78,7 +78,7 @@ export const useSupabaseTransactions = () => {
         return;
       }
 
-      const currentTimeUTC = fromZonedTime(new Date(), 'Europe/Paris');
+      const currentTimeUTC = fromZonedTime(new Date(), 'Europe/Brussels');
       
       const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
       const { data: employeeIdData } = await supabase.rpc('get_user_employee_id', { _user_id: user.id });
@@ -111,7 +111,7 @@ export const useSupabaseTransactions = () => {
         items: (data as any).items as any,
         totalAmount: (data as any).total_amount,
         paymentMethod: (data as any).payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Paris'),
+        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Brussels'),
         clientId: (data as any).client_id || undefined,
         staffId: (data as any).staff_id || undefined
       };
@@ -268,7 +268,7 @@ export const useSupabaseTransactions = () => {
             items: newRecord.items,
             totalAmount: newRecord.total_amount,
             paymentMethod: newRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Paris')
+            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Brussels')
           };
           setTransactions(prev => {
             if (prev.some(tx => tx.id === newTransaction.id)) return prev;
@@ -286,7 +286,7 @@ export const useSupabaseTransactions = () => {
             items: updatedRecord.items,
             totalAmount: updatedRecord.total_amount,
             paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Paris')
+            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Brussels')
           };
           setTransactions(prev => 
             prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
