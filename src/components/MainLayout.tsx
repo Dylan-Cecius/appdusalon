@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import logoImg from '@/assets/logo-auth.png';
+import { isDemoOnlyPreview } from '@/lib/previewSafety';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   adminOnly?: boolean;
+  externalAction?: boolean;
 };
 
 type NavGroup = {
@@ -54,10 +56,10 @@ const navGroups: NavGroup[] = [
     items: [
       { path: '/ca-total', label: 'Chiffre d’affaires', icon: TrendingUp, adminOnly: true },
       { path: '/equipe', label: 'Équipe', icon: Users, adminOnly: true },
-      { path: '/sms', label: 'SMS', icon: MessageSquare, adminOnly: true },
+      { path: '/sms', label: 'SMS', icon: MessageSquare, adminOnly: true, externalAction: true },
       { path: '/todo', label: 'To-do', icon: CheckSquare },
-      { path: '/rapports', label: 'Rapports', icon: Mail, adminOnly: true },
-      { path: '/abonnements', label: 'Abonnement', icon: Crown, adminOnly: true },
+      { path: '/rapports', label: 'Rapports', icon: Mail, adminOnly: true, externalAction: true },
+      { path: '/abonnements', label: 'Abonnement', icon: Crown, adminOnly: true, externalAction: true },
       { path: '/parametres', label: 'Paramètres', icon: SettingsIcon, adminOnly: true },
     ],
   },
@@ -94,7 +96,10 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   const visibleNavGroups = navGroups
     .map(group => ({
       ...group,
-      items: group.items.filter(item => !item.adminOnly || permissions.isAdmin),
+      items: group.items.filter(item =>
+        (!item.adminOnly || permissions.isAdmin) &&
+        (!isDemoOnlyPreview || !item.externalAction)
+      ),
     }))
     .filter(group => group.items.length > 0);
 
