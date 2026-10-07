@@ -24,6 +24,17 @@ Pour le workflow GitHub Pages de la V2, configurer les secrets GitHub suivants :
 
 Le workflow refuse désormais de déployer si ces secrets sont absents ou si l'URL Supabase de preview correspond à l'URL par défaut suivie dans `.env`.
 
+### Workflow backend de recette isolé
+
+Le workflow manuel `.github/workflows/v2-staging-backend.yml` nécessite :
+
+- `V2_STAGING_SUPABASE_ACCESS_TOKEN`
+- `V2_STAGING_SUPABASE_PROJECT_REF`
+- `V2_STAGING_DB_PASSWORD`
+- la confirmation manuelle exacte `STAGING_ONLY`
+
+Il refuse de s'exécuter si la référence du projet staging correspond au projet Supabase par défaut suivi dans `.env`. Il effectue d'abord un dry-run des migrations, applique ensuite les migrations en attente sans données de seed, déploie explicitement les Edge Functions vers le projet staging, puis vérifie l'historique des migrations.
+
 ## 2. Secrets Edge Functions
 
 Configurer dans le projet Supabase cible, sans les committer :
