@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, RotateCcw, Sparkles, ShoppingBag } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Eye, EyeOff, Users, RotateCcw, Sparkles, ShoppingBag, CalendarCheck, Copy, ExternalLink } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -14,6 +14,7 @@ import ServiceManagement from './ServiceManagement';
 import OpeningHoursSettings from './OpeningHoursSettings';
 import ActivityLogViewer from './ActivityLogViewer';
 import TwoFactorSettings from './TwoFactorSettings';
+import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 
 const DemoResetSection = () => {
   const { user } = useAuth();
@@ -75,10 +76,33 @@ const DemoResetSection = () => {
 const Settings = () => {
   const { salonSettings, loading, saveSalonSettings } = useSupabaseSettings();
   const { permissions } = usePermissions();
+  const { rights } = useSubscriptionRights();
   const [salonName, setSalonName] = useState('');
   const [statsPassword, setStatsPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const bookingUrl = salonSettings?.slug
+    ? `${window.location.origin}/booking/${salonSettings.slug}`
+    : null;
+
+  const copyBookingUrl = async () => {
+    if (!bookingUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(bookingUrl);
+      toast({
+        title: "Lien copié",
+        description: "Le lien de réservation est prêt à être partagé.",
+      });
+    } catch {
+      toast({
+        title: "Copie impossible",
+        description: "Sélectionnez le lien et copiez-le manuellement.",
+        variant: "destructive",
+      });
+    }
+  };
   
   useEffect(() => {
     setSalonName(salonSettings?.name || '');
@@ -229,6 +253,58 @@ const Settings = () => {
           >
             {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
+        </div>
+      </Card>
+
+      {/* Réservation en ligne */}
+      <Card className="v2-panel p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-primary/10 p-2">
+            <CalendarCheck className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-lg font-semibold sm:text-xl">Réservation en ligne</h3>
+            {rights.canAccessOnlineBooking ? (
+              <>
+                <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                  Partagez ce lien avec vos clients pour qu’ils réservent directement en ligne.
+                </p>
+                {bookingUrl ? (
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={bookingUrl}
+                      readOnly
+                      aria-label="Lien de réservation publique"
+                      className="min-w-0 font-mono text-xs"
+                    />
+                    <Button type="button" variant="outline" onClick={copyBookingUrl}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copier
+                    </Button>
+                    <Button type="button" variant="outline" asChild>
+                      <a href={bookingUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Ouvrir
+                      </a>
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-destructive">
+                    Le lien public n’est pas encore disponible. Réessayez après la mise à jour du salon.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  La réservation en ligne est disponible à partir du plan Solo.
+                </p>
+                <Button asChild variant="outline" className="shrink-0">
+                  <Link to="/abonnements">Voir les plans</Link>
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </Card>
 
