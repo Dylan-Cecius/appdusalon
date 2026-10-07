@@ -21,6 +21,7 @@ const DEFAULT_DAILY_SCHEDULES: DailySchedules = {
 
 export interface Staff {
   id: string;
+  auth_user_id: string | null;
   salon_id: string;
   name: string;
   role: string;
@@ -113,7 +114,69 @@ export const useStaff = () => {
     onError: (error: any) => toast.error(error.message || 'Erreur lors de la suppression'),
   });
 
+  const inviteStaffAccess = useMutation({
+    mutationFn: async ({
+      staffId,
+      email,
+      displayName,
+      color,
+    }: {
+      staffId: string;
+      email: string;
+      displayName: string;
+      color: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('create-employee', {
+        body: {
+          staff_id: staffId,
+          email,
+          display_name: displayName,
+          color,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Invitation impossible');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      toast.success('Invitation envoyée');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Impossible d’envoyer l’invitation');
+    },
+  });
+
+  const revokeStaffAccess = useMutation({
+    mutationFn: async (staffId: string) => {
+      const { data, error } = await supabase.functions.invoke('revoke-employee-access', {
+        body: { staff_id: staffId },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Révocation impossible');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      toast.success('Accès application révoqué');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Impossible de révoquer l’accès');
+    },
+  });
+
   const activeStaff = staff.filter(s => s.is_active);
 
-  return { staff, activeStaff, isLoading, createStaff, updateStaff, deleteStaff };
+  return {
+    staff,
+    activeStaff,
+    isLoading,
+    createStaff,
+    updateStaff,
+    deleteStaff,
+    inviteStaffAccess,
+    revokeStaffAccess,
+  };
 };
