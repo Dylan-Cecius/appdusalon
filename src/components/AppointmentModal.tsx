@@ -65,8 +65,10 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
     }
   }, [selectedTimeSlot, isOpen, staffId]);
 
-  const totalDuration = selectedServices.reduce((total, service) => 
-    total + service.duration, 0
+  const totalDuration = selectedServices.reduce(
+    (total, service) =>
+      total + service.duration + (service.appointmentBuffer || 0),
+    0
   );
 
   const totalPrice = selectedServices.reduce((total, service) => total + service.price, 0);
@@ -115,7 +117,11 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
     const appointmentEnd = new Date(appointmentStart);
     const displayDuration =
       appointmentType === 'client'
-        ? selectedServices.reduce((total, service) => total + service.duration, 0)
+        ? selectedServices.reduce(
+            (total, service) =>
+              total + service.duration + (service.appointmentBuffer || 0),
+            0
+          )
         : 30;
     appointmentEnd.setMinutes(appointmentEnd.getMinutes() + displayDuration);
 
