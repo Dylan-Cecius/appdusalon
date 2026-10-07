@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import { resolveBillingOwner } from "./billing-owner.ts";
 
 export type SmsEntitlement = "automation" | "marketing";
 
@@ -81,34 +82,52 @@ export const resolveSalonAndCheckEntitlement = async (
   user: { id: string; email?: string | null },
   entitlement: SmsEntitlement
 ) => {
-  const { data: salonId, error: salonError } = await admin.rpc("get_user_salon_id", {
-    _user_id: user.id,
-  });
-
-  if (salonError || !salonId) {
+  const billingOwner = await resolveBillingOwner(admin, user);
+  if (!billingOwner.salonId) {
     throw new Error("salon_not_found");
   }
 
-  const email = (user.email || "").toLowerCase();
+  const salonId = billingOwner.salonId;
+  const requesterEmail = (user.email || "").toLowerCase();
+  const billingEmail = billingOwner.ownerEmail;
 
-  const [{ data: platformAdmin }, subscriberResult] = await Promise.all([
-    email
-      ? admin
-          .from("platform_admin_emails")
-          .select("email")
-          .eq("email", email)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    admin
-      .from("subscribers")
-      .select("subscribed, subscription_tier, subscription_end")
-      .or(`user_id.eq.${user.id},email.eq.${email}`)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const [{ data: requesterPlatformAdmin }, { data: ownerPlatformAdmin }, { data: isSalonAdmin }, subscriberResult] =
+    await Promise.all([
+      requesterEmail
+        ? admin
+            .from("platform_admin_emails")
+            .select("email")
+            .eq("email", requesterEmail)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      billingEmail
+        ? admin
+            .from("platform_admin_emails")
+            .select("email")
+            .eq("email", billingEmail)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      admin.rpc("has_role_in_salon", {
+        _user_id: user.id,
+        _salon_id: salonId,
+        _role: "admin",
+      }),
+      admin
+        .from("subscribers")
+        .select("subscribed, subscription_tier, subscription_end")
+        .or(`user_id.eq.${billingOwner.ownerUserId},email.eq.${billingEmail}`)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-  if (platformAdmin) {
+  const isPlatformAdmin = Boolean(requesterPlatformAdmin || ownerPlatformAdmin);
+
+  if (!isPlatformAdmin && isSalonAdmin !== true) {
+    throw new Error("admin_required");
+  }
+
+  if (isPlatformAdmin) {
     return { salonId: String(salonId), tier: "Lifetime" };
   }
 
