@@ -108,10 +108,11 @@ serve(async (req) => {
           .maybeSingle(),
         supabase
           .from("services")
-          .select("id, duration, appointment_buffer")
+          .select("id, duration, appointment_buffer, category")
           .eq("id", serviceId)
           .eq("salon_id", salonId)
           .eq("is_active", true)
+          .neq("category", "produit")
           .maybeSingle(),
       ]);
 
