@@ -70,8 +70,14 @@ const normalizeTier = (tier?: string | null) => {
   return tier ?? null;
 };
 
+type SubscriberRow = {
+  subscribed: boolean | null;
+  subscription_tier: string | null;
+  subscription_end: string | null;
+};
+
 export const resolveSalonAndCheckEntitlement = async (
-  admin: ReturnType<typeof createClient>,
+  admin: any,
   user: { id: string; email?: string | null },
   entitlement: SmsEntitlement
 ) => {
@@ -85,7 +91,7 @@ export const resolveSalonAndCheckEntitlement = async (
 
   const email = (user.email || "").toLowerCase();
 
-  const [{ data: platformAdmin }, { data: subscriber }] = await Promise.all([
+  const [{ data: platformAdmin }, subscriberResult] = await Promise.all([
     email
       ? admin
           .from("platform_admin_emails")
@@ -106,6 +112,7 @@ export const resolveSalonAndCheckEntitlement = async (
     return { salonId: String(salonId), tier: "Lifetime" };
   }
 
+  const subscriber = (subscriberResult.data ?? null) as SubscriberRow | null;
   const tier = normalizeTier(subscriber?.subscription_tier);
   const subscriptionValid =
     subscriber?.subscribed === true &&
