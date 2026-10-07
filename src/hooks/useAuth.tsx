@@ -40,7 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       lastAuthSuccessAt.current = Date.now();
     }
 
-    console.log('[Auth] apply session:', source, '| user:', nextUser?.email ?? null);
 
     setUser((previousUser) => {
       const hasSameIdentity =
@@ -52,11 +51,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    console.log('[Auth] init start');
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
-        console.log('[Auth] state change:', event, '| session:', !!currentSession);
 
         if (!initialSessionResolved.current) {
           pendingSessionRef.current = currentSession;
@@ -64,7 +61,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (event === 'INITIAL_SESSION') {
             applySession(currentSession, 'INITIAL_SESSION');
           } else {
-            console.log('[Auth] queued pre-init event:', event);
           }
 
           return;
@@ -74,14 +70,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const withinGracePeriod = Date.now() - lastAuthSuccessAt.current < AUTH_EVENT_GRACE_MS;
 
           if (explicitSignOut.current) {
-            console.log('[Auth] explicit sign-out — clearing state');
             sessionRef.current = null;
             setUser(null);
             explicitSignOut.current = false;
           } else if (withinGracePeriod) {
-            console.log('[Auth] ignoring transient SIGNED_OUT within auth grace window');
           } else {
-            console.log('[Auth] signed out — clearing state');
             sessionRef.current = null;
             setUser(null);
           }
@@ -103,11 +96,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               previousUser?.email === nextUser?.email;
 
             if (hasSameIdentity) {
-              console.log('[Auth] token refreshed — stable user, skipping re-render');
               return previousUser;
             }
 
-            console.log('[Auth] token refreshed — user identity changed');
             return nextUser;
           });
 
@@ -126,7 +117,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const resolvedSession = restoredSession ?? pendingSessionRef.current ?? null;
 
-        console.log('[Auth] init session:', !!resolvedSession, resolvedSession?.user?.email);
         applySession(resolvedSession, 'getSession');
       })
       .finally(() => {
@@ -138,7 +128,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [applySession]);
 
   const signOut = useCallback(async () => {
-    console.log('[Auth] signOut called');
     explicitSignOut.current = true;
 
     try {
