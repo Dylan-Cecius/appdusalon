@@ -137,7 +137,16 @@ const App = () => {
                   }
                 />
                 <Route path="/services" element={<AuthGuard><LazyPage><ServicesPage /></LazyPage></AuthGuard>} />
-                <Route path="/produits" element={<AuthGuard><LazyPage><ProduitsPage /></LazyPage></AuthGuard>} />
+                <Route
+                  path="/produits"
+                  element={
+                    <AuthGuard>
+                      <SubscriptionGuard feature="canManageInventory">
+                        <LazyPage><ProduitsPage /></LazyPage>
+                      </SubscriptionGuard>
+                    </AuthGuard>
+                  }
+                />
                 <Route path="/agenda" element={<AuthGuard><LazyPage><AgendaPage /></LazyPage></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><LazyPage><TodoPage /></LazyPage></AuthGuard>} />
                 <Route
