@@ -85,6 +85,21 @@ serve(async (req) => {
       return jsonResponse({ error: "salon_id, service_id and date are required" }, 400);
     }
 
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return jsonResponse({ error: "invalid_date" }, 400);
+    }
+
+    const requestedDate = new Date(`${date}T12:00:00Z`);
+    const maxBookingDate = new Date();
+    maxBookingDate.setUTCDate(maxBookingDate.getUTCDate() + 366);
+
+    if (
+      Number.isNaN(requestedDate.getTime()) ||
+      requestedDate.getTime() > maxBookingDate.getTime()
+    ) {
+      return jsonResponse({ error: "date_out_of_range" }, 400);
+    }
+
     const { data: salon, error: salonError } = await supabase
       .from("salons")
       .select("owner_user_id")
@@ -139,7 +154,7 @@ serve(async (req) => {
       Number(service.duration || 30) + Number(service.appointment_buffer || 0)
     );
 
-    const dayProbe = new Date(`${date}T12:00:00Z`);
+    const dayProbe = requestedDate;
     const jsDay = dayProbe.getUTCDay();
     const staffDayName = DAY_NAMES[jsDay];
     const openingDayIndex = jsDay === 0 ? 6 : jsDay - 1;
