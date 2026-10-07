@@ -9,6 +9,7 @@ import SubscriptionGuard from "./components/SubscriptionGuard";
 import PermissionGuard from "./components/PermissionGuard";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useSubscriptionRights } from "@/hooks/useSubscriptionRights";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -48,8 +49,12 @@ const LazyPage = ({ children }: { children: ReactNode }) => (
 const AuthGuard = ({ children }: { children: ReactNode }) => {
   const { user, loading, signOut } = useAuth();
   const { permissions, isLoading: permissionsLoading } = usePermissions();
+  const {
+    subscriptionTier,
+    loading: subscriptionLoading,
+  } = useSubscriptionRights();
 
-  if (loading || (user && permissionsLoading)) {
+  if (loading || (user && (permissionsLoading || subscriptionLoading))) {
     return <PageFallback />;
   }
 
@@ -58,7 +63,11 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
   }
 
   const employeeAccessUnavailable =
-    permissions.role === 'employee' && !permissions.employeeId;
+    permissions.role === 'employee' &&
+    (
+      !permissions.employeeId ||
+      !['Equipe', 'Lifetime'].includes(subscriptionTier)
+    );
 
   if (employeeAccessUnavailable) {
     return (
