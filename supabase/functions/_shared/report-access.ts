@@ -52,7 +52,7 @@ export const hasReportAccess = async (
   if (error || !subscriber?.subscribed) return false;
 
   const tier = normalizeTier(subscriber.subscription_tier);
-  if (!["Solo", "Equipe", "Lifetime"].includes(tier || "")) return false;
+  if (!["Equipe", "Lifetime"].includes(tier || "")) return false;
 
   if (tier === "Lifetime") return true;
   if (!subscriber.subscription_end) return true;
