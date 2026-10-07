@@ -140,8 +140,27 @@ serve(async (req) => {
     }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+
     if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY is not set");
+      if (existingSubscriber?.stripe_customer_id) {
+        return jsonResponse({ error: "billing_not_configured" }, 503);
+      }
+
+      await supabaseClient.from("subscribers").upsert({
+        email: billingEmail,
+        user_id: billingUserId,
+        stripe_customer_id: null,
+        subscribed: false,
+        subscription_tier: null,
+        subscription_end: null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "email" });
+
+      return jsonResponse({
+        subscribed: false,
+        subscription_tier: null,
+        subscription_end: null,
+      } satisfies SubscriptionState);
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
