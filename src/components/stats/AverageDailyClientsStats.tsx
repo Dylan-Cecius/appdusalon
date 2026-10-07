@@ -1,39 +1,45 @@
 import { Card } from '@/components/ui/card';
 import { UserCheck, Calendar } from 'lucide-react';
 import { useTransactions } from '@/contexts/TransactionsContext';
-import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useMemo } from 'react';
 
 export const AverageDailyClientsStats = () => {
   const { transactions } = useTransactions();
-  const { appointments } = useSupabaseAppointments();
 
   const averages = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    // Group transactions by date
-    const transactionsByDate: Record<string, number> = {};
-    transactions.forEach(tx => {
-      const txDate = new Date(tx.transactionDate);
-      const dateKey = txDate.toISOString().split('T')[0];
-      transactionsByDate[dateKey] = (transactionsByDate[dateKey] || 0) + 1;
-    });
-
-    // Group appointments by date
-    const appointmentsByDate: Record<string, number> = {};
-    appointments.forEach(apt => {
-      const aptDate = new Date(apt.startTime);
-      const dateKey = aptDate.toISOString().split('T')[0];
-      appointmentsByDate[dateKey] = (appointmentsByDate[dateKey] || 0) + 1;
-    });
-
-    // Combine both
-    const allDates = new Set([...Object.keys(transactionsByDate), ...Object.keys(appointmentsByDate)]);
+    // Count distinct POS clients per active day. POS transactions are the
+    // accounting source of truth, so appointments are not added again here.
     const clientsByDate: Record<string, number> = {};
+    const knownClientsByDate: Record<string, Set<string>> = {};
+    const anonymousByDate: Record<string, number> = {};
+
+    transactions.forEach(transaction => {
+      const txDate = new Date(transaction.transactionDate);
+      const dateKey = txDate.toISOString().split('T')[0];
+
+      if (transaction.clientId) {
+        if (!knownClientsByDate[dateKey]) {
+          knownClientsByDate[dateKey] = new Set<string>();
+        }
+        knownClientsByDate[dateKey].add(transaction.clientId);
+      } else {
+        anonymousByDate[dateKey] = (anonymousByDate[dateKey] || 0) + 1;
+      }
+    });
+
+    const allDates = new Set([
+      ...Object.keys(knownClientsByDate),
+      ...Object.keys(anonymousByDate),
+    ]);
+
     allDates.forEach(date => {
-      clientsByDate[date] = (transactionsByDate[date] || 0) + (appointmentsByDate[date] || 0);
+      clientsByDate[date] =
+        (knownClientsByDate[date]?.size || 0) +
+        (anonymousByDate[date] || 0);
     });
 
     // Calculate averages
@@ -56,7 +62,7 @@ export const AverageDailyClientsStats = () => {
       totalDaysMonth: daysInMonth,
       totalDaysYear: daysInYear,
     };
-  }, [transactions, appointments]);
+  }, [transactions]);
 
   return (
     <Card className="p-6">
