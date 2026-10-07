@@ -58,7 +58,6 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
     await updateTransaction(editingTransaction.id, {
       totalAmount: parseFloat(editData.totalAmount),
       paymentMethod: editData.paymentMethod,
-      items: editData.items
     });
 
     setEditingTransaction(null);
