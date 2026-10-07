@@ -26,7 +26,9 @@ const DemoResetSection = () => {
     if (!window.confirm('Réinitialiser toutes les données de démonstration ?')) return;
     setResetting(true);
     try {
-      const { error } = await supabase.rpc('reset_demo_data');
+      const { error } = await supabase.functions.invoke('seed-demo-data', {
+        body: { force: true },
+      });
       if (error) throw error;
       toast({
         title: "✅ Données réinitialisées",
