@@ -17,12 +17,30 @@ export const resolveBillingOwner = async (
   const requesterEmail = String(requester.email || "").trim().toLowerCase();
   if (!requesterEmail) throw new Error("billing_email_missing");
 
-  const { data: salonId, error: salonIdError } = await admin.rpc(
-    "get_user_salon_id",
-    { _user_id: requester.id },
-  );
+  const { data: membership, error: membershipError } = await admin
+    .from("user_roles")
+    .select("salon_id, role, created_at")
+    .eq("user_id", requester.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
-  if (salonIdError) throw salonIdError;
+  if (membershipError) throw membershipError;
+
+  let salonId = membership?.salon_id || null;
+
+  if (!salonId) {
+    const { data: ownedSalon, error: ownedSalonError } = await admin
+      .from("salons")
+      .select("id")
+      .eq("owner_user_id", requester.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (ownedSalonError) throw ownedSalonError;
+    salonId = ownedSalon?.id || null;
+  }
 
   if (!salonId) {
     return {
