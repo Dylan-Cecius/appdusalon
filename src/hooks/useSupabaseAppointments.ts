@@ -3,9 +3,12 @@ import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Appointment } from '@/data/appointments';
 import { useAuth } from './useAuth';
+import { usePermissions } from './usePermissions';
 
 export const useSupabaseAppointments = () => {
   const { user, isReady } = useAuth();
+  const { permissions } = usePermissions();
+  const salonId = permissions.salonId;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const userIdRef = useRef<string | null>(null);
@@ -13,7 +16,7 @@ export const useSupabaseAppointments = () => {
   const fetchAppointments = async () => {
     console.log('[Appointments] fetch start');
     try {
-      if (!isSupabaseConfigured || !user) {
+      if (!isSupabaseConfigured || !user || !salonId) {
         setAppointments([]);
         setLoading(false);
         return;
@@ -37,7 +40,7 @@ export const useSupabaseAppointments = () => {
           created_at,
           updated_at
         `)
-        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
         .order('start_time', { ascending: true });
 
       if (error) throw error;
@@ -219,7 +222,7 @@ export const useSupabaseAppointments = () => {
   useEffect(() => {
     if (!isReady) return;
 
-    if (!user) {
+    if (!user || !salonId) {
       setAppointments([]);
       setLoading(false);
       userIdRef.current = null;
@@ -229,24 +232,29 @@ export const useSupabaseAppointments = () => {
     if (userIdRef.current === user.id) return;
     userIdRef.current = user.id;
 
-    console.log('[Appointments] effect trigger — fetching for user', user.id);
+    console.log('[Appointments] effect trigger — fetching for salon', salonId);
     setLoading(true);
     fetchAppointments();
 
     if (!isSupabaseConfigured) return;
 
     const subscription = supabase
-      .channel('appointments')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'appointments' },
-        () => { fetchAppointments(); }
+      .channel(`appointments-${salonId}`)
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `salon_id=eq.${salonId}`,
+        },
+        () => { void fetchAppointments(); }
       )
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [isReady, user?.id]);
+  }, [isReady, user?.id, salonId]);
 
   return {
     appointments,
