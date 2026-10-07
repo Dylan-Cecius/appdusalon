@@ -93,6 +93,7 @@ export type Database = {
         }
         Update: {
           barber_id?: string | null
+          staff_id?: string | null | null
           client_name?: string
           client_phone?: string
           created_at?: string
@@ -301,7 +302,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          barber_id: string
+          barber_id?: string | null
+          staff_id?: string | null
           block_date: string
           block_type?: string
           created_at?: string
@@ -1085,6 +1087,7 @@ export type Database = {
       todo_items: {
         Row: {
           barber_id: string | null
+          staff_id: string | null | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -1134,6 +1137,13 @@ export type Database = {
             columns: ["barber_id"]
             isOneToOne: false
             referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_items_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
           {
