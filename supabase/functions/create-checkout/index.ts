@@ -67,6 +67,23 @@ serve(async (req) => {
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
+
+      const existingSubscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 20,
+      });
+
+      const hasLiveSubscription = existingSubscriptions.data.some(subscription =>
+        ["active", "trialing", "past_due", "unpaid", "paused"].includes(subscription.status)
+      );
+
+      if (hasLiveSubscription) {
+        return new Response(JSON.stringify({ already_subscribed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
     }
 
     const origin = resolveAppOrigin(req);
