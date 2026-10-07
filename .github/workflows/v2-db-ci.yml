@@ -1,0 +1,46 @@
+name: V2 Database CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - v2/chatgpt-rebuild
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+      - ".github/workflows/v2-db-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "v2-db-ci-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase database
+        run: supabase db start
+
+      - name: Replay all migrations from scratch
+        run: supabase db reset --local --no-seed
+
+      - name: Lint database schema
+        run: supabase db lint --local --level error --fail-on error
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
