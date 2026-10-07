@@ -1,3 +1,4 @@
+import { isTrustedAppOrigin } from "../_shared/app-origin.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -77,6 +78,13 @@ const at = (day: Date, hour: number, minute: number) => {
 };
 
 Deno.serve(async (req) => {
+  if (!isTrustedAppOrigin(req)) {
+    return new Response(JSON.stringify({ error: "origin_not_allowed" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
