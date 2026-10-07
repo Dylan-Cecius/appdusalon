@@ -11,15 +11,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, CheckSquare, Square, Calendar, AlertCircle, Trash2, Clock } from 'lucide-react';
 import { useSupabaseTodos } from '@/hooks/useSupabaseTodos';
-import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { useStaff } from '@/hooks/useStaff';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const TodoList = () => {
   const { todos, loading, addTodo, deleteTodo, toggleComplete } = useSupabaseTodos();
-  const { barbers } = useSupabaseSettings();
+  const { activeStaff } = useStaff();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedBarberId, setSelectedBarberId] = useState(barbers[0]?.id || '');
+  const [selectedStaffId, setSelectedStaffId] = useState('');
   const [newTodo, setNewTodo] = useState({
     title: '',
     description: '',
@@ -28,11 +28,11 @@ const TodoList = () => {
   });
 
   const handleAddTodo = async () => {
-    if (!newTodo.title.trim() || !selectedBarberId) return;
+    if (!newTodo.title.trim() || !selectedStaffId) return;
 
     await addTodo({
       ...newTodo,
-      barber_id: selectedBarberId,
+      staff_id: selectedStaffId,
       is_completed: false,
       created_by: 'admin',
       due_date: newTodo.due_date || undefined
@@ -65,8 +65,8 @@ const TodoList = () => {
     }
   };
 
-  const filterTodosByBarber = (barberId: string) => {
-    return todos.filter(todo => todo.barber_id === barberId);
+  const filterTodosByStaff = (staffId: string) => {
+    return todos.filter(todo => todo.staff_id === staffId);
   };
 
   if (loading) {
@@ -80,7 +80,7 @@ const TodoList = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">To-Do List par Coiffeur</h2>
+        <h2 className="text-2xl font-bold">To-do de l’équipe</h2>
         
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger asChild>
@@ -97,17 +97,17 @@ const TodoList = () => {
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="barber-select">Coiffeur</Label>
-                <Select value={selectedBarberId} onValueChange={setSelectedBarberId}>
+                <Label htmlFor="barber-select">Membre de l’équipe</Label>
+                <Select value={selectedStaffId} onValueChange={setSelectedBarberId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un coiffeur" />
+                    <SelectValue placeholder="Sélectionner un membre" />
                   </SelectTrigger>
                   <SelectContent>
-                    {barbers.map(barber => (
-                      <SelectItem key={barber.id} value={barber.id}>
+                    {activeStaff.map(member => (
+                      <SelectItem key={member.id} value={member.id}>
                         <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded ${barber.color}`}></div>
-                          {barber.name}
+                          <div className={`w-3 h-3 rounded ${member.color}`}></div>
+                          {member.name}
                         </div>
                       </SelectItem>
                     ))}
@@ -172,17 +172,17 @@ const TodoList = () => {
         </Dialog>
       </div>
 
-      <Tabs defaultValue={barbers[0]?.id} className="space-y-4">
+      <Tabs defaultValue={activeStaff[0]?.id} className="space-y-4">
         <TabsList className="grid grid-cols-3 max-w-md bg-card">
-          {barbers.map(barber => {
-            const barberTodos = filterTodosByBarber(barber.id);
-            const completedCount = barberTodos.filter(t => t.is_completed).length;
-            const totalCount = barberTodos.length;
+          {activeStaff.map(member => {
+            const staffTodos = filterTodosByStaff(member.id);
+            const completedCount = staffTodos.filter(t => t.is_completed).length;
+            const totalCount = staffTodos.length;
             
             return (
-              <TabsTrigger key={barber.id} value={barber.id} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${barber.color}`}></div>
-                <span>{barber.name}</span>
+              <TabsTrigger key={member.id} value={member.id} className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded ${member.color}`}></div>
+                <span>{member.name}</span>
                 <Badge variant="secondary" className="ml-1">
                   {completedCount}/{totalCount}
                 </Badge>
@@ -191,29 +191,29 @@ const TodoList = () => {
           })}
         </TabsList>
 
-        {barbers.map(barber => {
-          const barberTodos = filterTodosByBarber(barber.id);
+        {activeStaff.map(member => {
+          const staffTodos = filterTodosByStaff(member.id);
           
           return (
-            <TabsContent key={barber.id} value={barber.id}>
+            <TabsContent key={member.id} value={member.id}>
               <Card className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className={`w-4 h-4 rounded ${barber.color}`}></div>
-                    <h3 className="text-lg font-semibold">Tâches de {barber.name}</h3>
+                    <div className={`w-4 h-4 rounded ${member.color}`}></div>
+                    <h3 className="text-lg font-semibold">Tâches de {member.name}</h3>
                     <Badge variant="outline">
-                      {barberTodos.filter(t => !t.is_completed).length} en cours
+                      {staffTodos.filter(t => !t.is_completed).length} en cours
                     </Badge>
                   </div>
                   
-                  {barberTodos.length === 0 ? (
+                  {staffTodos.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Aucune tâche assignée à {barber.name}</p>
+                      <p>Aucune tâche assignée à {member.name}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {barberTodos.map(todo => (
+                      {staffTodos.map(todo => (
                         <div
                           key={todo.id}
                           className={`p-4 border rounded-lg transition-all ${
