@@ -21,3 +21,13 @@ test('unknown route renders the V2 not-found screen', async ({ page }) => {
   await expect(page.getByText(/page introuvable/i)).toBeVisible();
   await expect(page.getByRole('link', { name: /retour au tableau de bord/i })).toBeVisible();
 });
+
+
+test('signup asks for the salon name', async ({ page }) => {
+  await page.goto('/auth');
+
+  await page.getByRole('button', { name: /créez-en un/i }).click();
+
+  await expect(page.getByLabel(/nom du salon/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /créer.*compte|s'inscrire|inscription/i })).toBeVisible();
+});
