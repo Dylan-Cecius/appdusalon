@@ -15,6 +15,7 @@ Configurer côté frontend de recette :
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SUPABASE_PROJECT_ID`
 - `VITE_PREVIEW_DEMO_ONLY=true` pour la preview publique V2
+- `VITE_DEMO_ACCOUNT_EMAIL` facultatif ; défaut `demo@appdusalon.com`, à aligner avec le secret Edge `DEMO_ACCOUNT_EMAIL` s'il est personnalisé
 
 Pour le workflow GitHub Pages de la V2, configurer les secrets GitHub suivants :
 
