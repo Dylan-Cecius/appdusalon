@@ -9,6 +9,7 @@ import logoImg from '@/assets/logo-auth.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { isDemoOnlyPreview, isAllowedPreviewUser } from '@/lib/previewSafety';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -98,6 +99,12 @@ const Auth = () => {
 
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+
+      if (session && !isAllowedPreviewUser(session.user.email)) {
+        await supabase.auth.signOut();
+        return;
+      }
+
       if (session && !isPasswordFlowLink) {
         navigate('/');
       }
@@ -111,6 +118,14 @@ const Auth = () => {
   }, [navigate]);
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    if (isDemoOnlyPreview) {
+      toast({
+        title: "Preview sécurisée",
+        description: "Cette preview accepte uniquement le compte de démonstration.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -140,6 +155,14 @@ const Auth = () => {
 
   const handleAuth = async (e?: FormEvent) => {
     e?.preventDefault();
+
+    if (isDemoOnlyPreview) {
+      toast({
+        title: "Preview sécurisée",
+        description: "Utilisez le bouton de démonstration pour tester cette version.",
+      });
+      return;
+    }
     if (!email || !password || (!isLogin && !salonName.trim())) {
       toast({
         title: "Erreur",
@@ -238,6 +261,14 @@ const Auth = () => {
 
   const handleForgotPassword = async (e?: FormEvent) => {
     e?.preventDefault();
+
+    if (isDemoOnlyPreview) {
+      toast({
+        title: "Preview sécurisée",
+        description: "La récupération de compte réel est désactivée sur cette preview.",
+      });
+      return;
+    }
     if (!email) {
       toast({
         title: "Erreur",
