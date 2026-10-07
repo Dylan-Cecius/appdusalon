@@ -1,3 +1,4 @@
+import { isTrustedAppOrigin } from "../_shared/app-origin.ts";
 // Deno Edge Function: create-promo-code
 // Allows only a specific admin email to create promo codes. Uses the service role to bypass RLS safely.
 // CORS enabled.
@@ -17,6 +18,13 @@ function corsHeaders(origin?: string) {
 }
 
 serve(async (req) => {
+  if (!isTrustedAppOrigin(req)) {
+    return new Response(JSON.stringify({ error: "origin_not_allowed" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const origin = req.headers.get("origin") ?? "*";
 
   if (req.method === "OPTIONS") {
