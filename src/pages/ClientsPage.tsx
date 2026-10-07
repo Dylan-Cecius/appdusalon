@@ -16,12 +16,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ClientDetailModal from '@/components/ClientDetailModal';
 import type { Client } from '@/hooks/useClients';
 import { format } from 'date-fns';
+import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 
 const ClientsPage = () => {
   const { clients, loading, addClient, getClientStats } = useClients();
   const { permissions } = usePermissions();
   const { salonSettings } = useSupabaseSettings();
   const { logActivity } = useActivityLog();
+  const { rights } = useSubscriptionRights();
+  const canUseClientNotes = rights.canAccessFullClientNotes;
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -54,7 +57,10 @@ const ClientsPage = () => {
   const handleAddClient = async () => {
     if (!newClient.name || !newClient.phone) return;
     
-    const result = await addClient(newClient);
+    const result = await addClient({
+      ...newClient,
+      notes: canUseClientNotes ? newClient.notes : '',
+    });
     if (result) {
       await logActivity('CLIENT_CREATED', { client_name: newClient.name });
     }
@@ -189,16 +195,22 @@ const ClientsPage = () => {
                     placeholder="jean@example.com"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={newClient.notes}
-                    onChange={(e) => setNewClient({ ...newClient, notes: e.target.value })}
-                    placeholder="Préférences, allergies, remarques..."
-                    rows={3}
-                  />
-                </div>
+                {canUseClientNotes ? (
+                  <div>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={newClient.notes}
+                      onChange={(e) => setNewClient({ ...newClient, notes: e.target.value })}
+                      placeholder="Préférences, allergies, remarques..."
+                      rows={3}
+                    />
+                  </div>
+                ) : (
+                  <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+                    Les notes client complètes sont disponibles à partir du plan Solo.
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -281,7 +293,7 @@ const ClientsPage = () => {
                     )}
                   </CardDescription>
                 </CardHeader>
-                {client.notes && (
+                {canUseClientNotes && client.notes && (
                   <CardContent>
                     <div className="flex items-start gap-2 text-sm text-muted-foreground">
                       <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
