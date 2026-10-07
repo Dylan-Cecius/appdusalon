@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Transaction } from '@/contexts/TransactionsContext';
 import { useTransactions } from '@/contexts/TransactionsContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface TransactionsManagerProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ interface EditTransactionData {
 
 const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
   const { transactions, updateTransaction, deleteTransaction, loading } = useTransactions();
+  const { permissions } = usePermissions();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editData, setEditData] = useState<EditTransactionData>({
     totalAmount: '',
@@ -207,21 +209,25 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
                       {showDetails === transaction.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                     
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(transaction)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(transaction.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {permissions.canManageTransactions && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(transaction)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(transaction.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </Card>
