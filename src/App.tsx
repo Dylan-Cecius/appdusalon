@@ -93,9 +93,11 @@ const App = () => {
                   path="/sms"
                   element={
                     <AuthGuard>
-                      <SubscriptionGuard feature="canUseSmsAutomations">
-                        <LazyPage><SMSPage /></LazyPage>
-                      </SubscriptionGuard>
+                      <PermissionGuard permission="canAccessSettings">
+                        <SubscriptionGuard feature="canUseSmsAutomations">
+                          <LazyPage><SMSPage /></LazyPage>
+                        </SubscriptionGuard>
+                      </PermissionGuard>
                     </AuthGuard>
                   }
                 />
