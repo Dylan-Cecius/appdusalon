@@ -199,7 +199,10 @@ const TodoList = () => {
             
             return (
               <TabsTrigger key={member.id} value={member.id} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${member.color}`}></div>
+                <div
+                  className="h-3 w-3 rounded-full"
+                  style={{ backgroundColor: member.color }}
+                />
                 <span>{member.name}</span>
                 <Badge variant="secondary" className="ml-1">
                   {completedCount}/{totalCount}
