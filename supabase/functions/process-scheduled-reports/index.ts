@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import { hasReportAccess } from "../_shared/report-access.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +47,9 @@ const handler = async (req: Request): Promise<Response> => {
     const results = await Promise.allSettled(
       reportsToSend.map(async (report) => {
         try {
+          if (!(await hasReportAccess(supabase, report.user_id))) {
+            return { reportId: report.id, success: false, skipped: "subscription_inactive" };
+          }
           const { data, error } = await supabase.functions.invoke("send-automated-report", {
             body: { reportId: report.id, isTest: false },
             headers: { "x-cron-secret": cronSecret },
@@ -59,9 +63,18 @@ const handler = async (req: Request): Promise<Response> => {
       })
     );
 
-    // Update next send dates
+    // Update next send dates only for reports that were eligible to run.
+    const eligibleReportIds = new Set(
+      results
+        .filter((result) => result.status === "fulfilled" && !result.value.skipped)
+        .map((result) => result.status === "fulfilled" ? result.value.reportId : null)
+        .filter(Boolean),
+    );
+
     await Promise.allSettled(
-      reportsToSend.map(async (report) => {
+      reportsToSend
+        .filter((report) => eligibleReportIds.has(report.id))
+        .map(async (report) => {
         try {
           const { data: nextDate, error: calcError } = await supabase.rpc("calculate_next_send_date", {
             frequency_type: report.frequency,
