@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 interface ClientDetailModalProps {
   client: Client;
   open: boolean;
@@ -30,6 +31,8 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const { appointments } = useSupabaseAppointments();
   const { permissions } = usePermissions();
   const { toast } = useToast();
+  const { rights } = useSubscriptionRights();
+  const canUseClientNotes = rights.canAccessFullClientNotes;
   const { logActivity } = useActivityLog();
   const [isEditing, setIsEditing] = useState(false);
   const [stats, setStats] = useState<ClientStats>({ totalSpent: 0, visitCount: 0, lastVisit: null });
@@ -57,7 +60,14 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   };
 
   const handleSave = async () => {
-    await updateClient(client.id, editedClient);
+    const updates = canUseClientNotes
+      ? editedClient
+      : {
+          ...editedClient,
+          notes: client.notes,
+        };
+
+    await updateClient(client.id, updates);
     setIsEditing(false);
   };
 
@@ -181,16 +191,22 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                   disabled={!isEditing}
                 />
               </div>
-              <div>
-                <Label>Notes</Label>
-                <Textarea
-                  value={editedClient.notes || ''}
-                  onChange={(e) => setEditedClient({ ...editedClient, notes: e.target.value })}
-                  disabled={!isEditing}
-                  rows={5}
-                  placeholder="Préférences, allergies, remarques..."
-                />
-              </div>
+              {canUseClientNotes ? (
+                <div>
+                  <Label>Notes</Label>
+                  <Textarea
+                    value={editedClient.notes || ''}
+                    onChange={(e) => setEditedClient({ ...editedClient, notes: e.target.value })}
+                    disabled={!isEditing}
+                    rows={5}
+                    placeholder="Préférences, allergies, remarques..."
+                  />
+                </div>
+              ) : (
+                <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+                  Les notes client complètes sont disponibles à partir du plan Solo.
+                </div>
+              )}
             </div>
           </TabsContent>
 
