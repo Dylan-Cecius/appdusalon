@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
+import PreviewStandalone from "./PreviewStandalone";
 import { ThemeProvider } from "next-themes";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -13,7 +14,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       enableSystem={false}
       disableTransitionOnChange
     >
-      <App />
+      {import.meta.env.VITE_PREVIEW_STANDALONE === 'true' ? <PreviewStandalone /> : <App />}
     </ThemeProvider>
   </React.StrictMode>
 );
