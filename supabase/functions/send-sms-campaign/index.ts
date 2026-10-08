@@ -131,8 +131,12 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : "internal_error";
     const status =
       message === "not_authenticated" ? 401 :
-      message === "subscription_required" || message === "upgrade_required" ? 403 :
+      message === "mfa_required" ||
+      message === "subscription_required" ||
+      message === "upgrade_required" ? 403 :
       message === "salon_not_found" ? 404 :
+      message === "auth_not_configured" ||
+      message === "mfa_check_failed" ||
       message === "sms_provider_not_configured" ? 503 : 500;
 
     console.error("[SMS-CAMPAIGN]", error);
