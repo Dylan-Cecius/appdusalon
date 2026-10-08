@@ -78,7 +78,7 @@ jobs:
       - name: Lint database schema
         run: supabase db lint --local --level error --fail-on error
 
-      - name: Test password crypto in the rebuilt local database
+      - name: Run rebuilt-database regression tests
         shell: bash
         run: |
           set -euo pipefail
@@ -89,8 +89,11 @@ jobs:
             exit 1
           fi
           database_container="${containers[0]}"
-          docker cp tests/database/password-crypto.sql "$database_container:/tmp/password-crypto.sql"
-          docker exec "$database_container" psql -X --username postgres --dbname postgres --set ON_ERROR_STOP=1 --file /tmp/password-crypto.sql
+          for test in tests/database/*.sql; do
+            name="$(basename "$test")"
+            docker cp "$test" "$database_container:/tmp/$name"
+            docker exec "$database_container" psql -X --username postgres --dbname postgres --set ON_ERROR_STOP=1 --file "/tmp/$name"
+          done
 
       - name: Stop local Supabase
         if: always()
