@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionGuard from "./components/SubscriptionGuard";
 import PermissionGuard from "./components/PermissionGuard";
@@ -12,6 +12,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useSubscriptionRights } from "@/hooks/useSubscriptionRights";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
 import { isAllowedPreviewUser, isDemoOnlyPreview } from "@/lib/previewSafety";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -57,8 +58,48 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
     subscriptionTier,
     loading: subscriptionLoading,
   } = useSubscriptionRights();
+  const [mfaChecked, setMfaChecked] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
 
-  if (loading || (user && (permissionsLoading || subscriptionLoading))) {
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkMfa = async () => {
+      if (!user) {
+        if (!cancelled) {
+          setMfaRequired(false);
+          setMfaChecked(true);
+        }
+        return;
+      }
+
+      setMfaChecked(false);
+
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error('[AuthGuard] MFA assurance check failed:', error);
+        setMfaRequired(true);
+        setMfaChecked(true);
+        return;
+      }
+
+      setMfaRequired(
+        data?.nextLevel === 'aal2' && data?.currentLevel !== 'aal2'
+      );
+      setMfaChecked(true);
+    };
+
+    void checkMfa();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  if (loading || (user && (!mfaChecked || permissionsLoading || subscriptionLoading))) {
     return <PageFallback />;
   }
 
@@ -69,6 +110,10 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
   if (!isAllowedPreviewUser(user.email)) {
     void signOut();
     return <Navigate to="/auth" replace />;
+  }
+
+  if (mfaRequired) {
+    return <Navigate to="/auth?mfa=required" replace />;
   }
 
   const employeeAccessUnavailable =
