@@ -461,9 +461,14 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const status =
+      message === "mfa_required" ? 403 :
+      message === "auth_not_configured" || message === "mfa_check_failed" ? 503 : 500;
+
     console.error("[seed-demo-data]", error);
-    return new Response(JSON.stringify({ error: String(error) }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: message }), {
+      status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
