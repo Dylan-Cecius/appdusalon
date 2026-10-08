@@ -225,7 +225,15 @@ serve(async (req) => {
       message: 'Invitation envoyée. Le compte est lié au membre de l’équipe.',
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'internal_server_error';
+    const status =
+      message === 'mfa_required' ? 403 :
+      message === 'auth_not_configured' || message === 'mfa_check_failed' ? 503 : 500;
+
     console.error('[CREATE-EMPLOYEE]', error);
-    return jsonResponse({ error: 'internal_server_error' }, 500);
+    return jsonResponse(
+      { error: status === 500 ? 'internal_server_error' : message },
+      status
+    );
   }
 });
