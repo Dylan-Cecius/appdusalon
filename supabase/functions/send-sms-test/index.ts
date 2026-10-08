@@ -49,7 +49,12 @@ Deno.serve(async (req) => {
     }, result.ok ? 200 : 502);
   } catch (error) {
     const message = error instanceof Error ? error.message : "internal_error";
+    const status =
+      message === "not_authenticated" ? 401 :
+      message === "mfa_required" ? 403 :
+      message === "auth_not_configured" || message === "mfa_check_failed" ? 503 : 500;
+
     console.error("[SMS-TEST]", error);
-    return jsonResponse({ error: message }, message === "not_authenticated" ? 401 : 500);
+    return jsonResponse({ error: message }, status);
   }
 });
