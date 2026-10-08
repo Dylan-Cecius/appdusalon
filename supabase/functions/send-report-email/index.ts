@@ -194,6 +194,21 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error: any) {
     console.error("Error in send-report-email function:", error);
+
+    const message = error?.message || "internal_error";
+    if (message === "mfa_required") {
+      return new Response(JSON.stringify({ error: message }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (message === "auth_not_configured" || message === "mfa_check_failed") {
+      return new Response(JSON.stringify({ error: message }), {
+        status: 503,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
     
     // Handle specific Resend errors
     let errorMessage = "Erreur lors de l'envoi de l'email";
