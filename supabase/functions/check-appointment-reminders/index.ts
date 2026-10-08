@@ -73,7 +73,9 @@ Deno.serve(async (req) => {
         supabase
           .from("subscribers")
           .select("subscribed, subscription_tier, subscription_end")
-          .eq("user_id", salon.owner_user_id)
+          .or(`user_id.eq.${salon.owner_user_id},email.eq.${ownerEmail}`)
+          .order("updated_at", { ascending: false })
+          .limit(1)
           .maybeSingle(),
       ]);
 
