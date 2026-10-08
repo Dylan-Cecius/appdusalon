@@ -24,6 +24,8 @@ describe('release-critical server invariants', () => {
     expect(booking).toContain('online_booking_unavailable');
     expect(booking).toContain('slot_no_longer_available');
     expect(booking).toContain('too_many_booking_attempts');
+    expect(booking).toContain('booking_temporarily_limited');
+    expect(booking).toContain('recentSalonBookingCount');
     expect(booking).toContain('appointment_conflict');
     expect(booking).toContain('opening_hours');
     expect(booking).toContain('staff_not_working');
