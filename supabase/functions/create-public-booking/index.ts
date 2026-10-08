@@ -261,17 +261,33 @@ serve(async (req) => {
     }
 
     const rateLimitSince = new Date(Date.now() - 10 * 60_000).toISOString();
-    const { count: recentBookingCount, error: rateLimitError } = await supabase
-      .from("appointments")
-      .select("id", { count: "exact", head: true })
-      .eq("salon_id", salon_id)
-      .eq("client_phone", normalizedClientPhone)
-      .gte("created_at", rateLimitSince);
+
+    const [
+      { count: recentBookingCount, error: rateLimitError },
+      { count: recentSalonBookingCount, error: salonRateLimitError },
+    ] = await Promise.all([
+      supabase
+        .from("appointments")
+        .select("id", { count: "exact", head: true })
+        .eq("salon_id", salon_id)
+        .eq("client_phone", normalizedClientPhone)
+        .gte("created_at", rateLimitSince),
+      supabase
+        .from("appointments")
+        .select("id", { count: "exact", head: true })
+        .eq("salon_id", salon_id)
+        .gte("created_at", rateLimitSince),
+    ]);
 
     if (rateLimitError) throw rateLimitError;
+    if (salonRateLimitError) throw salonRateLimitError;
 
     if ((recentBookingCount || 0) >= 3) {
       return jsonResponse({ error: "too_many_booking_attempts" }, 429);
+    }
+
+    if ((recentSalonBookingCount || 0) >= 30) {
+      return jsonResponse({ error: "booking_temporarily_limited" }, 429);
     }
 
     const { data: conflicts, error: conflictError } = await supabase
