@@ -49,8 +49,25 @@ serve(async (req) => {
       password: demoPassword,
     });
 
-    if (error || !data.session) {
+    if (error || !data.session || !data.user) {
       console.error("[DEMO-LOGIN] authentication failed", error?.message);
+      return new Response(JSON.stringify({ error: "demo_unavailable" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: demoSalon, error: demoSalonError } = await client
+      .from("salons")
+      .select("id")
+      .eq("owner_user_id", data.user.id)
+      .eq("is_demo", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (demoSalonError || !demoSalon) {
+      console.error("[DEMO-LOGIN] configured account is not a demo salon owner");
+      await client.auth.signOut();
       return new Response(JSON.stringify({ error: "demo_unavailable" }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
