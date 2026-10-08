@@ -90,4 +90,15 @@ describe('release-critical server invariants', () => {
     }
   });
 
+  it('keeps demo login public but bound to a real demo salon owner', () => {
+    const config = read('supabase/config.toml');
+    const source = read('supabase/functions/demo-login/index.ts');
+
+    expect(config).toContain('[functions.demo-login]\\nverify_jwt = false');
+    expect(source).toContain('DEMO_ACCOUNT_PASSWORD');
+    expect(source).toContain('.eq("owner_user_id", data.user.id)');
+    expect(source).toContain('.eq("is_demo", true)');
+    expect(source).toContain('"Cache-Control": "no-store"');
+  });
+
 });
