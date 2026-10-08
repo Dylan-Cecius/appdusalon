@@ -44,6 +44,7 @@ const BOOKING_ERROR_MESSAGES: Record<string, string> = {
   invalid_phone: 'Veuillez indiquer un numéro de téléphone valide.',
   slot_no_longer_available: 'Ce créneau vient d’être réservé. Choisissez-en un autre.',
   too_many_booking_attempts: 'Trop de tentatives en peu de temps. Réessayez dans quelques minutes.',
+  booking_temporarily_limited: 'Le système de réservation reçoit trop de demandes. Réessayez dans quelques minutes.',
   outside_staff_schedule: 'Ce créneau n’est plus disponible avec ce membre.',
   staff_not_working: 'Ce membre ne travaille pas à cette date.',
   salon_closed: 'Le salon est fermé à cette date.',
