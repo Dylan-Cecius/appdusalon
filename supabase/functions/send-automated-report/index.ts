@@ -275,10 +275,18 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
+    const message = error?.message || "internal_error";
+    const status =
+      message === "mfa_required" ? 403 :
+      message === "auth_not_configured" || message === "mfa_check_failed" ? 503 : 500;
+
     console.error("Error sending automated report:", error);
     return new Response(
-      JSON.stringify({ error: "An internal error occurred", success: false }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      JSON.stringify({
+        error: status === 500 ? "An internal error occurred" : message,
+        success: false,
+      }),
+      { status, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };
