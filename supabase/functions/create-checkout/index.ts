@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveAppOrigin, isTrustedAppOrigin } from "../_shared/app-origin.ts";
 import { resolveBillingOwner } from "../_shared/billing-owner.ts";
+import { requireMfaAssurance } from "../_shared/mfa.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,8 @@ serve(async (req) => {
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
+
+    await requireMfaAssurance(req);
 
     const billingOwner = await resolveBillingOwner(supabaseClient, user);
     if (!billingOwner.isOwner) {
