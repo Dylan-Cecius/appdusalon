@@ -59,7 +59,11 @@ serve(async (req) => {
     const { data: ownerResult } = await supabase.auth.admin.getUserById(salon.owner_user_id);
     const ownerEmail = ownerResult?.user?.email?.toLowerCase() || '';
 
-    const [{ data: platformAdmin }, { data: subscriber }] = await Promise.all([
+    const [
+      { data: platformAdmin },
+      { data: subscriberByUser },
+      { data: subscriberByEmail },
+    ] = await Promise.all([
       ownerEmail
         ? supabase
             .from('platform_admin_emails')
@@ -71,8 +75,21 @@ serve(async (req) => {
         .from('subscribers')
         .select('subscribed, subscription_tier, subscription_end')
         .eq('user_id', salon.owner_user_id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle(),
+      ownerEmail
+        ? supabase
+            .from('subscribers')
+            .select('subscribed, subscription_tier, subscription_end')
+            .eq('email', ownerEmail)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
+
+    const subscriber = subscriberByUser || subscriberByEmail;
 
     const tier =
       subscriber?.subscription_tier === 'Pro'
