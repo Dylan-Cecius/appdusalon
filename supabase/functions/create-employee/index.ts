@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveBillingOwner } from "../_shared/billing-owner.ts";
 import { resolveAppOrigin, isTrustedAppOrigin } from "../_shared/app-origin.ts";
+import { requireMfaAssurance } from "../_shared/mfa.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,6 +59,8 @@ serve(async (req) => {
     if (userError || !user?.email) {
       return jsonResponse({ error: 'unauthorized' }, 401);
     }
+
+    await requireMfaAssurance(req);
 
     const billingOwner = await resolveBillingOwner(supabaseAdmin, user);
     if (!billingOwner.salonId) {
