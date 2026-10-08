@@ -103,4 +103,17 @@ describe('release-critical server invariants', () => {
     expect(source).toContain('"Cache-Control": "no-store"');
   });
 
+  it('keeps scheduled SMS entitlement compatible with legacy email-linked subscribers', () => {
+    for (const path of [
+      'supabase/functions/check-appointment-reminders/index.ts',
+      'supabase/functions/process-sms-automations/index.ts',
+    ]) {
+      const source = read(path);
+      expect(source).toContain('user_id.eq.');
+      expect(source).toContain('email.eq.');
+      expect(source).toContain('.order("updated_at", { ascending: false })');
+      expect(source).toContain('.limit(1)');
+    }
+  });
+
 });
