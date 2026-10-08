@@ -36,7 +36,8 @@ SELECT pg_temp.assert_true(
   'sensitive direct writes require salon admin role'
 );
 
--- Client collaboration is allowed, but permanent deletion must remain admin-only.
+-- Client collaboration is allowed for reads/creates/updates, but deletion
+-- must go through the privacy-safe SECURITY DEFINER erasure RPC.
 SELECT pg_temp.assert_true(
   NOT EXISTS (
     SELECT 1
@@ -45,12 +46,13 @@ SELECT pg_temp.assert_true(
       AND p.tablename = 'clients'
       AND 'authenticated' = ANY(p.roles)
       AND p.cmd IN ('DELETE','ALL')
-      AND position(
-        'has_role_in_salon'
-        in COALESCE(p.qual, '') || ' ' || COALESCE(p.with_check, '')
-      ) = 0
   ),
-  'client deletion is admin-only'
+  'clients cannot be deleted directly through authenticated RLS'
+);
+
+SELECT pg_temp.assert_true(
+  to_regprocedure('public.erase_client_personal_data(uuid)') IS NOT NULL,
+  'privacy-safe client erasure RPC exists'
 );
 
 -- Employees may edit agenda data, but service configuration is never collaborative.
