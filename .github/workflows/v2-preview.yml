@@ -23,34 +23,20 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     env:
-      VITE_SUPABASE_URL: ${{ secrets.V2_PREVIEW_SUPABASE_URL }}
-      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.V2_PREVIEW_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_PREVIEW_STANDALONE: "true"
       VITE_PREVIEW_DEMO_ONLY: "true"
-      VITE_DEMO_ACCOUNT_EMAIL: ${{ vars.V2_PREVIEW_DEMO_ACCOUNT_EMAIL }}
     steps:
       - name: Checkout V2 branch
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Validate isolated preview configuration
+      - name: Validate standalone preview mode
         shell: bash
         run: |
           set -euo pipefail
-
-          if [[ -z "$VITE_SUPABASE_URL" || -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ]]; then
-            echo "::error::Missing V2_PREVIEW_SUPABASE_URL or V2_PREVIEW_SUPABASE_PUBLISHABLE_KEY GitHub secret."
-            exit 1
-          fi
-
-          if [[ ! "$VITE_SUPABASE_URL" =~ ^https://[A-Za-z0-9-]+\.supabase\.co/?$ ]]; then
-            echo "::error::V2_PREVIEW_SUPABASE_URL is not a valid Supabase project URL."
-            exit 1
-          fi
-
-          tracked_url="$(grep -E '^VITE_SUPABASE_URL=' .env | head -n1 | cut -d= -f2- || true)"
-          if [[ -n "$tracked_url" && ( "$tracked_url" == "$VITE_SUPABASE_URL" || "$tracked_url" == "\"$VITE_SUPABASE_URL\"" ) ]]; then
-            echo "::error::Preview Supabase URL matches the tracked default .env. Use a dedicated isolated preview project."
+          if [[ "$VITE_PREVIEW_STANDALONE" != "true" ]]; then
+            echo "::error::Standalone preview mode must be enabled."
             exit 1
           fi
 
