@@ -59,19 +59,26 @@ serve(async (req) => {
       return jsonResponse({ error: 'unauthorized' }, 401);
     }
 
-    const { data: roleData, error: roleLookupError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role, salon_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (roleLookupError) throw roleLookupError;
-
-    if (!roleData || roleData.role !== 'admin' || !roleData.salon_id) {
+    const billingOwner = await resolveBillingOwner(supabaseAdmin, user);
+    if (!billingOwner.salonId) {
       return jsonResponse({ error: 'forbidden' }, 403);
     }
 
-    const billingOwner = await resolveBillingOwner(supabaseAdmin, user);
+    const { data: isSalonAdmin, error: roleLookupError } = await supabaseAdmin.rpc(
+      'has_role_in_salon',
+      {
+        _user_id: user.id,
+        _salon_id: billingOwner.salonId,
+        _role: 'admin',
+      }
+    );
+
+    if (roleLookupError) throw roleLookupError;
+    if (isSalonAdmin !== true) {
+      return jsonResponse({ error: 'forbidden' }, 403);
+    }
+
+    const salonId = billingOwner.salonId;
     const requesterEmail = user.email.toLowerCase();
 
     const [{ data: platformAdmin }, { data: subscriber }] = await Promise.all([
@@ -131,7 +138,7 @@ serve(async (req) => {
       .from('staff')
       .select('id, auth_user_id, is_active')
       .eq('id', staffId)
-      .eq('salon_id', roleData.salon_id)
+      .eq('salon_id', salonId)
       .maybeSingle();
 
     if (staffError) throw staffError;
@@ -160,7 +167,7 @@ serve(async (req) => {
     const { data: employee, error: employeeError } = await supabaseAdmin
       .from('employees')
       .insert({
-        salon_id: roleData.salon_id,
+        salon_id: salonId,
         user_id: newUser.user.id,
         display_name: normalizedName,
         color: normalizedColor,
@@ -178,7 +185,7 @@ serve(async (req) => {
       .from('user_roles')
       .insert({
         user_id: newUser.user.id,
-        salon_id: roleData.salon_id,
+        salon_id: salonId,
         role: 'employee',
       });
 
@@ -197,7 +204,7 @@ serve(async (req) => {
         color: normalizedColor,
       })
       .eq('id', staffId)
-      .eq('salon_id', roleData.salon_id)
+      .eq('salon_id', salonId)
       .is('auth_user_id', null)
       .select('id')
       .maybeSingle();
