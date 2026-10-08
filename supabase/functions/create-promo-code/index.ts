@@ -107,8 +107,16 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: "internal_error", message: String(e) }), {
-      status: 500,
+    const message = e instanceof Error ? e.message : String(e);
+    const status =
+      message === "mfa_required" ? 403 :
+      message === "auth_not_configured" || message === "mfa_check_failed" ? 503 : 500;
+
+    return new Response(JSON.stringify({
+      error: status === 500 ? "internal_error" : message,
+      message,
+    }), {
+      status,
       headers: { "Content-Type": "application/json", ...corsHeaders() },
     });
   }
