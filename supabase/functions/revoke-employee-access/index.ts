@@ -1,5 +1,6 @@
 import { isTrustedAppOrigin } from "../_shared/app-origin.ts";
 import { resolveBillingOwner } from "../_shared/billing-owner.ts";
+import { requireMfaAssurance } from "../_shared/mfa.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 
 const corsHeaders = {
@@ -45,6 +46,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
 
     if (userError || !user) return jsonResponse({ error: "unauthorized" }, 401);
+
+    await requireMfaAssurance(req);
 
     const billingOwner = await resolveBillingOwner(admin, user);
     if (!billingOwner.salonId) {
