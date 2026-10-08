@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { resolveBillingOwner } from "./billing-owner.ts";
+import { requireMfaAssurance } from "./mfa.ts";
 
 export type SmsEntitlement = "automation" | "marketing";
 
@@ -61,6 +62,8 @@ export const getAuthenticatedUser = async (req: Request) => {
   if (error || !data.user?.email) {
     throw new Error("not_authenticated");
   }
+
+  await requireMfaAssurance(req);
 
   return { admin, user: data.user };
 };
