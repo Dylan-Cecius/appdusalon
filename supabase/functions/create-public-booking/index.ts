@@ -126,7 +126,8 @@ serve(async (req) => {
 
     const [
       { data: platformAdmin },
-      { data: subscriber },
+      { data: subscriberByUser },
+      { data: subscriberByEmail },
       { data: service, error: serviceError },
       { data: staffMember, error: staffError },
     ] = await Promise.all([
@@ -137,7 +138,18 @@ serve(async (req) => {
         .from("subscribers")
         .select("subscribed, subscription_tier, subscription_end")
         .eq("user_id", salon.owner_user_id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
         .maybeSingle(),
+      ownerEmail
+        ? supabase
+            .from("subscribers")
+            .select("subscribed, subscription_tier, subscription_end")
+            .eq("email", ownerEmail)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
       supabase
         .from("services")
         .select("id, name, price, duration, appointment_buffer, category")
@@ -160,6 +172,7 @@ serve(async (req) => {
     if (!service) return jsonResponse({ error: "service_not_found" }, 404);
     if (!staffMember) return jsonResponse({ error: "staff_not_found" }, 404);
 
+    const subscriber = subscriberByUser || subscriberByEmail;
     const tier = normalizeTier(subscriber?.subscription_tier);
     const subscriptionValid =
       subscriber?.subscribed === true &&
