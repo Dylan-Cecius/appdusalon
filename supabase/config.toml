@@ -56,6 +56,9 @@ verify_jwt = true
 
 [functions.check-appointment-reminders]
 verify_jwt = false
+[functions.demo-login]
+verify_jwt = false
+
 [functions.seed-demo-data]
 verify_jwt = true
 
