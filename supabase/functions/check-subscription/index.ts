@@ -247,10 +247,12 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
     } satisfies SubscriptionState);
   } catch (error) {
+    const message = error instanceof Error ? error.message : "internal_error";
+    const status =
+      message === "mfa_required" ? 403 :
+      message === "auth_not_configured" || message === "mfa_check_failed" ? 503 : 500;
+
     console.error("[CHECK-SUBSCRIPTION]", error);
-    return jsonResponse(
-      { error: error instanceof Error ? error.message : "internal_error" },
-      500
-    );
+    return jsonResponse({ error: message }, status);
   }
 });
