@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 import { useAuth } from './useAuth';
 import { usePermissions } from './usePermissions';
 
@@ -83,42 +83,27 @@ export const useSupabaseTransactions = () => {
         return;
       }
 
-      const currentTimeUTC = fromZonedTime(new Date(), 'Europe/Brussels');
-      
-      const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
-      const { data: employeeIdData } = await supabase.rpc('get_user_employee_id', { _user_id: user.id });
-      
-      if (!salonIdData) {
-        toast({ title: "Erreur", description: "Aucun salon associé à votre compte", variant: "destructive" });
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('transactions' as any)
-        .insert({
-          items: transaction.items as any,
-          total_amount: transaction.totalAmount,
-          payment_method: transaction.paymentMethod,
-          user_id: user.id,
-          salon_id: salonIdData,
-          employee_id: employeeIdData || null,
-          client_id: transaction.clientId || null,
-          staff_id: transaction.staffId || employeeIdData || null,
-          transaction_date: currentTimeUTC.toISOString()
-        })
-        .select()
-        .single();
+      const { data: rpcData, error } = await (supabase as any).rpc('record_pos_transaction', {
+        items_param: transaction.items,
+        total_amount_param: transaction.totalAmount,
+        payment_method_param: transaction.paymentMethod,
+        client_id_param: transaction.clientId || null,
+        staff_id_param: transaction.staffId || null,
+      });
 
       if (error) throw error;
 
+      const data = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      if (!data) throw new Error('Transaction non créée');
+
       const newTransaction: Transaction = {
-        id: (data as any).id,
-        items: (data as any).items as any,
-        totalAmount: (data as any).total_amount,
-        paymentMethod: (data as any).payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date((data as any).transaction_date), 'Europe/Brussels'),
-        clientId: (data as any).client_id || undefined,
-        staffId: (data as any).staff_id || undefined
+        id: data.id,
+        items: data.items as Transaction['items'],
+        totalAmount: Number(data.total_amount),
+        paymentMethod: data.payment_method as 'cash' | 'card',
+        transactionDate: toZonedTime(new Date(data.transaction_date), 'Europe/Brussels'),
+        clientId: data.client_id || undefined,
+        staffId: data.staff_id || undefined,
       };
 
       setTransactions(prev => [newTransaction, ...prev]);
@@ -131,36 +116,6 @@ export const useSupabaseTransactions = () => {
     }
   };
 
-  const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
-    try {
-      if (!isSupabaseConfigured) {
-        setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx));
-        toast({ title: "Succès", description: "Transaction modifiée (mode local)", duration: 2000 });
-        return;
-      }
-
-      const updateData: any = {};
-      if (updates.items) updateData.items = updates.items as any;
-      if (updates.totalAmount !== undefined) updateData.total_amount = updates.totalAmount;
-      if (updates.paymentMethod) updateData.payment_method = updates.paymentMethod;
-      if (updates.clientId !== undefined) updateData.client_id = updates.clientId || null;
-      if (updates.staffId !== undefined) updateData.staff_id = updates.staffId || null;
-
-      const { error } = await supabase
-        .from('transactions' as any)
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx));
-      toast({ title: "Succès", description: "Transaction modifiée avec succès", duration: 2000 });
-    } catch (error) {
-      console.error('Error updating transaction:', error);
-      toast({ title: "Erreur", description: "Impossible de modifier la transaction", variant: "destructive" });
-    }
-  };
-
   const deleteTransaction = async (id: string) => {
     try {
       if (!isSupabaseConfigured) {
@@ -169,10 +124,9 @@ export const useSupabaseTransactions = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from('transactions' as any)
-        .delete()
-        .eq('id', id);
+      const { error } = await (supabase as any).rpc('delete_pos_transaction', {
+        transaction_id_param: id,
+      });
 
       if (error) throw error;
 
@@ -311,7 +265,7 @@ export const useSupabaseTransactions = () => {
   }, [isReady, user?.id, salonId]);
 
   return {
-    transactions, loading, addTransaction, updateTransaction, deleteTransaction,
+    transactions, loading, addTransaction, deleteTransaction,
     getStats, getCustomStats, refreshTransactions: fetchTransactions
   };
 };
