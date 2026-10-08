@@ -26,7 +26,6 @@ interface TransactionsContextType {
   transactions: Transaction[];
   loading: boolean;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => Promise<Transaction | undefined>;
-  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
 }
@@ -201,52 +200,6 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update transaction
-  const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
-    try {
-      if (!isSupabaseConfigured) {
-        setTransactions(prev => 
-          prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx)
-        );
-        toast({
-          title: "Succès",
-          description: "Transaction modifiée (mode local)",
-          duration: 2000
-        });
-        return;
-      }
-
-      const updateData: any = {};
-      if (updates.items) updateData.items = updates.items as any;
-      if (updates.totalAmount !== undefined) updateData.total_amount = updates.totalAmount;
-      if (updates.paymentMethod) updateData.payment_method = updates.paymentMethod;
-
-      const { error } = await supabase
-        .from('transactions' as any)
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setTransactions(prev => 
-        prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx)
-      );
-
-      toast({
-        title: "Succès",
-        description: "Transaction modifiée avec succès",
-        duration: 2000
-      });
-    } catch (error) {
-      console.error('Error updating transaction:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier la transaction",
-        variant: "destructive"
-      });
-    }
-  };
-
   // Delete transaction with atomic stock restoration
   const deleteTransaction = async (id: string) => {
     try {
@@ -371,7 +324,6 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         transactions,
         loading,
         addTransaction,
-        updateTransaction,
         deleteTransaction,
         refreshTransactions: fetchTransactions
       }}
