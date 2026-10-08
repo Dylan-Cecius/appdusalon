@@ -67,6 +67,13 @@ serve(async (req) => {
       });
     }
 
+    if (!billingOwner.salonId) {
+      return new Response(JSON.stringify({ error: "salon_not_found" }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const billingEmail = billingOwner.ownerEmail;
     const billingUserId = billingOwner.ownerUserId;
     logStep("Billing owner authenticated", { userId: billingUserId });
