@@ -106,6 +106,35 @@ const Auth = () => {
       }
 
       if (session && !isPasswordFlowLink) {
+        const { data: aalData, error: aalError } =
+          await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+        if (aalError) {
+          console.error('[Auth] MFA assurance check failed:', aalError);
+          return;
+        }
+
+        if (aalData?.nextLevel === 'aal2' && aalData.currentLevel !== 'aal2') {
+          const { data: factorsData, error: factorsError } =
+            await supabase.auth.mfa.listFactors();
+
+          if (factorsError) {
+            console.error('[Auth] MFA factor lookup failed:', factorsError);
+            return;
+          }
+
+          const verifiedFactor = factorsData?.totp?.find(
+            factor => factor.status === 'verified'
+          );
+
+          if (verifiedFactor) {
+            setMfaRequired(true);
+            setMfaFactorId(verifiedFactor.id);
+            setMfaCode('');
+            return;
+          }
+        }
+
         navigate('/');
       }
     };
