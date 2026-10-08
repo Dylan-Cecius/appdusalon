@@ -110,30 +110,6 @@ export const useClients = () => {
     }
   };
 
-  const deleteClient = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setClients(prev => prev.filter(c => c.id !== id));
-      toast({
-        title: "Client supprimé",
-        description: "Le client a été supprimé",
-      });
-    } catch (error) {
-      console.error('Error deleting client:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le client",
-        variant: "destructive",
-      });
-    }
-  };
-
   const getClientStats = async (clientId: string): Promise<ClientStats> => {
     if (!user || !salonId) return { totalSpent: 0, visitCount: 0, lastVisit: null };
 
@@ -221,7 +197,6 @@ export const useClients = () => {
     loading,
     addClient,
     updateClient,
-    deleteClient,
     getClientStats,
     refreshClients: fetchClients,
   };
