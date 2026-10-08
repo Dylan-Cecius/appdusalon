@@ -1,3 +1,4 @@
+-- Final V2 identity RPC isolation regression.
 \set ON_ERROR_STOP on
 
 CREATE OR REPLACE FUNCTION pg_temp.assert_true(p_ok boolean, p_label text)
