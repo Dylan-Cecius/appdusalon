@@ -61,4 +61,33 @@ describe('release-critical server invariants', () => {
     expect(sms).toContain('["Equipe", "Lifetime"]');
     expect(sms).toContain('["Solo", "Equipe", "Lifetime"]');
   });
+  it('requires MFA assurance on authenticated sensitive Edge actions', () => {
+    const directlyGuarded = [
+      'supabase/functions/create-employee/index.ts',
+      'supabase/functions/revoke-employee-access/index.ts',
+      'supabase/functions/create-checkout/index.ts',
+      'supabase/functions/check-subscription/index.ts',
+      'supabase/functions/customer-portal/index.ts',
+      'supabase/functions/create-promo-code/index.ts',
+      'supabase/functions/seed-demo-data/index.ts',
+      'supabase/functions/send-report-email/index.ts',
+      'supabase/functions/send-automated-report/index.ts',
+    ];
+
+    for (const path of directlyGuarded) {
+      expect(read(path)).toContain('requireMfaAssurance');
+    }
+
+    const smsShared = read('supabase/functions/_shared/sms.ts');
+    expect(smsShared).toContain('requireMfaAssurance');
+
+    for (const path of [
+      'supabase/functions/send-sms-campaign/index.ts',
+      'supabase/functions/send-sms-automation/index.ts',
+      'supabase/functions/send-sms-test/index.ts',
+    ]) {
+      expect(read(path)).toContain('getAuthenticatedUser');
+    }
+  });
+
 });
