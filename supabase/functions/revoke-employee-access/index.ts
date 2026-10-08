@@ -107,7 +107,15 @@ Deno.serve(async (req) => {
     // staff.auth_user_id is ON DELETE SET NULL.
     return jsonResponse({ success: true });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "internal_server_error";
+    const status =
+      message === "mfa_required" ? 403 :
+      message === "auth_not_configured" || message === "mfa_check_failed" ? 503 : 500;
+
     console.error("[REVOKE-EMPLOYEE-ACCESS]", error);
-    return jsonResponse({ error: "internal_server_error" }, 500);
+    return jsonResponse(
+      { error: status === 500 ? "internal_server_error" : message },
+      status
+    );
   }
 });
