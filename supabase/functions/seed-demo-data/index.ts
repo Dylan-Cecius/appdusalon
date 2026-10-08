@@ -1,5 +1,6 @@
 import { isTrustedAppOrigin } from "../_shared/app-origin.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireMfaAssurance } from "../_shared/mfa.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -114,6 +115,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    await requireMfaAssurance(req);
 
     const { data: salon } = await supabase
       .from("salons")
