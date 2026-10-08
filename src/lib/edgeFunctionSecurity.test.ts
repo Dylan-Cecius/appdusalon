@@ -26,6 +26,7 @@ describe('edge-function security configuration', () => {
 
   it('keeps public booking endpoints explicitly JWT-free', () => {
     for (const name of [
+      'demo-login',
       'get-salon-booking-data',
       'get-booking-slots',
       'create-public-booking',
