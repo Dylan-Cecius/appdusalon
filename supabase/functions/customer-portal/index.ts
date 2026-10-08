@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { resolveAppOrigin, isTrustedAppOrigin } from "../_shared/app-origin.ts";
 import { resolveBillingOwner } from "../_shared/billing-owner.ts";
+import { requireMfaAssurance } from "../_shared/mfa.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +57,8 @@ serve(async (req) => {
     if (userError || !user?.email) {
       return jsonResponse({ error: "unauthorized" }, 401);
     }
+
+    await requireMfaAssurance(req);
 
     const billingOwner = await resolveBillingOwner(supabase, user);
     if (!billingOwner.isOwner) {
