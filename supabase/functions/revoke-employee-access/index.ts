@@ -45,16 +45,26 @@ Deno.serve(async (req) => {
 
     if (userError || !user) return jsonResponse({ error: "unauthorized" }, 401);
 
-    const { data: roleData, error: roleError } = await admin
-      .from("user_roles")
-      .select("role, salon_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (roleError) throw roleError;
-    if (!roleData || roleData.role !== "admin" || !roleData.salon_id) {
+    const billingOwner = await resolveBillingOwner(admin, user);
+    if (!billingOwner.salonId) {
       return jsonResponse({ error: "forbidden" }, 403);
     }
+
+    const { data: isSalonAdmin, error: roleError } = await admin.rpc(
+      "has_role_in_salon",
+      {
+        _user_id: user.id,
+        _salon_id: billingOwner.salonId,
+        _role: "admin",
+      }
+    );
+
+    if (roleError) throw roleError;
+    if (isSalonAdmin !== true) {
+      return jsonResponse({ error: "forbidden" }, 403);
+    }
+
+    const salonId = billingOwner.salonId;
 
     const { staff_id } = await req.json();
     const staffId = String(staff_id || "").trim();
@@ -64,7 +74,7 @@ Deno.serve(async (req) => {
       .from("staff")
       .select("id, auth_user_id")
       .eq("id", staffId)
-      .eq("salon_id", roleData.salon_id)
+      .eq("salon_id", salonId)
       .maybeSingle();
 
     if (staffError) throw staffError;
@@ -80,7 +90,7 @@ Deno.serve(async (req) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", targetUserId)
-      .eq("salon_id", roleData.salon_id)
+      .eq("salon_id", salonId)
       .maybeSingle();
 
     if (targetRole?.role === "admin") {
