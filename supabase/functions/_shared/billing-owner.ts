@@ -17,29 +17,39 @@ export const resolveBillingOwner = async (
   const requesterEmail = String(requester.email || "").trim().toLowerCase();
   if (!requesterEmail) throw new Error("billing_email_missing");
 
-  const { data: membership, error: membershipError } = await admin
-    .from("user_roles")
-    .select("salon_id, role, created_at")
-    .eq("user_id", requester.id)
+  // Prefer a salon actually owned by the requester. Legacy accounts can have
+  // several membership rows (for example an older employee membership plus
+  // their own salon), and billing must never attach to the wrong salon.
+  const { data: ownedSalon, error: ownedSalonError } = await admin
+    .from("salons")
+    .select("id")
+    .eq("owner_user_id", requester.id)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 
-  if (membershipError) throw membershipError;
+  if (ownedSalonError) throw ownedSalonError;
 
-  let salonId = membership?.salon_id || null;
+  let salonId = ownedSalon?.id || null;
 
   if (!salonId) {
-    const { data: ownedSalon, error: ownedSalonError } = await admin
-      .from("salons")
-      .select("id")
-      .eq("owner_user_id", requester.id)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    // For non-owners, mirror the application permission resolver: prefer an
+    // admin membership, otherwise the oldest membership.
+    const { data: memberships, error: membershipError } = await admin
+      .from("user_roles")
+      .select("salon_id, role, created_at")
+      .eq("user_id", requester.id)
+      .order("created_at", { ascending: true });
 
-    if (ownedSalonError) throw ownedSalonError;
-    salonId = ownedSalon?.id || null;
+    if (membershipError) throw membershipError;
+
+    const rows = memberships || [];
+    const membership =
+      rows.find((row: any) => row.role === "admin") ||
+      rows[0] ||
+      null;
+
+    salonId = membership?.salon_id || null;
   }
 
   if (!salonId) {
@@ -60,6 +70,7 @@ export const resolveBillingOwner = async (
   if (salonError) throw salonError;
 
   const ownerUserId = salon?.owner_user_id || requester.id;
+
   if (ownerUserId === requester.id) {
     return {
       salonId: String(salonId),
