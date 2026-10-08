@@ -163,10 +163,14 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const status =
+      errorMessage === "mfa_required" ? 403 :
+      errorMessage === "auth_not_configured" || errorMessage === "mfa_check_failed" ? 503 : 500;
+
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status,
     });
   }
 });
