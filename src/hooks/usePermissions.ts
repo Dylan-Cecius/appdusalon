@@ -16,49 +16,69 @@ export interface Permissions {
   employeeId: string | null;
 }
 
+const emptyPermissions: Permissions = {
+  canAccessStats: false,
+  canAccessSettings: false,
+  canAccessEmployeeManagement: false,
+  canAccessReports: false,
+  canManageTransactions: false,
+  isAdmin: false,
+  role: null,
+  salonId: null,
+  employeeId: null,
+};
+
 export const usePermissions = () => {
   const { user } = useAuth();
 
   const { data: permissions, isLoading } = useQuery<Permissions>({
     queryKey: ['permissions', user?.id],
     queryFn: async () => {
-      if (!user) {
-        return {
-          canAccessStats: false,
-          canAccessSettings: false,
-          canAccessEmployeeManagement: false,
-          canAccessReports: false,
-          canManageTransactions: false,
-          isAdmin: false,
-          role: null,
-          salonId: null,
-          employeeId: null,
-        };
+      if (!user) return emptyPermissions;
+
+      // A legacy account can contain more than one role row. Mirror the database
+      // resolver: prefer an admin membership, otherwise the oldest membership.
+      const { data: roleRows, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role, salon_id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (roleError) {
+        console.error('[Permissions] role lookup failed:', roleError);
+        return emptyPermissions;
       }
 
-      // Get user role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role, salon_id')
-        .eq('user_id', user.id)
-        .single();
+      const memberships = roleRows || [];
+      const selectedMembership =
+        memberships.find((membership: any) => membership.role === 'admin') ||
+        memberships[0] ||
+        null;
 
-      const role = roleData?.role as UserRole;
-      const salonId = roleData?.salon_id || null;
+      const role = (selectedMembership?.role ?? null) as UserRole;
+      const salonId = selectedMembership?.salon_id ?? null;
       const isAdmin = role === 'admin';
 
-      // Get employee_id
-      const { data: employeeData } = await supabase
-        .from('employees')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
+      let employeeId: string | null = null;
 
-      const employeeId = employeeData?.id || null;
+      if (salonId) {
+        const { data: employeeData, error: employeeError } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('salon_id', salonId)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (employeeError) {
+          console.error('[Permissions] employee lookup failed:', employeeError);
+        } else {
+          employeeId = employeeData?.id || null;
+        }
+      }
 
       return {
-        canAccessStats: true, // Both can access, but employees see only their stats
+        canAccessStats: role !== null,
         canAccessSettings: isAdmin,
         canAccessEmployeeManagement: isAdmin,
         canAccessReports: isAdmin,
@@ -73,17 +93,7 @@ export const usePermissions = () => {
   });
 
   return {
-    permissions: permissions || {
-      canAccessStats: false,
-      canAccessSettings: false,
-      canAccessEmployeeManagement: false,
-      canAccessReports: false,
-      canManageTransactions: false,
-      isAdmin: false,
-      role: null,
-      salonId: null,
-      employeeId: null,
-    },
+    permissions: permissions || emptyPermissions,
     isLoading,
   };
 };
