@@ -30,7 +30,7 @@ BEGIN
     PERFORM cron.unschedule(existing_job);
   END LOOP;
 END
-$;
+$$;
 
 SELECT cron.schedule(
   'process-scheduled-reports',
