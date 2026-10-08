@@ -62,6 +62,10 @@ serve(async (req) => {
       return jsonResponse({ error: "billing_owner_required" }, 403);
     }
 
+    if (!billingOwner.salonId) {
+      return jsonResponse({ error: "salon_not_found" }, 409);
+    }
+
     const billingEmail = billingOwner.ownerEmail;
     const billingUserId = billingOwner.ownerUserId;
 
