@@ -5,6 +5,7 @@ import { isTrustedAppOrigin } from "../_shared/app-origin.ts";
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import { requireMfaAssurance } from "../_shared/mfa.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -51,6 +52,8 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
       });
     }
+
+    await requireMfaAssurance(req);
 
     const requesterEmail = (userResult.user.email ?? "").toLowerCase();
     const { data: adminRecord, error: adminError } = await supabaseAdmin
