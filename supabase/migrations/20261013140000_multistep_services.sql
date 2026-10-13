@@ -79,9 +79,11 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  target_service_id uuid := COALESCE(NEW.service_id, OLD.service_id);
+  target_service_id uuid;
   step_total integer;
 BEGIN
+  target_service_id :=
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.service_id ELSE NEW.service_id END;
   SELECT COALESCE(sum(duration_minutes), 0)::integer
   INTO step_total
   FROM public.service_steps
@@ -93,9 +95,13 @@ BEGIN
     WHERE id = target_service_id;
   END IF;
 
-  RETURN COALESCE(NEW, OLD);
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+
+  RETURN NEW;
 END;
-$$;
+$;
 
 REVOKE ALL ON FUNCTION public.sync_service_duration_from_steps() FROM PUBLIC;
 
