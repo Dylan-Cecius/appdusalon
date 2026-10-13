@@ -117,24 +117,24 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[252px] flex-col border-r border-border/80 bg-sidebar/95 backdrop-blur-xl">
-        <div className="px-5 py-5">
-          <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3 py-3 shadow-sm">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[236px] flex-col border-r border-border/80 bg-slate-950 text-white shadow-xl">
+        <div className="px-4 py-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
               <img src={logoImg} alt="L'app du salon" className="h-9 w-9 object-contain" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold tracking-tight">L’App du Salon</p>
-              <p className="text-xs text-muted-foreground">Espace professionnel</p>
+              <p className="truncate text-sm font-semibold tracking-tight text-white">L’App du Salon</p>
+              <p className="text-xs text-slate-400">Espace professionnel</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-5">
-          <div className="space-y-6">
+        <nav className="flex-1 overflow-y-auto px-2.5 pb-4">
+          <div className="space-y-4">
             {visibleNavGroups.map((group) => (
               <div key={group.label} className="space-y-1.5">
-                <p className="px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80">
+                <p className="px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
                   {group.label}
                 </p>
                 {group.items.map((item) => {
@@ -147,11 +147,11 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                       className={cn(
                         'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
                         active
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          ? 'bg-white text-slate-950 shadow-sm'
+                          : 'text-slate-400 hover:bg-white/[0.06] hover:text-white'
                       )}
                     >
-                      <Icon className={cn('h-[18px] w-[18px] shrink-0', !active && 'group-hover:text-foreground')} />
+                      <Icon className={cn('h-[18px] w-[18px] shrink-0', !active && 'group-hover:text-white')} />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       {active && <ChevronRight className="h-4 w-4 opacity-70" />}
                     </Link>
@@ -162,21 +162,21 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
           </div>
         </nav>
 
-        <div className="border-t border-border/80 p-3">
-          <div className="flex items-center gap-3 rounded-2xl bg-muted/60 p-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card font-semibold shadow-sm">
+        <div className="border-t border-white/10 p-3">
+          <div className="flex items-center gap-3 rounded-2xl bg-white/[0.05] p-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 font-semibold text-white">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold">{user?.email}</p>
-              <p className="text-[11px] text-muted-foreground">{isDemo ? 'Mode démonstration' : 'Compte connecté'}</p>
+              <p className="truncate text-xs font-semibold text-white">{user?.email}</p>
+              <p className="text-[11px] text-slate-400">{isDemo ? 'Mode démonstration' : 'Compte connecté'}</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
               type="button"
               onClick={() => signOut()}
-              className="h-9 w-9 shrink-0 rounded-xl text-muted-foreground hover:text-destructive"
+              className="h-9 w-9 shrink-0 rounded-xl text-slate-400 hover:bg-white/10 hover:text-red-300"
               title="Déconnexion"
             >
               <LogOut className="h-4 w-4" />
@@ -185,14 +185,14 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         </div>
       </aside>
 
-      <div className="md:pl-[252px]">
-        <header className="sticky top-0 z-30 border-b border-border/70 bg-background/82 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
+      <div className="md:pl-[236px]">
+        <header className="sticky top-0 z-30 border-b border-border/70 bg-white/92 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <div className="min-w-0">
-              <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:block">
+              <p className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 sm:block">
                 L’App du Salon
               </p>
-              <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">{pageTitle}</h1>
+              <h1 className="truncate text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{pageTitle}</h1>
             </div>
 
             <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
           </div>
         </header>
 
-        <main className="mx-auto max-w-screen-2xl px-4 py-5 pb-24 sm:px-6 sm:py-7 md:pb-8">
+        <main className="mx-auto max-w-[1680px] px-4 py-4 pb-24 sm:px-6 sm:py-5 md:pb-8">
           {children}
         </main>
       </div>
@@ -235,7 +235,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 active ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              <span className={cn('rounded-lg p-1.5', active && 'bg-primary/10')}>
+              <span className={cn('rounded-lg p-1.5', active && 'bg-white/10')}>
                 <Icon className="h-5 w-5" />
               </span>
               {item.label}
