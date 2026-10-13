@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import {
+  bookingSegmentsConflict,
+  buildBookingSegments,
+  type BookingServiceStep,
+} from "../_shared/booking-segments.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -153,6 +158,15 @@ serve(async (req) => {
     if (serviceError) throw serviceError;
     if (!service) return jsonResponse({ error: "service_not_found" }, 404);
 
+    const { data: serviceSteps, error: stepsError } = await supabase
+      .from("service_steps")
+      .select("step_type, duration_minutes")
+      .eq("service_id", serviceId)
+      .eq("salon_id", salonId)
+      .order("position");
+
+    if (stepsError) throw stepsError;
+
     const subscriber = subscriberByUser || subscriberByEmail;
     const tier = normalizeTier(subscriber?.subscription_tier);
     const subscriptionValid =
@@ -168,10 +182,13 @@ serve(async (req) => {
       return jsonResponse({ error: "online_booking_unavailable" }, 403);
     }
 
-    const duration = Math.max(
-      5,
-      Number(service.duration || 30) + Number(service.appointment_buffer || 0)
-    );
+    const previewSegments = buildBookingSegments({
+      start: new Date(0),
+      serviceDurationMinutes: Number(service.duration || 30),
+      appointmentBufferMinutes: Number(service.appointment_buffer || 0),
+      steps: (serviceSteps || []) as BookingServiceStep[],
+    });
+    const duration = Math.max(5, previewSegments.totalDurationMinutes);
 
     const dayProbe = requestedDate;
     const jsDay = dayProbe.getUTCDay();
@@ -241,15 +258,15 @@ serve(async (req) => {
     nextDate.setUTCDate(nextDate.getUTCDate() + 1);
     const localDayEnd = zonedDateTimeToUtc(nextDate.toISOString().slice(0, 10), "00:00");
 
-    const { data: appointments, error: appointmentsError } = await supabase
-      .from("appointments")
-      .select("staff_id, start_time, end_time")
+    const { data: occupiedSegments, error: segmentsError } = await supabase
+      .from("appointment_segments")
+      .select("staff_id, starts_at, ends_at")
       .eq("salon_id", salonId)
-      .in("status", ["scheduled", "pending_payment"])
-      .gte("start_time", localDayStart.toISOString())
-      .lt("start_time", localDayEnd.toISOString());
+      .eq("occupies_staff", true)
+      .lt("starts_at", localDayEnd.toISOString())
+      .gt("ends_at", localDayStart.toISOString());
 
-    if (appointmentsError) throw appointmentsError;
+    if (segmentsError) throw segmentsError;
 
     const firstMinute = Math.min(...candidates.map((member) => member.start));
     const lastMinute = Math.max(...candidates.map((member) => member.end));
@@ -285,12 +302,21 @@ serve(async (req) => {
       for (const member of candidates) {
         if (minute < member.start || endMinute > member.end) continue;
 
-        const conflict = (appointments || []).some((appointment) => {
-          if (appointment.staff_id !== member.id) return false;
-          const appointmentStart = new Date(appointment.start_time);
-          const appointmentEnd = new Date(appointment.end_time);
-          return slotStart < appointmentEnd && slotEnd > appointmentStart;
+        const candidate = buildBookingSegments({
+          start: slotStart,
+          serviceDurationMinutes: Number(service.duration || 30),
+          appointmentBufferMinutes: Number(service.appointment_buffer || 0),
+          steps: (serviceSteps || []) as BookingServiceStep[],
         });
+
+        const memberOccupiedSegments = (occupiedSegments || []).filter(
+          (segment) => segment.staff_id === member.id
+        );
+
+        const conflict = bookingSegmentsConflict(
+          candidate.occupiedSegments,
+          memberOccupiedSegments
+        );
 
         if (!conflict) {
           assignedStaffId = member.id;
