@@ -355,6 +355,7 @@ serve(async (req) => {
         amount_paid: 0,
         payment_expires_at: paymentExpiresAt?.toISOString() || null,
         cancellation_deadline_at: cancellationDeadlineAt.toISOString(),
+        late_cancellation_policy: service.late_cancellation_policy || "keep_deposit",
         is_paid: false,
       })
       .select("id")
