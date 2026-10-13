@@ -74,6 +74,11 @@ export const useSupabaseAppointments = () => {
           deposit_required,
           amount_paid,
           payment_expires_at,
+          recurrence_group_id,
+          recurrence_index,
+          recurrence_frequency,
+          recurrence_interval,
+          recurrence_total,
           notes,
           created_at,
           updated_at
@@ -96,6 +101,11 @@ export const useSupabaseAppointments = () => {
         depositRequired: Number(apt.deposit_required || 0),
         amountPaid: Number(apt.amount_paid || 0),
         paymentExpiresAt: apt.payment_expires_at ? new Date(apt.payment_expires_at) : undefined,
+        recurrenceGroupId: apt.recurrence_group_id || undefined,
+        recurrenceIndex: apt.recurrence_index ?? undefined,
+        recurrenceFrequency: apt.recurrence_frequency || undefined,
+        recurrenceInterval: apt.recurrence_interval ?? undefined,
+        recurrenceTotal: apt.recurrence_total ?? undefined,
         notes: apt.notes,
         isPaid: apt.is_paid,
         barberId: apt.barber_id || undefined,
@@ -199,6 +209,64 @@ export const useSupabaseAppointments = () => {
         title: "Rendez-vous impossible",
         description: appointmentErrorDescription(error, 'add'),
         variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const addRecurringAppointments = async ({
+    appointment,
+    frequency,
+    interval,
+    occurrences,
+  }: {
+    appointment: Omit<Appointment, 'id'>;
+    frequency: 'weekly' | 'monthly';
+    interval: number;
+    occurrences: number;
+  }) => {
+    try {
+      if (!user) {
+        throw new Error('not_authenticated');
+      }
+
+      if (!appointment.staffId) {
+        throw new Error('invalid_staff');
+      }
+
+      const { data, error } = await (supabase as any).rpc(
+        'create_recurring_appointments',
+        {
+          client_name_param: appointment.clientName,
+          client_phone_param: appointment.clientPhone || '',
+          services_param: appointment.services as any,
+          first_start_param: appointment.startTime.toISOString(),
+          first_end_param: appointment.endTime.toISOString(),
+          staff_id_param: appointment.staffId,
+          notes_param: appointment.notes || null,
+          frequency_param: frequency,
+          interval_param: interval,
+          occurrences_param: occurrences,
+        }
+      );
+
+      if (error) throw error;
+
+      await fetchAppointments();
+
+      toast({
+        title: 'Série créée',
+        description: `${occurrences} rendez-vous ont été planifiés.`,
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error adding recurring appointments:', error);
+      toast({
+        title: 'Série impossible',
+        description:
+          'La série n’a pas été créée. Vérifiez les créneaux et les disponibilités.',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -426,6 +494,7 @@ export const useSupabaseAppointments = () => {
     appointments,
     loading,
     addAppointment,
+    addRecurringAppointments,
     updateAppointment,
     deleteAppointment,
     cancelAppointment,
