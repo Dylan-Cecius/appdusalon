@@ -9,7 +9,7 @@ DO $$
 DECLARE
   owner_a uuid := gen_random_uuid(); owner_b uuid := gen_random_uuid(); salon_a uuid; salon_b uuid;
   old_member uuid := gen_random_uuid(); new_member uuid := gen_random_uuid(); foreign_member uuid := gen_random_uuid();
-  color uuid := gen_random_uuid(); cut uuid := gen_random_uuid(); booking uuid; affected integer;
+  color_service_id uuid := gen_random_uuid(); cut_service_id uuid := gen_random_uuid(); booking uuid; affected integer;
   booked public.appointments%ROWTYPE; moved public.appointments%ROWTYPE; saved_phases jsonb; moved_phases jsonb;
   day date := (now() AT TIME ZONE 'Europe/Brussels')::date+1; start_at timestamptz; target_at timestamptz;
 BEGIN
@@ -24,19 +24,19 @@ BEGIN
     SELECT salon_a,d,true,'09:00','19:00' FROM generate_series(0,6) d
     ON CONFLICT(salon_id,day_of_week) DO UPDATE SET is_open=true,open_time='09:00',close_time='19:00',break_start=NULL,break_end=NULL;
   INSERT INTO public.services(id,salon_id,user_id,name,price,duration,category,appointment_buffer) VALUES
-    (color,salon_a,owner_a,'Coloration',75,90,'coupe',0),(cut,salon_a,owner_a,'Coupe',25,30,'coupe',0);
+    (color_service_id,salon_a,owner_a,'Coloration',75,90,'coupe',0),(cut_service_id,salon_a,owner_a,'Coupe',25,30,'coupe',0);
   INSERT INTO public.service_steps(service_id,salon_id,position,name,step_type,duration_minutes) VALUES
-    (color,salon_a,0,'Application','work',30),(color,salon_a,1,'Pose','pause',30),(color,salon_a,2,'Finition','work',30);
+    (color_service_id,salon_a,0,'Application','work',30),(color_service_id,salon_a,1,'Pose','pause',30),(color_service_id,salon_a,2,'Finition','work',30);
   start_at := (day+time '09:00') AT TIME ZONE 'Europe/Brussels';
   target_at := (day+time '14:00') AT TIME ZONE 'Europe/Brussels';
   INSERT INTO public.appointments(client_name,client_phone,services,start_time,end_time,status,total_price,is_paid,staff_id,user_id,salon_id,payment_status,amount_paid,notes)
-    VALUES('Client déplacé','00000000',jsonb_build_array(jsonb_build_object('id',color)),start_at,start_at+interval '90 minutes','scheduled',75,false,old_member,owner_a,salon_a,'deposit_paid',20,'Note conservée') RETURNING * INTO booked;
+    VALUES('Client déplacé','00000000',jsonb_build_array(jsonb_build_object('id',color_service_id)),start_at,start_at+interval '90 minutes','scheduled',75,false,old_member,owner_a,salon_a,'deposit_paid',20,'Note conservée') RETURNING * INTO booked;
   booking := booked.id;
   SELECT jsonb_agg(jsonb_build_array(id,label,segment_type,starts_at-start_at,ends_at-start_at,occupies_staff) ORDER BY position)
     INTO saved_phases FROM public.appointment_segments WHERE appointment_id=booking;
   -- Retired service and employee are realistic legacy data, within the active-staff plan limit.
-  DELETE FROM public.service_steps WHERE service_id=color;
-  UPDATE public.services SET price=999,duration=180,is_active=false WHERE id=color;
+  DELETE FROM public.service_steps WHERE service_id=color_service_id;
+  UPDATE public.services SET price=999,duration=180,is_active=false WHERE id=color_service_id;
   UPDATE public.staff SET is_active=false WHERE id=old_member;
   INSERT INTO public.staff(id,salon_id,name,daily_schedules) SELECT new_member,salon_a,'Nouveau',daily_schedules FROM public.staff WHERE id=old_member;
   UPDATE public.appointments SET start_time=target_at,staff_id=new_member WHERE id=booking RETURNING * INTO moved;
@@ -48,7 +48,7 @@ BEGIN
     RAISE EXCEPTION 'Move changed booked values, payments, notes, saved phases or staff assignment';
   END IF;
   INSERT INTO public.appointments(client_name,client_phone,services,start_time,end_time,status,total_price,is_paid,staff_id,user_id,salon_id)
-    VALUES('Pendant la pose','00000001',jsonb_build_array(jsonb_build_object('id',cut)),target_at+interval '30 minutes',target_at+interval '60 minutes','scheduled',25,false,new_member,owner_a,salon_a);
+    VALUES('Pendant la pose','00000001',jsonb_build_array(jsonb_build_object('id',cut_service_id)),target_at+interval '30 minutes',target_at+interval '60 minutes','scheduled',25,false,new_member,owner_a,salon_a);
   PERFORM pg_temp.expect_move_error(format('UPDATE public.appointments SET start_time=%L WHERE id=%L',target_at+interval '15 minutes',booking),'appointment_conflict');
   IF (SELECT start_time FROM public.appointments WHERE id=booking)<>target_at THEN RAISE EXCEPTION 'Failed move changed appointment'; END IF;
   SELECT jsonb_agg(jsonb_build_array(id,label,segment_type,starts_at-target_at,ends_at-target_at,occupies_staff) ORDER BY position)
