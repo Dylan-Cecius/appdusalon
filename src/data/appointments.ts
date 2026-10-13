@@ -7,8 +7,12 @@ export interface Appointment {
   services: Service[];
   startTime: Date;
   endTime: Date;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: 'pending_payment' | 'scheduled' | 'completed' | 'cancelled' | 'no_show';
   totalPrice: number;
+  paymentStatus?: 'unpaid' | 'pending' | 'deposit_paid' | 'paid' | 'refunded' | 'expired';
+  depositRequired?: number;
+  amountPaid?: number;
+  paymentExpiresAt?: Date;
   notes?: string;
   isPaid: boolean;
   barberId?: string;
