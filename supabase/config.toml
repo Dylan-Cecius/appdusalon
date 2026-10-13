@@ -70,3 +70,6 @@ verify_jwt = false
 
 [functions.stripe-booking-webhook]
 verify_jwt = false
+
+[functions.get-booking-payment-status]
+verify_jwt = false
