@@ -101,7 +101,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$$;
 
 REVOKE ALL ON FUNCTION public.sync_service_duration_from_steps() FROM PUBLIC;
 
