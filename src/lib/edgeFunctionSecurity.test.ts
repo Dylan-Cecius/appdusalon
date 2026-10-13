@@ -17,6 +17,7 @@ describe('edge-function security configuration', () => {
       'send-sms-automation',
       'send-sms-test',
       'seed-demo-data',
+      'cancel-appointment',
     ];
 
     for (const name of jwtFunctions) {
@@ -101,6 +102,18 @@ describe('edge-function security configuration', () => {
     expect(processor).toContain('x-cron-secret');
     expect(processor).toContain('sendSms');
   });
+
+  it('requires authenticated cancellation with MFA and protects Stripe refunds', () => {
+    const source = read('supabase/functions/cancel-appointment/index.ts');
+
+    expect(source).toContain('isTrustedAppOrigin');
+    expect(source).toContain('requireMfaAssurance');
+    expect(source).toContain('can_access_salon');
+    expect(source).toContain('stripe.refunds.create');
+    expect(source).toContain('refund_status');
+    expect(source).toContain('no_show');
+  });
+
 
 
 });
