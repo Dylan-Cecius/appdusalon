@@ -61,13 +61,16 @@ SELECT pg_temp.assert_true(
 SELECT pg_temp.assert_true(
   position(
     'pending_payment'
-    in pg_get_functiondef('public.prevent_staff_appointment_overlap()'::regprocedure)
+    in pg_get_functiondef('public.rebuild_appointment_segments(uuid)'::regprocedure)
   ) > 0
-  AND position(
-    'payment_expires_at'
-    in pg_get_functiondef('public.prevent_staff_appointment_overlap()'::regprocedure)
-  ) > 0,
-  'overlap guard blocks only active payment holds'
+  AND EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgrelid='public.appointment_segments'::regclass
+      AND tgname='appointment_segments_prevent_overlap'
+      AND NOT tgisinternal
+  ),
+  'active payment holds participate in segment-level overlap protection'
 );
 
 SELECT pg_temp.assert_true(
