@@ -96,14 +96,21 @@ SELECT pg_temp.assert_true(
   'linked staff deletion guard remains enabled'
 );
 
--- Appointment overlap protection must remain active.
+-- Appointment overlap protection is segment-aware so pause steps can free staff.
 SELECT pg_temp.assert_true(
   EXISTS (
     SELECT 1 FROM pg_trigger
+    WHERE tgrelid='public.appointment_segments'::regclass
+      AND tgname='appointment_segments_prevent_overlap'
+      AND NOT tgisinternal
+      AND tgenabled <> 'D'
+  )
+  AND EXISTS (
+    SELECT 1 FROM pg_trigger
     WHERE tgrelid='public.appointments'::regclass
-      AND tgname='appointments_prevent_staff_overlap'
+      AND tgname='appointments_refresh_segments'
       AND NOT tgisinternal
       AND tgenabled <> 'D'
   ),
-  'appointment overlap guard remains enabled'
+  'segment-aware appointment overlap guards remain enabled'
 );
