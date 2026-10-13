@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 interface CurrentTimeIndicatorProps {
   startHour: number;
   slotHeight: number;
+  minutesPerSlot?: number;
 }
 
-const CurrentTimeIndicator = ({ startHour, slotHeight }: CurrentTimeIndicatorProps) => {
+const CurrentTimeIndicator = ({
+  startHour,
+  slotHeight,
+  minutesPerSlot = 15,
+}: CurrentTimeIndicatorProps) => {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -17,21 +21,18 @@ const CurrentTimeIndicator = ({ startHour, slotHeight }: CurrentTimeIndicatorPro
   const currentHour = now.getHours();
   const currentMinutes = now.getMinutes();
   const totalMinutes = (currentHour - startHour) * 60 + currentMinutes;
-  const topPx = (totalMinutes / 15) * slotHeight;
+  const topPx = (totalMinutes / minutesPerSlot) * slotHeight;
 
   if (totalMinutes < 0) return null;
 
   return (
     <div
-      className="absolute left-0 right-0 z-30 pointer-events-none"
+      className="pointer-events-none absolute left-0 right-0 z-30"
       style={{ top: `${topPx}px` }}
     >
       <div className="flex items-center">
-        <div className="relative -ml-1.5">
-          <div className="w-3 h-3 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/50" />
-          <div className="absolute inset-0 w-3 h-3 rounded-full bg-indigo-400 animate-ping opacity-30" />
-        </div>
-        <div className="flex-1 h-[2px] bg-gradient-to-r from-indigo-500 via-indigo-500/60 to-transparent" />
+        <div className="-ml-1.5 h-3 w-3 rounded-full bg-red-500 shadow-sm" />
+        <div className="h-[2px] flex-1 bg-red-500/80" />
       </div>
     </div>
   );
