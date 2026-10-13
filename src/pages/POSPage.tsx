@@ -219,16 +219,11 @@ const POSPage = () => {
       cartItemsCount={cartItems.length} 
       onCartOpen={() => setIsCartOpen(true)}
     >
-      <div className="mb-5 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Encaissement</p>
-          <h2 className="text-3xl font-semibold tracking-tight">Caisse</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Ajoutez les prestations, vérifiez le panier et encaissez en quelques secondes.</p>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">Caisse</h2>
+          <p className="text-xs text-muted-foreground">Ajoutez, encaissez, passez au client suivant.</p>
         </div>
-      </div>
-
-      {/* Header with action buttons */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6">
         <div className="flex items-center gap-2">
           {permissions.isAdmin && (
             <Button
@@ -267,39 +262,39 @@ const POSPage = () => {
       </div>
 
       {/* Session Summary Bar */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <div className="v2-kpi flex items-center gap-1.5 p-3 sm:gap-3 sm:p-4">
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
           <div className="p-2 rounded-lg bg-green-500/20 hidden sm:block">
             <Euro className="h-4 w-4 text-green-600" />
           </div>
           <div>
-            <p className="text-sm sm:text-xl font-bold text-green-600">{todayStats.totalAmount.toFixed(0)}€</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Encaissé</p>
+            <p className="text-lg font-semibold tracking-tight text-green-600">{todayStats.totalAmount.toFixed(0)}€</p>
+            <p className="text-[10px] font-medium text-muted-foreground">Encaissé</p>
           </div>
         </div>
-        <div className="v2-kpi flex items-center gap-1.5 p-3 sm:gap-3 sm:p-4">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
           <div className="p-2 rounded-lg bg-primary/20 hidden sm:block">
             <Receipt className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-sm sm:text-xl font-bold text-primary">{todayStats.txCount}</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Transactions</p>
+            <p className="text-lg font-semibold tracking-tight text-primary">{todayStats.txCount}</p>
+            <p className="text-[10px] font-medium text-muted-foreground">Transactions</p>
           </div>
         </div>
-        <div className="v2-kpi flex items-center gap-1.5 p-3 sm:gap-3 sm:p-4">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
           <div className="p-2 rounded-lg bg-accent/20 hidden sm:block">
             <Scissors className="h-4 w-4 text-accent-foreground" />
           </div>
           <div>
-            <p className="text-sm sm:text-xl font-bold text-accent-foreground">{todayStats.servicesCount}</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Services</p>
+            <p className="text-lg font-semibold tracking-tight text-accent-foreground">{todayStats.servicesCount}</p>
+            <p className="text-[10px] font-medium text-muted-foreground">Services</p>
           </div>
         </div>
       </div>
 
-      <div className={cn("gap-4 sm:gap-6", isMobile ? "space-y-6" : "grid grid-cols-1 md:grid-cols-3")}>
+      <div className={cn("gap-4", isMobile ? "space-y-5" : "grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_360px]")}>
         {/* Services Section */}
-        <div className={cn(isMobile ? "space-y-4" : "md:col-span-2 space-y-6")}>
+        <div className={cn(isMobile ? "space-y-4" : "space-y-5")}>
           {servicesLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
@@ -322,7 +317,7 @@ const POSPage = () => {
               return (
                 <div key={category.id}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-primary">
+                    <h3 className="text-sm font-semibold text-slate-900">
                       {category.name}
                     </h3>
                     <Badge variant="secondary" className="bg-accent/10 text-accent-foreground">
@@ -331,7 +326,7 @@ const POSPage = () => {
                       {categoryServices.length > 1 ? 's' : ''}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-2.5">
                     {categoryServices.map(service => (
                       <ServiceCard
                         key={service.id}
@@ -348,7 +343,7 @@ const POSPage = () => {
           {canManageInventory && products.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-primary">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                   <Boxes className="h-5 w-5" />
                   Produits
                 </h3>
@@ -375,7 +370,7 @@ const POSPage = () => {
                         </div>
                         <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
                       </div>
-                      <p className="mt-4 text-lg font-semibold text-primary">
+                      <p className="mt-4 text-sm font-semibold text-slate-900">
                         {product.sell_price.toFixed(2)}€
                       </p>
                     </CardContent>
@@ -400,8 +395,8 @@ const POSPage = () => {
 
         {/* Cart Sidebar - Desktop and Tablet */}
         {!isMobile && (
-          <div className="md:col-span-1">
-            <div className="sticky top-24 rounded-2xl">
+          <div className="">
+            <div className="sticky top-20 rounded-2xl">
               <CartSidebar
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
