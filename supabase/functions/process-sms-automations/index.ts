@@ -62,6 +62,14 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    const targetLocalDate = `${currentLocal.year}-${currentLocal.month}-${currentLocal.day}`;
+    const { data: loyaltyBirthdayAwarded, error: loyaltyBirthdayError } = await admin.rpc(
+      "award_loyalty_birthday_bonuses",
+      { target_date_param: targetLocalDate }
+    );
+
+    if (loyaltyBirthdayError) throw loyaltyBirthdayError;
+
     const { data: settingsRows, error: settingsError } = await admin
       .from("sms_settings")
       .select(
@@ -71,7 +79,12 @@ Deno.serve(async (req) => {
 
     if (settingsError) throw settingsError;
     if (!settingsRows?.length) {
-      return jsonResponse({ birthday_sent: 0, reactivation_sent: 0, message: "no_automations_configured" });
+      return jsonResponse({
+        birthday_sent: 0,
+        loyalty_birthday_awarded: Number(loyaltyBirthdayAwarded || 0),
+        reactivation_sent: 0,
+        message: "no_sms_automations_configured",
+      });
     }
 
     let birthdaySent = 0;
@@ -295,6 +308,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       birthday_sent: birthdaySent,
+      loyalty_birthday_awarded: Number(loyaltyBirthdayAwarded || 0),
       reactivation_sent: reactivationSent,
       failed,
       skipped_no_entitlement: skippedNoEntitlement,
