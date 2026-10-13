@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
+import {
+  bookingSegmentsConflict,
+  buildBookingSegments,
+  type BookingServiceStep,
+} from "../_shared/booking-segments.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -175,6 +180,15 @@ serve(async (req) => {
     if (!service) return jsonResponse({ error: "service_not_found" }, 404);
     if (!staffMember) return jsonResponse({ error: "staff_not_found" }, 404);
 
+    const { data: serviceSteps, error: stepsError } = await supabase
+      .from("service_steps")
+      .select("step_type, duration_minutes")
+      .eq("service_id", service_id)
+      .eq("salon_id", salon_id)
+      .order("position");
+
+    if (stepsError) throw stepsError;
+
     const subscriber = subscriberByUser || subscriberByEmail;
     const tier = normalizeTier(subscriber?.subscription_tier);
     const subscriptionValid =
@@ -190,9 +204,15 @@ serve(async (req) => {
       return jsonResponse({ error: "online_booking_unavailable" }, 403);
     }
 
+    const candidateSegments = buildBookingSegments({
+      start: appointmentStart,
+      serviceDurationMinutes: Number(service.duration || 30),
+      appointmentBufferMinutes: Number(service.appointment_buffer || 0),
+      steps: (serviceSteps || []) as BookingServiceStep[],
+    });
     const blockedDurationMinutes = Math.max(
       5,
-      Number(service.duration || 30) + Number(service.appointment_buffer || 0)
+      candidateSegments.totalDurationMinutes
     );
     const appointmentEnd = new Date(
       appointmentStart.getTime() + blockedDurationMinutes * 60_000
@@ -293,18 +313,23 @@ serve(async (req) => {
       return jsonResponse({ error: "booking_temporarily_limited" }, 429);
     }
 
-    const { data: conflicts, error: conflictError } = await supabase
-      .from("appointments")
-      .select("id")
+    const { data: occupiedSegments, error: conflictError } = await supabase
+      .from("appointment_segments")
+      .select("starts_at, ends_at")
       .eq("salon_id", salon_id)
       .eq("staff_id", staff_id)
-      .neq("status", "cancelled")
-      .lt("start_time", appointmentEnd.toISOString())
-      .gt("end_time", appointmentStart.toISOString());
+      .eq("occupies_staff", true)
+      .lt("starts_at", appointmentEnd.toISOString())
+      .gt("ends_at", appointmentStart.toISOString());
 
     if (conflictError) throw conflictError;
 
-    if ((conflicts || []).length > 0) {
+    if (
+      bookingSegmentsConflict(
+        candidateSegments.occupiedSegments,
+        occupiedSegments || []
+      )
+    ) {
       return jsonResponse({ error: "slot_no_longer_available" }, 409);
     }
 
