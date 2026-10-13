@@ -35,6 +35,7 @@ const ClientsPage = () => {
     name: '',
     phone: '',
     email: '',
+    birth_date: '',
     notes: '',
   });
 
@@ -64,7 +65,7 @@ const ClientsPage = () => {
     if (result) {
       await logActivity('CLIENT_CREATED', { client_name: newClient.name });
     }
-    setNewClient({ name: '', phone: '', email: '', notes: '' });
+    setNewClient({ name: '', phone: '', email: '', birth_date: '', notes: '' });
     setIsAddDialogOpen(false);
   };
 
@@ -86,12 +87,13 @@ const ClientsPage = () => {
       const filename = `clients-${salonName}-${dateStr}`;
 
       if (type === 'csv') {
-        const header = 'Nom,Téléphone,Email,Date de création,Nombre de visites,Total dépensé (€),Notes';
+        const header = 'Nom,Téléphone,Email,Date de naissance,Date de création,Nombre de visites,Total dépensé (€),Notes';
         const rows = clientsWithStats.map(c =>
           [
             `"${c.name}"`,
             `"${c.phone}"`,
             `"${c.email || ''}"`,
+            `"${c.birth_date ? format(new Date(c.birth_date + 'T12:00:00'), 'dd/MM/yyyy') : ''}"`,
             `"${format(new Date(c.created_at), 'dd/MM/yyyy')}"`,
             c.visitCount,
             c.totalSpent.toFixed(2),
@@ -105,6 +107,7 @@ const ClientsPage = () => {
           nom: c.name,
           telephone: c.phone,
           email: c.email || null,
+          date_naissance: c.birth_date || null,
           date_creation: format(new Date(c.created_at), 'dd/MM/yyyy'),
           nombre_visites: c.visitCount,
           total_depense: c.totalSpent,
@@ -193,6 +196,18 @@ const ClientsPage = () => {
                     onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
                     placeholder="jean@example.com"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="birth-date">Date de naissance</Label>
+                  <Input
+                    id="birth-date"
+                    type="date"
+                    value={newClient.birth_date}
+                    onChange={(e) => setNewClient({ ...newClient, birth_date: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Utilisée pour les automatisations anniversaire et le bonus fidélité.
+                  </p>
                 </div>
                 {canUseClientNotes ? (
                   <div>
