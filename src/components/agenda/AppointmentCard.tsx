@@ -118,12 +118,20 @@ const AppointmentCard = memo(({
             <span
               className={cn(
                 'rounded-full px-1.5 py-0.5 text-[9px] font-bold',
-                appointment.isPaid
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-amber-100 text-amber-700'
+                appointment.status === 'pending_payment'
+                  ? 'bg-violet-100 text-violet-700'
+                  : appointment.isPaid
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-amber-100 text-amber-700'
               )}
             >
-              {appointment.isPaid ? 'Payé' : 'À encaisser'}
+              {appointment.status === 'pending_payment'
+                ? 'Paiement…'
+                : appointment.isPaid
+                  ? 'Payé'
+                  : appointment.paymentStatus === 'deposit_paid'
+                    ? 'Acompte payé'
+                    : 'À encaisser'}
             </span>
           </div>
         )}
