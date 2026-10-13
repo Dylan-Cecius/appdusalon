@@ -15,6 +15,7 @@ import OpeningHoursSettings from './OpeningHoursSettings';
 import ActivityLogViewer from './ActivityLogViewer';
 import TwoFactorSettings from './TwoFactorSettings';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
+import LoyaltySettingsCard from './LoyaltySettingsCard';
 
 const DemoResetSection = () => {
   const { user } = useAuth();
@@ -307,6 +308,8 @@ const Settings = () => {
           </div>
         </div>
       </Card>
+
+      <LoyaltySettingsCard />
 
       {/* Sécurité */}
       <Card className="p-6">
