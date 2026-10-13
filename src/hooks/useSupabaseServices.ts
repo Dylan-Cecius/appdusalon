@@ -12,6 +12,10 @@ export interface Service {
   isActive: boolean;
   displayOrder: number;
   color: string;
+  bookingPaymentMode: 'none' | 'deposit_fixed' | 'deposit_percent' | 'full';
+  bookingPaymentValue: number;
+  cancellationDeadlineHours: number;
+  lateCancellationPolicy: 'keep_deposit' | 'refund_deposit';
 }
 
 export const useSupabaseServices = () => {
@@ -51,7 +55,11 @@ export const useSupabaseServices = () => {
         appointmentBuffer: service.appointment_buffer || 0,
         isActive: service.is_active,
         displayOrder: service.display_order || 0,
-        color: (service as any).color || '#6B7280'
+        color: (service as any).color || '#6B7280',
+        bookingPaymentMode: ((service as any).booking_payment_mode || 'none') as Service['bookingPaymentMode'],
+        bookingPaymentValue: Number((service as any).booking_payment_value || 0),
+        cancellationDeadlineHours: Number((service as any).cancellation_deadline_hours ?? 24),
+        lateCancellationPolicy: ((service as any).late_cancellation_policy || 'keep_deposit') as Service['lateCancellationPolicy']
       })) || [];
 
       setServices(formattedServices);
@@ -80,7 +88,11 @@ export const useSupabaseServices = () => {
           appointment_buffer: serviceData.appointmentBuffer,
           is_active: serviceData.isActive,
           display_order: serviceData.displayOrder,
-          color: serviceData.color
+          color: serviceData.color,
+          booking_payment_mode: serviceData.bookingPaymentMode,
+          booking_payment_value: serviceData.bookingPaymentValue,
+          cancellation_deadline_hours: serviceData.cancellationDeadlineHours,
+          late_cancellation_policy: serviceData.lateCancellationPolicy
         } as any)
         .select()
         .single();
@@ -111,6 +123,10 @@ export const useSupabaseServices = () => {
       if (serviceData.isActive !== undefined) updateData.is_active = serviceData.isActive;
       if (serviceData.displayOrder !== undefined) updateData.display_order = serviceData.displayOrder;
       if (serviceData.color !== undefined) updateData.color = serviceData.color;
+      if (serviceData.bookingPaymentMode !== undefined) updateData.booking_payment_mode = serviceData.bookingPaymentMode;
+      if (serviceData.bookingPaymentValue !== undefined) updateData.booking_payment_value = serviceData.bookingPaymentValue;
+      if (serviceData.cancellationDeadlineHours !== undefined) updateData.cancellation_deadline_hours = serviceData.cancellationDeadlineHours;
+      if (serviceData.lateCancellationPolicy !== undefined) updateData.late_cancellation_policy = serviceData.lateCancellationPolicy;
 
       const { error } = await supabase
         .from('services')
