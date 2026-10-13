@@ -82,8 +82,15 @@ DECLARE
   target_service_id uuid;
   step_total integer;
 BEGIN
-  target_service_id :=
-    CASE WHEN TG_OP = 'DELETE' THEN OLD.service_id ELSE NEW.service_id END;
+  IF TG_OP = 'DELETE' THEN
+    -- Deleting old steps is commonly part of an atomic replace operation.
+    -- Keep the service duration set by the editor until replacement inserts
+    -- rebuild the total from the new step set.
+    RETURN OLD;
+  END IF;
+
+  target_service_id := NEW.service_id;
+
   SELECT COALESCE(sum(duration_minutes), 0)::integer
   INTO step_total
   FROM public.service_steps
@@ -95,13 +102,9 @@ BEGIN
     WHERE id = target_service_id;
   END IF;
 
-  IF TG_OP = 'DELETE' THEN
-    RETURN OLD;
-  END IF;
-
   RETURN NEW;
 END;
-$$;
+$;
 
 REVOKE ALL ON FUNCTION public.sync_service_duration_from_steps() FROM PUBLIC;
 
