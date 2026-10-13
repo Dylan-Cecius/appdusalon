@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { format, isBefore, startOfDay } from 'date-fns';
+import { addDays, format, isBefore, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
@@ -82,6 +82,10 @@ export default function BookingPage() {
   const [confirmed, setConfirmed] = useState(false);
   const [paymentReturnConfirmed, setPaymentReturnConfirmed] = useState(false);
   const [paymentReturnStatus, setPaymentReturnStatus] = useState<'idle' | 'checking' | 'error'>('idle');
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistConfirmed, setWaitlistConfirmed] = useState(false);
+  const [waitlistWindowDays, setWaitlistWindowDays] = useState(7);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -197,9 +201,44 @@ export default function BookingPage() {
           return;
         }
         setSalonId(data.salon_id);
-        setServices(data.services || []);
-        setStaff(data.staff || []);
+        const loadedServices = data.services || [];
+        const loadedStaff = data.staff || [];
+        setServices(loadedServices);
+        setStaff(loadedStaff);
         setSalonName(data.salon?.name || 'Notre Salon');
+
+        const params = new URLSearchParams(window.location.search);
+        const requestedServiceId = params.get('service_id');
+        const requestedStaffId = params.get('staff_id');
+        const requestedDate = params.get('date');
+
+        const requestedService = loadedServices.find(
+          (service: Service) => service.id === requestedServiceId
+        );
+        const requestedStaff = loadedStaff.find(
+          (member: StaffMember) => member.id === requestedStaffId
+        );
+
+        if (requestedService) {
+          setSelectedService(requestedService);
+
+          if (requestedStaff) {
+            setSelectedStaff(requestedStaff);
+            setNoPreference(false);
+          } else if (requestedStaffId) {
+            setSelectedStaff(null);
+            setNoPreference(true);
+          }
+
+          if (requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) {
+            const parsedDate = new Date(`${requestedDate}T12:00:00`);
+            if (!Number.isNaN(parsedDate.getTime())) {
+              setSelectedDate(parsedDate);
+            }
+          }
+
+          setStep(requestedStaff || requestedStaffId ? 3 : 2);
+        }
       } catch (error) {
         console.error('Error fetching booking data:', error);
         toast.error('Impossible de charger les données du salon');
@@ -239,6 +278,62 @@ export default function BookingPage() {
     };
     fetchSlots();
   }, [selectedDate, selectedService, selectedStaff, noPreference, salonId]);
+
+  const handleJoinWaitlist = async () => {
+    if (
+      !selectedService ||
+      !selectedDate ||
+      !salonId ||
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !phone.trim()
+    ) {
+      toast.error('Indiquez votre nom et votre numéro pour rejoindre la liste d’attente.');
+      return;
+    }
+
+    setWaitlistSubmitting(true);
+
+    try {
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/join-booking-waitlist`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+          body: JSON.stringify({
+            salon_id: salonId,
+            service_id: selectedService.id,
+            preferred_staff_id: noPreference ? null : selectedStaff?.id || null,
+            client_name: `${firstName.trim()} ${lastName.trim()}`,
+            client_phone: phone.trim(),
+            preferred_date_from: format(selectedDate, 'yyyy-MM-dd'),
+            preferred_date_to: format(
+              addDays(selectedDate, waitlistWindowDays),
+              'yyyy-MM-dd'
+            ),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error === 'too_many_waitlist_attempts'
+            ? "Trop de demandes en peu de temps. Réessayez plus tard."
+            : "Impossible de rejoindre la liste d'attente."
+        );
+      }
+
+      setWaitlistConfirmed(true);
+      setWaitlistOpen(false);
+      toast.success("Vous êtes inscrit sur la liste d’attente.");
+    } catch (error: any) {
+      toast.error(error.message || "Impossible de rejoindre la liste d'attente.");
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!selectedService || !selectedSlot || !firstName.trim() || !lastName.trim() || !phone.trim() || !salonId) {
@@ -548,9 +643,105 @@ export default function BookingPage() {
                       </Button>
                     ))}
                     {slots.length === 0 && (
-                      <p className="col-span-full text-center text-muted-foreground py-4">
-                        Aucun créneau disponible ce jour
-                      </p>
+                      <div className="col-span-full rounded-2xl border border-dashed border-border bg-muted/20 p-5 text-center">
+                        <p className="font-medium text-foreground">Aucun créneau disponible ce jour</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Inscrivez-vous sur la liste d'attente et recevez un SMS si une place se libère.
+                        </p>
+
+                        {waitlistConfirmed ? (
+                          <div className="mt-4 rounded-xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                            Vous êtes sur la liste d'attente.
+                          </div>
+                        ) : !waitlistOpen ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-4"
+                            onClick={() => setWaitlistOpen(true)}
+                          >
+                            M'alerter si une place se libère
+                          </Button>
+                        ) : (
+                          <div className="mx-auto mt-4 max-w-md space-y-3 text-left">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label htmlFor="waitlist-first-name">Prénom</Label>
+                                <Input
+                                  id="waitlist-first-name"
+                                  value={firstName}
+                                  onChange={(event) => setFirstName(event.target.value)}
+                                  placeholder="Jean"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="waitlist-last-name">Nom</Label>
+                                <Input
+                                  id="waitlist-last-name"
+                                  value={lastName}
+                                  onChange={(event) => setLastName(event.target.value)}
+                                  placeholder="Dupont"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label htmlFor="waitlist-phone">Téléphone</Label>
+                              <Input
+                                id="waitlist-phone"
+                                type="tel"
+                                value={phone}
+                                onChange={(event) => setPhone(event.target.value)}
+                                placeholder="+32 ..."
+                              />
+                            </div>
+
+                            <div>
+                              <Label>Je reste disponible pendant</Label>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {[1, 3, 7, 14].map((days) => (
+                                  <Button
+                                    key={days}
+                                    type="button"
+                                    size="sm"
+                                    variant={waitlistWindowDays === days ? 'default' : 'outline'}
+                                    onClick={() => setWaitlistWindowDays(days)}
+                                  >
+                                    {days === 1 ? 'Ce jour' : `${days} jours`}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => setWaitlistOpen(false)}
+                              >
+                                Annuler
+                              </Button>
+                              <Button
+                                type="button"
+                                className="flex-1"
+                                disabled={
+                                  waitlistSubmitting ||
+                                  !firstName.trim() ||
+                                  !lastName.trim() ||
+                                  !phone.trim()
+                                }
+                                onClick={handleJoinWaitlist}
+                              >
+                                {waitlistSubmitting ? (
+                                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Inscription...</>
+                                ) : (
+                                  "Rejoindre la liste"
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
