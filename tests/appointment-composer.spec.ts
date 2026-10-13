@@ -1,0 +1,72 @@
+import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-13T10:00:00'));
+  await page.goto('/tests/fixtures/standalone.html?view=agenda');
+});
+
+test('orders multiple services, recalculates the timeline and persists the complete booking', async ({ page }) => {
+  await page.getByRole('button', { name: 'Nouveau rendez-vous', exact: true }).click();
+  const form = page.getByRole('dialog');
+  await form.getByLabel('Nom du client fictif').fill('Client composition');
+  await form.getByLabel('Notes internes').fill('Préférence test conservée');
+  await form.getByLabel('Ajouter une prestation', { exact: true }).selectOption('demo-couleur');
+  await form.getByRole('button', { name: 'Ajouter la prestation', exact: true }).click();
+  const summary = form.getByRole('region', { name: 'Résumé du rendez-vous' });
+  const phases = form.getByRole('region', { name: 'Déroulé du rendez-vous' });
+  await expect(summary).toContainText('17:00 → 19:00');
+  await expect(summary).toContainText('100.00 €');
+  await expect(phases.getByRole('listitem')).toHaveCount(5);
+  await expect(phases).toContainText('18:00–18:30');
+  await form.getByRole('button', { name: 'Monter Coloration & soin' }).click();
+  await expect(phases.getByRole('listitem').first()).toContainText('Application de la couleur');
+  await expect(phases).toContainText('17:30–18:00');
+  await form.getByRole('button', { name: 'Retirer Coupe homme' }).click();
+  await expect(summary).toContainText('75.00 €');
+  await form.getByLabel('Ajouter une prestation', { exact: true }).selectOption('demo-coupe');
+  await form.getByRole('button', { name: 'Ajouter la prestation', exact: true }).click();
+  await form.getByLabel('Heure', { exact: true }).fill('17:15');
+  await expect(form.getByRole('alert')).toContainText('horaires d’ouverture');
+  await expect(form.getByRole('button', { name: 'Créer le rendez-vous' })).toBeDisabled();
+  await form.getByLabel('Heure', { exact: true }).fill('17:00');
+  await form.getByRole('button', { name: 'Créer le rendez-vous' }).click();
+  await expect(form).toBeHidden();
+  await page.reload();
+  await page.getByRole('button', { name: 'Rechercher un rendez-vous', exact: true }).click();
+  await form.getByLabel('Client, téléphone ou prestation').fill('Client composition');
+  await form.getByRole('button', { name: /Client composition/ }).click();
+  await expect(form.getByLabel('Notes', { exact: true })).toHaveValue('Préférence test conservée');
+  await expect(form.getByLabel('Heure de fin')).toHaveValue('19:00');
+  await expect(phases.getByRole('listitem')).toHaveCount(5);
+  await expect(phases.getByRole('listitem').first()).toContainText('Application de la couleur');
+});
+
+test('checks future absences before creating a series and saves all dates together', async ({ page }) => {
+  await page.getByRole('button', { name: 'Indisponibilités', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Bloquer un créneau', exact: true }).click();
+  const off = dialog.getByRole('form', { name: 'Indisponibilité', exact: true });
+  await off.getByLabel('Libellé').fill('Congé futur');
+  await off.getByLabel('Du', { exact: true }).fill('2026-10-20');
+  await off.getByLabel('Au inclus', { exact: true }).fill('2026-10-20');
+  await off.getByLabel('Début', { exact: true }).fill('17:00');
+  await off.getByLabel('Fin', { exact: true }).fill('18:00');
+  await off.getByRole('button', { name: 'Enregistrer l’indisponibilité' }).click();
+  await expect(dialog.getByRole('article', { name: 'Indisponibilité Congé futur' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Nouveau rendez-vous', exact: true }).click();
+  await dialog.getByLabel('Nom du client fictif').fill('Client série');
+  await dialog.getByLabel('Répéter ce rendez-vous').check();
+  await dialog.getByLabel('Nombre de rendez-vous').fill('3');
+  await expect(dialog.getByRole('alert')).toContainText('20/10/2026 17:00');
+  await expect(dialog.getByRole('button', { name: 'Créer la série' })).toBeDisabled();
+  await dialog.getByLabel('Heure', { exact: true }).fill('18:00');
+  await dialog.getByText('Voir les 3 dates').click();
+  await expect(dialog.getByText('27/10/2026 · 18:00')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Créer la série' }).click();
+  await expect(dialog).toBeHidden();
+  await page.reload();
+  await page.getByRole('button', { name: 'Rechercher un rendez-vous', exact: true }).click();
+  await dialog.getByLabel('Client, téléphone ou prestation').fill('Client série');
+  await expect(dialog.getByRole('status')).toHaveText('3 résultats');
+});

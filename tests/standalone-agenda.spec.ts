@@ -32,7 +32,7 @@ test('creates a demo appointment, rejects collisions, and resets the sample data
   const form = page.getByRole('dialog');
   await form.getByLabel('Nom du client fictif').fill('Alex Preview');
   await form.getByLabel('Heure', { exact: true }).fill('09:30');
-  await form.getByRole('button', { name: 'Créer le rendez-vous' }).click();
+  await expect(form.getByRole('button', { name: 'Créer le rendez-vous' })).toBeDisabled();
   await expect(form.getByRole('alert')).toHaveText(/déjà un rendez-vous/);
   await form.getByLabel('Heure', { exact: true }).fill('17:00');
   await form.getByRole('button', { name: 'Créer le rendez-vous' }).click();
@@ -105,7 +105,7 @@ test('allows a cut during processing and rejects overlap with the next work phas
   await form.getByLabel('Nom du client fictif').fill('Coupe pendant la pose');
   await form.getByLabel('Collaborateur').selectOption('demo-staff-2');
   await form.getByLabel('Heure', { exact: true }).fill('09:45');
-  await form.getByRole('button', { name: 'Créer le rendez-vous' }).click();
+  await expect(form.getByRole('button', { name: 'Créer le rendez-vous' })).toBeDisabled();
   await expect(form.getByRole('alert')).toHaveText(/déjà un rendez-vous/);
   await form.getByLabel('Heure', { exact: true }).fill('09:30');
   await form.getByRole('button', { name: 'Créer le rendez-vous' }).click();

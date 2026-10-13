@@ -20,7 +20,7 @@ test('blocks, edits and releases a period with persistence without adding an app
   await page.getByRole('button', { name: 'Nouveau rendez-vous', exact: true }).click();
   await sheet.getByLabel('Nom du client fictif').fill('Client bloqué');
   await sheet.getByLabel('Heure', { exact: true }).fill('16:15');
-  await sheet.getByRole('button', { name: 'Créer le rendez-vous' }).click();
+  await expect(sheet.getByRole('button', { name: 'Créer le rendez-vous' })).toBeDisabled();
   await expect(sheet.getByRole('alert')).toHaveText('Ce collaborateur est indisponible sur cette période.');
   await page.keyboard.press('Escape');
   await page.reload();

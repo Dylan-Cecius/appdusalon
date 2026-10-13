@@ -1,36 +1,20 @@
 import { isTimeOffConflict, type StaffTimeOff } from './staffTimeOff';
 import { addDays, format } from 'date-fns';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
-import type { Appointment, AppointmentSegment } from '@/data/appointments';
+import type { Appointment } from '@/data/appointments';
 import type { BookingWaitlistEntry } from '@/hooks/useBookingWaitlist';
-import type { Service } from '@/hooks/useSupabaseServices';
+import { buildAppointmentDraft, type AppointmentService } from './appointmentDraft';
 import type { Staff } from '@/hooks/useStaff';
 import type { DaySchedule } from '@/hooks/useOpeningHours';
 import { appointmentOccupancyOverlaps } from './appointmentSegments';
 
-export type WaitlistService = Pick<Service, 'id' | 'name' | 'price' | 'duration'> & Partial<Pick<Service, 'appointmentBuffer' | 'steps'>>;
+export type WaitlistService = AppointmentService;
 export type WaitlistRequest = Pick<BookingWaitlistEntry, 'client_name' | 'client_phone' | 'service_id' | 'preferred_staff_id' | 'preferred_date_from' | 'preferred_date_to' | 'preferred_time_start' | 'preferred_time_end'>;
 export type WaitlistSlot = { staffId: string; staffName: string; startTime: Date; endTime: Date };
 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function waitlistAppointment(entry: WaitlistRequest, service: WaitlistService, slot: Pick<WaitlistSlot, 'staffId' | 'startTime'>): Appointment {
-  let cursor = slot.startTime.getTime();
-  const segments: AppointmentSegment[] = [];
-  const steps = service.steps?.length ? service.steps : [{ name: service.name, type: 'work' as const, duration: service.duration }];
-  const hasWork = steps.some(step => step.type !== 'pause');
-  for (const [index, step] of steps.entries()) {
-    if (!Number.isFinite(step.duration) || step.duration <= 0) throw new Error('Durée de prestation invalide.');
-    const startTime = new Date(cursor); cursor += step.duration * 60_000;
-    segments.push({ id: `step-${index}`, label: step.name, type: step.type, startTime, endTime: new Date(cursor), occupiesStaff: step.type !== 'pause' || !hasWork });
-  }
-  if ((service.appointmentBuffer || 0) > 0) {
-    const startTime = new Date(cursor); cursor += service.appointmentBuffer! * 60_000;
-    segments.push({ id: 'buffer', label: 'Préparation / nettoyage', type: 'cleanup', startTime, endTime: new Date(cursor), occupiesStaff: true });
-  }
-  return { id: 'waitlist-candidate', clientName: entry.client_name, clientPhone: entry.client_phone,
-    services: [{ id: service.id, name: service.name, price: service.price, duration: (cursor - slot.startTime.getTime()) / 60_000, category: 'coupe' }],
-    staffId: slot.staffId, startTime: slot.startTime, endTime: new Date(cursor), segments, totalPrice: service.price,
-    status: 'scheduled', isPaid: false, paymentStatus: 'unpaid', amountPaid: 0 };
+  return buildAppointmentDraft({ services: [service], startTime: slot.startTime, staffId: slot.staffId, clientName: entry.client_name, clientPhone: entry.client_phone });
 }
 
 export function findWaitlistSlots(entry: BookingWaitlistEntry, { services, staff, appointments, schedule, timezone, timeOff = [], now = new Date(), limit = 6 }: {

@@ -4,14 +4,14 @@ import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useOpeningHours } from '@/hooks/useOpeningHours';
 import { useStaff } from '@/hooks/useStaff';
 import { useBookingWaitlist } from '@/hooks/useBookingWaitlist';
-import AppointmentModal from '../AppointmentModal';
+import CreateAppointmentDialog from './CreateAppointmentDialog';
 import AgendaWorkspace from './AgendaWorkspace';
 
 export default function ProAgenda() {
-  const { appointments, loading, updateAppointment, markAsPaid, cancelAppointment, refreshAppointments } = useSupabaseAppointments();
-  const { services } = useSupabaseServices();
-  const { getScheduleForDate, hasData } = useOpeningHours();
-  const { activeStaff } = useStaff();
+  const { appointments, loading, error: appointmentsError, addAppointment, addRecurringAppointments, updateAppointment, markAsPaid, cancelAppointment, refreshAppointments } = useSupabaseAppointments();
+  const { services, loading: servicesLoading } = useSupabaseServices();
+  const { getScheduleForDate, hasData, loading: hoursLoading } = useOpeningHours();
+  const { activeStaff, isLoading: staffLoading } = useStaff();
   const waitlist = useBookingWaitlist();
   const timeOff = useStaffTimeOff();
 
@@ -34,6 +34,12 @@ export default function ProAgenda() {
     markAsPaid={markAsPaid}
     cancelAppointment={cancelAppointment}
     refreshAppointments={refreshAppointments}
-    renderCreateDialog={props => <AppointmentModal {...props} />}
+    renderCreateDialog={props => props.isOpen ? <CreateAppointmentDialog {...props} services={services} staff={activeStaff} appointments={appointments} timeOff={timeOff.entries} schedule={getScheduleForDate} timezone="Europe/Brussels"
+      unavailable={loading || !!appointmentsError || servicesLoading || staffLoading || hoursLoading || timeOff.loading || timeOff.error}
+      onSave={async (draft, recurrence) => {
+        if (recurrence) await addRecurringAppointments({ appointment: draft, ...recurrence });
+        else { const created = await addAppointment(draft); if (!created) throw new Error('Le rendez-vous n’a pas été enregistré. Reconnectez-vous et réessayez.'); }
+        await refreshAppointments();
+      }} /> : null}
   />;
 }

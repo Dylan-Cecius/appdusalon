@@ -47,10 +47,13 @@ export const useSupabaseAppointments = () => {
   const salonId = permissions.salonId;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const userIdRef = useRef<string | null>(null);
 
   const fetchAppointments = async () => {
     console.log('[Appointments] fetch start');
+    setLoading(true);
+    setError(false);
     try {
       if (!isSupabaseConfigured || !user || !salonId) {
         setAppointments([]);
@@ -133,6 +136,7 @@ export const useSupabaseAppointments = () => {
       setAppointments(formattedAppointments);
     } catch (error) {
       console.error('[Appointments] fetch error:', error);
+      setError(true);
       setAppointments([]);
     } finally {
       setLoading(false);
@@ -510,6 +514,7 @@ export const useSupabaseAppointments = () => {
   return {
     appointments,
     loading,
+    error,
     addAppointment,
     addRecurringAppointments,
     updateAppointment,

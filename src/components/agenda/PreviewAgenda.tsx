@@ -1,3 +1,5 @@
+import CreateAppointmentDialog from './CreateAppointmentDialog';
+import { appointmentDraftSeries, appointmentDraftConflict } from '@/lib/appointmentDraft';
 import { isTimeOffConflict, validateTimeOff, type StaffTimeOff } from '@/lib/staffTimeOff';
 import { useEffect, useRef, useState, type SetStateAction } from 'react';
 import { addDays, format } from 'date-fns';
@@ -8,13 +10,10 @@ import { findWaitlistSlots, waitlistAppointment, type WaitlistService } from '@/
 import type { Staff } from '@/hooks/useStaff';
 import type { DaySchedule } from '@/hooks/useOpeningHours';
 import type { BookingWaitlistEntry } from '@/hooks/useBookingWaitlist';
-import AgendaWorkspace, { type AgendaCreateDialogProps } from './AgendaWorkspace';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import AgendaWorkspace from './AgendaWorkspace';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -100,37 +99,6 @@ function validateAppointment(candidate: Appointment, appointments: Appointment[]
   if (appointments.some(other => other.id !== candidate.id && other.staffId === candidate.staffId && !['cancelled', 'no_show'].includes(other.status) && appointmentOccupancyOverlaps(candidate, other))) throw new Error('Ce collaborateur a déjà un rendez-vous à cet horaire.');
 }
 
-function CreatePreviewAppointment({ isOpen, onClose, selectedDate, selectedTimeSlot, staffId, onCreate }: AgendaCreateDialogProps & { onCreate: (appointment: Appointment) => void }) {
-  const [error, setError] = useState('');
-  return <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose(); }}>
-    <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl">
-      <DialogHeader><DialogTitle>Nouveau rendez-vous</DialogTitle><DialogDescription>Testez librement avec un client fictif. Aucun message ne sera envoyé.</DialogDescription></DialogHeader>
-      <form className="space-y-4" onSubmit={event => {
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        const service = services.find(item => item.id === data.get('service'))!;
-        const startTime = new Date(`${data.get('date')}T${data.get('time')}:00`);
-        const id = crypto.randomUUID();
-        try {
-          onCreate({ id, clientName: String(data.get('name')).trim(), clientPhone: String(data.get('phone') || ''), services: [service], staffId: String(data.get('staff')), startTime, endTime: new Date(startTime.getTime() + service.duration * 60_000), totalPrice: service.price, status: 'scheduled', paymentStatus: 'unpaid', isPaid: false, amountPaid: 0, notes: 'Créé dans la démonstration.', segments: previewSegments(id, startTime, service.id) });
-          onClose();
-        } catch (err) { setError(err instanceof Error ? err.message : 'Créneau indisponible.'); }
-      }}>
-        <div><Label htmlFor="preview-name">Nom du client fictif</Label><Input id="preview-name" name="name" required autoComplete="off" placeholder="Ex. Alex Démo" /></div>
-        <div><Label htmlFor="preview-phone">Téléphone fictif</Label><Input id="preview-phone" name="phone" placeholder="0000 00 00 00" /></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label htmlFor="preview-date">Date</Label><Input id="preview-date" name="date" type="date" required defaultValue={format(selectedDate, 'yyyy-MM-dd')} /></div>
-          <div><Label htmlFor="preview-time">Heure</Label><Input id="preview-time" name="time" type="time" required min="09:00" max="18:30" step={900} defaultValue={selectedTimeSlot || '17:00'} /></div>
-        </div>
-        <div><Label htmlFor="preview-staff">Collaborateur</Label><select id="preview-staff" name="staff" defaultValue={staffId || members[0].id} className="mt-1 h-10 w-full rounded-md border bg-white px-3 text-sm">{members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}</select></div>
-        <div><Label htmlFor="preview-service">Prestation</Label><select id="preview-service" name="service" className="mt-1 h-10 w-full rounded-md border bg-white px-3 text-sm">{services.map(service => <option key={service.id} value={service.id}>{service.name} · {service.duration} min · {service.price} €</option>)}</select></div>
-        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-        <Button type="submit" className="w-full">Créer le rendez-vous</Button>
-      </form>
-    </DialogContent>
-  </Dialog>;
-}
-
 export default function PreviewAgenda() {
   const [state, setState] = useState(loadPreviewState);
   const { appointments, waitlist, timeOff } = state;
@@ -185,7 +153,21 @@ export default function PreviewAgenda() {
       updateAppointment={updateAppointment} refreshAppointments={refresh}
       markAsPaid={async id => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: 'completed', paymentStatus: 'paid', isPaid: true, amountPaid: item.totalPrice } : item)); toast({ title: 'Paiement simulé', description: 'Le rendez-vous est maintenant marqué payé.' }); }}
       cancelAppointment={async (id, action) => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: action === 'cancel' ? 'cancelled' : 'no_show' } : item)); }}
-      renderCreateDialog={props => props.isOpen ? <CreatePreviewAppointment {...props} onCreate={appointment => { validateAppointment(appointment, appointments, timeOff); setAppointments(current => [...current, appointment]); toast({ title: 'Rendez-vous de démonstration créé' }); }} /> : null}
+      renderCreateDialog={props => props.isOpen ? <CreateAppointmentDialog {...props} demo services={services} staff={members} appointments={appointments} timeOff={timeOff} schedule={schedule} onSave={async (draft, recurrence) => {
+        const current = currentState.current;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const series = appointmentDraftSeries(draft, recurrence, timezone);
+        const created: Appointment[] = [];
+        const groupId = recurrence ? crypto.randomUUID() : undefined;
+        for (const [index, item] of series.entries()) {
+          const issue = appointmentDraftConflict(item, { staff: members, appointments: [...current.appointments, ...created], timeOff: current.timeOff, schedule, timezone });
+          if (issue) throw new Error(issue);
+          created.push({ ...item, id: crypto.randomUUID(), recurrenceGroupId: groupId, recurrenceIndex: recurrence ? index : undefined, recurrenceFrequency: recurrence?.frequency, recurrenceInterval: recurrence?.interval, recurrenceTotal: recurrence?.occurrences });
+        }
+        const next = { ...current, appointments: [...current.appointments, ...created] };
+        currentState.current = next; setState(next);
+        toast({ title: recurrence ? `${created.length} rendez-vous de démonstration créés` : 'Rendez-vous de démonstration créé' });
+      }} /> : null}
     />
     <Toaster />
   </TooltipProvider>;

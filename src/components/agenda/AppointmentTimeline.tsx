@@ -1,8 +1,8 @@
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import type { Appointment } from '@/data/appointments';
 import { getAppointmentSegments } from '@/lib/appointmentSegments';
 
-export default function AppointmentTimeline({ appointment, compact = false }: { appointment: Appointment; compact?: boolean }) {
+export default function AppointmentTimeline({ appointment, compact = false, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone }: { appointment: Appointment; compact?: boolean; timezone?: string }) {
   const segments = getAppointmentSegments(appointment);
   if (segments.length < 2) return null;
   const freeMinutes = segments.filter(segment => !segment.occupiesStaff)
@@ -12,7 +12,7 @@ export default function AppointmentTimeline({ appointment, compact = false }: { 
     <p className="text-xs font-semibold">Déroulé du rendez-vous</p>
     <ol className="space-y-1.5">
       {segments.map((segment, index) => <li key={`${segment.id}-${index}`} className={`rounded-lg border px-3 py-2 text-xs ${!segment.occupiesStaff ? 'border-dashed border-amber-200 bg-amber-50 text-amber-950' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-        <div className="flex flex-wrap items-center justify-between gap-1"><span className="font-medium">{segment.label}</span><span className="tabular-nums">{format(segment.startTime, 'HH:mm')}–{format(segment.endTime, 'HH:mm')}</span></div>
+        <div className="flex flex-wrap items-center justify-between gap-1"><span className="font-medium">{segment.label}</span><span className="tabular-nums">{formatInTimeZone(segment.startTime, timezone, 'HH:mm')}–{formatInTimeZone(segment.endTime, timezone, 'HH:mm')}</span></div>
         <p className="mt-0.5 text-[10px]">{!segment.occupiesStaff ? 'Temps de pose · collaborateur disponible' : segment.type === 'cleanup' ? 'Préparation / nettoyage · collaborateur occupé' : 'Collaborateur occupé'}</p>
       </li>)}
     </ol>
