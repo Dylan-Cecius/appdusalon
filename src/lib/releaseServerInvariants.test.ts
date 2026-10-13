@@ -116,4 +116,23 @@ describe('release-critical server invariants', () => {
     }
   });
 
+  it('keeps paid booking holds server-authoritative and expiring', () => {
+    const booking = read('supabase/functions/create-public-booking/index.ts');
+    const checkout = read('supabase/functions/create-booking-payment/index.ts');
+    const webhook = read('supabase/functions/stripe-booking-webhook/index.ts');
+
+    expect(booking).toContain('calculate_booking_payment_amount');
+    expect(booking).toContain('"pending_payment"');
+    expect(booking).toContain('payment_expires_at');
+
+    expect(checkout).toContain('deposit_required');
+    expect(checkout).toContain('expires_at');
+    expect(checkout).toContain('payment_reference');
+
+    expect(webhook).toContain('checkout.session.completed');
+    expect(webhook).toContain('payment_status');
+    expect(webhook).toContain('status: "scheduled"');
+  });
+
+
 });
