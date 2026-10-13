@@ -362,6 +362,20 @@ serve(async (req) => {
 
     if (insertError) throw insertError;
 
+    if (!paymentRequired) {
+      const { error: waitlistUpdateError } = await supabase
+        .from("booking_waitlist")
+        .update({ status: "booked", offer_expires_at: null })
+        .eq("salon_id", salon_id)
+        .eq("service_id", service_id)
+        .eq("client_phone", normalizedClientPhone)
+        .in("status", ["active", "notified"]);
+
+      if (waitlistUpdateError) {
+        console.warn("[PUBLIC-BOOKING] waitlist completion failed", waitlistUpdateError);
+      }
+    }
+
     return jsonResponse({
       success: true,
       appointment_id: appointment.id,
