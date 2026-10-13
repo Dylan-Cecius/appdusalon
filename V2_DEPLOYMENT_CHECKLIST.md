@@ -48,6 +48,7 @@ Configure these server-side only:
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `STRIPE_SECRET_KEY`
+- `STRIPE_BOOKING_WEBHOOK_SECRET` — signing secret for the dedicated booking-payment Stripe webhook
 - `RESEND_API_KEY`
 - `REPORT_FROM_EMAIL` — verified Resend sender, e.g. `L'App du Salon <rapports@example.com>`
 - `TWILIO_ACCOUNT_SID`
@@ -141,6 +142,10 @@ Verify:
 - subscription metadata contains the billing owner user ID and plan
 - `check-subscription` resolves employee rights from the salon owner
 - downgrade from Equipe disables employee access
+- booking deposit/full-payment checkout uses the server-calculated appointment amount
+- booking payment webhook confirms `pending_payment` appointments only after Stripe payment
+- abandoned booking payment sessions expire and release their slot
+- Stripe webhook endpoint is configured for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, and `checkout.session.async_payment_failed`
 
 Add the final production/staging origins to `APP_URL` / `ALLOWED_APP_ORIGINS`.
 
