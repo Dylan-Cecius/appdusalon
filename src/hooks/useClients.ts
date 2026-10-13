@@ -10,6 +10,7 @@ export interface Client {
   name: string;
   phone: string;
   email?: string;
+  birth_date?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
