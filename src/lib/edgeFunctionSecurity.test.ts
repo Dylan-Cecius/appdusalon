@@ -30,6 +30,8 @@ describe('edge-function security configuration', () => {
       'get-salon-booking-data',
       'get-booking-slots',
       'create-public-booking',
+      'create-booking-payment',
+      'stripe-booking-webhook',
     ]) {
       expect(config).toContain(`[functions.${name}]\nverify_jwt = false`);
     }
@@ -65,4 +67,18 @@ describe('edge-function security configuration', () => {
       expect(source).toContain('x-cron-secret');
     }
   });
+  it('protects public booking payments with origin checks and Stripe signatures', () => {
+    const checkout = read('supabase/functions/create-booking-payment/index.ts');
+    const webhook = read('supabase/functions/stripe-booking-webhook/index.ts');
+
+    expect(checkout).toContain('isTrustedAppOrigin');
+    expect(checkout).toContain('deposit_required');
+    expect(checkout).toContain('appointment_not_payable');
+
+    expect(webhook).toContain('STRIPE_BOOKING_WEBHOOK_SECRET');
+    expect(webhook).toContain('constructEventAsync');
+    expect(webhook).toContain('stripe-signature');
+  });
+
+
 });
