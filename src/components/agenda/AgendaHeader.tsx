@@ -49,18 +49,18 @@ const AgendaHeader = ({
       : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr });
 
   return (
-    <div className="shrink-0 border-b border-border/80 bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-4">
+    <div className="shrink-0 border-b border-slate-200 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           {onToggleSidebar && (
             <button
               type="button"
               onClick={onToggleSidebar}
               className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-xl border transition-colors',
+                'flex h-8 w-8 items-center justify-center rounded-lg border transition-colors',
                 sidebarOpen
-                  ? 'border-primary/20 bg-primary/10 text-primary'
-                  : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                  ? 'border-slate-300 bg-slate-100 text-slate-800'
+                  : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
               )}
               title="Afficher ou masquer les collaborateurs"
             >
@@ -68,7 +68,7 @@ const AgendaHeader = ({
             </button>
           )}
 
-          <div className="flex items-center rounded-xl border border-border bg-background p-0.5">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
             <button
               type="button"
               onClick={goPrevious}
@@ -81,8 +81,8 @@ const AgendaHeader = ({
               type="button"
               onClick={() => onDateChange(new Date())}
               className={cn(
-                'h-8 rounded-lg px-3 text-xs font-semibold transition-colors',
-                isToday ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
+                'h-7 rounded-md px-3 text-[11px] font-semibold transition-colors',
+                isToday ? 'bg-slate-900 text-white' : 'text-foreground hover:bg-muted'
               )}
             >
               Aujourd'hui
@@ -101,10 +101,10 @@ const AgendaHeader = ({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="hidden min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-muted sm:flex"
+                className="hidden min-w-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-slate-50 sm:flex"
               >
                 <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-sm font-semibold capitalize text-foreground">
+                <span className="truncate text-sm font-semibold capitalize text-slate-900">
                   {periodLabel}
                 </span>
               </button>
@@ -121,7 +121,7 @@ const AgendaHeader = ({
           </Popover>
 
           {appointmentCount > 0 && (
-            <span className="hidden rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground lg:inline-flex">
+            <span className="hidden rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 lg:inline-flex">
               {appointmentCount} RDV
             </span>
           )}
@@ -129,16 +129,16 @@ const AgendaHeader = ({
 
         <div className="flex items-center gap-2">
           {onViewModeChange && (
-            <div className="flex rounded-xl border border-border bg-background p-0.5">
+            <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
               {(['day', 'week'] as AgendaViewMode[]).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => onViewModeChange(mode)}
                   className={cn(
-                    'h-8 rounded-lg px-3 text-xs font-semibold transition-colors',
+                    'h-7 rounded-md px-3 text-[11px] font-semibold transition-colors',
                     viewMode === mode
-                      ? 'bg-card text-foreground shadow-sm'
+                      ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
@@ -149,7 +149,7 @@ const AgendaHeader = ({
           )}
 
           {viewMode === 'day' && onSlotIntervalChange && (
-            <div className="hidden items-center rounded-xl border border-border bg-background p-0.5 xl:flex">
+            <div className="hidden items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 xl:flex">
               <Clock3 className="ml-2 h-3.5 w-3.5 text-muted-foreground" />
               {([15, 30] as AgendaSlotInterval[]).map((minutes) => (
                 <button
@@ -159,7 +159,7 @@ const AgendaHeader = ({
                   className={cn(
                     'h-8 rounded-lg px-2.5 text-[11px] font-semibold transition-colors',
                     slotInterval === minutes
-                      ? 'bg-card text-foreground shadow-sm'
+                      ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
@@ -172,7 +172,7 @@ const AgendaHeader = ({
           <button
             type="button"
             onClick={onAddClick}
-            className="flex h-9 items-center gap-2 rounded-xl bg-primary px-3.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98]"
+            className="flex h-8 items-center gap-2 rounded-lg bg-slate-900 px-3.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nouveau RDV</span>
