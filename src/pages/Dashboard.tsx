@@ -181,13 +181,13 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Vue d’ensemble</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Tableau de bord</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Les indicateurs essentiels de votre salon, en temps réel.</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tableau de bord</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Votre journée, vos priorités et vos indicateurs clés en un coup d’œil.</p>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
@@ -197,6 +197,30 @@ const Dashboard = () => {
               <Link to="/pos"><DollarSign className="mr-2 h-4 w-4" />Encaissement</Link>
             </Button>
           </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { to: '/agenda', label: 'Voir le planning', helper: 'Rendez-vous & disponibilités', icon: Clock },
+            { to: '/pos', label: 'Encaisser', helper: 'Ouvrir la caisse rapidement', icon: DollarSign },
+            { to: '/clients', label: 'Clients', helper: 'Fiches & historique', icon: Users },
+            { to: '/stats', label: 'Analyser', helper: 'CA & performance', icon: BarChart3 },
+          ].map(({ to, label, helper, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="group flex items-center gap-3 rounded-xl border border-border/80 bg-card px-4 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground">{label}</span>
+                <span className="block truncate text-[11px] text-muted-foreground">{helper}</span>
+              </span>
+              <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+            </Link>
+          ))}
         </div>
 
         {showSubscriptionAlert && (
@@ -213,7 +237,7 @@ const Dashboard = () => {
         {/* 4 KPI Cards */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           {/* CA du jour */}
-          <Card className="v2-kpi overflow-hidden">
+          <Card className="v2-kpi overflow-hidden border-slate-200 bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-success/10">
@@ -221,12 +245,12 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{stats.todayRevenue.toFixed(0)} €</div>
+              <div className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-950">{stats.todayRevenue.toFixed(0)} €</div>
             </CardContent>
           </Card>
 
           {/* CA Hebdomadaire */}
-          <Card className="v2-kpi overflow-hidden">
+          <Card className="v2-kpi overflow-hidden border-slate-200 bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA hebdomadaire</CardTitle>
               <div className="p-1.5 rounded-lg bg-primary/10">
@@ -234,12 +258,12 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{stats.weeklyRevenue.toFixed(0)} €</div>
+              <div className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-950">{stats.weeklyRevenue.toFixed(0)} €</div>
             </CardContent>
           </Card>
 
           {/* CA Mensuel */}
-          <Card className="v2-kpi overflow-hidden">
+          <Card className="v2-kpi overflow-hidden border-slate-200 bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA Mensuel</CardTitle>
               <div className="p-1.5 rounded-lg bg-accent/10">
@@ -247,13 +271,13 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{stats.monthlyRevenue.toFixed(0)} €</div>
+              <div className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-950">{stats.monthlyRevenue.toFixed(0)} €</div>
               <Variation current={stats.monthlyRevenue} previous={stats.previousMonthRevenue} suffix="vs mois préc." />
             </CardContent>
           </Card>
 
           {/* Clients encaissés aujourd'hui */}
-          <Card className="v2-kpi overflow-hidden">
+          <Card className="v2-kpi overflow-hidden border-slate-200 bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Clients du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-card/10">
@@ -261,13 +285,13 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-5 pt-0">
-              <div className="text-lg sm:text-2xl font-bold">{todayDistinctClients}</div>
+              <div className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-950">{todayDistinctClients}</div>
               <Variation current={todayDistinctClients} previous={yesterdayDistinctClients} suffix="vs hier" />
             </CardContent>
           </Card>
         </div>
 
-        {/* Projection CA mensuel */}
+        {/* Prévision du mois */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -318,7 +342,7 @@ const Dashboard = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              CA sur 6 mois
+              Évolution du chiffre d’affaires
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-3">
