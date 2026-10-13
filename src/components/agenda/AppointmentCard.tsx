@@ -127,11 +127,13 @@ const AppointmentCard = memo(({
             >
               {appointment.status === 'pending_payment'
                 ? 'Paiement…'
-                : appointment.isPaid
-                  ? 'Payé'
-                  : appointment.paymentStatus === 'deposit_paid'
-                    ? 'Acompte payé'
-                    : 'À encaisser'}
+                : appointment.paymentStatus === 'paid' && appointment.status !== 'completed'
+                  ? 'Prépayé'
+                  : appointment.isPaid
+                    ? 'Payé'
+                    : appointment.paymentStatus === 'deposit_paid'
+                      ? 'Acompte payé'
+                      : 'À encaisser'}
             </span>
           </div>
         )}
