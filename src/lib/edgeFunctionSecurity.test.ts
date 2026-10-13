@@ -33,6 +33,7 @@ describe('edge-function security configuration', () => {
       'create-booking-payment',
       'stripe-booking-webhook',
       'get-booking-payment-status',
+      'join-booking-waitlist',
     ]) {
       expect(config).toContain(`[functions.${name}]\nverify_jwt = false`);
     }
@@ -60,6 +61,7 @@ describe('edge-function security configuration', () => {
       ['send-automated-report', 'CRON_SECRET'],
       ['check-appointment-reminders', 'SMS_CRON_SECRET'],
       ['process-sms-automations', 'SMS_CRON_SECRET'],
+      ['process-booking-waitlist', 'SMS_CRON_SECRET'],
     ] as const;
 
     for (const [name, secret] of schedulers) {
@@ -84,6 +86,20 @@ describe('edge-function security configuration', () => {
     expect(status).toContain('isTrustedAppOrigin');
     expect(status).toContain('payment_reference');
     expect(status).toContain('confirmed');
+  });
+
+
+  it('keeps waitlist enrollment origin-checked and processor cron-protected', () => {
+    const join = read('supabase/functions/join-booking-waitlist/index.ts');
+    const processor = read('supabase/functions/process-booking-waitlist/index.ts');
+
+    expect(join).toContain('isTrustedAppOrigin');
+    expect(join).toContain('too_many_waitlist_attempts');
+    expect(join).toContain('online_booking_unavailable');
+
+    expect(processor).toContain('SMS_CRON_SECRET');
+    expect(processor).toContain('x-cron-secret');
+    expect(processor).toContain('sendSms');
   });
 
 
