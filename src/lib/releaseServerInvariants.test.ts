@@ -150,4 +150,18 @@ describe('release-critical server invariants', () => {
   });
 
 
+  it('uses occupied appointment segments for multistep public booking availability', () => {
+    const slots = read('supabase/functions/get-booking-slots/index.ts');
+    const createBooking = read('supabase/functions/create-public-booking/index.ts');
+    const helper = read('supabase/functions/_shared/booking-segments.ts');
+
+    expect(slots).toContain('service_steps');
+    expect(slots).toContain('appointment_segments');
+    expect(slots).toContain('bookingSegmentsConflict');
+    expect(createBooking).toContain('service_steps');
+    expect(createBooking).toContain('appointment_segments');
+    expect(createBooking).toContain('candidateSegments.occupiedSegments');
+    expect(helper).toContain('step.step_type !== "pause"');
+  });
+
 });
