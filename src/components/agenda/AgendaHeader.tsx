@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3, BellRing } from 'lucide-react';
 import { addDays, addWeeks, endOfWeek, format, isSameDay, startOfWeek, subDays, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,8 @@ interface AgendaHeaderProps {
   onViewModeChange?: (mode: AgendaViewMode) => void;
   slotInterval?: AgendaSlotInterval;
   onSlotIntervalChange?: (minutes: AgendaSlotInterval) => void;
+  waitlistCount?: number;
+  onWaitlistClick?: () => void;
 }
 
 const AgendaHeader = ({
@@ -32,6 +34,8 @@ const AgendaHeader = ({
   onViewModeChange,
   slotInterval = 15,
   onSlotIntervalChange,
+  waitlistCount = 0,
+  onWaitlistClick,
 }: AgendaHeaderProps) => {
   const isToday = isSameDay(selectedDate, new Date());
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -146,6 +150,22 @@ const AgendaHeader = ({
                 </button>
               ))}
             </div>
+          )}
+
+          {onWaitlistClick && (
+            <button
+              type="button"
+              onClick={onWaitlistClick}
+              className="relative hidden h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:flex"
+            >
+              <BellRing className="h-3.5 w-3.5" />
+              Liste d’attente
+              {waitlistCount > 0 && (
+                <span className="ml-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
+                  {waitlistCount}
+                </span>
+              )}
+            </button>
           )}
 
           {viewMode === 'day' && onSlotIntervalChange && (
