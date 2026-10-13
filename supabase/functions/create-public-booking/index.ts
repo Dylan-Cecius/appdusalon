@@ -322,7 +322,7 @@ serve(async (req) => {
     const requiredPayment = Math.max(0, Number(paymentAmount || 0));
     const paymentRequired = requiredPayment > 0;
     const paymentExpiresAt = paymentRequired
-      ? new Date(Date.now() + 15 * 60_000)
+      ? new Date(Date.now() + 30 * 60_000)
       : null;
     const cancellationDeadlineAt = new Date(
       appointmentStart.getTime() -
