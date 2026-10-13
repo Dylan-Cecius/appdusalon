@@ -5,6 +5,7 @@ import {
   DollarSign,
   Edit2,
   FileText,
+  Gift,
   Mail,
   Phone,
   Save,
@@ -43,6 +44,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
+import { useLoyalty } from '@/hooks/useLoyalty';
 
 interface ClientDetailModalProps {
   client: Client;
@@ -64,6 +66,12 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const { toast } = useToast();
   const { rights } = useSubscriptionRights();
   const canUseClientNotes = rights.canAccessFullClientNotes;
+  const {
+    program: loyaltyProgram,
+    account: loyaltyAccount,
+    events: loyaltyEvents,
+    loading: loyaltyLoading,
+  } = useLoyalty(client.id);
   const { logActivity } = useActivityLog();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -348,6 +356,73 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
             </TabsList>
 
             <TabsContent value="overview" className="mt-4 space-y-4">
+              {loyaltyProgram?.enabled && (
+                <div className="rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 p-4 shadow-sm">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white">
+                        <Gift className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-violet-950">Fidélité</p>
+                        <p className="text-xs text-violet-700/70">
+                          {loyaltyLoading
+                            ? 'Chargement…'
+                            : `${loyaltyAccount?.points_balance || 0} points disponibles`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!loyaltyLoading && loyaltyProgram && (
+                      <div className="text-left sm:text-right">
+                        <p className="text-lg font-semibold text-violet-950">
+                          {loyaltyAccount?.points_balance || 0} / {loyaltyProgram.reward_threshold}
+                        </p>
+                        <p className="text-[11px] text-violet-700">
+                          {Number(loyaltyAccount?.points_balance || 0) >= loyaltyProgram.reward_threshold
+                            ? `${loyaltyProgram.reward_value.toFixed(2)} € de récompense disponible`
+                            : `${Math.max(
+                                loyaltyProgram.reward_threshold -
+                                  Number(loyaltyAccount?.points_balance || 0),
+                                0
+                              )} points avant la prochaine récompense`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {!loyaltyLoading && loyaltyProgram && (
+                    <>
+                      <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/80">
+                        <div
+                          className="h-full rounded-full bg-violet-600 transition-all"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (Number(loyaltyAccount?.points_balance || 0) /
+                                Math.max(loyaltyProgram.reward_threshold, 1)) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-violet-700/70">
+                        <span>
+                          Gagnés au total : {loyaltyAccount?.lifetime_earned || 0} pts
+                        </span>
+                        {loyaltyEvents[0] && (
+                          <span>
+                            Dernier mouvement :{' '}
+                            {loyaltyEvents[0].points_delta > 0 ? '+' : ''}
+                            {loyaltyEvents[0].points_delta} pts
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-center gap-2">
