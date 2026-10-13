@@ -32,7 +32,7 @@ describe('release-critical server invariants', () => {
 
     expect(slots).toContain('online_booking_unavailable');
     expect(slots).toContain('opening_hours');
-    expect(slots).toContain('appointments');
+    expect(slots).toContain('appointment_segments');
   });
 
   it('keeps demo seeding restricted to an authenticated demo salon owner', () => {
