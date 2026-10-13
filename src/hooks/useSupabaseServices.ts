@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
+export interface ServiceStep {
+  id?: string;
+  name: string;
+  type: 'work' | 'pause' | 'cleanup';
+  duration: number;
+  customerVisible: boolean;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -16,6 +24,7 @@ export interface Service {
   bookingPaymentValue: number;
   cancellationDeadlineHours: number;
   lateCancellationPolicy: 'keep_deposit' | 'refund_deposit';
+  steps: ServiceStep[];
 }
 
 export const useSupabaseServices = () => {
@@ -33,17 +42,45 @@ export const useSupabaseServices = () => {
     try {
       const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
 
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('salon_id', salonId)
-        .eq('is_active', true)
-        .neq('category', 'produit')
-        .order('display_order');
+      const [
+        { data, error },
+        { data: stepsData, error: stepsError },
+      ] = await Promise.all([
+        supabase
+          .from('services')
+          .select('*')
+          .eq('salon_id', salonId)
+          .eq('is_active', true)
+          .neq('category', 'produit')
+          .order('display_order'),
+        (supabase as any)
+          .from('service_steps')
+          .select('id, service_id, position, name, step_type, duration_minutes, customer_visible')
+          .eq('salon_id', salonId)
+          .order('position'),
+      ]);
 
       if (error) {
         console.error('Error fetching services:', error);
         return;
+      }
+
+      if (stepsError) {
+        console.error('Error fetching service steps:', stepsError);
+        return;
+      }
+
+      const stepsByService = new Map<string, ServiceStep[]>();
+      for (const step of (stepsData || []) as any[]) {
+        const existing = stepsByService.get(step.service_id) || [];
+        existing.push({
+          id: step.id,
+          name: step.name,
+          type: step.step_type,
+          duration: Number(step.duration_minutes),
+          customerVisible: Boolean(step.customer_visible),
+        });
+        stepsByService.set(step.service_id, existing);
       }
 
       const formattedServices: Service[] = data?.map(service => ({
@@ -59,7 +96,8 @@ export const useSupabaseServices = () => {
         bookingPaymentMode: ((service as any).booking_payment_mode || 'none') as Service['bookingPaymentMode'],
         bookingPaymentValue: Number((service as any).booking_payment_value || 0),
         cancellationDeadlineHours: Number((service as any).cancellation_deadline_hours ?? 24),
-        lateCancellationPolicy: ((service as any).late_cancellation_policy || 'keep_deposit') as Service['lateCancellationPolicy']
+        lateCancellationPolicy: ((service as any).late_cancellation_policy || 'keep_deposit') as Service['lateCancellationPolicy'],
+        steps: stepsByService.get(service.id) || []
       })) || [];
 
       setServices(formattedServices);
@@ -102,6 +140,26 @@ export const useSupabaseServices = () => {
         throw error;
       }
 
+      if (serviceData.steps.length > 0) {
+        const { error: stepsError } = await (supabase as any).rpc(
+          'replace_service_steps',
+          {
+            target_service_id: data.id,
+            steps_payload: serviceData.steps.map((step) => ({
+              name: step.name,
+              type: step.type,
+              duration: step.duration,
+              customer_visible: step.customerVisible,
+            })),
+          }
+        );
+
+        if (stepsError) {
+          await supabase.from('services').delete().eq('id', data.id);
+          throw stepsError;
+        }
+      }
+
       await fetchServices();
       return data;
     } catch (error) {
@@ -136,6 +194,23 @@ export const useSupabaseServices = () => {
       if (error) {
         console.error('Error updating service:', error);
         throw error;
+      }
+
+      if (serviceData.steps !== undefined) {
+        const { error: stepsError } = await (supabase as any).rpc(
+          'replace_service_steps',
+          {
+            target_service_id: id,
+            steps_payload: serviceData.steps.map((step) => ({
+              name: step.name,
+              type: step.type,
+              duration: step.duration,
+              customer_visible: step.customerVisible,
+            })),
+          }
+        );
+
+        if (stepsError) throw stepsError;
       }
 
       await fetchServices();
