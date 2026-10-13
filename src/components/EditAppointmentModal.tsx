@@ -18,7 +18,7 @@ interface EditAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: Appointment | null;
-  onUpdate: (id: string, updates: Partial<Appointment>) => void;
+  onUpdate: (id: string, updates: Partial<Appointment>) => Promise<void> | void;
   onCancel: (id: string) => void;
   onNoShow: (id: string) => void;
   onPay: (id: string, method: 'cash' | 'card') => void;
@@ -34,6 +34,7 @@ const EditAppointmentModal = ({
   onPay 
 }: EditAppointmentModalProps) => {
   const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment>>({});
+  const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -71,7 +72,7 @@ const EditAppointmentModal = ({
             ? '✓ Payé'
             : 'À encaisser';
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editedAppointment.clientName?.trim()) {
       toast({
         title: "Erreur",
@@ -81,13 +82,16 @@ const EditAppointmentModal = ({
       return;
     }
 
-    onUpdate(appointment.id, editedAppointment);
-    onClose();
-    
-    toast({
-      title: "Succès",
-      description: "Rendez-vous mis à jour avec succès"
-    });
+    setSaving(true);
+    try {
+      await onUpdate(appointment.id, editedAppointment);
+      onClose();
+      toast({ title: 'Succès', description: 'Rendez-vous mis à jour avec succès' });
+    } catch {
+      toast({ title: 'Modification impossible', description: 'Vérifiez le créneau et réessayez.', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -124,8 +128,8 @@ const EditAppointmentModal = ({
   const canCloseAppointment =
     !['completed', 'cancelled', 'no_show'].includes(appointment.status);
 
-  const ModalContent = ({ className }: { className?: string }) => (
-    <div className={`space-y-4 ${className}`}>
+  const modalContent = (
+    <div className="space-y-4">
       {/* Informations générales */}
       <div className="p-3 sm:p-4 bg-muted rounded-lg">
         <div className={`flex items-center justify-between mb-2 ${isMobile ? 'flex-col gap-2' : ''}`}>
@@ -360,8 +364,8 @@ const EditAppointmentModal = ({
             Fermer
           </Button>
           {canCloseAppointment && (
-            <Button onClick={handleSave} className="flex-1">
-              Sauvegarder
+            <Button onClick={handleSave} disabled={saving} className="flex-1">
+              {saving ? 'Sauvegarde…' : 'Sauvegarder'}
             </Button>
           )}
         </div>
@@ -381,7 +385,7 @@ const EditAppointmentModal = ({
               </DrawerTitle>
             </DrawerHeader>
             <div className="px-4 pb-4 overflow-y-auto">
-              <ModalContent />
+              {modalContent}
             </div>
           </DrawerContent>
         </Drawer>
@@ -394,7 +398,7 @@ const EditAppointmentModal = ({
                 Éditer le rendez-vous
               </DialogTitle>
             </DialogHeader>
-            <ModalContent />
+            {modalContent}
           </DialogContent>
         </Dialog>
       )}

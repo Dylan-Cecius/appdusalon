@@ -14,7 +14,7 @@ describe('agenda UX contract', () => {
   });
 
   it('keeps a visual mini calendar and collaborator filtering', () => {
-    const agenda = read('src/components/agenda/ProAgenda.tsx');
+    const agenda = read('src/components/agenda/AgendaWorkspace.tsx');
 
     expect(agenda).toContain('MiniCalendar');
     expect(agenda).toContain('visibleMemberIds');
@@ -23,7 +23,7 @@ describe('agenda UX contract', () => {
   });
 
   it('keeps fast creation from empty slots and drag and drop', () => {
-    const agenda = read('src/components/agenda/ProAgenda.tsx');
+    const agenda = read('src/components/agenda/AgendaWorkspace.tsx');
 
     expect(agenda).toContain('DroppableSlot');
     expect(agenda).toContain('handleSlotClick');
@@ -32,7 +32,7 @@ describe('agenda UX contract', () => {
   });
 
   it('keeps a weekly overview with direct return to day view', () => {
-    const agenda = read('src/components/agenda/ProAgenda.tsx');
+    const agenda = read('src/components/agenda/AgendaWorkspace.tsx');
 
     expect(agenda).toContain('weekDays');
     expect(agenda).toContain('visibleWeekAppointments');

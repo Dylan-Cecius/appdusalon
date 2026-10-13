@@ -1,9 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./App";
-import PreviewStandalone from "./PreviewStandalone";
 import { ThemeProvider } from "next-themes";
+
+// Keep the standalone demo independent from authentication and production clients.
+const Root = import.meta.env.VITE_PREVIEW_STANDALONE === 'true'
+  ? React.lazy(() => import('./PreviewStandalone'))
+  : React.lazy(() => import('./App'));
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -14,7 +17,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       enableSystem={false}
       disableTransitionOnChange
     >
-      {import.meta.env.VITE_PREVIEW_STANDALONE === 'true' ? <PreviewStandalone /> : <App />}
+      <React.Suspense fallback={<div className="p-8 text-center text-sm text-slate-500">Chargement du salon…</div>}>
+        <Root />
+      </React.Suspense>
     </ThemeProvider>
   </React.StrictMode>
 );
