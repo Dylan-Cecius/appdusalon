@@ -13,6 +13,11 @@ export interface Appointment {
   depositRequired?: number;
   amountPaid?: number;
   paymentExpiresAt?: Date;
+  recurrenceGroupId?: string;
+  recurrenceIndex?: number;
+  recurrenceFrequency?: 'weekly' | 'monthly';
+  recurrenceInterval?: number;
+  recurrenceTotal?: number;
   notes?: string;
   isPaid: boolean;
   barberId?: string;
