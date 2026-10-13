@@ -117,7 +117,7 @@ serve(async (req) => {
     const [servicesRes, staffRes] = await Promise.all([
       supabase
         .from('services')
-        .select('id, name, price, duration, category, color')
+        .select('id, name, price, duration, category, color, booking_payment_mode, booking_payment_value, cancellation_deadline_hours, late_cancellation_policy')
         .eq('salon_id', salon.id)
         .eq('is_active', true)
         .neq('category', 'produit')
