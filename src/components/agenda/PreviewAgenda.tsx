@@ -1,3 +1,4 @@
+import { isTimeOffConflict, validateTimeOff, type StaffTimeOff } from '@/lib/staffTimeOff';
 import { useEffect, useRef, useState, type SetStateAction } from 'react';
 import { addDays, format } from 'date-fns';
 import { RotateCcw } from 'lucide-react';
@@ -67,17 +68,17 @@ function seedAppointments(): Appointment[] {
   });
 }
 
-type PreviewState = { appointments: Appointment[]; waitlist: BookingWaitlistEntry[] };
+type PreviewState = { appointments: Appointment[]; waitlist: BookingWaitlistEntry[]; timeOff: StaffTimeOff[] };
 function loadPreviewState(): PreviewState {
   try {
     const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
     const savedAppointments = Array.isArray(stored) ? stored : stored?.appointments;
     if (Array.isArray(savedAppointments)) {
       const restored = savedAppointments.map(item => ({ ...item, startTime: new Date(item.startTime), endTime: new Date(item.endTime) }));
-      if (restored.every(item => item.id && typeof item.clientName === 'string' && Array.isArray(item.services) && Number.isFinite(item.startTime.getTime()) && Number.isFinite(item.endTime.getTime()))) return { appointments: restored, waitlist: Array.isArray(stored?.waitlist) ? stored.waitlist : seedWaitlist() };
+      if (restored.every(item => item.id && typeof item.clientName === 'string' && Array.isArray(item.services) && Number.isFinite(item.startTime.getTime()) && Number.isFinite(item.endTime.getTime()))) return { appointments: restored, waitlist: Array.isArray(stored?.waitlist) ? stored.waitlist : seedWaitlist(), timeOff: Array.isArray(stored?.timeOff) ? stored.timeOff.map((item: StaffTimeOff) => ({ ...item, startTime: new Date(item.startTime), endTime: new Date(item.endTime) })) : [] };
     }
   } catch { /* A blocked or obsolete local store must not prevent previewing. */ }
-  return { appointments: seedAppointments(), waitlist: seedWaitlist() };
+  return { appointments: seedAppointments(), waitlist: seedWaitlist(), timeOff: [] };
 }
 
 function seedWaitlist(): BookingWaitlistEntry[] {
@@ -91,7 +92,8 @@ function seedWaitlist(): BookingWaitlistEntry[] {
   }));
 }
 
-function validateAppointment(candidate: Appointment, appointments: Appointment[]) {
+function validateAppointment(candidate: Appointment, appointments: Appointment[], timeOff: StaffTimeOff[] = []) {
+  if (isTimeOffConflict(candidate, timeOff)) throw new Error('Ce collaborateur est indisponible sur cette période.');
   const start = new Date(candidate.startTime), end = new Date(candidate.endTime);
   if (!candidate.clientName.trim() || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start || format(start, 'yyyy-MM-dd') !== format(end, 'yyyy-MM-dd')) throw new Error('Vérifiez le nom et la durée du rendez-vous.');
   if (start.getHours() < 9 || end.getHours() > 19 || (end.getHours() === 19 && end.getMinutes() > 0)) throw new Error('Choisissez un horaire entre 9 h et 19 h.');
@@ -131,7 +133,7 @@ function CreatePreviewAppointment({ isOpen, onClose, selectedDate, selectedTimeS
 
 export default function PreviewAgenda() {
   const [state, setState] = useState(loadPreviewState);
-  const { appointments, waitlist } = state;
+  const { appointments, waitlist, timeOff } = state;
   const currentState = useRef(state);
   currentState.current = state;
   const setAppointments = (action: SetStateAction<Appointment[]>) => setState(current => ({ ...current, appointments: typeof action === 'function' ? action(current.appointments) : action }));
@@ -147,16 +149,19 @@ export default function PreviewAgenda() {
       if (new Date(next.endTime).getTime() - new Date(next.startTime).getTime() !== duration) throw new Error('Conservez la durée des étapes de la prestation.');
       next.segments = shiftAppointmentSegments(original, new Date(next.startTime));
     }
-    validateAppointment(next, appointments);
+    validateAppointment(next, appointments, timeOff);
     setAppointments(current => current.map(item => item.id === id ? next : item));
   };
 
   return <TooltipProvider>
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
       <div><p className="text-sm font-semibold text-indigo-950">Essayez le nouvel agenda</p><p className="mt-1 text-xs text-indigo-800">La coloration inclut 30 min de pose : essayez d’y placer une coupe. Données fictives, paiements simulés.</p></div>
-      <Button type="button" variant="outline" size="sm" onClick={() => { setAppointments(seedAppointments()); setWaitlist(seedWaitlist()); setRevision(value => value + 1); toast({ title: 'Démonstration réinitialisée' }); }}><RotateCcw className="mr-2 h-3.5 w-3.5" />Réinitialiser la démo</Button>
+      <Button type="button" variant="outline" size="sm" onClick={() => { setState({ appointments: seedAppointments(), waitlist: seedWaitlist(), timeOff: [] }); setRevision(value => value + 1); toast({ title: 'Démonstration réinitialisée' }); }}><RotateCcw className="mr-2 h-3.5 w-3.5" />Réinitialiser la démo</Button>
     </div>
     <AgendaWorkspace key={revision}
+      timeOff={timeOff}
+      saveTimeOff={async (input, id) => { const current = currentState.current; validateTimeOff(input, current.timeOff, current.appointments, id); const item = { ...input, id: id || crypto.randomUUID() }; const next = { ...current, timeOff: id ? current.timeOff.map(old => old.id === id ? item : old) : [...current.timeOff, item] }; currentState.current = next; setState(next); }}
+      removeTimeOff={async id => { setState(current => ({ ...current, timeOff: current.timeOff.filter(item => item.id !== id) })); }}
       appointments={appointments} appointmentsLoading={false} dbServices={services} activeStaff={members}
       getScheduleForDate={schedule} hasOpeningHours={true} waitlistEntries={waitlist} waitlistLoading={false}
       cancelWaitlistEntry={async id => { setWaitlist(current => current.filter(item => item.id !== id)); }}
@@ -170,17 +175,17 @@ export default function PreviewAgenda() {
       bookWaitlistEntry={async (entry, slot) => {
         const current = currentState.current;
         if (!current.waitlist.some(item => item.id === entry.id)) throw new Error('Cette demande a déjà été traitée.');
-        const available = findWaitlistSlots(entry, { services, staff: members, appointments: current.appointments, schedule, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, limit: 5000 });
+        const available = findWaitlistSlots(entry, { services, staff: members, appointments: current.appointments, timeOff: current.timeOff, schedule, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, limit: 5000 });
         if (!available.some(item => item.staffId === slot.staffId && item.startTime.getTime() === slot.startTime.getTime())) throw new Error('Ce créneau n’est plus disponible. Recherchez un autre horaire.');
         const appointment = { ...waitlistAppointment(entry, services.find(service => service.id === entry.service_id)!, slot), id: crypto.randomUUID() };
-        validateAppointment(appointment, current.appointments);
-        const next = { appointments: [...current.appointments, appointment], waitlist: current.waitlist.filter(item => item.id !== entry.id) };
+        validateAppointment(appointment, current.appointments, current.timeOff);
+        const next = { ...current, appointments: [...current.appointments, appointment], waitlist: current.waitlist.filter(item => item.id !== entry.id) };
         currentState.current = next; setState(next);
       }}
       updateAppointment={updateAppointment} refreshAppointments={refresh}
       markAsPaid={async id => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: 'completed', paymentStatus: 'paid', isPaid: true, amountPaid: item.totalPrice } : item)); toast({ title: 'Paiement simulé', description: 'Le rendez-vous est maintenant marqué payé.' }); }}
       cancelAppointment={async (id, action) => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: action === 'cancel' ? 'cancelled' : 'no_show' } : item)); }}
-      renderCreateDialog={props => props.isOpen ? <CreatePreviewAppointment {...props} onCreate={appointment => { validateAppointment(appointment, appointments); setAppointments(current => [...current, appointment]); toast({ title: 'Rendez-vous de démonstration créé' }); }} /> : null}
+      renderCreateDialog={props => props.isOpen ? <CreatePreviewAppointment {...props} onCreate={appointment => { validateAppointment(appointment, appointments, timeOff); setAppointments(current => [...current, appointment]); toast({ title: 'Rendez-vous de démonstration créé' }); }} /> : null}
     />
     <Toaster />
   </TooltipProvider>;

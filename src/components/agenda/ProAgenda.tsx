@@ -1,3 +1,4 @@
+import { useStaffTimeOff } from '@/hooks/useStaffTimeOff';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useOpeningHours } from '@/hooks/useOpeningHours';
@@ -12,8 +13,11 @@ export default function ProAgenda() {
   const { getScheduleForDate, hasData } = useOpeningHours();
   const { activeStaff } = useStaff();
   const waitlist = useBookingWaitlist();
+  const timeOff = useStaffTimeOff();
 
   return <AgendaWorkspace
+    timeOff={timeOff.entries} timeOffLoading={timeOff.loading} timeOffError={timeOff.error}
+    saveTimeOff={timeOff.canManage ? timeOff.save : undefined} removeTimeOff={timeOff.canManage ? timeOff.remove : undefined}
     appointments={appointments}
     appointmentsLoading={loading}
     dbServices={services}

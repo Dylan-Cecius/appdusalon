@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3, BellRing, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3, BellRing, Search, CalendarOff } from 'lucide-react';
 import { addDays, addWeeks, endOfWeek, format, isSameDay, startOfWeek, subDays, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,7 @@ interface AgendaHeaderProps {
   waitlistCount?: number;
   onWaitlistClick?: () => void;
   onSearchClick?: () => void;
+  onTimeOffClick?: () => void;
 }
 
 const AgendaHeader = ({
@@ -38,7 +39,7 @@ const AgendaHeader = ({
   onSlotIntervalChange,
   waitlistCount = 0,
   onWaitlistClick,
-  onSearchClick,
+  onSearchClick, onTimeOffClick,
 }: AgendaHeaderProps) => {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [mobileDatePickerOpen, setMobileDatePickerOpen] = useState(false);
@@ -169,6 +170,7 @@ const AgendaHeader = ({
             </div>
           )}
 
+          {onTimeOffClick && <button type="button" onClick={onTimeOffClick} aria-label="Indisponibilités" title="Indisponibilités" className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"><CalendarOff className="h-4 w-4" /><span className="hidden lg:inline">Indisponibilités</span></button>}
           {onSearchClick && (
             <button type="button" onClick={onSearchClick} aria-label="Rechercher un rendez-vous" title="Rechercher un rendez-vous" className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50">
               <Search className="h-4 w-4" />

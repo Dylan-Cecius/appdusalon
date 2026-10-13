@@ -1,3 +1,5 @@
+import StaffTimeOffPanel from './StaffTimeOffPanel';
+import { timeOffOnDay, timeOffReasons, isTimeOffConflict, type StaffTimeOff, type TimeOffInput } from '@/lib/staffTimeOff';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { addDays, format, getDay, isSameDay, startOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -133,6 +135,7 @@ const DroppableSlot = ({
 };
 
 export type AgendaCreateDialogProps = {
+  onTimeOffClick?: () => void;
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date;
@@ -142,6 +145,11 @@ export type AgendaCreateDialogProps = {
 
 export type AgendaWorkspaceProps = {
   appointments: Appointment[];
+  timeOff?: StaffTimeOff[];
+  timeOffLoading?: boolean;
+  timeOffError?: boolean;
+  saveTimeOff?: (input: TimeOffInput, id?: string) => Promise<void>;
+  removeTimeOff?: (id: string) => Promise<void>;
   appointmentsLoading: boolean;
   dbServices: (WaitlistService & Pick<Service, 'color' | 'category'>)[];
   activeStaff: Staff[];
@@ -163,7 +171,7 @@ export type AgendaWorkspaceProps = {
 export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices, activeStaff,
   getScheduleForDate, hasOpeningHours, waitlistEntries, waitlistLoading, cancelWaitlistEntry,
   updateAppointment, markAsPaid, cancelAppointment, refreshAppointments, renderCreateDialog,
-  addWaitlistEntry, bookWaitlistEntry, waitlistTimezone,
+  addWaitlistEntry, bookWaitlistEntry, waitlistTimezone, timeOff = [], timeOffLoading = false, timeOffError = false, saveTimeOff, removeTimeOff,
 }: AgendaWorkspaceProps) => {
   const waitlistCount = waitlistEntries.length;
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -179,6 +187,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [timeOffOpen, setTimeOffOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isMobile = useIsMobile();
@@ -434,6 +443,8 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
       return;
     }
 
+    if (isTimeOffConflict({ startTime: newStart, endTime: newEnd, staffId: newStaffId }, timeOff)) { toast({ title: 'Collaborateur indisponible', description: 'Choisissez un autre créneau.', variant: 'destructive' }); return; }
+
     const targetMember = agendaMembers.find((member) => member.id === newStaffId);
     if (
       targetMember &&
@@ -490,6 +501,13 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
     setIsModalOpen(true);
   };
 
+  const renderTimeOff = (date: Date, memberId?: string) => timeOffOnDay(timeOff, date, memberId).filter(item => memberId || visibleMemberIds.has(item.staffId)).map(item => (
+    <button key={item.id} type="button" onClick={() => { setSelectedDate(date); setTimeOffOpen(true); }} aria-label={`Indisponibilité : ${item.title}`} className="w-full rounded-xl border border-dashed border-slate-400 bg-slate-100 p-3 text-left text-slate-700">
+      <span className="block text-xs font-semibold">{item.title} · {timeOffReasons[item.reason]}</span>
+      <span className="block text-xs">{agendaMembers.find(member => member.id === item.staffId)?.name} · {format(item.startTime, 'dd/MM HH:mm')} → {format(item.endTime, 'dd/MM HH:mm')}</span>
+    </button>
+  ));
+
   const renderMobileDay = () => (
     <>
       <div className="flex gap-2 overflow-x-auto border-b border-border bg-card px-3 py-2.5">
@@ -524,6 +542,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
 
       <div className="flex-1 overflow-auto bg-slate-50 p-3">
         <div className="space-y-2">
+          {renderTimeOff(selectedDate, selectedBarberId)}
           {(appointmentsByMember[selectedBarberId] || []).map((appointment: any) => {
             const color = getAppointmentColor(
               appointment.services,
@@ -628,6 +647,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
               </button>
 
               <div className="space-y-2 p-2">
+                {renderTimeOff(day)}
                 {dayAppointmentsVisible.map((appointment: any) => {
                   const memberId = appointment.staffId || appointment.barberId || '';
                   const member = agendaMembers.find((item) => item.id === memberId);
@@ -669,7 +689,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                     className="flex min-h-24 w-full flex-col items-center justify-center rounded-xl border border-dashed border-border text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/[0.03] hover:text-primary"
                   >
                     <Clock3 className="h-4 w-4" />
-                    <span className="mt-1 text-[10px] font-semibold">Libre</span>
+                    <span className="mt-1 text-[10px] font-semibold">{timeOffOnDay(timeOff, day).length ? 'Ajouter un rendez-vous' : 'Libre'}</span>
                   </button>
                 )}
               </div>
@@ -867,7 +887,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                     isBreak={isBreak}
                     isHourStart={minute === 0}
                     isHalfHour={minute === 30}
-                    isAbsent={!isStaffWorking(member, selectedDate, hour, minute)}
+                    isAbsent={!isStaffWorking(member, selectedDate, hour, minute) || timeOffOnDay(timeOff, selectedDate, member.id).some(item => { const start = new Date(selectedDate); start.setHours(hour, minute, 0, 0); return start < item.endTime && new Date(start.getTime() + slotInterval * 60000) > item.startTime; })}
                     slotHeight={slotHeight}
                     onClick={() => handleSlotClick(member.id, hour, minute)}
                   />
@@ -887,6 +907,14 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                     onClick={() => openAppointment(appointment)}
                   />
                 ))}
+
+                {timeOffOnDay(timeOff, selectedDate, member.id).map(item => {
+                  const gridStart = new Date(selectedDate); gridStart.setHours(startHour, 0, 0, 0);
+                  const start = Math.max(0, (item.startTime.getTime() - gridStart.getTime()) / 60000);
+                  const end = Math.min(timeLabels.length * slotInterval, (item.endTime.getTime() - gridStart.getTime()) / 60000);
+                  if (end <= start) return null;
+                  return <button key={item.id} type="button" aria-label={`Indisponibilité : ${item.title}`} onClick={() => setTimeOffOpen(true)} className="absolute left-1 right-1 z-[15] overflow-hidden rounded-lg border border-dashed border-slate-400 p-2 text-left text-xs text-slate-700" style={{ top: start / slotInterval * slotHeight, height: (end - start) / slotInterval * slotHeight, background: 'repeating-linear-gradient(135deg,#f1f5f9,#f1f5f9 8px,#e2e8f0 8px,#e2e8f0 10px)' }}><span className="block font-semibold">{item.title}</span><span>{timeOffReasons[item.reason]}</span></button>;
+                })}
 
                 {isSameDay(selectedDate, new Date()) && (
                   <CurrentTimeIndicator
@@ -917,6 +945,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
         waitlistCount={waitlistCount}
         onWaitlistClick={() => setWaitlistOpen(true)}
         onSearchClick={() => setSearchOpen(true)}
+        onTimeOffClick={() => setTimeOffOpen(true)}
       />
       {viewMode === 'day' ? renderMobileDay() : renderWeekOverview(true)}
     </div>
@@ -936,6 +965,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
         waitlistCount={waitlistCount}
         onWaitlistClick={() => setWaitlistOpen(true)}
         onSearchClick={() => setSearchOpen(true)}
+        onTimeOffClick={() => setTimeOffOpen(true)}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -951,7 +981,9 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      {timeOffError && <p role="alert" className="mb-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Indisponibilités non chargées : la recherche de créneaux en liste d’attente est suspendue.</p>}
       {body}
+      <StaffTimeOffPanel open={timeOffOpen} onOpenChange={setTimeOffOpen} entries={timeOff} staff={agendaMembers} date={selectedDate} staffId={selectedBarberId} onSave={saveTimeOff} onRemove={removeTimeOff} loading={timeOffLoading} error={timeOffError} />
 
       <AgendaSearchDialog open={searchOpen} onOpenChange={setSearchOpen} appointments={appointments} members={agendaMembers} loading={appointmentsLoading} onSelect={openSearchResult} />
 
@@ -973,6 +1005,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
       </DragOverlay>
 
       {renderCreateDialog({
+        onTimeOffClick: () => { setIsModalOpen(false); setTimeOffOpen(true); },
         isOpen: isModalOpen,
         onClose: () => {
           setIsModalOpen(false);
@@ -989,6 +1022,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
         entries={waitlistEntries}
         loading={waitlistLoading}
         onCancel={cancelWaitlistEntry}
+        timeOff={timeOff} availabilityError={timeOffError || timeOffLoading}
         services={dbServices} staff={activeStaff} appointments={appointments}
         schedule={getScheduleForDate} timezone={waitlistTimezone}
         onAdd={addWaitlistEntry}

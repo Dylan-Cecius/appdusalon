@@ -313,6 +313,12 @@ serve(async (req) => {
       return jsonResponse({ error: "booking_temporarily_limited" }, 429);
     }
 
+    const { data: timeOff, error: timeOffError } = await supabase.from("staff_time_off")
+      .select("id").eq("salon_id", salon_id).eq("staff_id", staff_id)
+      .lt("starts_at", appointmentEnd.toISOString()).gt("ends_at", appointmentStart.toISOString()).limit(1);
+    if (timeOffError) throw timeOffError;
+    if (timeOff?.length) return jsonResponse({ error: "slot_no_longer_available" }, 409);
+
     const { data: occupiedSegments, error: conflictError } = await supabase
       .from("appointment_segments")
       .select("starts_at, ends_at")

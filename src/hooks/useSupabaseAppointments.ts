@@ -13,6 +13,8 @@ const appointmentErrorDescription = (error: unknown, action: 'add' | 'update') =
         ? String((error as { message?: unknown }).message || '')
         : '';
 
+  if (message.includes('staff_unavailable')) return 'Ce collaborateur est indisponible sur cette période.';
+
   if (message.includes('appointment_conflict') || message.includes('23P01')) {
     return 'Ce créneau est déjà occupé pour ce membre de l’équipe.';
   }

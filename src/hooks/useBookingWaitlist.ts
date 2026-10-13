@@ -6,7 +6,7 @@ import type { WaitlistRequest, WaitlistSlot } from '@/lib/waitlistSlots';
 
 const waitlistError = (error: { message?: string; code?: string }) => {
   if (error.code === 'PGRST202') return new Error('Cette action n’est pas encore disponible sur cet environnement.');
-  if (/appointment_conflict|23P01|outside_|invalid_waitlist_slot/.test(error.message || '')) return new Error('Ce créneau n’est plus disponible. Recherchez un autre horaire.');
+  if (/staff_unavailable|appointment_conflict|23P01|outside_|invalid_waitlist_slot/.test(error.message || '')) return new Error('Ce créneau n’est plus disponible. Recherchez un autre horaire.');
   if (/already_processed/.test(error.message || '')) return new Error('Cette demande a déjà été traitée. Actualisez la liste.');
   return new Error('La demande n’a pas pu être enregistrée. Vérifiez les informations et réessayez.');
 };

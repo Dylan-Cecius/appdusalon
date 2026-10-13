@@ -1,3 +1,4 @@
+import type { StaffTimeOff } from '@/lib/staffTimeOff';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -18,6 +19,8 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   entries: BookingWaitlistEntry[];
   loading: boolean;
+  timeOff?: StaffTimeOff[];
+  availabilityError?: boolean;
   onCancel: (id: string) => Promise<void>;
   services?: WaitlistService[];
   staff?: Staff[];
@@ -32,7 +35,7 @@ const BookingWaitlistPanel = ({
   open,
   onOpenChange,
   entries,
-  loading,
+  loading, timeOff = [], availabilityError = false,
   onCancel,
   services = [], staff = [], appointments = [], schedule = () => null,
   timezone = Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -47,7 +50,7 @@ const BookingWaitlistPanel = ({
   const normalize = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
   const filtered = entries.filter(entry => normalize(`${entry.client_name} ${entry.client_phone} ${entry.service?.name || ''}`).includes(normalize(query)));
   const selectedEntry = entries.find(entry => entry.id === selectedId);
-  const slots = selectedEntry ? findWaitlistSlots(selectedEntry, { services, staff, appointments, schedule, timezone }) : [];
+  const slots = selectedEntry && !availabilityError ? findWaitlistSlots(selectedEntry, { services, staff, appointments, schedule, timezone, timeOff }) : [];
   const act = async (action: () => Promise<void>) => {
     if (busy) return;
     setBusy(true); setError('');
@@ -133,6 +136,7 @@ const BookingWaitlistPanel = ({
                       {selectedId === entry.id && <div className="mt-3 space-y-2">
                         <p className="text-xs text-slate-500">Propositions selon les préférences du client. Confirmez son accord avant de créer le rendez-vous.</p>
                         {timezone === 'Europe/Brussels' && <p className="text-[10px] text-slate-500">Heure du salon · Bruxelles</p>}
+                        {availabilityError && <p role="alert" className="text-xs text-red-700">Les indisponibilités n’ont pas pu être vérifiées. Réessayez après actualisation.</p>}
                         {slots.length === 0 ? <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Aucun créneau adapté sur cette période. Vérifiez les horaires du salon et du collaborateur.</p> : <fieldset className="space-y-1.5"><legend className="mb-1 text-xs font-semibold">Choisir un créneau</legend>
                           {slots.map(slot => <label key={`${slot.staffId}-${slot.startTime.toISOString()}`} className="flex cursor-pointer items-center gap-2 rounded-lg border p-2 text-xs has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-50">
                             <input type="radio" name={`slot-${entry.id}`} disabled={busy} checked={selectedSlot?.staffId === slot.staffId && selectedSlot?.startTime.getTime() === slot.startTime.getTime()} onChange={() => setSelectedSlot(slot)} />

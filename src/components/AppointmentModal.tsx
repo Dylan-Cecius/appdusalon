@@ -20,6 +20,7 @@ import { fr } from 'date-fns/locale';
 
 interface AppointmentModalProps {
   isOpen: boolean;
+  onTimeOffClick?: () => void;
   onClose: () => void;
   selectedDate: Date;
   staffId?: string;
@@ -36,7 +37,7 @@ const appointmentTypes = [
   { value: 'autre', label: 'Autre', color: 'bg-orange-500' }
 ];
 
-const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTimeSlot }: AppointmentModalProps) => {
+const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTimeSlot, onTimeOffClick }: AppointmentModalProps) => {
   const [appointmentType, setAppointmentType] = useState('client');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -197,6 +198,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
 
   const recurrenceControls = (
     <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+      {onTimeOffClick && <Button type="button" variant="outline" className="mb-3 w-full" onClick={onTimeOffClick}>Bloquer un créneau sans rendez-vous</Button>}
       <button
         type="button"
         onClick={() => setRecurrenceEnabled((value) => !value)}
@@ -303,7 +305,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-background border z-50">
-                      {appointmentTypes.map((type) => (
+                      {appointmentTypes.filter(type => !onTimeOffClick || type.value === 'client').map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           <div className="flex items-center gap-2">
                             <div className={`w-3 h-3 rounded ${type.color}`}></div>
@@ -494,7 +496,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-background border z-50">
-                    {appointmentTypes.map((type) => (
+                    {appointmentTypes.filter(type => !onTimeOffClick || type.value === 'client').map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         <div className="flex items-center gap-2">
                           <div className={`w-3 h-3 rounded ${type.color}`}></div>

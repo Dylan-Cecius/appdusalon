@@ -153,6 +153,19 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // A freed appointment may since have been replaced by a staff absence.
+      if (opening.staff_id) {
+        const { data: timeOff, error: timeOffError } = await admin.from("staff_time_off")
+          .select("id").eq("salon_id", opening.salon_id).eq("staff_id", opening.staff_id)
+          .lt("starts_at", opening.end_time).gt("ends_at", opening.start_time).limit(1);
+        if (timeOffError) throw timeOffError;
+        if (timeOff?.length) {
+          await admin.from("booking_waitlist_openings").update({ processed_at: nowIso }).eq("id", opening.id);
+          openingsProcessed += 1;
+          continue;
+        }
+      }
+
       const { data: candidates, error: candidatesError } = await admin
         .from("booking_waitlist")
         .select(

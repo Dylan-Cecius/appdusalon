@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      staff_time_off: {
+        Row: { id: string; salon_id: string; staff_id: string; title: string; reason: string; starts_at: string; ends_at: string; created_at: string }
+        Insert: { id?: string; salon_id: string; staff_id: string; title: string; reason: string; starts_at: string; ends_at: string; created_at?: string }
+        Update: { id?: string; salon_id?: string; staff_id?: string; title?: string; reason?: string; starts_at?: string; ends_at?: string; created_at?: string }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action: string

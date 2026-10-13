@@ -268,6 +268,11 @@ serve(async (req) => {
 
     if (segmentsError) throw segmentsError;
 
+    const { data: timeOff, error: timeOffError } = await supabase.from("staff_time_off")
+      .select("staff_id, starts_at, ends_at").eq("salon_id", salonId)
+      .lt("starts_at", localDayEnd.toISOString()).gt("ends_at", localDayStart.toISOString());
+    if (timeOffError) throw timeOffError;
+
     const firstMinute = Math.min(...candidates.map((member) => member.start));
     const lastMinute = Math.max(...candidates.map((member) => member.end));
     const now = new Date();
@@ -301,6 +306,7 @@ serve(async (req) => {
 
       for (const member of candidates) {
         if (minute < member.start || endMinute > member.end) continue;
+        if ((timeOff || []).some(block => block.staff_id === member.id && new Date(block.starts_at) < slotEnd && new Date(block.ends_at) > slotStart)) continue;
 
         const candidate = buildBookingSegments({
           start: slotStart,

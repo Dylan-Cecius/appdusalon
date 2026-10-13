@@ -1,3 +1,4 @@
+import { isTimeOffConflict, type StaffTimeOff } from './staffTimeOff';
 import { addDays, format } from 'date-fns';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import type { Appointment, AppointmentSegment } from '@/data/appointments';
@@ -32,8 +33,8 @@ export function waitlistAppointment(entry: WaitlistRequest, service: WaitlistSer
     status: 'scheduled', isPaid: false, paymentStatus: 'unpaid', amountPaid: 0 };
 }
 
-export function findWaitlistSlots(entry: BookingWaitlistEntry, { services, staff, appointments, schedule, timezone, now = new Date(), limit = 6 }: {
-  services: WaitlistService[]; staff: Staff[]; appointments: Appointment[];
+export function findWaitlistSlots(entry: BookingWaitlistEntry, { services, staff, appointments, schedule, timezone, timeOff = [], now = new Date(), limit = 6 }: {
+  services: WaitlistService[]; staff: Staff[]; appointments: Appointment[]; timeOff?: StaffTimeOff[];
   schedule: (date: Date) => DaySchedule | null; timezone: string; now?: Date; limit?: number;
 }): WaitlistSlot[] {
   const service = services.find(item => item.id === entry.service_id);
@@ -62,6 +63,7 @@ export function findWaitlistSlots(entry: BookingWaitlistEntry, { services, staff
         let candidate: Appointment;
         try { candidate = waitlistAppointment(entry, service, { staffId: member.id, startTime }); } catch { return []; }
         if (candidate.endTime.getTime() > upper) break;
+        if (isTimeOffConflict(candidate, timeOff)) continue;
         if (hours.break_start && hours.break_end && startTime < at(hours.break_end) && candidate.endTime > at(hours.break_start)) continue;
         if (appointments.some(other => (other.staffId || other.barberId) === member.id && !['cancelled', 'no_show'].includes(other.status) && appointmentOccupancyOverlaps(candidate, other))) continue;
         results.push({ staffId: member.id, staffName: member.name, startTime, endTime: candidate.endTime });
