@@ -135,4 +135,19 @@ describe('release-critical server invariants', () => {
   });
 
 
+  it('keeps automatic waitlist matching server-side', () => {
+    const join = read('supabase/functions/join-booking-waitlist/index.ts');
+    const processor = read('supabase/functions/process-booking-waitlist/index.ts');
+    const booking = read('supabase/functions/create-public-booking/index.ts');
+
+    expect(join).toContain('preferred_date_from');
+    expect(join).toContain('preferred_staff_id');
+    expect(processor).toContain('booking_waitlist_openings');
+    expect(processor).toContain('.slice(0, 3)');
+    expect(processor).toContain('offer_expires_at');
+    expect(booking).toContain('.from("booking_waitlist")');
+    expect(booking).toContain('status: "booked"');
+  });
+
+
 });
