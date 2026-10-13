@@ -1,3 +1,5 @@
+import AgendaClientPanel from './AgendaClientPanel';
+import { agendaClientDirectory, clientFromAppointment, type AgendaClient, type BookingPrefill, type RegisteredAgendaClient } from '@/lib/agendaClients';
 import StaffTimeOffPanel from './StaffTimeOffPanel';
 import { timeOffOnDay, timeOffReasons, isTimeOffConflict, type StaffTimeOff, type TimeOffInput } from '@/lib/staffTimeOff';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -135,6 +137,8 @@ const DroppableSlot = ({
 };
 
 export type AgendaCreateDialogProps = {
+  clientSuggestions?: AgendaClient[];
+  prefill?: BookingPrefill;
   onTimeOffClick?: () => void;
   isOpen: boolean;
   onClose: () => void;
@@ -144,6 +148,10 @@ export type AgendaCreateDialogProps = {
 };
 
 export type AgendaWorkspaceProps = {
+  clients?: RegisteredAgendaClient[];
+  clientsLoading?: boolean;
+  clientsError?: boolean;
+  appointmentsError?: boolean;
   appointments: Appointment[];
   timeOff?: StaffTimeOff[];
   timeOffLoading?: boolean;
@@ -168,11 +176,15 @@ export type AgendaWorkspaceProps = {
   renderCreateDialog: (props: AgendaCreateDialogProps) => ReactNode;
 };
 
-export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices, activeStaff,
+export const AgendaWorkspace = ({ clients = [], clientsLoading = false, clientsError = false, appointmentsError = false, appointments, appointmentsLoading, dbServices, activeStaff,
   getScheduleForDate, hasOpeningHours, waitlistEntries, waitlistLoading, cancelWaitlistEntry,
   updateAppointment, markAsPaid, cancelAppointment, refreshAppointments, renderCreateDialog,
   addWaitlistEntry, bookWaitlistEntry, waitlistTimezone, timeOff = [], timeOffLoading = false, timeOffError = false, saveTimeOff, removeTimeOff,
 }: AgendaWorkspaceProps) => {
+  const directory = useMemo(() => agendaClientDirectory(appointments, clients), [appointments, clients]);
+  const [clientsOpen, setClientsOpen] = useState(false);
+  const [historyClient, setHistoryClient] = useState<AgendaClient | null>(null);
+  const [bookingPrefill, setBookingPrefill] = useState<BookingPrefill | undefined>();
   const waitlistCount = waitlistEntries.length;
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<AgendaViewMode>('day');
@@ -400,6 +412,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
       : visibleWeekAppointments.length;
 
   const handleSlotClick = (memberId: string, hour: number, minute: number) => {
+    setBookingPrefill(undefined);
     setSelectedBarberId(memberId);
     setSelectedTimeSlot(
       `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
@@ -495,6 +508,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
   };
 
   const openNewAppointment = (date = selectedDate, memberId?: string) => {
+    setBookingPrefill(undefined);
     setSelectedDate(date);
     setSelectedTimeSlot('');
     setSelectedBarberId(memberId || filteredMembers[0]?.id || agendaMembers[0]?.id || '');
@@ -946,6 +960,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
         onWaitlistClick={() => setWaitlistOpen(true)}
         onSearchClick={() => setSearchOpen(true)}
         onTimeOffClick={() => setTimeOffOpen(true)}
+        onClientsClick={() => { setHistoryClient(null); setClientsOpen(true); }}
       />
       {viewMode === 'day' ? renderMobileDay() : renderWeekOverview(true)}
     </div>
@@ -966,6 +981,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
         onWaitlistClick={() => setWaitlistOpen(true)}
         onSearchClick={() => setSearchOpen(true)}
         onTimeOffClick={() => setTimeOffOpen(true)}
+        onClientsClick={() => { setHistoryClient(null); setClientsOpen(true); }}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -983,6 +999,18 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
     >
       {timeOffError && <p role="alert" className="mb-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Indisponibilités non chargées : la recherche de créneaux en liste d’attente est suspendue.</p>}
       {body}
+      {clientsOpen && <AgendaClientPanel clients={directory} appointments={appointments} initialClient={historyClient}
+        loading={clientsLoading || appointmentsLoading} error={clientsError || appointmentsError}
+        staff={agendaMembers} services={dbServices} timezone={waitlistTimezone}
+        onClose={() => setClientsOpen(false)}
+        onAppointment={appointment => { setClientsOpen(false); openSearchResult(appointment); }}
+        onBook={(client, appointment) => {
+          setClientsOpen(false);
+          const preferredStaff = appointment?.staffId || appointment?.barberId;
+          const memberId = agendaMembers.some(member => member.id === preferredStaff) ? preferredStaff : undefined;
+          openNewAppointment(selectedDate < new Date() ? new Date() : selectedDate, memberId);
+          setBookingPrefill({ client: { name: client.name, phone: client.phone }, services: appointment?.services.map(service => ({ id: service.id, name: service.name })) });
+        }} />}
       <StaffTimeOffPanel open={timeOffOpen} onOpenChange={setTimeOffOpen} entries={timeOff} staff={agendaMembers} date={selectedDate} staffId={selectedBarberId} onSave={saveTimeOff} onRemove={removeTimeOff} loading={timeOffLoading} error={timeOffError} />
 
       <AgendaSearchDialog open={searchOpen} onOpenChange={setSearchOpen} appointments={appointments} members={agendaMembers} loading={appointmentsLoading} onSelect={openSearchResult} />
@@ -1005,6 +1033,8 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
       </DragOverlay>
 
       {renderCreateDialog({
+        clientSuggestions: directory,
+        prefill: bookingPrefill,
         onTimeOffClick: () => { setIsModalOpen(false); setTimeOffOpen(true); },
         isOpen: isModalOpen,
         onClose: () => {
@@ -1043,6 +1073,11 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
             setSelectedAppointment(null);
           }}
           appointment={selectedAppointment}
+          serviceColors={Object.fromEntries(dbServices.map(service => [service.id, service.color]))}
+          onClientHistory={() => {
+            setHistoryClient(clientFromAppointment(selectedAppointment));
+            setIsEditModalOpen(false); setSelectedAppointment(null); setClientsOpen(true);
+          }}
           onUpdate={async (id, updates) => {
             await updateAppointment(id, updates);
             await refreshAppointments();

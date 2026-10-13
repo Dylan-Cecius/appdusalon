@@ -1,3 +1,4 @@
+import AgendaClientPicker from './AgendaClientPicker';
 import { useMemo, useRef, useState } from 'react';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { ArrowUp, ArrowDown, Plus, X, Clock3, CheckCircle2 } from 'lucide-react';
@@ -20,18 +21,19 @@ type Props = AgendaCreateDialogProps & {
   schedule: (date: Date) => DaySchedule | null; unavailable?: boolean; demo?: boolean; timezone?: string;
   onSave: (appointment: Appointment, recurrence: Recurrence | null) => Promise<void>;
 };
-export default function CreateAppointmentDialog({ isOpen, onClose, onTimeOffClick, selectedDate, selectedTimeSlot, staffId, services, staff, appointments, timeOff, schedule, unavailable = false, demo = false, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone, onSave }: Props) {
-  const [clientName, setClientName] = useState(''), [phone, setPhone] = useState(''), [notes, setNotes] = useState('');
+export default function CreateAppointmentDialog({ clientSuggestions = [], prefill, isOpen, onClose, onTimeOffClick, selectedDate, selectedTimeSlot, staffId, services, staff, appointments, timeOff, schedule, unavailable = false, demo = false, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone, onSave }: Props) {
+  const [clientName, setClientName] = useState(prefill?.client.name || ''), [phone, setPhone] = useState(prefill?.client.phone || ''), [notes, setNotes] = useState('');
   const [date, setDate] = useState(formatInTimeZone(selectedDate, timezone, 'yyyy-MM-dd'));
   const [time, setTime] = useState(selectedTimeSlot || (demo ? '17:00' : ''));
   const [memberId, setMemberId] = useState(staffId || staff[0]?.id || '');
-  const [serviceIds, setServiceIds] = useState<string[]>(services[0] ? [services[0].id] : []);
+  const [serviceIds, setServiceIds] = useState<string[]>(() => prefill?.services ? [...new Set(prefill.services.filter(item => services.some(service => service.id === item.id)).map(item => item.id))] : services[0] ? [services[0].id] : []);
   const [nextServiceId, setNextServiceId] = useState('');
   const [repeat, setRepeat] = useState(false);
   const [frequency, setFrequency] = useState<Recurrence['frequency']>('weekly');
   const [interval, setInterval] = useState('1'), [occurrences, setOccurrences] = useState('4');
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const saving = useRef(false);
+  const missingServices = prefill?.services?.filter(item => !services.some(service => service.id === item.id)) || [];
   const selected = useMemo(() => serviceIds.map(id => services.find(item => item.id === id)).filter((item): item is AppointmentService => !!item), [serviceIds, services]);
   const draftResult = useMemo(() => {
     if (!date || !time || !serviceIds.length) return { draft: null, series: [], issue: '' };
@@ -65,6 +67,9 @@ export default function CreateAppointmentDialog({ isOpen, onClose, onTimeOffClic
       }}>
         <fieldset disabled={busy} className="grid min-w-0 gap-5 md:grid-cols-[1.15fr_1fr]">
           <div className="min-w-0 space-y-4">
+            <AgendaClientPicker clients={clientSuggestions} onSelect={client => { setClientName(client.name); setPhone(client.phone); }} />
+            {prefill && <p className="rounded-lg bg-indigo-50 p-3 text-xs text-indigo-900">Coordonnées reprises pour ce rendez-vous.{prefill.services && ' Prestations recalculées au tarif et à la durée actuels ; choisissez la date et l’heure.'}</p>}
+            {missingServices.length > 0 && <p role="status" className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Prestations indisponibles à remplacer : {missingServices.map(item => item.name).join(', ')}.</p>}
             <div><Label htmlFor="create-name">{demo ? 'Nom du client fictif' : 'Nom du client'}</Label><Input id="create-name" required maxLength={100} value={clientName} onChange={event => setClientName(event.target.value)} autoComplete="off" /></div>
             <div><Label htmlFor="create-phone">{demo ? 'Téléphone fictif' : 'Téléphone'}</Label><Input id="create-phone" type="tel" maxLength={30} value={phone} onChange={event => setPhone(event.target.value)} /></div>
             <div className="grid grid-cols-2 gap-2"><div><Label htmlFor="create-date">Date</Label><Input id="create-date" type="date" required value={date} onChange={event => setDate(event.target.value)} /></div><div><Label htmlFor="create-time">Heure</Label><Input id="create-time" type="time" required value={time} onChange={event => setTime(event.target.value)} /></div></div>

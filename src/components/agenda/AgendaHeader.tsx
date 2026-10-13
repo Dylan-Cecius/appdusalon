@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3, BellRing, Search, CalendarOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3, BellRing, Search, CalendarOff, UserRound } from 'lucide-react';
 import { addDays, addWeeks, endOfWeek, format, isSameDay, startOfWeek, subDays, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,7 @@ interface AgendaHeaderProps {
   onWaitlistClick?: () => void;
   onSearchClick?: () => void;
   onTimeOffClick?: () => void;
+  onClientsClick?: () => void;
 }
 
 const AgendaHeader = ({
@@ -39,7 +40,7 @@ const AgendaHeader = ({
   onSlotIntervalChange,
   waitlistCount = 0,
   onWaitlistClick,
-  onSearchClick, onTimeOffClick,
+  onSearchClick, onTimeOffClick, onClientsClick,
 }: AgendaHeaderProps) => {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [mobileDatePickerOpen, setMobileDatePickerOpen] = useState(false);
@@ -194,6 +195,8 @@ const AgendaHeader = ({
               )}
             </button>
           )}
+
+          {onClientsClick && <button type="button" onClick={onClientsClick} aria-label="Clients de l’agenda" title="Clients de l’agenda" className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"><UserRound className="h-3.5 w-3.5" /><span className="hidden sm:inline">Clients</span></button>}
 
           {viewMode === 'day' && onSlotIntervalChange && (
             <div className="hidden items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 xl:flex">

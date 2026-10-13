@@ -1,3 +1,4 @@
+import { appointmentPalette } from '@/lib/appointmentPalette';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -17,6 +18,8 @@ import AppointmentTimeline from './agenda/AppointmentTimeline';
 import { getAppointmentSegments, shiftAppointmentSegments } from '@/lib/appointmentSegments';
 
 interface EditAppointmentModalProps {
+  onClientHistory?: () => void;
+  serviceColors?: Record<string, string | undefined>;
   isOpen: boolean;
   onClose: () => void;
   appointment: Appointment | null;
@@ -33,7 +36,7 @@ const EditAppointmentModal = ({
   onUpdate, 
   onCancel,
   onNoShow,
-  onPay 
+  onPay, onClientHistory, serviceColors = {}
 }: EditAppointmentModalProps) => {
   const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment>>({});
   const [saving, setSaving] = useState(false);
@@ -118,17 +121,12 @@ const EditAppointmentModal = ({
     onClose();
   };
 
-  const getServiceColor = (services: any[]) => {
-    if (!services || services.length === 0) return 'bg-purple-500';
-    const category = services[0]?.category;
-    switch (category) {
-      case 'coupe': return 'bg-red-500';
-      case 'barbe': return 'bg-pink-500';
-      case 'combo': return 'bg-purple-600';
-      case 'produit': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
-  };
+  const clientDraftChanged = ['clientName', 'clientPhone', 'notes'].some(field =>
+    (editedAppointment[field as keyof Appointment] || '') !== (appointment[field as keyof Appointment] || '')) ||
+    ['startTime', 'endTime'].some(field => {
+      const value = editedAppointment[field as 'startTime' | 'endTime'];
+      return value && new Date(value).getTime() !== new Date(appointment[field as 'startTime' | 'endTime']).getTime();
+    });
 
   const canCloseAppointment =
     !['completed', 'cancelled', 'no_show'].includes(appointment.status);
@@ -152,6 +150,8 @@ const EditAppointmentModal = ({
         </div>
       </div>
 
+      {onClientHistory && <div><Button type="button" variant="outline" className="w-full" disabled={saving || clientDraftChanged} onClick={onClientHistory}><User className="mr-2 h-4 w-4" />Historique du client</Button>{clientDraftChanged && <p className="mt-1 text-xs text-muted-foreground">Enregistrez vos modifications avant d’ouvrir l’historique.</p>}</div>}
+
       {/* Services */}
       <div>
         <Label className="text-sm font-medium mb-2 block">Services</Label>
@@ -159,7 +159,8 @@ const EditAppointmentModal = ({
           {appointment.services.map((service) => (
             <div 
               key={service.id}
-              className={`p-3 rounded text-white ${getServiceColor(appointment.services)}`}
+              className="rounded-xl border p-3 text-slate-800"
+              style={{ backgroundColor: appointmentPalette(serviceColors[service.id] || '#64748b').background, borderColor: appointmentPalette(serviceColors[service.id] || '#64748b').border }}
             >
               <div className={`flex items-center justify-between ${isMobile ? 'flex-col gap-1 items-start' : ''}`}>
                 <span className="font-medium">{service.name}</span>
