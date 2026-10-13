@@ -21,6 +21,8 @@ import AgendaHeader, { AgendaSlotInterval, AgendaViewMode } from './AgendaHeader
 import AppointmentCard from './AppointmentCard';
 import AgendaSearchDialog from './AgendaSearchDialog';
 import AppointmentStatusBadge from './AppointmentStatusBadge';
+import AppointmentTimeline from './AppointmentTimeline';
+import { appointmentPalette } from '@/lib/appointmentPalette';
 import type { Appointment } from '@/data/appointments';
 import BookingWaitlistPanel from './BookingWaitlistPanel';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
@@ -254,15 +256,14 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
 
   const getAppointmentColor = useCallback(
     (services: any[], memberId?: string): string => {
-      if (memberId && memberColorMap[memberId]) return memberColorMap[memberId];
-      if (!services?.length) return '#4f46e5';
+      if (!services?.length) return (memberId && memberColorMap[memberId]) || '#64748b';
 
       const service = services[0];
       const name = String(service?.name || '').toLowerCase();
       if (serviceColorMap[name]) return serviceColorMap[name];
 
       const category = String(service?.category || '').toLowerCase();
-      return categoryColors[category] || '#4f46e5';
+      return categoryColors[category] || '#64748b';
     },
     [memberColorMap, serviceColorMap]
   );
@@ -523,6 +524,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
               appointment.services,
               appointment.staffId || appointment.barberId
             );
+            const palette = appointmentPalette(color);
 
             return (
               <button
@@ -530,7 +532,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                 key={appointment.id}
                 onClick={() => openAppointment(appointment)}
                 className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left shadow-sm"
-                style={{ borderLeft: `4px solid ${color}` }}
+                style={{ borderColor: palette.border, borderLeft: `4px solid ${palette.accent}`, backgroundColor: palette.background }}
               >
                 <div className="w-14 shrink-0 text-sm font-bold tabular-nums text-foreground">
                   {format(new Date(appointment.startTime), 'HH:mm')}
@@ -541,6 +543,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                     {appointment.services?.[0]?.name}
                   </div>
                   <div className="mt-1"><AppointmentStatusBadge appointment={appointment} /></div>
+                  <AppointmentTimeline appointment={appointment} compact />
                 </div>
                 <div className="text-sm font-semibold">
                   {Number(appointment.totalPrice || 0).toFixed(0)} €
@@ -624,6 +627,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                   const memberId = appointment.staffId || appointment.barberId || '';
                   const member = agendaMembers.find((item) => item.id === memberId);
                   const color = getAppointmentColor(appointment.services, memberId);
+                  const palette = appointmentPalette(color);
 
                   return (
                     <button
@@ -631,7 +635,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                       type="button"
                       onClick={() => openAppointment(appointment)}
                       className="w-full rounded-xl border bg-background p-2.5 text-left transition-shadow hover:shadow-sm"
-                      style={{ borderLeft: `4px solid ${color}` }}
+                      style={{ borderColor: palette.border, borderLeft: `4px solid ${palette.accent}`, backgroundColor: palette.background }}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-bold tabular-nums">
@@ -648,6 +652,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
                         {appointment.services?.[0]?.name || 'Rendez-vous'}
                       </div>
                       <div className="mt-1.5"><AppointmentStatusBadge appointment={appointment} /></div>
+                      <AppointmentTimeline appointment={appointment} compact />
                     </button>
                   );
                 })}
@@ -761,11 +766,12 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
       memberCount <= 1 ? 320 : memberCount <= 3 ? 230 : 190;
 
     return (
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+      <div ref={scrollRef} data-testid="agenda-scroll" className="min-w-0 flex-1 overflow-auto bg-white">
+        <div style={{ minWidth: TIME_COL_WIDTH + memberCount * columnMinWidth }}>
         <div
-          className="flex shrink-0 border-b border-border bg-card"
-          style={{ paddingLeft: `${TIME_COL_WIDTH}px` }}
+          className="sticky top-0 z-30 flex border-b border-border bg-card"
         >
+          <div aria-hidden="true" className="sticky left-0 z-10 shrink-0 border-r border-border bg-card" style={{ width: TIME_COL_WIDTH }} />
           {filteredMembers.map((member, index) => {
             const dayName = jsWeekDayMap[getDay(selectedDate)];
             const worksToday = Boolean(member.daily_schedules?.[dayName]);
@@ -775,6 +781,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
             return (
               <div
                 key={member.id}
+                data-member-header={member.id}
                 className="flex-1 border-l border-border px-3 py-2.5"
                 style={{ minWidth: `${columnMinWidth}px` }}
               >
@@ -797,13 +804,13 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
           })}
         </div>
 
-        <div ref={scrollRef} className="flex-1 overflow-auto bg-white">
           <div
             className="flex"
             style={{ height: `${timeLabels.length * slotHeight}px` }}
           >
             <div
-              className="sticky left-0 z-10 shrink-0 bg-card"
+              data-testid="agenda-hours"
+              className="sticky left-0 z-20 shrink-0 bg-card"
               style={{
                 width: `${TIME_COL_WIDTH}px`,
                 borderRight: '1px solid hsl(var(--border))',
@@ -841,6 +848,7 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
             {filteredMembers.map((member, index) => (
               <div
                 key={member.id}
+                data-member-column={member.id}
                 className="relative flex-1 border-l border-border bg-white"
                 style={{ minWidth: `${columnMinWidth}px` }}
               >

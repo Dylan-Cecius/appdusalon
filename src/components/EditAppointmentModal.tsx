@@ -13,6 +13,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { Appointment } from '@/data/appointments';
+import AppointmentTimeline from './agenda/AppointmentTimeline';
+import { getAppointmentSegments, shiftAppointmentSegments } from '@/lib/appointmentSegments';
 
 interface EditAppointmentModalProps {
   isOpen: boolean;
@@ -50,6 +52,9 @@ const EditAppointmentModal = ({
   }, [appointment]);
 
   if (!appointment) return null;
+  const hasSegments = getAppointmentSegments(appointment).length > 1;
+  const timelineAppointment = { ...appointment, ...editedAppointment,
+    segments: editedAppointment.startTime ? shiftAppointmentSegments(appointment, editedAppointment.startTime) : appointment.segments };
 
   const amountPaid = Math.max(0, Number(appointment.amountPaid || 0));
   const remainingAmount = Math.max(0, Number(appointment.totalPrice || 0) - amountPaid);
@@ -184,6 +189,8 @@ const EditAppointmentModal = ({
 
       <Separator />
 
+      <AppointmentTimeline appointment={timelineAppointment} />
+
       {/* Modifier l'horaire */}
       <div className="space-y-4">
         <Label className="text-sm font-medium">Modifier l'horaire</Label>
@@ -201,10 +208,8 @@ const EditAppointmentModal = ({
                   const newStartTime = new Date(editedAppointment.startTime);
                   newStartTime.setHours(parseInt(hours), parseInt(minutes));
                   
-                  // Calculer automatiquement l'heure de fin basée sur la durée des services
-                  const totalDuration = appointment.services.reduce((total, service) => 
-                    total + service.duration + (service.appointmentBuffer || 0), 0
-                  );
+                  // Preserve the saved duration, including processing and cleanup.
+                  const totalDuration = (new Date(appointment.endTime).getTime() - new Date(appointment.startTime).getTime()) / 60_000;
                   const newEndTime = new Date(newStartTime);
                   newEndTime.setMinutes(newEndTime.getMinutes() + totalDuration);
                   
@@ -224,6 +229,8 @@ const EditAppointmentModal = ({
             <Input 
               id="endTime"
               type="time"
+              readOnly={hasSegments}
+              aria-describedby={hasSegments ? 'segment-duration-hint' : undefined}
               value={editedAppointment.endTime ? format(editedAppointment.endTime, 'HH:mm') : ''}
               onChange={(e) => {
                 if (e.target.value && editedAppointment.endTime) {
@@ -239,6 +246,7 @@ const EditAppointmentModal = ({
               }}
               className="mt-1"
             />
+            {hasSegments && <p id="segment-duration-hint" className="mt-1 text-xs text-muted-foreground">La durée suit les étapes de la prestation.</p>}
           </div>
         </div>
       </div>

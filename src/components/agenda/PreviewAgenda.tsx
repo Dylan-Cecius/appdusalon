@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { addDays, format } from 'date-fns';
 import { RotateCcw } from 'lucide-react';
-import type { Appointment } from '@/data/appointments';
+import type { Appointment, AppointmentSegment } from '@/data/appointments';
+import { appointmentOccupancyOverlaps, getAppointmentSegments, shiftAppointmentSegments } from '@/lib/appointmentSegments';
 import type { Staff } from '@/hooks/useStaff';
 import type { DaySchedule } from '@/hooks/useOpeningHours';
 import type { BookingWaitlistEntry } from '@/hooks/useBookingWaitlist';
@@ -28,9 +29,23 @@ const services = [
   { id: 'demo-barbe', name: 'Coupe + barbe', price: 35, duration: 45, category: 'combo' as const, color: '#059669' },
   { id: 'demo-couleur', name: 'Coloration & soin', price: 75, duration: 90, category: 'coupe' as const, color: '#db2777' },
 ];
-const storageKey = `appdusalon-agenda-preview-v1-${format(new Date(), 'yyyy-MM-dd')}`;
+const storageKey = `appdusalon-agenda-preview-v2-${format(new Date(), 'yyyy-MM-dd')}`;
 const schedule = (date: Date): DaySchedule => ({ day_of_week: (date.getDay() + 6) % 7, is_open: true, open_time: '09:00', close_time: '19:00', break_start: null, break_end: null });
 const refresh = async () => {};
+
+function previewSegments(id: string, start: Date, serviceId: string): AppointmentSegment[] {
+  if (serviceId !== 'demo-couleur') return [];
+  let cursor = start.getTime();
+  return [
+    { label: 'Application de la couleur', type: 'work' as const, minutes: 30 },
+    { label: 'Temps de pose', type: 'pause' as const, minutes: 30 },
+    { label: 'Rinçage & coiffage', type: 'work' as const, minutes: 20 },
+    { label: 'Nettoyage', type: 'cleanup' as const, minutes: 10 },
+  ].map((step, index) => {
+    const startTime = new Date(cursor); cursor += step.minutes * 60_000;
+    return { id: `${id}-step-${index}`, label: step.label, type: step.type, startTime, endTime: new Date(cursor), occupiesStaff: step.type !== 'pause' };
+  });
+}
 
 function seedAppointments(): Appointment[] {
   return ['Élodie Noël', 'Lucas Bernard', 'Emma Dubois', 'Jean Dupont', 'Julie Simon', 'Nicolas Petit', 'Sophie Martin', 'Alex Leroy', 'Camille Laurent', 'Léa Moreau', 'Maxime Denis', 'Louise Perrin', 'Arthur Simon', 'Maya André', 'Paul Robert'].map((clientName, index) => {
@@ -46,6 +61,7 @@ function seedAppointments(): Appointment[] {
       amountPaid: index >= 12 || paymentStatus === 'paid' ? service.price : index === 0 ? 10 : 0,
       depositRequired: index === 0 ? 10 : 0, staffId: members[index % 3].id,
       notes: 'Rendez-vous fictif pour tester l’agenda.',
+      segments: previewSegments(`demo-rdv-${index}`, startTime, service.id),
     };
   });
 }
@@ -76,7 +92,7 @@ function validateAppointment(candidate: Appointment, appointments: Appointment[]
   const start = new Date(candidate.startTime), end = new Date(candidate.endTime);
   if (!candidate.clientName.trim() || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start || format(start, 'yyyy-MM-dd') !== format(end, 'yyyy-MM-dd')) throw new Error('Vérifiez le nom et la durée du rendez-vous.');
   if (start.getHours() < 9 || end.getHours() > 19 || (end.getHours() === 19 && end.getMinutes() > 0)) throw new Error('Choisissez un horaire entre 9 h et 19 h.');
-  if (appointments.some(other => other.id !== candidate.id && other.staffId === candidate.staffId && !['cancelled', 'no_show'].includes(other.status) && new Date(other.startTime) < end && new Date(other.endTime) > start)) throw new Error('Ce collaborateur a déjà un rendez-vous à cet horaire.');
+  if (appointments.some(other => other.id !== candidate.id && other.staffId === candidate.staffId && !['cancelled', 'no_show'].includes(other.status) && appointmentOccupancyOverlaps(candidate, other))) throw new Error('Ce collaborateur a déjà un rendez-vous à cet horaire.');
 }
 
 function CreatePreviewAppointment({ isOpen, onClose, selectedDate, selectedTimeSlot, staffId, onCreate }: AgendaCreateDialogProps & { onCreate: (appointment: Appointment) => void }) {
@@ -89,8 +105,9 @@ function CreatePreviewAppointment({ isOpen, onClose, selectedDate, selectedTimeS
         const data = new FormData(event.currentTarget);
         const service = services.find(item => item.id === data.get('service'))!;
         const startTime = new Date(`${data.get('date')}T${data.get('time')}:00`);
+        const id = crypto.randomUUID();
         try {
-          onCreate({ id: crypto.randomUUID(), clientName: String(data.get('name')).trim(), clientPhone: String(data.get('phone') || ''), services: [service], staffId: String(data.get('staff')), startTime, endTime: new Date(startTime.getTime() + service.duration * 60_000), totalPrice: service.price, status: 'scheduled', paymentStatus: 'unpaid', isPaid: false, amountPaid: 0, notes: 'Créé dans la démonstration.' });
+          onCreate({ id, clientName: String(data.get('name')).trim(), clientPhone: String(data.get('phone') || ''), services: [service], staffId: String(data.get('staff')), startTime, endTime: new Date(startTime.getTime() + service.duration * 60_000), totalPrice: service.price, status: 'scheduled', paymentStatus: 'unpaid', isPaid: false, amountPaid: 0, notes: 'Créé dans la démonstration.', segments: previewSegments(id, startTime, service.id) });
           onClose();
         } catch (err) { setError(err instanceof Error ? err.message : 'Créneau indisponible.'); }
       }}>
@@ -118,13 +135,18 @@ export default function PreviewAgenda() {
     const original = appointments.find(item => item.id === id);
     if (!original) throw new Error('Rendez-vous introuvable');
     const next = { ...original, ...updates };
+    if (getAppointmentSegments(original).length > 0) {
+      const duration = new Date(original.endTime).getTime() - new Date(original.startTime).getTime();
+      if (new Date(next.endTime).getTime() - new Date(next.startTime).getTime() !== duration) throw new Error('Conservez la durée des étapes de la prestation.');
+      next.segments = shiftAppointmentSegments(original, new Date(next.startTime));
+    }
     validateAppointment(next, appointments);
     setAppointments(current => current.map(item => item.id === id ? next : item));
   };
 
   return <TooltipProvider>
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
-      <div><p className="text-sm font-semibold text-indigo-950">Essayez le nouvel agenda</p><p className="mt-1 text-xs text-indigo-800">Recherchez, créez, déplacez et modifiez les rendez-vous. Données fictives, paiements simulés.</p></div>
+      <div><p className="text-sm font-semibold text-indigo-950">Essayez le nouvel agenda</p><p className="mt-1 text-xs text-indigo-800">La coloration inclut 30 min de pose : essayez d’y placer une coupe. Données fictives, paiements simulés.</p></div>
       <Button type="button" variant="outline" size="sm" onClick={() => { setAppointments(seedAppointments()); setWaitlist(seedWaitlist()); setRevision(value => value + 1); toast({ title: 'Démonstration réinitialisée' }); }}><RotateCcw className="mr-2 h-3.5 w-3.5" />Réinitialiser la démo</Button>
     </div>
     <AgendaWorkspace key={revision}

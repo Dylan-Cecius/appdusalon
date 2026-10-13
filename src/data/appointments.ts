@@ -1,5 +1,14 @@
 import { Service } from './services';
 
+export interface AppointmentSegment {
+  id: string;
+  type: 'work' | 'pause' | 'cleanup' | 'block';
+  label: string;
+  startTime: Date;
+  endTime: Date;
+  occupiesStaff: boolean;
+}
+
 export interface Appointment {
   id: string;
   clientName: string;
@@ -22,6 +31,7 @@ export interface Appointment {
   isPaid: boolean;
   barberId?: string;
   staffId?: string;
+  segments?: AppointmentSegment[];
 }
 
 // Mock appointments for demonstration

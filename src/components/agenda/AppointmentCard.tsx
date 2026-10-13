@@ -6,6 +6,9 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Appointment } from '@/data/appointments';
 import AppointmentStatusBadge from './AppointmentStatusBadge';
+import AppointmentTimeline from './AppointmentTimeline';
+import { getAppointmentSegments } from '@/lib/appointmentSegments';
+import { appointmentPalette } from '@/lib/appointmentPalette';
 import {
   Tooltip,
   TooltipContent,
@@ -33,6 +36,9 @@ const AppointmentCard = memo(({
 }: AppointmentCardProps) => {
   const startTime = new Date(appointment.startTime);
   const endTime = new Date(appointment.endTime);
+  const segments = getAppointmentSegments(appointment);
+  const hasPhases = segments.length > 1;
+  const palette = appointmentPalette(color);
   const startMinutes = (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
   const durationMinutes = Math.max(
     minutesPerSlot,
@@ -73,20 +79,27 @@ const AppointmentCard = memo(({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      aria-label={`${appointment.clientName}, ${serviceName}, ${format(startTime, 'HH:mm')} – ${format(endTime, 'HH:mm')}`}
+      data-appointment-id={appointment.id}
       className={cn(
         'group overflow-hidden rounded-lg cursor-grab',
         'transition-[box-shadow,transform,opacity] duration-150 ease-out',
         !isDragOverlay && 'absolute left-1 right-1',
         isDragOverlay && 'shadow-2xl ring-1 ring-black/10',
         isDragging && 'z-50',
+        hasPhases && 'pointer-events-none',
         'hover:z-20 hover:shadow-md',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
         'active:cursor-grabbing'
       )}
       style={{
         ...style,
-        backgroundColor: `${color}14`,
-        border: `1px solid ${color}30`,
-        borderLeft: `4px solid ${color}`,
+        backgroundColor: hasPhases ? 'transparent' : palette.background,
+        border: hasPhases ? undefined : `1px solid ${palette.border}`,
+        borderLeft: hasPhases ? undefined : `4px solid ${palette.accent}`,
+      }}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick(); }
       }}
       onClick={(event) => {
         if (isDragging) return;
@@ -94,7 +107,26 @@ const AppointmentCard = memo(({
         onClick();
       }}
     >
-      <div className={cn(
+      {hasPhases ? segments.map((segment, index) => {
+        const total = endTime.getTime() - startTime.getTime();
+        const minutes = (segment.endTime.getTime() - segment.startTime.getTime()) / 60_000;
+        const phaseHeight = minutes / minutesPerSlot * slotHeight;
+        const free = !segment.occupiesStaff;
+        return <div key={`${segment.id}-${index}`} data-phase-type={segment.type} data-phase-free={free}
+          className={cn('absolute inset-x-0 overflow-hidden rounded-md border px-2.5 py-1',
+            free ? 'border-dashed border-amber-300 text-amber-950' : 'pointer-events-auto border-solid text-foreground')}
+          style={{ top: `${(segment.startTime.getTime() - startTime.getTime()) / total * 100}%`,
+            height: `calc(${(segment.endTime.getTime() - segment.startTime.getTime()) / total * 100}% - 2px)`,
+            background: free ? 'repeating-linear-gradient(135deg, #fffbeb 0px, #fffbeb 6px, #fef3c7 6px, #fef3c7 7px)' : palette.background,
+            borderLeft: free ? undefined : `4px solid ${palette.accent}`, borderColor: free ? undefined : palette.border }}>
+          {phaseHeight >= 28 && <div className="flex items-center justify-between gap-1 text-[10px] font-semibold">
+            <span className="truncate">{free ? `Pose · ${minutes} min` : appointment.clientName}</span>
+            <span className="shrink-0 tabular-nums">{format(segment.startTime, 'HH:mm')}</span>
+          </div>}
+          {phaseHeight >= 48 && <p className="truncate text-[10px]">{free ? 'Collaborateur disponible' : segment.label}</p>}
+          {index === 0 && phaseHeight >= 72 && <div className="mt-1"><AppointmentStatusBadge appointment={appointment} /></div>}
+        </div>;
+      }) : <div className={cn(
         'flex h-full min-w-0 flex-col overflow-hidden px-2.5',
         isCompact ? 'justify-center py-1' : 'justify-start py-2'
       )}>
@@ -124,7 +156,7 @@ const AppointmentCard = memo(({
             <AppointmentStatusBadge appointment={appointment} />
           </div>
         )}
-      </div>
+      </div>}
 
       <div
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
@@ -147,6 +179,7 @@ const AppointmentCard = memo(({
           </div>
           <div className="text-xs font-semibold">{Number(appointment.totalPrice || 0).toFixed(2)} €</div>
           <AppointmentStatusBadge appointment={appointment} />
+          <AppointmentTimeline appointment={appointment} />
           {appointment.recurrenceGroupId && (
             <div className="flex items-center gap-1 text-[11px] font-medium text-primary">
               <Repeat2 className="h-3 w-3" />

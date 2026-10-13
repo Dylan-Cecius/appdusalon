@@ -52,6 +52,63 @@ export type Database = {
           },
         ]
       }
+      appointment_segments: {
+        Row: {
+          id: string
+          appointment_id: string
+          salon_id: string
+          service_id: string | null
+          service_step_id: string | null
+          staff_id: string | null
+          position: number
+          segment_type: string
+          label: string
+          starts_at: string
+          ends_at: string
+          occupies_staff: boolean
+          customer_visible: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          appointment_id: string
+          salon_id: string
+          service_id?: string | null
+          service_step_id?: string | null
+          staff_id?: string | null
+          position: number
+          segment_type: string
+          label: string
+          starts_at: string
+          ends_at: string
+          occupies_staff?: boolean
+          customer_visible?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          appointment_id?: string
+          salon_id?: string
+          service_id?: string | null
+          service_step_id?: string | null
+          staff_id?: string | null
+          position?: number
+          segment_type?: string
+          label?: string
+          starts_at?: string
+          ends_at?: string
+          occupies_staff?: boolean
+          customer_visible?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "appointment_segments_appointment_id_fkey"; columns: ["appointment_id"]; isOneToOne: false; referencedRelation: "appointments"; referencedColumns: ["id"] },
+          { foreignKeyName: "appointment_segments_salon_id_fkey"; columns: ["salon_id"]; isOneToOne: false; referencedRelation: "salons"; referencedColumns: ["id"] },
+          { foreignKeyName: "appointment_segments_service_id_fkey"; columns: ["service_id"]; isOneToOne: false; referencedRelation: "services"; referencedColumns: ["id"] },
+          { foreignKeyName: "appointment_segments_service_step_id_fkey"; columns: ["service_step_id"]; isOneToOne: false; referencedRelation: "service_steps"; referencedColumns: ["id"] },
+          { foreignKeyName: "appointment_segments_staff_id_fkey"; columns: ["staff_id"]; isOneToOne: false; referencedRelation: "staff"; referencedColumns: ["id"] },
+        ]
+      }
       appointments: {
         Row: {
           barber_id: string | null

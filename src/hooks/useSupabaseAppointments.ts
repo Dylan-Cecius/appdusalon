@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Appointment } from '@/data/appointments';
+import { Appointment, type AppointmentSegment } from '@/data/appointments';
 import { useAuth } from './useAuth';
 import { usePermissions } from './usePermissions';
 
@@ -56,7 +56,7 @@ export const useSupabaseAppointments = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const [{ data, error }, { data: segmentData, error: segmentError }] = await Promise.all([supabase
         .from('appointments' as any)
         .select(`
           id,
@@ -84,9 +84,23 @@ export const useSupabaseAppointments = () => {
           updated_at
         `)
         .eq('salon_id', salonId)
-        .order('start_time', { ascending: true });
+        .order('start_time', { ascending: true }),
+        supabase.from('appointment_segments')
+          .select('id, appointment_id, segment_type, label, starts_at, ends_at, occupies_staff')
+          .eq('salon_id', salonId)
+          .order('position', { ascending: true }),
+      ]);
 
       if (error) throw error;
+      // Older backends can still show appointments before the segments migration.
+      if (segmentError) console.warn('[Appointments] segment details unavailable:', segmentError.message);
+      const segmentsByAppointment = new Map<string, AppointmentSegment[]>();
+      for (const segment of segmentData || []) {
+        const segments = segmentsByAppointment.get(segment.appointment_id) || [];
+        segments.push({ id: segment.id, type: segment.segment_type as AppointmentSegment['type'], label: segment.label,
+          startTime: new Date(segment.starts_at), endTime: new Date(segment.ends_at), occupiesStaff: segment.occupies_staff });
+        segmentsByAppointment.set(segment.appointment_id, segments);
+      }
 
       const formattedAppointments = data?.map((apt: any) => ({
         id: apt.id,
@@ -109,7 +123,8 @@ export const useSupabaseAppointments = () => {
         notes: apt.notes,
         isPaid: apt.is_paid,
         barberId: apt.barber_id || undefined,
-        staffId: apt.staff_id || undefined
+        staffId: apt.staff_id || undefined,
+        segments: segmentsByAppointment.get(apt.id) || [],
       })) || [];
 
       console.log('[Appointments] fetch success', formattedAppointments.length);
