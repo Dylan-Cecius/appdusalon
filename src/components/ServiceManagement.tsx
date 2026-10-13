@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Edit2, Trash2, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, CreditCard, Clock3 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseServices, Service } from '@/hooks/useSupabaseServices';
 
@@ -19,7 +19,11 @@ const ServiceManagement = () => {
     duration: '',
     category: 'general',
     appointmentBuffer: '10',
-    color: '#6B7280'
+    color: '#6B7280',
+    bookingPaymentMode: 'none' as Service['bookingPaymentMode'],
+    bookingPaymentValue: '0',
+    cancellationDeadlineHours: '24',
+    lateCancellationPolicy: 'keep_deposit' as Service['lateCancellationPolicy']
   });
 
   const categoryDefaultColors: Record<string, string> = {
@@ -35,7 +39,11 @@ const ServiceManagement = () => {
       duration: '',
       category: 'general',
       appointmentBuffer: '10',
-      color: '#6B7280'
+      color: '#6B7280',
+      bookingPaymentMode: 'none',
+      bookingPaymentValue: '0',
+      cancellationDeadlineHours: '24',
+      lateCancellationPolicy: 'keep_deposit'
     });
     setEditingService(null);
   };
@@ -49,7 +57,11 @@ const ServiceManagement = () => {
         duration: service.duration.toString(),
         category: service.category,
         appointmentBuffer: service.appointmentBuffer.toString(),
-        color: service.color || '#6B7280'
+        color: service.color || '#6B7280',
+        bookingPaymentMode: service.bookingPaymentMode || 'none',
+        bookingPaymentValue: String(service.bookingPaymentValue || 0),
+        cancellationDeadlineHours: String(service.cancellationDeadlineHours ?? 24),
+        lateCancellationPolicy: service.lateCancellationPolicy || 'keep_deposit'
       });
     } else {
       resetForm();
@@ -74,15 +86,49 @@ const ServiceManagement = () => {
       return;
     }
 
+    const parsedPrice = parseFloat(formData.price);
+    const parsedPaymentValue = parseFloat(formData.bookingPaymentValue) || 0;
+
+    if (
+      formData.bookingPaymentMode === 'deposit_percent' &&
+      (parsedPaymentValue <= 0 || parsedPaymentValue > 100)
+    ) {
+      toast({
+        title: "Acompte invalide",
+        description: "Le pourcentage d'acompte doit être compris entre 1 et 100 %.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (
+      formData.bookingPaymentMode === 'deposit_fixed' &&
+      (parsedPaymentValue <= 0 || parsedPaymentValue > parsedPrice)
+    ) {
+      toast({
+        title: "Acompte invalide",
+        description: "L'acompte fixe doit être supérieur à 0 € et ne peut pas dépasser le prix de la prestation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const serviceData = {
       name: formData.name.trim(),
-      price: parseFloat(formData.price),
+      price: parsedPrice,
       duration: parseInt(formData.duration),
       category: formData.category,
       appointmentBuffer: parseInt(formData.appointmentBuffer) || 0,
       isActive: true,
-      displayOrder: services.length + 1,
-      color: formData.color
+      displayOrder: editingService?.displayOrder ?? services.length + 1,
+      color: formData.color,
+      bookingPaymentMode: formData.bookingPaymentMode,
+      bookingPaymentValue:
+        formData.bookingPaymentMode === 'none' || formData.bookingPaymentMode === 'full'
+          ? 0
+          : parsedPaymentValue,
+      cancellationDeadlineHours: Math.max(0, parseInt(formData.cancellationDeadlineHours) || 0),
+      lateCancellationPolicy: formData.lateCancellationPolicy
     };
 
     try {
@@ -180,6 +226,22 @@ const ServiceManagement = () => {
                   {service.price.toFixed(2)}€ • {service.duration} min
                   {service.appointmentBuffer > 0 && ` • +${service.appointmentBuffer} min buffer`}
                 </div>
+                {service.bookingPaymentMode !== 'none' && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary">
+                      <CreditCard className="h-3 w-3" />
+                      {service.bookingPaymentMode === 'full'
+                        ? 'Paiement complet en ligne'
+                        : service.bookingPaymentMode === 'deposit_percent'
+                          ? `Acompte ${service.bookingPaymentValue}%`
+                          : `Acompte ${service.bookingPaymentValue.toFixed(2)} €`}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                      <Clock3 className="h-3 w-3" />
+                      Annulation {service.cancellationDeadlineHours} h avant
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -303,6 +365,100 @@ const ServiceManagement = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 Temps supplémentaire entre les rendez-vous pour la préparation
               </p>
+            </div>
+
+            <div className="space-y-4 rounded-2xl border border-border bg-muted/20 p-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  <Label className="font-semibold">Paiement à la réservation</Label>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Sécurisez les rendez-vous pris en ligne avec un acompte ou un paiement complet.
+                </p>
+              </div>
+
+              <div>
+                <Label>Mode de paiement</Label>
+                <Select
+                  value={formData.bookingPaymentMode}
+                  onValueChange={(value: Service['bookingPaymentMode']) =>
+                    setFormData({ ...formData, bookingPaymentMode: value })
+                  }
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucun paiement demandé</SelectItem>
+                    <SelectItem value="deposit_fixed">Acompte fixe (€)</SelectItem>
+                    <SelectItem value="deposit_percent">Acompte en pourcentage</SelectItem>
+                    <SelectItem value="full">Paiement complet</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(formData.bookingPaymentMode === 'deposit_fixed' ||
+                formData.bookingPaymentMode === 'deposit_percent') && (
+                <div>
+                  <Label htmlFor="bookingPaymentValue">
+                    {formData.bookingPaymentMode === 'deposit_percent'
+                      ? "Pourcentage d'acompte (%)"
+                      : "Montant de l'acompte (€)"}
+                  </Label>
+                  <Input
+                    id="bookingPaymentValue"
+                    className="mt-1"
+                    type="number"
+                    min="0"
+                    max={formData.bookingPaymentMode === 'deposit_percent' ? 100 : undefined}
+                    step={formData.bookingPaymentMode === 'deposit_percent' ? 1 : 0.01}
+                    value={formData.bookingPaymentValue}
+                    onChange={(event) =>
+                      setFormData({ ...formData, bookingPaymentValue: event.target.value })
+                    }
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="cancellationDeadlineHours">
+                  Annulation gratuite jusqu'à
+                </Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <Input
+                    id="cancellationDeadlineHours"
+                    type="number"
+                    min="0"
+                    max="720"
+                    value={formData.cancellationDeadlineHours}
+                    onChange={(event) =>
+                      setFormData({ ...formData, cancellationDeadlineHours: event.target.value })
+                    }
+                  />
+                  <span className="whitespace-nowrap text-sm text-muted-foreground">heures avant</span>
+                </div>
+              </div>
+
+              {formData.bookingPaymentMode !== 'none' && (
+                <div>
+                  <Label>En cas d'annulation tardive</Label>
+                  <Select
+                    value={formData.lateCancellationPolicy}
+                    onValueChange={(value: Service['lateCancellationPolicy']) =>
+                      setFormData({ ...formData, lateCancellationPolicy: value })
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="keep_deposit">Conserver l'acompte</SelectItem>
+                      <SelectItem value="refund_deposit">Rembourser l'acompte</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 pt-4">
