@@ -30,6 +30,7 @@ BEGIN
   SELECT member_a,salon_a,'Test A',jsonb_object_agg(d, jsonb_build_object('start','09:00','end','19:00'))
     FROM unnest(ARRAY['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']) d;
   INSERT INTO public.staff(id,salon_id,name,daily_schedules) SELECT member_b,salon_b,'Test B',daily_schedules FROM public.staff WHERE id=member_a;
+  PERFORM pg_temp.expect_error(format('INSERT INTO public.staff(salon_id,name) VALUES(%L,%L)',salon_a,'Au-delà du forfait'), 'staff_plan_limit_reached:1');
   INSERT INTO public.opening_hours(salon_id,day_of_week,is_open,open_time,close_time,break_start,break_end)
     SELECT salon_a,d,true,'09:00'::time,'19:00'::time,'12:00'::time,'13:00'::time FROM generate_series(0,6) d
     ON CONFLICT(salon_id,day_of_week) DO UPDATE SET is_open=true,open_time='09:00',close_time='19:00',break_start='12:00',break_end='13:00';
