@@ -242,6 +242,76 @@ export const useSupabaseAppointments = () => {
     }
   };
 
+  const cancelAppointment = async (
+    id: string,
+    action: 'cancel' | 'no_show' = 'cancel',
+    reason = ''
+  ) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('cancel-appointment', {
+        body: {
+          appointment_id: id,
+          action,
+          reason,
+        },
+      });
+
+      if (error) throw error;
+
+      const nextStatus: Appointment['status'] =
+        action === 'no_show' ? 'no_show' : 'cancelled';
+
+      setAppointments(prev =>
+        prev.map(appointment =>
+          appointment.id === id
+            ? {
+                ...appointment,
+                status: nextStatus,
+                paymentStatus:
+                  data?.refund_status === 'refunded'
+                    ? 'refunded'
+                    : appointment.paymentStatus,
+              }
+            : appointment
+        )
+      );
+
+      if (action === 'no_show') {
+        toast({
+          title: "No-show enregistré",
+          description:
+            Number(data?.deposit_kept || 0) > 0
+              ? `L'acompte de ${Number(data.deposit_kept).toFixed(2)} € est conservé.`
+              : "Le rendez-vous a été marqué comme non honoré.",
+        });
+      } else {
+        const refundStatus = String(data?.refund_status || 'not_applicable');
+        const refundAmount = Number(data?.refund_amount || 0);
+
+        toast({
+          title: "Rendez-vous annulé",
+          description:
+            refundStatus === 'refunded'
+              ? `Remboursement de ${refundAmount.toFixed(2)} € effectué.`
+              : refundStatus === 'failed'
+                ? "Le rendez-vous est annulé, mais le remboursement doit être vérifié."
+                : "Le créneau est de nouveau disponible.",
+          variant: refundStatus === 'failed' ? 'destructive' : 'default',
+        });
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+      toast({
+        title: action === 'no_show' ? "No-show impossible" : "Annulation impossible",
+        description: "Impossible de mettre à jour ce rendez-vous.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const deleteAppointment = async (id: string) => {
     try {
       const { error } = await supabase
@@ -358,6 +428,7 @@ export const useSupabaseAppointments = () => {
     addAppointment,
     updateAppointment,
     deleteAppointment,
+    cancelAppointment,
     markAsPaid,
     getAppointmentsForDate,
     getClientDetails,
