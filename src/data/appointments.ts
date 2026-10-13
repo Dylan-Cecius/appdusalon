@@ -32,6 +32,7 @@ export interface Appointment {
   barberId?: string;
   staffId?: string;
   segments?: AppointmentSegment[];
+  updatedAt?: string;
 }
 
 // Mock appointments for demonstration

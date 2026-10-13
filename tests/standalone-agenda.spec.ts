@@ -88,10 +88,11 @@ test('shows saved phases and moves their timetable together when editing', async
   await expect(phases).toContainText('09:30–10:00');
   await expect(phases).toContainText('collaborateur disponible');
   await expect(editor.getByLabel('Heure de fin')).toHaveAttribute('readonly', '');
-  await editor.getByLabel('Heure de début').fill('10:30');
-  await expect(editor.getByLabel('Heure de fin')).toHaveValue('12:00');
+  await editor.getByRole('button', { name: 'Déplacer le rendez-vous', exact: true }).click();
+  await editor.getByLabel('Nouvelle heure').fill('10:30');
+  await expect(editor.getByRole('region', { name: 'Nouveau créneau' })).toContainText('10:30 → 12:00');
   await expect(phases).toContainText('11:00–11:30');
-  await editor.getByRole('button', { name: 'Sauvegarder' }).click();
+  await editor.getByRole('button', { name: 'Confirmer le déplacement' }).click();
   await expect(editor).toBeHidden();
   await page.reload();
   await search(page, 'Emma Dubois');

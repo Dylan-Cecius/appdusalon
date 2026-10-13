@@ -1,7 +1,9 @@
+import MoveAppointmentDialog from './MoveAppointmentDialog';
+import { appointmentMoveIssue, moveAppointmentDraft } from '@/lib/appointmentMove';
 import AgendaClientPanel from './AgendaClientPanel';
 import { agendaClientDirectory, clientFromAppointment, type AgendaClient, type BookingPrefill, type RegisteredAgendaClient } from '@/lib/agendaClients';
 import StaffTimeOffPanel from './StaffTimeOffPanel';
-import { timeOffOnDay, timeOffReasons, isTimeOffConflict, type StaffTimeOff, type TimeOffInput } from '@/lib/staffTimeOff';
+import { timeOffOnDay, timeOffReasons, type StaffTimeOff, type TimeOffInput } from '@/lib/staffTimeOff';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { addDays, format, getDay, isSameDay, startOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -152,6 +154,8 @@ export type AgendaWorkspaceProps = {
   clientsLoading?: boolean;
   clientsError?: boolean;
   appointmentsError?: boolean;
+  availabilityLoading?: boolean;
+  moveAppointment: (original: Appointment, candidate: Appointment) => Promise<void>;
   appointments: Appointment[];
   timeOff?: StaffTimeOff[];
   timeOffLoading?: boolean;
@@ -176,7 +180,7 @@ export type AgendaWorkspaceProps = {
   renderCreateDialog: (props: AgendaCreateDialogProps) => ReactNode;
 };
 
-export const AgendaWorkspace = ({ clients = [], clientsLoading = false, clientsError = false, appointmentsError = false, appointments, appointmentsLoading, dbServices, activeStaff,
+export const AgendaWorkspace = ({ moveAppointment, availabilityLoading = false, clients = [], clientsLoading = false, clientsError = false, appointmentsError = false, appointments, appointmentsLoading, dbServices, activeStaff,
   getScheduleForDate, hasOpeningHours, waitlistEntries, waitlistLoading, cancelWaitlistEntry,
   updateAppointment, markAsPaid, cancelAppointment, refreshAppointments, renderCreateDialog,
   addWaitlistEntry, bookWaitlistEntry, waitlistTimezone, timeOff = [], timeOffLoading = false, timeOffError = false, saveTimeOff, removeTimeOff,
@@ -191,7 +195,8 @@ export const AgendaWorkspace = ({ clients = [], clientsLoading = false, clientsE
   const [slotInterval, setSlotInterval] = useState<AgendaSlotInterval>(15);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [moveTarget, setMoveTarget] = useState<Appointment | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [selectedBarberId, setSelectedBarberId] = useState('');
   const [draggedAppointment, setDraggedAppointment] = useState<any>(null);
@@ -425,70 +430,33 @@ export const AgendaWorkspace = ({ clients = [], clientsLoading = false, clientsE
     if (appointment) setDraggedAppointment(appointment);
   };
 
+  const availability = useMemo(() => ({ staff: activeStaff, appointments, timeOff, schedule: getScheduleForDate,
+    timezone: waitlistTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone }), [activeStaff, appointments, timeOff, getScheduleForDate, waitlistTimezone]);
+  const availabilityUnavailable = availabilityLoading || appointmentsLoading || appointmentsError || timeOffLoading || timeOffError;
+  const applyMove = async (original: Appointment, candidate: Appointment) => {
+    if (availabilityUnavailable) throw new Error('Actualisez les disponibilités avant de déplacer un rendez-vous.');
+    const issue = appointmentMoveIssue(original, candidate, availability);
+    if (issue) throw new Error(issue);
+    await moveAppointment(original, candidate);
+    setSelectedDate(new Date(candidate.startTime));
+    setSelectedBarberId(candidate.staffId || '');
+    setVisibleMemberIds(previous => new Set([...previous, candidate.staffId || '']));
+    setViewMode('day');
+    toast({ title: 'Rendez-vous déplacé', description: `${candidate.clientName} · ${format(candidate.startTime, 'dd/MM HH:mm')}` });
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     setDraggedAppointment(null);
-
     const { active, over } = event;
     if (!over || viewMode !== 'day') return;
-
-    const appointment = active.data.current?.appointment;
-    if (!appointment) return;
-
+    const appointment = active.data.current?.appointment as Appointment | undefined;
     const dropData = over.data.current;
-    if (!dropData?.barberId) return;
-
-    const newStaffId = dropData.barberId as string;
-    const newHour = dropData.hour as number;
-    const newMinute = dropData.minute as number;
-
-    const oldStart = new Date(appointment.startTime);
-    const oldEnd = new Date(appointment.endTime);
-    const durationMs = oldEnd.getTime() - oldStart.getTime();
-
+    if (!appointment || !dropData?.barberId) return;
     const newStart = new Date(selectedDate);
-    newStart.setHours(newHour, newMinute, 0, 0);
-    const newEnd = new Date(newStart.getTime() + durationMs);
-
-    if (
-      newStart.getTime() === oldStart.getTime() &&
-      newStaffId === (appointment.staffId || appointment.barberId)
-    ) {
-      return;
-    }
-
-    if (isTimeOffConflict({ startTime: newStart, endTime: newEnd, staffId: newStaffId }, timeOff)) { toast({ title: 'Collaborateur indisponible', description: 'Choisissez un autre créneau.', variant: 'destructive' }); return; }
-
-    const targetMember = agendaMembers.find((member) => member.id === newStaffId);
-    if (
-      targetMember &&
-      !isStaffWorking(targetMember, selectedDate, newHour, newMinute)
-    ) {
-      toast({
-        title: 'Créneau indisponible',
-        description: `${targetMember.name} ne travaille pas à cet horaire.`,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      await updateAppointment(appointment.id, {
-        startTime: newStart,
-        endTime: newEnd,
-        staffId: newStaffId,
-      });
-      await refreshAppointments();
-      toast({
-        title: 'Rendez-vous déplacé',
-        description: `${appointment.clientName} → ${format(newStart, 'HH:mm')}`,
-      });
-    } catch {
-      toast({
-        title: 'Déplacement impossible',
-        description: 'Le nouveau créneau est indisponible.',
-        variant: 'destructive',
-      });
-    }
+    newStart.setHours(dropData.hour as number, dropData.minute as number, 0, 0);
+    if (newStart.getTime() === appointment.startTime.getTime() && dropData.barberId === (appointment.staffId || appointment.barberId)) return;
+    try { await applyMove(appointment, moveAppointmentDraft(appointment, newStart, dropData.barberId as string)); }
+    catch (error) { toast({ title: 'Déplacement impossible', description: error instanceof Error ? error.message : 'Le nouveau créneau est indisponible.', variant: 'destructive' }); }
   };
 
   const openAppointment = (appointment: any) => {
@@ -1065,6 +1033,9 @@ export const AgendaWorkspace = ({ clients = [], clientsLoading = false, clientsE
         } : undefined}
       />
 
+      {moveTarget && <MoveAppointmentDialog appointment={moveTarget} availability={availability} unavailable={availabilityUnavailable}
+        onClose={() => { setSelectedAppointment(moveTarget); setIsEditModalOpen(true); setMoveTarget(null); }}
+        onSave={async candidate => { await applyMove(moveTarget, candidate); setMoveTarget(null); }} />}
       {selectedAppointment && (
         <EditAppointmentModal
           isOpen={isEditModalOpen}
@@ -1074,6 +1045,7 @@ export const AgendaWorkspace = ({ clients = [], clientsLoading = false, clientsE
           }}
           appointment={selectedAppointment}
           serviceColors={Object.fromEntries(dbServices.map(service => [service.id, service.color]))}
+          onReschedule={() => { setMoveTarget(selectedAppointment); setSelectedAppointment(null); setIsEditModalOpen(false); }}
           onClientHistory={() => {
             setHistoryClient(clientFromAppointment(selectedAppointment));
             setIsEditModalOpen(false); setSelectedAppointment(null); setClientsOpen(true);

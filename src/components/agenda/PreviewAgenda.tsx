@@ -1,3 +1,4 @@
+import { appointmentMoveIssue, moveAppointmentDraft } from '@/lib/appointmentMove';
 import CreateAppointmentDialog from './CreateAppointmentDialog';
 import { appointmentDraftSeries, appointmentDraftConflict } from '@/lib/appointmentDraft';
 import { isTimeOffConflict, validateTimeOff, type StaffTimeOff } from '@/lib/staffTimeOff';
@@ -127,6 +128,15 @@ export default function PreviewAgenda() {
       <Button type="button" variant="outline" size="sm" onClick={() => { setState({ appointments: seedAppointments(), waitlist: seedWaitlist(), timeOff: [] }); setRevision(value => value + 1); toast({ title: 'Démonstration réinitialisée' }); }}><RotateCcw className="mr-2 h-3.5 w-3.5" />Réinitialiser la démo</Button>
     </div>
     <AgendaWorkspace key={revision}
+      moveAppointment={async (original, candidate) => {
+        const current = currentState.current;
+        const issue = appointmentMoveIssue(original, candidate, { staff: members, appointments: current.appointments, timeOff: current.timeOff, schedule, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+        if (issue) throw new Error(issue);
+        const existing = current.appointments.find(item => item.id === original.id)!;
+        const moved = { ...moveAppointmentDraft(existing, candidate.startTime, candidate.staffId!), updatedAt: new Date().toISOString() };
+        const next = { ...current, appointments: current.appointments.map(item => item.id === original.id ? moved : item) };
+        currentState.current = next; setState(next);
+      }}
       timeOff={timeOff}
       saveTimeOff={async (input, id) => { const current = currentState.current; validateTimeOff(input, current.timeOff, current.appointments, id); const item = { ...input, id: id || crypto.randomUUID() }; const next = { ...current, timeOff: id ? current.timeOff.map(old => old.id === id ? item : old) : [...current.timeOff, item] }; currentState.current = next; setState(next); }}
       removeTimeOff={async id => { setState(current => ({ ...current, timeOff: current.timeOff.filter(item => item.id !== id) })); }}

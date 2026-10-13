@@ -15,10 +15,10 @@ import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { Appointment } from '@/data/appointments';
 import AppointmentTimeline from './agenda/AppointmentTimeline';
-import { getAppointmentSegments, shiftAppointmentSegments } from '@/lib/appointmentSegments';
 
 interface EditAppointmentModalProps {
   onClientHistory?: () => void;
+  onReschedule: () => void;
   serviceColors?: Record<string, string | undefined>;
   isOpen: boolean;
   onClose: () => void;
@@ -36,7 +36,7 @@ const EditAppointmentModal = ({
   onUpdate, 
   onCancel,
   onNoShow,
-  onPay, onClientHistory, serviceColors = {}
+  onPay, onClientHistory, onReschedule, serviceColors = {}
 }: EditAppointmentModalProps) => {
   const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment>>({});
   const [saving, setSaving] = useState(false);
@@ -48,17 +48,11 @@ const EditAppointmentModal = ({
         clientName: appointment.clientName,
         clientPhone: appointment.clientPhone,
         notes: appointment.notes || '',
-        startTime: appointment.startTime,
-        endTime: appointment.endTime,
       });
     }
   }, [appointment]);
 
   if (!appointment) return null;
-  const hasSegments = getAppointmentSegments(appointment).length > 1;
-  const timelineAppointment = { ...appointment, ...editedAppointment,
-    segments: editedAppointment.startTime ? shiftAppointmentSegments(appointment, editedAppointment.startTime) : appointment.segments };
-
   const amountPaid = Math.max(0, Number(appointment.amountPaid || 0));
   const remainingAmount = Math.max(0, Number(appointment.totalPrice || 0) - amountPaid);
   const hasDeposit = amountPaid > 0 && remainingAmount > 0;
@@ -122,11 +116,7 @@ const EditAppointmentModal = ({
   };
 
   const clientDraftChanged = ['clientName', 'clientPhone', 'notes'].some(field =>
-    (editedAppointment[field as keyof Appointment] || '') !== (appointment[field as keyof Appointment] || '')) ||
-    ['startTime', 'endTime'].some(field => {
-      const value = editedAppointment[field as 'startTime' | 'endTime'];
-      return value && new Date(value).getTime() !== new Date(appointment[field as 'startTime' | 'endTime']).getTime();
-    });
+    (editedAppointment[field as keyof Appointment] || '') !== (appointment[field as keyof Appointment] || ''));
 
   const canCloseAppointment =
     !['completed', 'cancelled', 'no_show'].includes(appointment.status);
@@ -190,68 +180,15 @@ const EditAppointmentModal = ({
 
       <Separator />
 
-      <AppointmentTimeline appointment={timelineAppointment} />
+      <AppointmentTimeline appointment={appointment} />
 
-      {/* Modifier l'horaire */}
-      <div className="space-y-4">
-        <Label className="text-sm font-medium">Modifier l'horaire</Label>
-        
-        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-          <div>
-            <Label htmlFor="startTime">Heure de début</Label>
-            <Input 
-              id="startTime"
-              type="time"
-              value={editedAppointment.startTime ? format(editedAppointment.startTime, 'HH:mm') : ''}
-              onChange={(e) => {
-                if (e.target.value && editedAppointment.startTime) {
-                  const [hours, minutes] = e.target.value.split(':');
-                  const newStartTime = new Date(editedAppointment.startTime);
-                  newStartTime.setHours(parseInt(hours), parseInt(minutes));
-                  
-                  // Preserve the saved duration, including processing and cleanup.
-                  const totalDuration = (new Date(appointment.endTime).getTime() - new Date(appointment.startTime).getTime()) / 60_000;
-                  const newEndTime = new Date(newStartTime);
-                  newEndTime.setMinutes(newEndTime.getMinutes() + totalDuration);
-                  
-                  setEditedAppointment({
-                    ...editedAppointment,
-                    startTime: newStartTime,
-                    endTime: newEndTime
-                  });
-                }
-              }}
-              className="mt-1"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="endTime">Heure de fin</Label>
-            <Input 
-              id="endTime"
-              type="time"
-              readOnly={hasSegments}
-              aria-describedby={hasSegments ? 'segment-duration-hint' : undefined}
-              value={editedAppointment.endTime ? format(editedAppointment.endTime, 'HH:mm') : ''}
-              onChange={(e) => {
-                if (e.target.value && editedAppointment.endTime) {
-                  const [hours, minutes] = e.target.value.split(':');
-                  const newEndTime = new Date(editedAppointment.endTime);
-                  newEndTime.setHours(parseInt(hours), parseInt(minutes));
-                  
-                  setEditedAppointment({
-                    ...editedAppointment,
-                    endTime: newEndTime
-                  });
-                }
-              }}
-              className="mt-1"
-            />
-            {hasSegments && <p id="segment-duration-hint" className="mt-1 text-xs text-muted-foreground">La durée suit les étapes de la prestation.</p>}
-          </div>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label htmlFor="startTime">Heure de début</Label><Input id="startTime" type="time" readOnly value={format(appointment.startTime, 'HH:mm')} /></div>
+          <div><Label htmlFor="endTime">Heure de fin</Label><Input id="endTime" type="time" readOnly value={format(appointment.endTime, 'HH:mm')} /></div>
         </div>
+        {canCloseAppointment && <><Button type="button" variant="outline" className="w-full" disabled={saving || clientDraftChanged} onClick={onReschedule}><Clock className="mr-2 h-4 w-4" />Déplacer le rendez-vous</Button>{clientDraftChanged && <p className="text-xs text-muted-foreground">Enregistrez les modifications avant de déplacer ce rendez-vous.</p>}</>}
       </div>
-
       <Separator />
 
       {/* Informations client modifiables */}

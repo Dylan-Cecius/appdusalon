@@ -14,6 +14,11 @@ const appointmentErrorDescription = (error: unknown, action: 'add' | 'update') =
         : '';
 
   if (message.includes('staff_unavailable')) return 'Ce collaborateur est indisponible sur cette période.';
+  if (message.includes('outside_opening_hours')) return 'Le rendez-vous dépasse les horaires ou recouvre une pause du salon.';
+  if (message.includes('outside_staff_hours')) return 'Ce collaborateur ne travaille pas sur toute cette période.';
+  if (message.includes('invalid_staff')) return 'Ce collaborateur n’est plus disponible dans ce salon.';
+  if (message.includes('appointment_not_movable')) return 'Ce rendez-vous ne peut plus être déplacé. Actualisez l’agenda.';
+  if (message.includes('invalid_appointment_duration') || message.includes('invalid_appointment_time')) return 'Conservez la durée réservée et choisissez un créneau sur une seule journée.';
 
   if (message.includes('appointment_conflict') || message.includes('23P01')) {
     return 'Ce créneau est déjà occupé pour ce membre de l’équipe.';
@@ -109,6 +114,7 @@ export const useSupabaseAppointments = () => {
 
       const formattedAppointments = data?.map((apt: any) => ({
         id: apt.id,
+        updatedAt: apt.updated_at,
         clientName: apt.client_name || 'Client',
         clientPhone: apt.client_phone || '',
         services: apt.services as any,
@@ -291,6 +297,17 @@ export const useSupabaseAppointments = () => {
       });
       throw error;
     }
+  };
+
+  const moveAppointment = async (original: Appointment, candidate: Appointment) => {
+    if (!user || !salonId || !original.updatedAt) throw new Error('Actualisez l’agenda avant de déplacer ce rendez-vous.');
+    const { data, error } = await supabase.from('appointments' as any)
+      .update({ start_time: candidate.startTime.toISOString(), end_time: candidate.endTime.toISOString(), staff_id: candidate.staffId })
+      .eq('id', original.id).eq('salon_id', salonId).eq('updated_at', original.updatedAt)
+      .select('id').maybeSingle();
+    if (error) throw new Error(appointmentErrorDescription(error, 'update'));
+    if (!data) throw new Error('Ce rendez-vous a changé ou n’est plus accessible. Actualisez l’agenda et réessayez.');
+    await fetchAppointments();
   };
 
   const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
@@ -518,6 +535,7 @@ export const useSupabaseAppointments = () => {
     addAppointment,
     addRecurringAppointments,
     updateAppointment,
+    moveAppointment,
     deleteAppointment,
     cancelAppointment,
     markAsPaid,
