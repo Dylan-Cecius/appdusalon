@@ -21,6 +21,10 @@ interface Service {
   duration: number;
   category: string;
   color: string | null;
+  booking_payment_mode: 'none' | 'deposit_fixed' | 'deposit_percent' | 'full';
+  booking_payment_value: number;
+  cancellation_deadline_hours: number;
+  late_cancellation_policy: 'keep_deposit' | 'refund_deposit';
 }
 
 interface StaffMember {
@@ -76,6 +80,89 @@ export default function BookingPage() {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  const [paymentReturnConfirmed, setPaymentReturnConfirmed] = useState(false);
+  const [paymentReturnStatus, setPaymentReturnStatus] = useState<'idle' | 'checking' | 'error'>('idle');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentResult = params.get('payment');
+    const sessionId = params.get('session_id');
+
+    if (paymentResult === 'cancelled') {
+      toast.error("Le paiement a été annulé. Le créneau sera libéré automatiquement.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (paymentResult !== 'success' || !sessionId || !SUPABASE_URL || !SUPABASE_KEY) {
+      return;
+    }
+
+    let disposed = false;
+    setPaymentReturnStatus('checking');
+
+    const verifyPayment = async () => {
+      for (let attempt = 0; attempt < 12 && !disposed; attempt += 1) {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/get-booking-payment-status?session_id=${encodeURIComponent(sessionId)}`,
+          { headers: { apikey: SUPABASE_KEY } }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.confirmed) {
+            setPaymentReturnConfirmed(true);
+            if (data.payment_required) {
+        const paymentResponse = await fetch(
+          `${SUPABASE_URL}/functions/v1/create-booking-payment`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+            body: JSON.stringify({ appointment_id: data.appointment_id }),
+          }
+        );
+
+        const paymentData = await paymentResponse.json();
+        if (!paymentResponse.ok || !paymentData.url) {
+          throw new Error(
+            paymentData.error === 'payment_hold_expired'
+              ? "Le délai de paiement a expiré. Recommencez la réservation."
+              : "Impossible d'ouvrir le paiement sécurisé. Réessayez."
+          );
+        }
+
+        window.location.assign(paymentData.url);
+        return;
+      }
+
+      setConfirmed(true);
+            setPaymentReturnStatus('idle');
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+
+          if (data.expired) {
+            setPaymentReturnStatus('error');
+            return;
+          }
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 800));
+      }
+
+      if (!disposed) setPaymentReturnStatus('error');
+    };
+
+    void verifyPayment().catch((error) => {
+      console.error('Payment confirmation error:', error);
+      if (!disposed) setPaymentReturnStatus('error');
+    });
+
+    return () => {
+      disposed = true;
+    };
+  }, []);
 
   // Fetch salon data by slug
   useEffect(() => {
@@ -191,6 +278,41 @@ export default function BookingPage() {
     }
   };
 
+  if (paymentReturnStatus === 'checking') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="v2-panel max-w-md w-full text-center">
+          <CardContent className="pt-8 pb-8 space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+            <h2 className="text-xl font-semibold">Confirmation du paiement</h2>
+            <p className="text-sm text-muted-foreground">
+              Nous vérifions le paiement sécurisé et confirmons votre rendez-vous.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (paymentReturnStatus === 'error') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="v2-panel max-w-md w-full text-center">
+          <CardContent className="pt-8 pb-8 space-y-4">
+            <h2 className="text-xl font-semibold">Confirmation en attente</h2>
+            <p className="text-sm text-muted-foreground">
+              Le paiement n'a pas encore pu être confirmé. Si votre compte a été débité,
+              le salon recevra la confirmation automatiquement.
+            </p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Vérifier à nouveau
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -239,17 +361,21 @@ export default function BookingPage() {
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
             <h2 className="text-2xl font-bold text-foreground">Réservation confirmée !</h2>
             <p className="text-muted-foreground">
-              Votre rendez-vous est confirmé ! À bientôt au salon.
+              {paymentReturnConfirmed
+                ? "Votre paiement est confirmé et le rendez-vous est enregistré."
+                : "Votre rendez-vous est confirmé ! À bientôt au salon."}
             </p>
-            <div className="bg-muted rounded-lg p-4 text-left space-y-1 text-sm">
-              <p><strong>Prestation :</strong> {selectedService?.name}</p>
-              {selectedStaff && !noPreference && (
-                <p><strong>Avec :</strong> {selectedStaff.name}</p>
-              )}
-              <p><strong>Date :</strong> {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}</p>
-              <p><strong>Heure :</strong> {selectedSlot?.time}</p>
-              <p><strong>Prix :</strong> {selectedService?.price.toFixed(2)} €</p>
-            </div>
+            {!paymentReturnConfirmed && (
+              <div className="bg-muted rounded-lg p-4 text-left space-y-1 text-sm">
+                <p><strong>Prestation :</strong> {selectedService?.name}</p>
+                {selectedStaff && !noPreference && (
+                  <p><strong>Avec :</strong> {selectedStaff.name}</p>
+                )}
+                <p><strong>Date :</strong> {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}</p>
+                <p><strong>Heure :</strong> {selectedSlot?.time}</p>
+                <p><strong>Prix :</strong> {selectedService?.price.toFixed(2)} €</p>
+              </div>
+            )}
             <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
               Nouvelle réservation
             </Button>
@@ -316,7 +442,18 @@ export default function BookingPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="font-semibold text-foreground">{service.price.toFixed(2)} €</span>
+                    <div className="text-right">
+                      <span className="block font-semibold text-foreground">{service.price.toFixed(2)} €</span>
+                      {service.booking_payment_mode !== 'none' && (
+                        <span className="mt-1 block text-[11px] font-medium text-primary">
+                          {service.booking_payment_mode === 'full'
+                            ? 'Paiement en ligne'
+                            : service.booking_payment_mode === 'deposit_percent'
+                              ? `Acompte ${service.booking_payment_value}%`
+                              : `Acompte ${Number(service.booking_payment_value).toFixed(2)} €`}
+                        </span>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -432,6 +569,19 @@ export default function BookingPage() {
             <Card>
               <CardContent className="p-4 space-y-1 text-sm">
                 <p><strong>Prestation :</strong> {selectedService?.name} — {selectedService?.price.toFixed(2)} €</p>
+                {selectedService?.booking_payment_mode !== 'none' && (
+                  <p className="text-primary">
+                    <strong>Paiement à la réservation :</strong>{' '}
+                    {selectedService?.booking_payment_mode === 'full'
+                      ? `${selectedService.price.toFixed(2)} €`
+                      : selectedService?.booking_payment_mode === 'deposit_percent'
+                        ? `${(
+                            selectedService.price *
+                            (Number(selectedService.booking_payment_value) / 100)
+                          ).toFixed(2)} € d'acompte`
+                        : `${Number(selectedService?.booking_payment_value || 0).toFixed(2)} € d'acompte`}
+                  </p>
+                )}
                 {selectedStaff && !noPreference && <p><strong>Avec :</strong> {selectedStaff.name}</p>}
                 <p><strong>Date :</strong> {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}</p>
                 <p><strong>Heure :</strong> {selectedSlot?.time}</p>
@@ -461,7 +611,9 @@ export default function BookingPage() {
                 {submitting ? (
                   <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Réservation en cours...</>
                 ) : (
-                  'Confirmer ma réservation'
+                  selectedService?.booking_payment_mode !== 'none'
+                    ? 'Continuer vers le paiement sécurisé'
+                    : 'Confirmer ma réservation'
                 )}
               </Button>
             </div>
