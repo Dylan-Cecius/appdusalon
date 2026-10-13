@@ -17,7 +17,9 @@ BEGIN
   SELECT id INTO STRICT salon_b FROM public.salons WHERE owner_user_id=owner_b;
   INSERT INTO public.staff(id,salon_id,name,daily_schedules) SELECT member_a,salon_a,'A',jsonb_object_agg(d,jsonb_build_object('start','09:00','end','19:00')) FROM unnest(ARRAY['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']) d;
   INSERT INTO public.staff(id,salon_id,name) VALUES(member_b,salon_b,'B');
-  UPDATE public.opening_hours SET is_open=true,open_time='09:00',close_time='19:00',break_start=NULL,break_end=NULL WHERE salon_id=salon_a;
+  INSERT INTO public.opening_hours(salon_id,day_of_week,is_open,open_time,close_time)
+    SELECT salon_a,d,true,'09:00','19:00' FROM generate_series(0,6) d
+    ON CONFLICT(salon_id,day_of_week) DO UPDATE SET is_open=true,open_time='09:00',close_time='19:00',break_start=NULL,break_end=NULL;
   INSERT INTO public.services(id,salon_id,user_id,name,price,duration,category,appointment_buffer) VALUES(service,salon_a,owner_a,'Coupe',25,30,'coupe',15);
   start_at := (tomorrow+time '14:00') AT TIME ZONE 'Europe/Brussels';
   INSERT INTO public.staff_time_off(salon_id,staff_id,title,reason,starts_at,ends_at) VALUES(salon_a,member_a,'Formation','training',start_at,start_at+interval '1 hour') RETURNING id INTO block;
