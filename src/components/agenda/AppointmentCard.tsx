@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { Repeat2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useDraggable } from '@dnd-kit/core';
@@ -99,6 +100,9 @@ const AppointmentCard = memo(({
           <span className="min-w-0 flex-1 truncate text-[12px] font-bold leading-tight text-foreground">
             {appointment.clientName}
           </span>
+          {appointment.recurrenceGroupId && (
+            <Repeat2 className="h-3 w-3 shrink-0 text-primary/70" />
+          )}
           <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">
             {format(startTime, 'HH:mm')}
           </span>
@@ -159,6 +163,12 @@ const AppointmentCard = memo(({
             {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
           </div>
           <div className="text-xs font-semibold">{Number(appointment.totalPrice || 0).toFixed(2)} €</div>
+          {appointment.recurrenceGroupId && (
+            <div className="flex items-center gap-1 text-[11px] font-medium text-primary">
+              <Repeat2 className="h-3 w-3" />
+              Série {Number(appointment.recurrenceIndex || 0) + 1}/{appointment.recurrenceTotal || '?'}
+            </div>
+          )}
           {appointment.notes && (
             <div className="max-w-[220px] text-xs italic text-muted-foreground">{appointment.notes}</div>
           )}
