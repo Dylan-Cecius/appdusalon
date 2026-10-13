@@ -12,6 +12,7 @@ import ServiceCard from '@/components/ServiceCard';
 import CartSidebar from '@/components/CartSidebar';
 import MainLayout from '@/components/MainLayout';
 import TransactionsManager from '@/components/TransactionsManager';
+import CashSessionPanel from '@/components/CashSessionPanel';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -260,6 +261,8 @@ const POSPage = () => {
           </Button>
         )}
       </div>
+
+      <CashSessionPanel />
 
       {/* Session Summary Bar */}
       <div className="mb-4 grid grid-cols-3 gap-2">
