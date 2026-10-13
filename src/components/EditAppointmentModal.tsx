@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { User, Phone, Scissors, Euro, Clock, Trash2, CreditCard, Banknote } from 'lucide-react';
+import { User, Phone, Scissors, Euro, Clock, XCircle, UserX, CreditCard, Banknote } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
@@ -19,7 +19,8 @@ interface EditAppointmentModalProps {
   onClose: () => void;
   appointment: Appointment | null;
   onUpdate: (id: string, updates: Partial<Appointment>) => void;
-  onDelete: (id: string) => void;
+  onCancel: (id: string) => void;
+  onNoShow: (id: string) => void;
   onPay: (id: string, method: 'cash' | 'card') => void;
 }
 
@@ -28,7 +29,8 @@ const EditAppointmentModal = ({
   onClose, 
   appointment, 
   onUpdate, 
-  onDelete, 
+  onCancel,
+  onNoShow,
   onPay 
 }: EditAppointmentModalProps) => {
   const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment>>({});
@@ -88,15 +90,17 @@ const EditAppointmentModal = ({
     });
   };
 
-  const handleDelete = () => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
-      onDelete(appointment.id);
+  const handleCancel = () => {
+    if (confirm('Annuler ce rendez-vous ? Le créneau sera libéré et l’historique sera conservé.')) {
+      onCancel(appointment.id);
       onClose();
-      
-      toast({
-        title: "Succès",
-        description: "Rendez-vous supprimé avec succès"
-      });
+    }
+  };
+
+  const handleNoShow = () => {
+    if (confirm('Marquer ce client comme absent (no-show) ?')) {
+      onNoShow(appointment.id);
+      onClose();
     }
   };
 
@@ -116,6 +120,9 @@ const EditAppointmentModal = ({
       default: return 'bg-gray-500';
     }
   };
+
+  const canCloseAppointment =
+    !['completed', 'cancelled', 'no_show'].includes(appointment.status);
 
   const ModalContent = ({ className }: { className?: string }) => (
     <div className={`space-y-4 ${className}`}>
@@ -325,22 +332,39 @@ const EditAppointmentModal = ({
       ) : null}
 
       {/* Actions */}
-      <div className={`flex gap-2 pt-4 ${isMobile ? 'flex-col' : ''}`}>
-        <Button 
-          type="button" 
-          variant="destructive" 
-          onClick={handleDelete}
-          className="flex-1"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Supprimer
-        </Button>
-        <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-          Annuler
-        </Button>
-        <Button onClick={handleSave} className="flex-1">
-          Sauvegarder
-        </Button>
+      <div className="space-y-2 pt-4">
+        {canCloseAppointment && (
+          <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleNoShow}
+              className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+            >
+              <UserX className="mr-2 h-4 w-4" />
+              No-show
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              className="border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Annuler le RDV
+            </Button>
+          </div>
+        )}
+        <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            Fermer
+          </Button>
+          {canCloseAppointment && (
+            <Button onClick={handleSave} className="flex-1">
+              Sauvegarder
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
