@@ -48,6 +48,27 @@ const EditAppointmentModal = ({
 
   if (!appointment) return null;
 
+  const amountPaid = Math.max(0, Number(appointment.amountPaid || 0));
+  const remainingAmount = Math.max(0, Number(appointment.totalPrice || 0) - amountPaid);
+  const hasDeposit = amountPaid > 0 && remainingAmount > 0;
+  const isFullyPrepaid =
+    appointment.paymentStatus === 'paid' &&
+    amountPaid + 0.001 >= Number(appointment.totalPrice || 0);
+  const isPaymentPending =
+    appointment.status === 'pending_payment' || appointment.paymentStatus === 'pending';
+
+  const paymentBadgeLabel = isPaymentPending
+    ? 'Paiement en attente'
+    : appointment.status === 'completed' && appointment.isPaid
+      ? '✓ Encaissé'
+      : isFullyPrepaid
+        ? 'Prépayé'
+        : hasDeposit
+          ? 'Acompte payé'
+          : appointment.isPaid
+            ? '✓ Payé'
+            : 'À encaisser';
+
   const handleSave = () => {
     if (!editedAppointment.clientName?.trim()) {
       toast({
@@ -104,8 +125,8 @@ const EditAppointmentModal = ({
           <div className="text-sm font-medium">
             📅 {format(appointment.startTime, isMobile ? 'dd/MM/yy' : 'EEEE d MMMM yyyy', { locale: fr })}
           </div>
-          <Badge variant={appointment.isPaid ? "secondary" : "default"}>
-            {appointment.isPaid ? '✓ Payé' : 'En attente'}
+          <Badge variant={appointment.isPaid || amountPaid > 0 ? "secondary" : "default"}>
+            {paymentBadgeLabel}
           </Badge>
         </div>
         
@@ -132,10 +153,21 @@ const EditAppointmentModal = ({
           ))}
         </div>
         
-        <div className="mt-2 p-2 bg-green-100 rounded text-center">
-          <span className="font-bold text-green-800">
-            Total: {appointment.totalPrice.toFixed(2)}€
-          </span>
+        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Total prestation</span>
+            <span className="font-semibold">{appointment.totalPrice.toFixed(2)} €</span>
+          </div>
+          {amountPaid > 0 && (
+            <div className="mt-1 flex items-center justify-between text-sm">
+              <span className="text-emerald-700">Déjà payé en ligne</span>
+              <span className="font-semibold text-emerald-700">− {amountPaid.toFixed(2)} €</span>
+            </div>
+          )}
+          <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
+            <span className="font-semibold">Reste à payer</span>
+            <span className="text-lg font-bold text-slate-950">{remainingAmount.toFixed(2)} €</span>
+          </div>
         </div>
       </div>
 
@@ -250,27 +282,47 @@ const EditAppointmentModal = ({
       <Separator />
 
       {/* Paiement */}
-      {!appointment.isPaid && (
+      {isPaymentPending ? (
+        <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm text-violet-800">
+          Le créneau est temporairement réservé en attente du paiement en ligne.
+        </div>
+      ) : isFullyPrepaid && appointment.status !== 'completed' ? (
         <div>
-          <Label className="text-sm font-medium mb-3 block">Encaisser le paiement</Label>
+          <Label className="mb-2 block text-sm font-medium">Prestation déjà payée</Label>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Aucun solde à encaisser. Clôturez simplement la prestation une fois terminée.
+          </p>
+          <Button onClick={() => handlePay('card')} className="w-full">
+            <CreditCard className="mr-2 h-4 w-4" />
+            Clôturer la prestation
+          </Button>
+        </div>
+      ) : !appointment.isPaid && remainingAmount > 0 ? (
+        <div>
+          <Label className="mb-1 block text-sm font-medium">Encaisser le solde</Label>
+          {hasDeposit && (
+            <p className="mb-3 text-xs text-muted-foreground">
+              Acompte reçu : {amountPaid.toFixed(2)} € · Solde : {remainingAmount.toFixed(2)} €
+            </p>
+          )}
           <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-            <Button 
+            <Button
               onClick={() => handlePay('cash')}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-600 text-white hover:bg-green-700"
             >
-              <Banknote className="h-4 w-4 mr-2" />
-              Espèces
+              <Banknote className="mr-2 h-4 w-4" />
+              Espèces · {remainingAmount.toFixed(2)} €
             </Button>
-            <Button 
+            <Button
               onClick={() => handlePay('card')}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 text-white hover:bg-blue-700"
             >
-              <CreditCard className="h-4 w-4 mr-2" />
-              Bancontact
+              <CreditCard className="mr-2 h-4 w-4" />
+              Carte · {remainingAmount.toFixed(2)} €
             </Button>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Actions */}
       <div className={`flex gap-2 pt-4 ${isMobile ? 'flex-col' : ''}`}>
