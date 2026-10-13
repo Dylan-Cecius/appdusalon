@@ -93,7 +93,6 @@ export type Database = {
         }
         Update: {
           barber_id?: string | null
-          staff_id?: string | null | null
           client_name?: string
           client_phone?: string
           created_at?: string

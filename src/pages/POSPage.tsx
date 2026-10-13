@@ -181,6 +181,11 @@ const POSPage = () => {
         isActive: true,
         displayOrder: 0,
         color: '#6B7280',
+        bookingPaymentMode: 'none',
+        bookingPaymentValue: 0,
+        cancellationDeadlineHours: 24,
+        lateCancellationPolicy: 'keep_deposit',
+        steps: [],
       });
       toast({ title: 'Succès', description: 'Service ajouté avec succès' });
       setServiceForm({ name: '', price: '', duration: '30', category: 'coupe' });

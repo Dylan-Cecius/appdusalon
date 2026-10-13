@@ -21,6 +21,9 @@ import AppointmentModal from '../AppointmentModal';
 import EditAppointmentModal from '../EditAppointmentModal';
 import AgendaHeader, { AgendaSlotInterval, AgendaViewMode } from './AgendaHeader';
 import AppointmentCard from './AppointmentCard';
+import AgendaSearchDialog from './AgendaSearchDialog';
+import AppointmentStatusBadge from './AppointmentStatusBadge';
+import type { Appointment } from '@/data/appointments';
 import BookingWaitlistPanel from './BookingWaitlistPanel';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { Calendar as MiniCalendar } from '@/components/ui/calendar';
@@ -138,10 +141,12 @@ const ProAgenda = () => {
   const [visibleMemberIds, setVisibleMemberIds] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
     appointments,
+    loading: appointmentsLoading,
     updateAppointment,
     markAsPaid,
     cancelAppointment,
@@ -360,7 +365,9 @@ const ProAgenda = () => {
   const displayedAppointmentCount =
     viewMode === 'day'
       ? dayAppointments.filter((appointment) =>
-          visibleMemberIds.has(appointment.staffId || appointment.barberId || '')
+          isMobile
+            ? (appointment.staffId || appointment.barberId) === selectedBarberId
+            : visibleMemberIds.has(appointment.staffId || appointment.barberId || '')
         ).length
       : visibleWeekAppointments.length;
 
@@ -446,6 +453,17 @@ const ProAgenda = () => {
     setIsEditModalOpen(true);
   };
 
+  const openSearchResult = (appointment: Appointment) => {
+    setSelectedDate(new Date(appointment.startTime));
+    const memberId = appointment.staffId || appointment.barberId || '';
+    if (agendaMembers.some(member => member.id === memberId)) {
+      setSelectedBarberId(memberId);
+      setVisibleMemberIds(previous => new Set([...previous, memberId]));
+    }
+    setViewMode('day');
+    openAppointment(appointment);
+  };
+
   const openNewAppointment = (date = selectedDate, memberId?: string) => {
     setSelectedDate(date);
     setSelectedTimeSlot('');
@@ -465,6 +483,7 @@ const ProAgenda = () => {
               key={member.id}
               type="button"
               onClick={() => setSelectedBarberId(member.id)}
+              aria-pressed={active}
               className={cn(
                 'flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors',
                 active
@@ -508,6 +527,7 @@ const ProAgenda = () => {
                   <div className="truncate text-xs text-muted-foreground">
                     {appointment.services?.[0]?.name}
                   </div>
+                  <div className="mt-1"><AppointmentStatusBadge appointment={appointment} /></div>
                 </div>
                 <div className="text-sm font-semibold">
                   {Number(appointment.totalPrice || 0).toFixed(0)} €
@@ -614,6 +634,7 @@ const ProAgenda = () => {
                       <div className="mt-0.5 truncate text-[10px] text-muted-foreground">
                         {appointment.services?.[0]?.name || 'Rendez-vous'}
                       </div>
+                      <div className="mt-1.5"><AppointmentStatusBadge appointment={appointment} /></div>
                     </button>
                   );
                 })}
@@ -647,10 +668,13 @@ const ProAgenda = () => {
     >
       <div className="border-b border-border p-3">
         <MiniCalendar
+          key={format(selectedDate, 'yyyy-MM')}
           mode="single"
           selected={selectedDate}
+          defaultMonth={selectedDate}
           onSelect={(date) => date && setSelectedDate(date)}
           locale={fr}
+          weekStartsOn={1}
           className="w-full p-0"
         />
       </div>
@@ -683,6 +707,7 @@ const ProAgenda = () => {
               key={member.id}
               type="button"
               onClick={() => toggleMemberVisibility(member.id)}
+              aria-pressed={visible}
               className={cn(
                 'flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors',
                 visible ? 'hover:bg-muted' : 'opacity-45 hover:bg-muted/60'
@@ -865,6 +890,7 @@ const ProAgenda = () => {
         onAddClick={() => openNewAppointment()}
         waitlistCount={waitlistCount}
         onWaitlistClick={() => setWaitlistOpen(true)}
+        onSearchClick={() => setSearchOpen(true)}
       />
       {viewMode === 'day' ? renderMobileDay() : renderWeekOverview(true)}
     </div>
@@ -883,6 +909,7 @@ const ProAgenda = () => {
         onAddClick={() => openNewAppointment()}
         waitlistCount={waitlistCount}
         onWaitlistClick={() => setWaitlistOpen(true)}
+        onSearchClick={() => setSearchOpen(true)}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -899,6 +926,8 @@ const ProAgenda = () => {
       onDragEnd={handleDragEnd}
     >
       {body}
+
+      <AgendaSearchDialog open={searchOpen} onOpenChange={setSearchOpen} appointments={appointments} members={agendaMembers} loading={appointmentsLoading} onSelect={openSearchResult} />
 
       <DragOverlay dropAnimation={{ duration: 160, easing: 'ease' }}>
         {draggedAppointment && (

@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import AppointmentModal from './AppointmentModal';
 import SecureClientData from './SecureClientData';
-import { toast } from '@/hooks/use-toast';
 
 interface AppointmentCalendarProps {
   barberId?: string;
@@ -33,14 +32,12 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
     }
   };
 
-  const handlePayAppointment = (appointmentId: string, method: 'cash' | 'card') => {
-    markAsPaid(appointmentId);
-    const appointment = appointments.find(apt => apt.id === appointmentId);
-    
-    toast({
-      title: "Paiement encaissé",
-      description: `${appointment?.totalPrice.toFixed(2)}€ encaissé par ${method === 'cash' ? 'espèces' : 'Bancontact'}`,
-    });
+  const handlePayAppointment = async (appointmentId: string, method: 'cash' | 'card') => {
+    try {
+      await markAsPaid(appointmentId, method);
+    } catch {
+      // The appointment hook displays the server error; do not report a false success.
+    }
   };
 
   // Generate time slots for the day (10h-19h) with 15-minute intervals
@@ -270,7 +267,7 @@ const AppointmentCalendar = ({ barberId }: AppointmentCalendarProps) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedDate={selectedDate}
-        barberId={barberId}
+        staffId={barberId}
       />
     </div>
   );

@@ -4,6 +4,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import type { Appointment } from '@/data/appointments';
+import AppointmentStatusBadge from './AppointmentStatusBadge';
 import {
   Tooltip,
   TooltipContent,
@@ -11,7 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 
 interface AppointmentCardProps {
-  appointment: any;
+  appointment: Appointment;
   slotHeight: number;
   startHour: number;
   color: string;
@@ -119,26 +121,7 @@ const AppointmentCard = memo(({
             <span className="text-[10px] font-semibold text-foreground/75">
               {Number(appointment.totalPrice || 0).toFixed(2)} €
             </span>
-            <span
-              className={cn(
-                'rounded-full px-1.5 py-0.5 text-[9px] font-bold',
-                appointment.status === 'pending_payment'
-                  ? 'bg-violet-100 text-violet-700'
-                  : appointment.isPaid
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-amber-100 text-amber-700'
-              )}
-            >
-              {appointment.status === 'pending_payment'
-                ? 'Paiement…'
-                : appointment.paymentStatus === 'paid' && appointment.status !== 'completed'
-                  ? 'Prépayé'
-                  : appointment.isPaid
-                    ? 'Payé'
-                    : appointment.paymentStatus === 'deposit_paid'
-                      ? 'Acompte payé'
-                      : 'À encaisser'}
-            </span>
+            <AppointmentStatusBadge appointment={appointment} />
           </div>
         )}
       </div>
@@ -163,6 +146,7 @@ const AppointmentCard = memo(({
             {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
           </div>
           <div className="text-xs font-semibold">{Number(appointment.totalPrice || 0).toFixed(2)} €</div>
+          <AppointmentStatusBadge appointment={appointment} />
           {appointment.recurrenceGroupId && (
             <div className="flex items-center gap-1 text-[11px] font-medium text-primary">
               <Repeat2 className="h-3 w-3" />

@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3, BellRing } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Users, Clock3, BellRing, Search } from 'lucide-react';
 import { addDays, addWeeks, endOfWeek, format, isSameDay, startOfWeek, subDays, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ interface AgendaHeaderProps {
   onSlotIntervalChange?: (minutes: AgendaSlotInterval) => void;
   waitlistCount?: number;
   onWaitlistClick?: () => void;
+  onSearchClick?: () => void;
 }
 
 const AgendaHeader = ({
@@ -36,7 +38,16 @@ const AgendaHeader = ({
   onSlotIntervalChange,
   waitlistCount = 0,
   onWaitlistClick,
+  onSearchClick,
 }: AgendaHeaderProps) => {
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [mobileDatePickerOpen, setMobileDatePickerOpen] = useState(false);
+  const selectDate = (date?: Date) => {
+    if (!date) return;
+    onDateChange(date);
+    setDatePickerOpen(false);
+    setMobileDatePickerOpen(false);
+  };
   const isToday = isSameDay(selectedDate, new Date());
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -67,6 +78,8 @@ const AgendaHeader = ({
                   : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
               )}
               title="Afficher ou masquer les collaborateurs"
+              aria-label="Afficher ou masquer les collaborateurs"
+              aria-pressed={sidebarOpen}
             >
               <Users className="h-4 w-4" />
             </button>
@@ -101,10 +114,11 @@ const AgendaHeader = ({
             </button>
           </div>
 
-          <Popover>
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
+                aria-label={`Choisir une date : ${periodLabel}`}
                 className="hidden min-w-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-slate-50 sm:flex"
               >
                 <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
@@ -117,8 +131,10 @@ const AgendaHeader = ({
               <CalendarPicker
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => date && onDateChange(date)}
+                defaultMonth={selectedDate}
+                onSelect={selectDate}
                 locale={fr}
+                weekStartsOn={1}
                 className="p-3 pointer-events-auto"
               />
             </PopoverContent>
@@ -131,7 +147,7 @@ const AgendaHeader = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           {onViewModeChange && (
             <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
               {(['day', 'week'] as AgendaViewMode[]).map((mode) => (
@@ -139,6 +155,7 @@ const AgendaHeader = ({
                   key={mode}
                   type="button"
                   onClick={() => onViewModeChange(mode)}
+                  aria-pressed={viewMode === mode}
                   className={cn(
                     'h-7 rounded-md px-3 text-[11px] font-semibold transition-colors',
                     viewMode === mode
@@ -152,14 +169,22 @@ const AgendaHeader = ({
             </div>
           )}
 
+          {onSearchClick && (
+            <button type="button" onClick={onSearchClick} aria-label="Rechercher un rendez-vous" title="Rechercher un rendez-vous" className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50">
+              <Search className="h-4 w-4" />
+            </button>
+          )}
+
           {onWaitlistClick && (
             <button
               type="button"
               onClick={onWaitlistClick}
-              className="relative hidden h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:flex"
+              aria-label={`Liste d’attente${waitlistCount > 0 ? `, ${waitlistCount} demandes` : ''}`}
+              title="Liste d’attente"
+              className="relative flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
               <BellRing className="h-3.5 w-3.5" />
-              Liste d’attente
+              <span className="hidden sm:inline">Liste d’attente</span>
               {waitlistCount > 0 && (
                 <span className="ml-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
                   {waitlistCount}
@@ -176,6 +201,7 @@ const AgendaHeader = ({
                   key={minutes}
                   type="button"
                   onClick={() => onSlotIntervalChange(minutes)}
+                  aria-pressed={slotInterval === minutes}
                   className={cn(
                     'h-8 rounded-lg px-2.5 text-[11px] font-semibold transition-colors',
                     slotInterval === minutes
@@ -192,7 +218,9 @@ const AgendaHeader = ({
           <button
             type="button"
             onClick={onAddClick}
-            className="flex h-8 items-center gap-2 rounded-lg bg-slate-900 px-3.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.98]"
+            aria-label="Nouveau rendez-vous"
+            title="Nouveau rendez-vous"
+            className="ml-auto flex h-9 items-center gap-2 rounded-lg bg-slate-900 px-3.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.98] sm:ml-0"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nouveau RDV</span>
@@ -200,15 +228,19 @@ const AgendaHeader = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-border/60 px-4 py-2 sm:hidden">
-        <button
-          type="button"
-          className="flex min-w-0 items-center gap-2 text-left"
-        >
-          <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
-          <span className="truncate text-xs font-semibold capitalize">{periodLabel}</span>
-        </button>
-        <span className="text-[11px] font-medium text-muted-foreground">{appointmentCount} RDV</span>
+      <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-2 sm:hidden">
+        <Popover open={mobileDatePickerOpen} onOpenChange={setMobileDatePickerOpen}>
+          <PopoverTrigger asChild>
+            <button type="button" aria-label={`Choisir une date : ${periodLabel}`} className="flex min-w-0 items-center gap-2 rounded-lg py-1 text-left">
+              <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate text-xs font-semibold capitalize">{periodLabel}</span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <CalendarPicker mode="single" selected={selectedDate} defaultMonth={selectedDate} onSelect={selectDate} locale={fr} weekStartsOn={1} className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+        <span className="shrink-0 text-[11px] font-medium text-muted-foreground">{appointmentCount} RDV</span>
       </div>
     </div>
   );

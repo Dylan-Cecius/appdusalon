@@ -120,6 +120,7 @@ const StaffPage = () => {
     ALL_DAYS.slice(0, 6).forEach(d => { defaultSchedules[d] = { start: '09:00', end: '19:00' }; });
     await createStaff.mutateAsync({
       name,
+      auth_user_id: null,
       role: fd.get('role') as string || 'coiffeur',
       color: fd.get('color') as string || '#8B5CF6',
       phone: (fd.get('phone') as string) || null,
