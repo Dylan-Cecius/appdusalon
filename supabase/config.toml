@@ -64,3 +64,9 @@ verify_jwt = true
 
 [functions.process-sms-automations]
 verify_jwt = false
+
+[functions.create-booking-payment]
+verify_jwt = false
+
+[functions.stripe-booking-webhook]
+verify_jwt = false
