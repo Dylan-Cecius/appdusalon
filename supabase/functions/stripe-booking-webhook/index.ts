@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       const appointmentId = session.metadata.appointment_id;
       const { data: appointment, error: appointmentError } = await admin
         .from("appointments")
-        .select("id, status, payment_status, total_price, deposit_required")
+        .select("id, salon_id, client_phone, services, status, payment_status, total_price, deposit_required")
         .eq("id", appointmentId)
         .maybeSingle();
 
@@ -100,6 +100,24 @@ Deno.serve(async (req) => {
         .eq("status", "pending_payment");
 
       if (updateError) throw updateError;
+
+      const serviceId = Array.isArray(appointment.services)
+        ? appointment.services[0]?.id
+        : null;
+
+      if (serviceId && appointment.client_phone) {
+        const { error: waitlistUpdateError } = await admin
+          .from("booking_waitlist")
+          .update({ status: "booked", offer_expires_at: null })
+          .eq("salon_id", appointment.salon_id)
+          .eq("service_id", serviceId)
+          .eq("client_phone", appointment.client_phone)
+          .in("status", ["active", "notified"]);
+
+        if (waitlistUpdateError) {
+          console.warn("[BOOKING-PAYMENT-WEBHOOK] waitlist completion failed", waitlistUpdateError);
+        }
+      }
     }
 
     if (
