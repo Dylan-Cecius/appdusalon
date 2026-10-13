@@ -66,6 +66,9 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    const { error: expiryError } = await supabase.rpc("expire_pending_booking_payments");
+    if (expiryError) throw expiryError;
+
     const body = await req.json();
     const {
       salon_id,
@@ -152,7 +155,7 @@ serve(async (req) => {
         : Promise.resolve({ data: null }),
       supabase
         .from("services")
-        .select("id, name, price, duration, appointment_buffer, category")
+        .select("id, name, price, duration, appointment_buffer, category, booking_payment_mode, booking_payment_value, cancellation_deadline_hours, late_cancellation_policy")
         .eq("id", service_id)
         .eq("salon_id", salon_id)
         .eq("is_active", true)
@@ -305,6 +308,27 @@ serve(async (req) => {
       return jsonResponse({ error: "slot_no_longer_available" }, 409);
     }
 
+    const { data: paymentAmount, error: paymentAmountError } = await supabase.rpc(
+      "calculate_booking_payment_amount",
+      {
+        total_price_value: Number(service.price),
+        payment_mode_value: service.booking_payment_mode || "none",
+        payment_value: Number(service.booking_payment_value || 0),
+      }
+    );
+
+    if (paymentAmountError) throw paymentAmountError;
+
+    const requiredPayment = Math.max(0, Number(paymentAmount || 0));
+    const paymentRequired = requiredPayment > 0;
+    const paymentExpiresAt = paymentRequired
+      ? new Date(Date.now() + 15 * 60_000)
+      : null;
+    const cancellationDeadlineAt = new Date(
+      appointmentStart.getTime() -
+        Math.max(0, Number(service.cancellation_deadline_hours || 0)) * 60 * 60_000
+    );
+
     const { data: appointment, error: insertError } = await supabase
       .from("appointments")
       .insert({
@@ -325,7 +349,12 @@ serve(async (req) => {
         start_time: appointmentStart.toISOString(),
         end_time: appointmentEnd.toISOString(),
         total_price: Number(service.price),
-        status: "scheduled",
+        status: paymentRequired ? "pending_payment" : "scheduled",
+        payment_status: paymentRequired ? "pending" : "unpaid",
+        deposit_required: requiredPayment,
+        amount_paid: 0,
+        payment_expires_at: paymentExpiresAt?.toISOString() || null,
+        cancellation_deadline_at: cancellationDeadlineAt.toISOString(),
         is_paid: false,
       })
       .select("id")
@@ -336,7 +365,15 @@ serve(async (req) => {
     return jsonResponse({
       success: true,
       appointment_id: appointment.id,
-      message: "Réservation créée avec succès",
+      payment_required: paymentRequired,
+      payment_amount: requiredPayment,
+      payment_mode: service.booking_payment_mode || "none",
+      payment_expires_at: paymentExpiresAt?.toISOString() || null,
+      cancellation_deadline_at: cancellationDeadlineAt.toISOString(),
+      late_cancellation_policy: service.late_cancellation_policy || "keep_deposit",
+      message: paymentRequired
+        ? "Créneau réservé temporairement en attente du paiement"
+        : "Réservation créée avec succès",
     });
   } catch (error) {
     console.error("[PUBLIC-BOOKING]", error);
