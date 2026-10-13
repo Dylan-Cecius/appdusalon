@@ -133,11 +133,10 @@ const ClientsPage = () => {
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Relation client</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Clients</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Retrouvez rapidement les coordonnées, notes et historiques de vos clients.</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Clients</h1>
+            <p className="mt-1 text-xs text-muted-foreground">{clients.length} fiches · coordonnées, historique et notes.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {permissions.isAdmin && (
@@ -225,7 +224,7 @@ const ClientsPage = () => {
           </div>
         </div>
 
-        <div className="v2-panel flex flex-col gap-3 p-3 sm:flex-row sm:p-4">
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -268,41 +267,41 @@ const ClientsPage = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredAndSortedClients.map((client) => (
-              <Card
-                key={client.id}
-                className="v2-kpi min-h-[96px] cursor-pointer hover:border-primary/20 active:scale-[0.99]"
-                onClick={() => setSelectedClient(client)}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    {client.name}
-                  </CardTitle>
-                  <CardDescription className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-3 w-3" />
-                      {client.phone}
-                    </div>
-                    {client.email && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-3 w-3" />
-                        {client.email}
-                      </div>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="hidden grid-cols-[minmax(220px,1.4fr)_1fr_1.2fr_80px] gap-3 bg-slate-50 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 md:grid">
+              <span>Client</span>
+              <span>Téléphone</span>
+              <span>Email / note</span>
+              <span></span>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {filteredAndSortedClients.map((client) => (
+                <button
+                  key={client.id}
+                  type="button"
+                  onClick={() => setSelectedClient(client)}
+                  className="grid w-full gap-2 px-4 py-3 text-left transition-colors hover:bg-slate-50 md:grid-cols-[minmax(220px,1.4fr)_1fr_1.2fr_80px] md:items-center md:gap-3"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                      {client.name.slice(0, 2).toUpperCase()}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-slate-900">{client.name}</span>
+                      <span className="block text-[11px] text-muted-foreground md:hidden">{client.phone}</span>
+                    </span>
+                  </span>
+                  <span className="hidden text-sm text-slate-600 md:block">{client.phone}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm text-slate-600">{client.email || '—'}</span>
+                    {canUseClientNotes && client.notes && (
+                      <span className="block truncate text-[11px] text-slate-400">{client.notes}</span>
                     )}
-                  </CardDescription>
-                </CardHeader>
-                {canUseClientNotes && client.notes && (
-                  <CardContent>
-                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <p className="line-clamp-2">{client.notes}</p>
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
+                  </span>
+                  <span className="hidden text-right text-xs font-semibold text-primary md:block">Ouvrir</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
