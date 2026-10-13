@@ -32,6 +32,7 @@ describe('edge-function security configuration', () => {
       'create-public-booking',
       'create-booking-payment',
       'stripe-booking-webhook',
+      'get-booking-payment-status',
     ]) {
       expect(config).toContain(`[functions.${name}]\nverify_jwt = false`);
     }
@@ -78,6 +79,11 @@ describe('edge-function security configuration', () => {
     expect(webhook).toContain('STRIPE_BOOKING_WEBHOOK_SECRET');
     expect(webhook).toContain('constructEventAsync');
     expect(webhook).toContain('stripe-signature');
+
+    const status = read('supabase/functions/get-booking-payment-status/index.ts');
+    expect(status).toContain('isTrustedAppOrigin');
+    expect(status).toContain('payment_reference');
+    expect(status).toContain('confirmed');
   });
 
 
