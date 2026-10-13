@@ -300,6 +300,7 @@ DECLARE
   segment_position integer := 0;
   inserted_count integer := 0;
   has_steps boolean;
+  has_occupying_steps boolean;
 BEGIN
   SELECT *
   INTO appointment_record
@@ -371,12 +372,19 @@ BEGIN
       RAISE EXCEPTION 'service_not_found';
     END IF;
 
-    SELECT EXISTS (
-      SELECT 1
-      FROM public.service_steps
-      WHERE service_id = service_record.id
-    )
-    INTO has_steps;
+    SELECT
+      EXISTS (
+        SELECT 1
+        FROM public.service_steps
+        WHERE service_id = service_record.id
+      ),
+      EXISTS (
+        SELECT 1
+        FROM public.service_steps
+        WHERE service_id = service_record.id
+          AND step_type <> 'pause'
+      )
+    INTO has_steps, has_occupying_steps;
 
     IF has_steps THEN
       FOR step_record IN
@@ -413,7 +421,7 @@ BEGIN
           step_record.name,
           cursor_time,
           segment_end,
-          step_record.step_type <> 'pause',
+          step_record.step_type <> 'pause' OR NOT has_occupying_steps,
           step_record.customer_visible
         );
 
