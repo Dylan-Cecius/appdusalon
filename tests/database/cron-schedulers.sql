@@ -52,6 +52,19 @@ SELECT pg_temp.assert_true(
   'appointment reminders cron is installed with Vault secret'
 );
 
+
+SELECT pg_temp.assert_true(
+  EXISTS (
+    SELECT 1
+    FROM cron.job
+    WHERE jobname = 'process-booking-waitlist'
+      AND schedule = '*/5 * * * *'
+      AND command LIKE '%sms_cron_secret%'
+      AND command LIKE '%process-booking-waitlist%'
+  ),
+  'booking waitlist processor cron is installed with SMS Vault secret'
+);
+
 SELECT pg_temp.assert_true(
   NOT EXISTS (
     SELECT 1
@@ -59,7 +72,8 @@ SELECT pg_temp.assert_true(
     WHERE jobname IN (
       'process-scheduled-reports',
       'process-sms-automations',
-      'check-appointment-reminders'
+      'check-appointment-reminders',
+      'process-booking-waitlist'
     )
     GROUP BY jobname
     HAVING count(*) > 1
