@@ -21,10 +21,12 @@ import AppointmentModal from '../AppointmentModal';
 import EditAppointmentModal from '../EditAppointmentModal';
 import AgendaHeader, { AgendaSlotInterval, AgendaViewMode } from './AgendaHeader';
 import AppointmentCard from './AppointmentCard';
+import BookingWaitlistPanel from './BookingWaitlistPanel';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { Calendar as MiniCalendar } from '@/components/ui/calendar';
 import { CalendarDays, Check, Clock3 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useBookingWaitlist } from '@/hooks/useBookingWaitlist';
 
 const TIME_COL_WIDTH = 64;
 const SIDEBAR_WIDTH = 224;
@@ -135,6 +137,7 @@ const ProAgenda = () => {
   const [draggedAppointment, setDraggedAppointment] = useState<any>(null);
   const [visibleMemberIds, setVisibleMemberIds] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -147,6 +150,12 @@ const ProAgenda = () => {
   const { services: dbServices } = useSupabaseServices();
   const { getScheduleForDate, hasData: hasOpeningHours } = useOpeningHours();
   const { activeStaff } = useStaff();
+  const {
+    entries: waitlistEntries,
+    loading: waitlistLoading,
+    activeCount: waitlistCount,
+    cancelEntry: cancelWaitlistEntry,
+  } = useBookingWaitlist();
   const isMobile = useIsMobile();
 
   const sensors = useSensors(
@@ -854,6 +863,8 @@ const ProAgenda = () => {
         slotInterval={slotInterval}
         onSlotIntervalChange={setSlotInterval}
         onAddClick={() => openNewAppointment()}
+        waitlistCount={waitlistCount}
+        onWaitlistClick={() => setWaitlistOpen(true)}
       />
       {viewMode === 'day' ? renderMobileDay() : renderWeekOverview(true)}
     </div>
@@ -870,6 +881,8 @@ const ProAgenda = () => {
         slotInterval={slotInterval}
         onSlotIntervalChange={setSlotInterval}
         onAddClick={() => openNewAppointment()}
+        waitlistCount={waitlistCount}
+        onWaitlistClick={() => setWaitlistOpen(true)}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -913,6 +926,14 @@ const ProAgenda = () => {
         selectedDate={selectedDate}
         staffId={selectedBarberId}
         selectedTimeSlot={selectedTimeSlot}
+      />
+
+      <BookingWaitlistPanel
+        open={waitlistOpen}
+        onOpenChange={setWaitlistOpen}
+        entries={waitlistEntries}
+        loading={waitlistLoading}
+        onCancel={cancelWaitlistEntry}
       />
 
       {selectedAppointment && (
