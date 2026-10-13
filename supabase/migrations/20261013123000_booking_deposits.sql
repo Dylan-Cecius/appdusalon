@@ -125,7 +125,7 @@ BEGIN
   END IF;
 
   IF NEW.status = 'pending_payment' AND NEW.payment_expires_at IS NULL THEN
-    NEW.payment_expires_at := now() + interval '15 minutes';
+    NEW.payment_expires_at := now() + interval '30 minutes';
   END IF;
 
   IF NEW.status NOT IN ('scheduled', 'pending_payment') THEN
