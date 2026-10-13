@@ -30,6 +30,7 @@ import { Calendar as MiniCalendar } from '@/components/ui/calendar';
 import { CalendarDays, Check, Clock3 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { BookingWaitlistEntry } from '@/hooks/useBookingWaitlist';
+import type { WaitlistRequest, WaitlistService, WaitlistSlot } from '@/lib/waitlistSlots';
 
 const TIME_COL_WIDTH = 64;
 const SIDEBAR_WIDTH = 224;
@@ -142,13 +143,16 @@ export type AgendaCreateDialogProps = {
 export type AgendaWorkspaceProps = {
   appointments: Appointment[];
   appointmentsLoading: boolean;
-  dbServices: Pick<Service, 'name' | 'color' | 'category'>[];
+  dbServices: (WaitlistService & Pick<Service, 'color' | 'category'>)[];
   activeStaff: Staff[];
   getScheduleForDate: (date: Date) => DaySchedule | null;
   hasOpeningHours: boolean;
   waitlistEntries: BookingWaitlistEntry[];
   waitlistLoading: boolean;
   cancelWaitlistEntry: (id: string) => Promise<void>;
+  addWaitlistEntry?: (entry: WaitlistRequest) => Promise<void>;
+  bookWaitlistEntry?: (entry: BookingWaitlistEntry, slot: WaitlistSlot) => Promise<void>;
+  waitlistTimezone?: string;
   updateAppointment: (id: string, updates: Partial<Appointment>) => Promise<void>;
   markAsPaid: (id: string, method: 'cash' | 'card') => Promise<void>;
   cancelAppointment: (id: string, action: 'cancel' | 'no_show') => Promise<void>;
@@ -159,6 +163,7 @@ export type AgendaWorkspaceProps = {
 export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices, activeStaff,
   getScheduleForDate, hasOpeningHours, waitlistEntries, waitlistLoading, cancelWaitlistEntry,
   updateAppointment, markAsPaid, cancelAppointment, refreshAppointments, renderCreateDialog,
+  addWaitlistEntry, bookWaitlistEntry, waitlistTimezone,
 }: AgendaWorkspaceProps) => {
   const waitlistCount = waitlistEntries.length;
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -984,6 +989,16 @@ export const AgendaWorkspace = ({ appointments, appointmentsLoading, dbServices,
         entries={waitlistEntries}
         loading={waitlistLoading}
         onCancel={cancelWaitlistEntry}
+        services={dbServices} staff={activeStaff} appointments={appointments}
+        schedule={getScheduleForDate} timezone={waitlistTimezone}
+        onAdd={addWaitlistEntry}
+        onBook={bookWaitlistEntry ? async (entry, slot) => {
+          await bookWaitlistEntry(entry, slot);
+          setSelectedDate(new Date(slot.startTime)); setSelectedBarberId(slot.staffId);
+          setVisibleMemberIds(previous => new Set([...previous, slot.staffId]));
+          setViewMode('day'); setWaitlistOpen(false);
+          toast({ title: 'Rendez-vous créé', description: `${entry.client_name} a été retiré de la liste d’attente.` });
+        } : undefined}
       />
 
       {selectedAppointment && (

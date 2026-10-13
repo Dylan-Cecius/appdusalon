@@ -1394,6 +1394,14 @@ export type Database = {
       }
     }
     Functions: {
+      add_staff_waitlist_entry: {
+        Args: { service_id_param: string; staff_id_param: string | null; client_name_param: string; client_phone_param: string; date_from_param: string; date_to_param: string; time_start_param?: string | null; time_end_param?: string | null }
+        Returns: string
+      }
+      book_waitlist_entry: {
+        Args: { entry_id_param: string; staff_id_param: string; start_param: string }
+        Returns: string
+      }
       calculate_next_send_date:
         | {
             Args: {

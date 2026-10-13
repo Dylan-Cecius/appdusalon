@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/hooks/use-toast';
+import type { WaitlistRequest, WaitlistSlot } from '@/lib/waitlistSlots';
+
+const waitlistError = (error: { message?: string; code?: string }) => {
+  if (error.code === 'PGRST202') return new Error('Cette action n’est pas encore disponible sur cet environnement.');
+  if (/appointment_conflict|23P01|outside_|invalid_waitlist_slot/.test(error.message || '')) return new Error('Ce créneau n’est plus disponible. Recherchez un autre horaire.');
+  if (/already_processed/.test(error.message || '')) return new Error('Cette demande a déjà été traitée. Actualisez la liste.');
+  return new Error('La demande n’a pas pu être enregistrée. Vérifiez les informations et réessayez.');
+};
 
 export type BookingWaitlistEntry = {
   id: string;
@@ -100,13 +108,16 @@ export const useBookingWaitlist = () => {
   }, [salonId, refresh]);
 
   const cancelEntry = async (id: string) => {
-    const { error } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from('booking_waitlist')
       .update({ status: 'cancelled', offer_expires_at: null })
       .eq('id', id)
-      .eq('salon_id', salonId);
+      .eq('salon_id', salonId)
+      .in('status', ['active', 'notified'])
+      .select('id').maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Cette demande a déjà été traitée.');
 
     toast({
       title: "Liste d'attente mise à jour",
@@ -116,11 +127,31 @@ export const useBookingWaitlist = () => {
     await refresh();
   };
 
+  const addEntry = async (entry: WaitlistRequest) => {
+    const { error } = await supabase.rpc('add_staff_waitlist_entry', {
+      service_id_param: entry.service_id, staff_id_param: entry.preferred_staff_id,
+      client_name_param: entry.client_name, client_phone_param: entry.client_phone,
+      date_from_param: entry.preferred_date_from, date_to_param: entry.preferred_date_to,
+      time_start_param: entry.preferred_time_start, time_end_param: entry.preferred_time_end,
+    });
+    if (error) throw waitlistError(error);
+    await refresh();
+  };
+  const bookEntry = async (entry: BookingWaitlistEntry, slot: WaitlistSlot) => {
+    const { error } = await supabase.rpc('book_waitlist_entry', {
+      entry_id_param: entry.id, staff_id_param: slot.staffId, start_param: slot.startTime.toISOString(),
+    });
+    if (error) throw waitlistError(error);
+    await refresh();
+  };
+
   return {
     entries,
     loading,
     activeCount: entries.length,
     refresh,
     cancelEntry,
+    addEntry,
+    bookEntry,
   };
 };

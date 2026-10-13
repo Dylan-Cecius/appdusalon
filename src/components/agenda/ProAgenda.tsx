@@ -23,6 +23,9 @@ export default function ProAgenda() {
     waitlistEntries={waitlist.entries}
     waitlistLoading={waitlist.loading}
     cancelWaitlistEntry={waitlist.cancelEntry}
+    addWaitlistEntry={waitlist.addEntry}
+    bookWaitlistEntry={async (entry, slot) => { await waitlist.bookEntry(entry, slot); await refreshAppointments(); }}
+    waitlistTimezone="Europe/Brussels"
     updateAppointment={updateAppointment}
     markAsPaid={markAsPaid}
     cancelAppointment={cancelAppointment}

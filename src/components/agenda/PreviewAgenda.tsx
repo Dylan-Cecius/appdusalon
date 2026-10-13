@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type SetStateAction } from 'react';
 import { addDays, format } from 'date-fns';
 import { RotateCcw } from 'lucide-react';
 import type { Appointment, AppointmentSegment } from '@/data/appointments';
 import { appointmentOccupancyOverlaps, getAppointmentSegments, shiftAppointmentSegments } from '@/lib/appointmentSegments';
+import { findWaitlistSlots, waitlistAppointment, type WaitlistService } from '@/lib/waitlistSlots';
 import type { Staff } from '@/hooks/useStaff';
 import type { DaySchedule } from '@/hooks/useOpeningHours';
 import type { BookingWaitlistEntry } from '@/hooks/useBookingWaitlist';
@@ -24,10 +25,15 @@ const members: Staff[] = ['Dylan', 'Marie', 'Thomas'].map((name, index) => ({
   daily_schedules: Object.fromEntries(dayNames.map(day => [day, { start: '09:00', end: '19:00' }])),
   created_at: '2026-01-01T00:00:00Z',
 }));
-const services = [
+const services: (WaitlistService & { color: string; category: 'coupe' | 'combo' })[] = [
   { id: 'demo-coupe', name: 'Coupe homme', price: 25, duration: 30, category: 'coupe' as const, color: '#4f46e5' },
   { id: 'demo-barbe', name: 'Coupe + barbe', price: 35, duration: 45, category: 'combo' as const, color: '#059669' },
-  { id: 'demo-couleur', name: 'Coloration & soin', price: 75, duration: 90, category: 'coupe' as const, color: '#db2777' },
+  { id: 'demo-couleur', name: 'Coloration & soin', price: 75, duration: 90, category: 'coupe', color: '#db2777', steps: [
+    { name: 'Application de la couleur', type: 'work', duration: 30, customerVisible: true },
+    { name: 'Temps de pose', type: 'pause', duration: 30, customerVisible: true },
+    { name: 'Rinçage & coiffage', type: 'work', duration: 20, customerVisible: true },
+    { name: 'Nettoyage', type: 'cleanup', duration: 10, customerVisible: false },
+  ] },
 ];
 const storageKey = `appdusalon-agenda-preview-v2-${format(new Date(), 'yyyy-MM-dd')}`;
 const schedule = (date: Date): DaySchedule => ({ day_of_week: (date.getDay() + 6) % 7, is_open: true, open_time: '09:00', close_time: '19:00', break_start: null, break_end: null });
@@ -36,14 +42,9 @@ const refresh = async () => {};
 function previewSegments(id: string, start: Date, serviceId: string): AppointmentSegment[] {
   if (serviceId !== 'demo-couleur') return [];
   let cursor = start.getTime();
-  return [
-    { label: 'Application de la couleur', type: 'work' as const, minutes: 30 },
-    { label: 'Temps de pose', type: 'pause' as const, minutes: 30 },
-    { label: 'Rinçage & coiffage', type: 'work' as const, minutes: 20 },
-    { label: 'Nettoyage', type: 'cleanup' as const, minutes: 10 },
-  ].map((step, index) => {
-    const startTime = new Date(cursor); cursor += step.minutes * 60_000;
-    return { id: `${id}-step-${index}`, label: step.label, type: step.type, startTime, endTime: new Date(cursor), occupiesStaff: step.type !== 'pause' };
+  return (services.find(service => service.id === serviceId)?.steps || []).map((step, index) => {
+    const startTime = new Date(cursor); cursor += step.duration * 60_000;
+    return { id: `${id}-step-${index}`, label: step.name, type: step.type, startTime, endTime: new Date(cursor), occupiesStaff: step.type !== 'pause' };
   });
 }
 
@@ -66,15 +67,17 @@ function seedAppointments(): Appointment[] {
   });
 }
 
-function loadAppointments(): Appointment[] {
+type PreviewState = { appointments: Appointment[]; waitlist: BookingWaitlistEntry[] };
+function loadPreviewState(): PreviewState {
   try {
     const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
-    if (Array.isArray(stored)) {
-      const restored = stored.map(item => ({ ...item, startTime: new Date(item.startTime), endTime: new Date(item.endTime) }));
-      if (restored.every(item => item.id && typeof item.clientName === 'string' && Array.isArray(item.services) && Number.isFinite(item.startTime.getTime()) && Number.isFinite(item.endTime.getTime()))) return restored;
+    const savedAppointments = Array.isArray(stored) ? stored : stored?.appointments;
+    if (Array.isArray(savedAppointments)) {
+      const restored = savedAppointments.map(item => ({ ...item, startTime: new Date(item.startTime), endTime: new Date(item.endTime) }));
+      if (restored.every(item => item.id && typeof item.clientName === 'string' && Array.isArray(item.services) && Number.isFinite(item.startTime.getTime()) && Number.isFinite(item.endTime.getTime()))) return { appointments: restored, waitlist: Array.isArray(stored?.waitlist) ? stored.waitlist : seedWaitlist() };
     }
   } catch { /* A blocked or obsolete local store must not prevent previewing. */ }
-  return seedAppointments();
+  return { appointments: seedAppointments(), waitlist: seedWaitlist() };
 }
 
 function seedWaitlist(): BookingWaitlistEntry[] {
@@ -127,10 +130,14 @@ function CreatePreviewAppointment({ isOpen, onClose, selectedDate, selectedTimeS
 }
 
 export default function PreviewAgenda() {
-  const [appointments, setAppointments] = useState(loadAppointments);
-  const [waitlist, setWaitlist] = useState(seedWaitlist);
+  const [state, setState] = useState(loadPreviewState);
+  const { appointments, waitlist } = state;
+  const currentState = useRef(state);
+  currentState.current = state;
+  const setAppointments = (action: SetStateAction<Appointment[]>) => setState(current => ({ ...current, appointments: typeof action === 'function' ? action(current.appointments) : action }));
+  const setWaitlist = (action: SetStateAction<BookingWaitlistEntry[]>) => setState(current => ({ ...current, waitlist: typeof action === 'function' ? action(current.waitlist) : action }));
   const [revision, setRevision] = useState(0);
-  useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(appointments)); } catch { /* Session remains usable without persistence. */ } }, [appointments]);
+  useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* Session remains usable without persistence. */ } }, [state]);
   const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
     const original = appointments.find(item => item.id === id);
     if (!original) throw new Error('Rendez-vous introuvable');
@@ -153,6 +160,23 @@ export default function PreviewAgenda() {
       appointments={appointments} appointmentsLoading={false} dbServices={services} activeStaff={members}
       getScheduleForDate={schedule} hasOpeningHours={true} waitlistEntries={waitlist} waitlistLoading={false}
       cancelWaitlistEntry={async id => { setWaitlist(current => current.filter(item => item.id !== id)); }}
+      addWaitlistEntry={async entry => {
+        const service = services.find(item => item.id === entry.service_id);
+        if (!service) throw new Error('Prestation introuvable.');
+        const member = members.find(item => item.id === entry.preferred_staff_id);
+        setWaitlist(current => [...current, { ...entry, id: crypto.randomUUID(), salon_id: 'preview', status: 'active', notification_count: 0,
+          last_notified_at: null, offer_expires_at: null, created_at: new Date().toISOString(), service: { name: service.name }, preferred_staff: member ? { name: member.name } : null }]);
+      }}
+      bookWaitlistEntry={async (entry, slot) => {
+        const current = currentState.current;
+        if (!current.waitlist.some(item => item.id === entry.id)) throw new Error('Cette demande a déjà été traitée.');
+        const available = findWaitlistSlots(entry, { services, staff: members, appointments: current.appointments, schedule, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, limit: 5000 });
+        if (!available.some(item => item.staffId === slot.staffId && item.startTime.getTime() === slot.startTime.getTime())) throw new Error('Ce créneau n’est plus disponible. Recherchez un autre horaire.');
+        const appointment = { ...waitlistAppointment(entry, services.find(service => service.id === entry.service_id)!, slot), id: crypto.randomUUID() };
+        validateAppointment(appointment, current.appointments);
+        const next = { appointments: [...current.appointments, appointment], waitlist: current.waitlist.filter(item => item.id !== entry.id) };
+        currentState.current = next; setState(next);
+      }}
       updateAppointment={updateAppointment} refreshAppointments={refresh}
       markAsPaid={async id => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: 'completed', paymentStatus: 'paid', isPaid: true, amountPaid: item.totalPrice } : item)); toast({ title: 'Paiement simulé', description: 'Le rendez-vous est maintenant marqué payé.' }); }}
       cancelAppointment={async (id, action) => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: action === 'cancel' ? 'cancelled' : 'no_show' } : item)); }}
