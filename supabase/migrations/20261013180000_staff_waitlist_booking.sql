@@ -84,8 +84,8 @@ BEGIN
   END IF;
   SELECT * INTO hours FROM public.opening_hours
     WHERE salon_id=entry.salon_id AND day_of_week=extract(isodow FROM local_start)::integer-1 FOR SHARE;
-  IF NOT FOUND OR NOT hours.is_open OR local_start::time < hours.open_time OR local_end::time > hours.close_time
-     OR (hours.break_start IS NOT NULL AND hours.break_end IS NOT NULL AND local_start::time < hours.break_end AND local_end::time > hours.break_start) THEN
+  IF NOT FOUND OR NOT hours.is_open OR local_start::time < hours.open_time::time OR local_end::time > hours.close_time::time
+     OR (hours.break_start IS NOT NULL AND hours.break_end IS NOT NULL AND local_start::time < hours.break_end::time AND local_end::time > hours.break_start::time) THEN
     RAISE EXCEPTION 'outside_opening_hours';
   END IF;
   day_name := (ARRAY['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'])[extract(isodow FROM local_start)::integer];
