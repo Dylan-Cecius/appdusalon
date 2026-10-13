@@ -141,7 +141,7 @@ const ProAgenda = () => {
     appointments,
     updateAppointment,
     markAsPaid,
-    deleteAppointment,
+    cancelAppointment,
     refreshAppointments,
   } = useSupabaseAppointments();
   const { services: dbServices } = useSupabaseServices();
@@ -927,8 +927,13 @@ const ProAgenda = () => {
             setIsEditModalOpen(false);
             setSelectedAppointment(null);
           }}
-          onDelete={(id) => {
-            void deleteAppointment(id);
+          onCancel={(id) => {
+            void cancelAppointment(id, 'cancel');
+            setIsEditModalOpen(false);
+            setSelectedAppointment(null);
+          }}
+          onNoShow={(id) => {
+            void cancelAppointment(id, 'no_show');
             setIsEditModalOpen(false);
             setSelectedAppointment(null);
           }}
