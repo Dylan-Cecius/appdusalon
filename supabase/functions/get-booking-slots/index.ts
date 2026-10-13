@@ -75,6 +75,9 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    const { error: expiryError } = await supabase.rpc("expire_pending_booking_payments");
+    if (expiryError) throw expiryError;
+
     const url = new URL(req.url);
     const salonId = url.searchParams.get("salon_id");
     const serviceId = url.searchParams.get("service_id");
@@ -242,7 +245,7 @@ serve(async (req) => {
       .from("appointments")
       .select("staff_id, start_time, end_time")
       .eq("salon_id", salonId)
-      .neq("status", "cancelled")
+      .in("status", ["scheduled", "pending_payment"])
       .gte("start_time", localDayStart.toISOString())
       .lt("start_time", localDayEnd.toISOString());
 
