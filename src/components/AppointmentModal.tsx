@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Repeat2 } from 'lucide-react';
 import { useSupabaseServices } from '@/hooks/useSupabaseServices';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { useStaff } from '@/hooks/useStaff';
@@ -44,7 +44,11 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
-  const { addAppointment } = useSupabaseAppointments();
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<'weekly' | 'monthly'>('weekly');
+  const [recurrenceInterval, setRecurrenceInterval] = useState('1');
+  const [recurrenceOccurrences, setRecurrenceOccurrences] = useState('4');
+  const { addAppointment, addRecurringAppointments } = useSupabaseAppointments();
   const { services } = useSupabaseServices();
   const { activeStaff } = useStaff();
   const isMobile = useIsMobile();
@@ -62,6 +66,10 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
       setSelectedServices([]);
       setNotes('');
       setSelectedStaffId('');
+      setRecurrenceEnabled(false);
+      setRecurrenceFrequency('weekly');
+      setRecurrenceInterval('1');
+      setRecurrenceOccurrences('4');
     }
   }, [selectedTimeSlot, isOpen, staffId]);
 
@@ -140,23 +148,34 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
       : appointmentTypes.find(t => t.value === appointmentType)?.label || clientName;
 
     try {
-      await addAppointment({
+      const appointmentPayload = {
         clientName: finalClientName,
         clientPhone: appointmentType === 'client' ? clientPhone : undefined,
         services: appointmentType === 'client' ? selectedServices : [],
         startTime: appointmentStart,
         endTime: appointmentEnd,
-        status: 'scheduled',
+        status: 'scheduled' as const,
         totalPrice: appointmentType === 'client' ? totalPrice : 0,
         notes: notes || undefined,
         isPaid: false,
         staffId: effectiveStaffId
-      });
+      };
 
-      toast({
-        title: "Rendez-vous créé",
-        description: `RDV pour ${finalClientName} le ${format(appointmentStart, 'dd/MM à HH:mm')}`,
-      });
+      if (recurrenceEnabled) {
+        await addRecurringAppointments({
+          appointment: appointmentPayload,
+          frequency: recurrenceFrequency,
+          interval: Math.max(1, Math.min(12, Number(recurrenceInterval) || 1)),
+          occurrences: Math.max(2, Math.min(52, Number(recurrenceOccurrences) || 2)),
+        });
+      } else {
+        await addAppointment(appointmentPayload);
+
+        toast({
+          title: "Rendez-vous créé",
+          description: `RDV pour ${finalClientName} le ${format(appointmentStart, 'dd/MM à HH:mm')}`,
+        });
+      }
 
       // Reset form
       setAppointmentType('client');
@@ -166,11 +185,103 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
       setStartTime('');
       setNotes('');
       setSelectedStaffId('');
+      setRecurrenceEnabled(false);
+      setRecurrenceFrequency('weekly');
+      setRecurrenceInterval('1');
+      setRecurrenceOccurrences('4');
       onClose();
     } catch {
       // addAppointment gère déjà le toast d'erreur
     }
-  }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, staffId, totalPrice, addAppointment, onClose, selectedStaffId]);
+  }, [appointmentType, clientName, clientPhone, selectedServices, startTime, notes, selectedDate, staffId, totalPrice, addAppointment, addRecurringAppointments, onClose, selectedStaffId, recurrenceEnabled, recurrenceFrequency, recurrenceInterval, recurrenceOccurrences]);
+
+  const recurrenceControls = (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+      <button
+        type="button"
+        onClick={() => setRecurrenceEnabled((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <span className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-primary shadow-sm">
+            <Repeat2 className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold">Répéter ce rendez-vous</span>
+            <span className="block text-[11px] text-muted-foreground">
+              Créer une série automatiquement.
+            </span>
+          </span>
+        </span>
+        <span
+          className={cn(
+            'flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors',
+            recurrenceEnabled ? 'bg-primary' : 'bg-slate-200'
+          )}
+        >
+          <span
+            className={cn(
+              'h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
+              recurrenceEnabled && 'translate-x-5'
+            )}
+          />
+        </span>
+      </button>
+
+      {recurrenceEnabled && (
+        <div className="mt-3 grid gap-3 border-t border-slate-200 pt-3 sm:grid-cols-3">
+          <div>
+            <Label>Fréquence</Label>
+            <Select
+              value={recurrenceFrequency}
+              onValueChange={(value) =>
+                setRecurrenceFrequency(value as 'weekly' | 'monthly')
+              }
+            >
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Semaine</SelectItem>
+                <SelectItem value="monthly">Mois</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Intervalle</Label>
+            <Select value={recurrenceInterval} onValueChange={setRecurrenceInterval}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4].map((value) => (
+                  <SelectItem key={value} value={String(value)}>
+                    {value === 1
+                      ? recurrenceFrequency === 'weekly'
+                        ? 'Chaque semaine'
+                        : 'Chaque mois'
+                      : recurrenceFrequency === 'weekly'
+                        ? `Toutes les ${value} semaines`
+                        : `Tous les ${value} mois`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="recurrenceOccurrences">Occurrences</Label>
+            <Input
+              id="recurrenceOccurrences"
+              type="number"
+              min="2"
+              max="52"
+              value={recurrenceOccurrences}
+              onChange={(event) => setRecurrenceOccurrences(event.target.value)}
+              className="mt-1"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -277,7 +388,11 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, staffId, selectedTime
                   />
                 </div>
 
-                {/* Services Selection - Only show for client appointments */}
+                {recurrenceControls}
+
+                {recurrenceControls}
+
+              {/* Services Selection - Only show for client appointments */}
                 {appointmentType === 'client' && (
                   <div>
                     <Label>Services disponibles</Label>
