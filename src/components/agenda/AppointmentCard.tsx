@@ -15,17 +15,29 @@ interface AppointmentCardProps {
   startHour: number;
   color: string;
   onClick: () => void;
+  minutesPerSlot?: number;
   isDragOverlay?: boolean;
 }
 
-const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onClick, isDragOverlay }: AppointmentCardProps) => {
+const AppointmentCard = memo(({
+  appointment,
+  slotHeight,
+  startHour,
+  color,
+  onClick,
+  minutesPerSlot = 15,
+  isDragOverlay,
+}: AppointmentCardProps) => {
   const startTime = new Date(appointment.startTime);
   const endTime = new Date(appointment.endTime);
   const startMinutes = (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
-  const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+  const durationMinutes = Math.max(
+    minutesPerSlot,
+    (endTime.getTime() - startTime.getTime()) / (1000 * 60)
+  );
 
-  const topPx = (startMinutes / 15) * slotHeight;
-  const heightPx = (durationMinutes / 15) * slotHeight;
+  const topPx = (startMinutes / minutesPerSlot) * slotHeight;
+  const heightPx = (durationMinutes / minutesPerSlot) * slotHeight;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: appointment.id,
@@ -33,24 +45,24 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
     disabled: isDragOverlay,
   });
 
-  const serviceName = appointment.services?.[0]?.name || '';
-  const cardHeight = Math.max(heightPx, 44);
-  const isShort = cardHeight < 56;
-  const isTall = cardHeight >= 75;
+  const serviceName = appointment.services?.[0]?.name || 'Rendez-vous';
+  const cardHeight = Math.max(heightPx, 38);
+  const isCompact = cardHeight < 56;
+  const isTall = cardHeight >= 74;
 
   const style: React.CSSProperties = isDragOverlay
     ? {
-        width: 220,
-        minHeight: '44px',
+        width: 230,
+        minHeight: '42px',
         height: `${cardHeight}px`,
-        opacity: 0.95,
+        opacity: 0.98,
       }
     : {
-        top: `${topPx}px`,
-        minHeight: '44px',
-        height: `${cardHeight}px`,
+        top: `${topPx + 2}px`,
+        minHeight: '38px',
+        height: `${Math.max(cardHeight - 4, 38)}px`,
         transform: CSS.Translate.toString(transform),
-        opacity: isDragging ? 0.2 : 1,
+        opacity: isDragging ? 0.28 : 1,
       };
 
   const card = (
@@ -59,76 +71,67 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       {...listeners}
       {...attributes}
       className={cn(
-        "rounded-lg cursor-grab overflow-hidden group",
-        "transition-all duration-200 ease-out",
-        !isDragOverlay && "absolute left-1 right-1",
-        isDragOverlay && "shadow-2xl ring-1 ring-white/10",
-        isDragging && "z-50",
-        "hover:z-20 hover:shadow-lg",
-        "active:cursor-grabbing"
+        'group overflow-hidden rounded-lg cursor-grab',
+        'transition-[box-shadow,transform,opacity] duration-150 ease-out',
+        !isDragOverlay && 'absolute left-1 right-1',
+        isDragOverlay && 'shadow-2xl ring-1 ring-black/10',
+        isDragging && 'z-50',
+        'hover:z-20 hover:shadow-md',
+        'active:cursor-grabbing'
       )}
       style={{
         ...style,
-        background: `linear-gradient(135deg, ${color}18 0%, ${color}10 100%)`,
-        borderLeft: `3px solid ${color}`,
-        backdropFilter: 'blur(8px)',
-        border: `1px solid ${color}25`,
-        borderLeftWidth: '3px',
-        borderLeftColor: color,
+        backgroundColor: `${color}14`,
+        border: `1px solid ${color}30`,
+        borderLeft: `4px solid ${color}`,
       }}
-      onClick={(e) => {
+      onClick={(event) => {
         if (isDragging) return;
-        e.stopPropagation();
+        event.stopPropagation();
         onClick();
       }}
     >
       <div className={cn(
-        "px-2.5 h-full flex flex-col overflow-hidden",
-        isShort ? "justify-center py-1" : "justify-start py-2"
+        'flex h-full min-w-0 flex-col overflow-hidden px-2.5',
+        isCompact ? 'justify-center py-1' : 'justify-start py-2'
       )}>
-        {isShort ? (
-          <div className="flex items-center gap-1.5 text-[11px] leading-normal font-medium min-w-0">
-            <span className="font-semibold text-white truncate flex-1 min-w-0">{appointment.clientName}</span>
-            <span className="text-white/35 shrink-0 text-[10px] font-mono">{format(startTime, 'HH:mm')}</span>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="min-w-0 flex-1 truncate text-[12px] font-bold leading-tight text-foreground">
+            {appointment.clientName}
+          </span>
+          <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">
+            {format(startTime, 'HH:mm')}
+          </span>
+        </div>
+
+        {!isCompact && (
+          <div className="mt-0.5 truncate text-[10px] font-medium leading-tight text-muted-foreground">
+            {serviceName}
           </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between gap-1">
-              <span className="text-[13px] font-semibold text-white truncate leading-normal min-w-0 flex-1">
-                {appointment.clientName}
-              </span>
-              {!appointment.isPaid && (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 animate-pulse" />
+        )}
+
+        {isTall && (
+          <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+            <span className="text-[10px] font-semibold text-foreground/75">
+              {Number(appointment.totalPrice || 0).toFixed(2)} €
+            </span>
+            <span
+              className={cn(
+                'rounded-full px-1.5 py-0.5 text-[9px] font-bold',
+                appointment.isPaid
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-amber-100 text-amber-700'
               )}
-            </div>
-            <div className="text-[11px] leading-normal mt-0.5 text-white/45 truncate min-w-0">
-              {serviceName}
-            </div>
-            {heightPx >= 60 && (
-              <div className="text-[10px] text-white/30 leading-snug mt-1 font-mono tracking-wide">
-                {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
-              </div>
-            )}
-            {isTall && (
-              <div className="flex items-center gap-1.5 mt-auto pt-1">
-                <span className="text-[11px] font-semibold text-white/60">{appointment.totalPrice}€</span>
-                {!appointment.isPaid && (
-                  <span className="text-[9px] font-medium text-red-400/80 bg-red-400/10 px-1.5 py-0.5 rounded-full">
-                    Non payé
-                  </span>
-                )}
-              </div>
-            )}
-          </>
+            >
+              {appointment.isPaid ? 'Payé' : 'À encaisser'}
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Hover glow effect */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-lg"
-        style={{
-          background: `linear-gradient(135deg, ${color}10 0%, transparent 60%)`,
-        }}
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
+        style={{ boxShadow: `inset 0 0 0 1px ${color}35` }}
       />
     </div>
   );
@@ -138,18 +141,17 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
   return (
     <Tooltip>
       <TooltipTrigger asChild>{card}</TooltipTrigger>
-      <TooltipContent
-        side="right"
-        className="max-w-[220px] border-white/10"
-        style={{ backgroundColor: '#1e1e35', borderColor: 'rgba(255,255,255,0.1)' }}
-      >
+      <TooltipContent side="right" className="max-w-[250px] p-3">
         <div className="space-y-1.5">
-          <div className="font-bold text-white">{appointment.clientName}</div>
-          <div className="text-xs text-white/50">{serviceName}</div>
-          <div className="text-xs text-white/70 font-mono">{format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}</div>
-          <div className="text-xs font-semibold text-white/80">{appointment.totalPrice}€</div>
-          {appointment.notes && <div className="text-xs italic text-white/40">{appointment.notes}</div>}
-          {!appointment.isPaid && <div className="text-xs font-bold text-red-400">Non payé</div>}
+          <div className="font-semibold">{appointment.clientName}</div>
+          <div className="text-xs text-muted-foreground">{serviceName}</div>
+          <div className="text-xs font-medium tabular-nums">
+            {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
+          </div>
+          <div className="text-xs font-semibold">{Number(appointment.totalPrice || 0).toFixed(2)} €</div>
+          {appointment.notes && (
+            <div className="max-w-[220px] text-xs italic text-muted-foreground">{appointment.notes}</div>
+          )}
         </div>
       </TooltipContent>
     </Tooltip>
