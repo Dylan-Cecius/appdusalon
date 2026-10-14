@@ -139,6 +139,7 @@ const DroppableSlot = ({
 };
 
 export type AgendaCreateDialogProps = {
+  onCreated?: (appointment: Appointment) => void;
   clientSuggestions?: AgendaClient[];
   prefill?: BookingPrefill;
   onTimeOffClick?: () => void;
@@ -1001,6 +1002,12 @@ export const AgendaWorkspace = ({ moveAppointment, availabilityLoading = false, 
       </DragOverlay>
 
       {renderCreateDialog({
+        onCreated: appointment => {
+          setSelectedDate(new Date(appointment.startTime));
+          setSelectedBarberId(appointment.staffId || '');
+          setVisibleMemberIds(previous => new Set([...previous, appointment.staffId || '']));
+          setViewMode('day');
+        },
         clientSuggestions: directory,
         prefill: bookingPrefill,
         onTimeOffClick: () => { setIsModalOpen(false); setTimeOffOpen(true); },

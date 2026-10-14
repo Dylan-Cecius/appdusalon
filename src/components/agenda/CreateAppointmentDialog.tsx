@@ -1,3 +1,5 @@
+import AppointmentSlotFinder from './AppointmentSlotFinder';
+import { appointmentSeriesIssue } from '@/lib/appointmentSlots';
 import AgendaClientPicker from './AgendaClientPicker';
 import { useMemo, useRef, useState } from 'react';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
@@ -6,7 +8,7 @@ import type { Staff } from '@/hooks/useStaff';
 import type { Appointment } from '@/data/appointments';
 import type { DaySchedule } from '@/hooks/useOpeningHours';
 import type { StaffTimeOff } from '@/lib/staffTimeOff';
-import { appointmentDraftConflict, appointmentDraftSeries, buildAppointmentDraft, type AppointmentService, type Recurrence } from '@/lib/appointmentDraft';
+import { appointmentDraftSeries, buildAppointmentDraft, type AppointmentService, type Recurrence } from '@/lib/appointmentDraft';
 import { appointmentPalette } from '@/lib/appointmentPalette';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,7 +23,7 @@ type Props = AgendaCreateDialogProps & {
   schedule: (date: Date) => DaySchedule | null; unavailable?: boolean; demo?: boolean; timezone?: string;
   onSave: (appointment: Appointment, recurrence: Recurrence | null) => Promise<void>;
 };
-export default function CreateAppointmentDialog({ clientSuggestions = [], prefill, isOpen, onClose, onTimeOffClick, selectedDate, selectedTimeSlot, staffId, services, staff, appointments, timeOff, schedule, unavailable = false, demo = false, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone, onSave }: Props) {
+export default function CreateAppointmentDialog({ clientSuggestions = [], prefill, isOpen, onClose, onCreated, onTimeOffClick, selectedDate, selectedTimeSlot, staffId, services, staff, appointments, timeOff, schedule, unavailable = false, demo = false, timezone = Intl.DateTimeFormat().resolvedOptions().timeZone, onSave }: Props) {
   const [clientName, setClientName] = useState(prefill?.client.name || ''), [phone, setPhone] = useState(prefill?.client.phone || ''), [notes, setNotes] = useState('');
   const [date, setDate] = useState(formatInTimeZone(selectedDate, timezone, 'yyyy-MM-dd'));
   const [time, setTime] = useState(selectedTimeSlot || (demo ? '17:00' : ''));
@@ -33,6 +35,9 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
   const [interval, setInterval] = useState('1'), [occurrences, setOccurrences] = useState('4');
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const saving = useRef(false);
+  const [slotsOpen, setSlotsOpen] = useState(false);
+  const availability = useMemo(() => ({ staff, appointments, timeOff, schedule, timezone }), [staff, appointments, timeOff, schedule, timezone]);
+  const recurrence = useMemo<Recurrence | null>(() => repeat ? { frequency, interval: Number(interval), occurrences: Number(occurrences) } : null, [repeat, frequency, interval, occurrences]);
   const missingServices = prefill?.services?.filter(item => !services.some(service => service.id === item.id)) || [];
   const selected = useMemo(() => serviceIds.map(id => services.find(item => item.id === id)).filter((item): item is AppointmentService => !!item), [serviceIds, services]);
   const draftResult = useMemo(() => {
@@ -40,17 +45,12 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
     try {
       if (selected.length !== serviceIds.length) throw new Error('Une prestation sélectionnée n’est plus disponible.');
       const draft = buildAppointmentDraft({ services: selected, startTime: fromZonedTime(`${date}T${time}:00`, timezone), staffId: memberId });
-      const recurrence = repeat ? { frequency, interval: Number(interval), occurrences: Number(occurrences) } : null;
       const series = appointmentDraftSeries(draft, recurrence, timezone);
-      let issue = '';
-      for (const [index, item] of series.entries()) {
-        const conflict = appointmentDraftConflict(item, { staff, appointments: [...appointments, ...series.slice(0, index)], timeOff, schedule, timezone });
-        if (conflict) { issue = (series.length > 1 ? `${formatInTimeZone(item.startTime, timezone, 'dd/MM/yyyy HH:mm')} : ` : '') + conflict; break; }
-      }
+      const issue = appointmentSeriesIssue(series, availability);
       return { draft, series, issue };
     } catch (err) { return { draft: null, series: [], issue: err instanceof Error ? err.message : 'Vérifiez les prestations.' }; }
   // The catalogue and availability data must update the draft while the form stays open.
-  }, [date, time, memberId, serviceIds, selected, staff, appointments, timeOff, schedule, timezone, repeat, frequency, interval, occurrences]);
+  }, [date, time, memberId, serviceIds, selected, availability, timezone, recurrence]);
   const { draft, series } = draftResult;
   const issue = unavailable ? 'Les disponibilités n’ont pas pu être vérifiées. Attendez le chargement ou actualisez l’agenda.' : draftResult.issue;
   const selectClass = 'h-10 w-full rounded-md border border-input bg-background px-3 text-sm';
@@ -61,7 +61,7 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
       <form onSubmit={async event => {
         event.preventDefault(); if (saving.current || !draft || issue) return;
         saving.current = true; setBusy(true); setError('');
-        try { await onSave({ ...draft, clientName: clientName.trim(), clientPhone: phone.trim(), notes: notes.trim() }, repeat ? { frequency, interval: Number(interval), occurrences: Number(occurrences) } : null); onClose(); }
+        try { await onSave({ ...draft, clientName: clientName.trim(), clientPhone: phone.trim(), notes: notes.trim() }, recurrence); onCreated?.(draft); onClose(); }
         catch (err) { setError(err instanceof Error ? err.message : 'Le rendez-vous n’a pas pu être enregistré. Vérifiez le créneau et réessayez.'); }
         finally { saving.current = false; setBusy(false); }
       }}>
@@ -92,9 +92,13 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
           <div className="min-w-0 space-y-4">
             <section aria-label="Résumé du rendez-vous" className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
               <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-indigo-950"><Clock3 className="h-4 w-4" />Résumé du rendez-vous</p>
-              {draft ? <><div className="flex items-end justify-between gap-2"><span className="text-2xl font-bold tabular-nums text-indigo-950">{formatInTimeZone(draft.startTime, timezone, 'HH:mm')} → {formatInTimeZone(draft.endTime, timezone, 'HH:mm')}</span><span className="text-lg font-semibold">{draft.totalPrice.toFixed(2)} €</span></div><p className="mt-2 text-xs text-indigo-800">{(draft.endTime.getTime() - draft.startTime.getTime()) / 60000} min · {selected.length} prestation{selected.length > 1 ? 's' : ''} · préparation comprise</p>{repeat && <p className="mt-2 text-xs">{series.length} rendez-vous · total prévu {(draft.totalPrice * series.length).toFixed(2)} €</p>}</> : <p className="text-sm text-slate-600">Choisissez les prestations et l’heure pour voir la durée et le total.</p>}
+              {draft ? <><p className="mb-2 text-xs font-medium text-indigo-800">{formatInTimeZone(draft.startTime, timezone, 'dd/MM/yyyy')} · {staff.find(member => member.id === memberId)?.name}</p><div className="flex items-end justify-between gap-2"><span className="text-2xl font-bold tabular-nums text-indigo-950">{formatInTimeZone(draft.startTime, timezone, 'HH:mm')} → {formatInTimeZone(draft.endTime, timezone, 'HH:mm')}</span><span className="text-lg font-semibold">{draft.totalPrice.toFixed(2)} €</span></div><p className="mt-2 text-xs text-indigo-800">{(draft.endTime.getTime() - draft.startTime.getTime()) / 60000} min · {selected.length} prestation{selected.length > 1 ? 's' : ''} · préparation comprise</p>{repeat && <p className="mt-2 text-xs">{series.length} rendez-vous · total prévu {(draft.totalPrice * series.length).toFixed(2)} €</p>}</> : <p className="text-sm text-slate-600">Choisissez les prestations et l’heure pour voir la durée et le total.</p>}
               <p className="mt-2 text-[10px] text-slate-500">Horaires : {timezone === 'Europe/Brussels' ? 'Bruxelles' : timezone}</p>
             </section>
+            <Button type="button" variant="outline" className="w-full" aria-expanded={slotsOpen} aria-controls="appointment-slot-finder" onClick={() => setSlotsOpen(value => !value)}>{slotsOpen ? 'Masquer les disponibilités' : 'Trouver un créneau'}</Button>
+            {slotsOpen && <AppointmentSlotFinder services={selected} date={date} staffId={memberId} recurrence={recurrence} availability={availability} unavailable={unavailable || selected.length !== serviceIds.length} selectedTime={time} onSelect={slot => {
+              setDate(formatInTimeZone(slot.startTime, timezone, 'yyyy-MM-dd')); setTime(formatInTimeZone(slot.startTime, timezone, 'HH:mm')); setMemberId(slot.staffId); setError('');
+            }} />}
             {issue ? <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">{issue}</p> : draft && <p role="status" className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-xs font-medium text-emerald-800"><CheckCircle2 className="h-4 w-4" />{repeat ? 'Les créneaux de la série sont disponibles' : 'Créneau disponible'} selon l’agenda chargé.</p>}
             {draft && <AppointmentTimeline appointment={draft} timezone={timezone} />}
             {repeat && series.length > 0 && <details className="rounded-xl border p-3 text-xs"><summary className="cursor-pointer font-semibold">Voir les {series.length} dates</summary><ol className="mt-2 max-h-40 space-y-1 overflow-y-auto">{series.map(item => <li key={item.id}>{formatInTimeZone(item.startTime, timezone, 'dd/MM/yyyy · HH:mm')}</li>)}</ol></details>}
