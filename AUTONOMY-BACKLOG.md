@@ -131,3 +131,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Rapports automatiques — formulaire confirmé
 - Validation des champs, révision capturée, saisie conservée, fermeture après confirmation et verrou des actions. 317 unitaires, typecheck/build réussis ; lint 0 erreur/206 avertissements. Recette navigateur/serveur encore manquante, aucun envoi ni configuration réelle.
+
+## Régressions fidélité/rapports — checkpoints complets
+- 22 nouveaux cas navigateur préparés, total 70 non exécutés ; 317 unitaires, typecheck/build réussis, lint 0 erreur/207 avertissements. Dernière relecture après mutation protège les rapports ; feedback fidélité effacé à la nouvelle saisie. Contrôles hébergés et publication toujours distincts.

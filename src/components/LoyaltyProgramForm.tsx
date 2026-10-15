@@ -30,6 +30,7 @@ export const LoyaltyProgramForm = ({ program, disabled, onRefresh, saveProgram }
   useEffect(() => { current.current = true; return () => { current.current = false; }; }, []);
   useEffect(() => { if (saveError) errorRef.current?.focus(); }, [saveError]);
   const blocked = saving || disabled;
+  const clearFeedback = () => { setMessage(null); setSaveError(null); };
   const adopt = (p: LoyaltyProgram) => {
     setBaseline(p); setEnabled(p.enabled); setPointsPerEuro(String(p.points_per_euro));
     setRewardThreshold(String(p.reward_threshold)); setRewardValue(String(p.reward_value)); setBirthdayBonus(String(p.birthday_bonus));
@@ -68,7 +69,7 @@ export const LoyaltyProgramForm = ({ program, disabled, onRefresh, saveProgram }
 
         <button
           type="button"
-          onClick={() => setEnabled((value) => !value)}
+          onClick={() => { clearFeedback(); setEnabled((value) => !value); }}
           role="switch" aria-checked={enabled} aria-label="Activer le programme fidélité" disabled={blocked}
           className="flex items-center gap-2 self-start sm:self-auto"
         >
@@ -111,7 +112,7 @@ export const LoyaltyProgramForm = ({ program, disabled, onRefresh, saveProgram }
             min="0"
             step="0.001" max="100"
             value={pointsPerEuro}
-            onChange={(event) => setPointsPerEuro(event.target.value)}
+            onChange={(event) => { clearFeedback(); setPointsPerEuro(event.target.value); }}
             className="mt-1 bg-white"
           />
           <p className="mt-1 text-[10px] text-slate-400">Ex. 1 € = 1 point</p>
@@ -126,7 +127,7 @@ export const LoyaltyProgramForm = ({ program, disabled, onRefresh, saveProgram }
             min="1"
             step="1"
             value={rewardThreshold}
-            onChange={(event) => setRewardThreshold(event.target.value)}
+            onChange={(event) => { clearFeedback(); setRewardThreshold(event.target.value); }}
             className="mt-1 bg-white"
           />
           <p className="mt-1 text-[10px] text-slate-400">Points nécessaires</p>
@@ -141,7 +142,7 @@ export const LoyaltyProgramForm = ({ program, disabled, onRefresh, saveProgram }
             min="0"
             step="0.01" max="99999999.99"
             value={rewardValue}
-            onChange={(event) => setRewardValue(event.target.value)}
+            onChange={(event) => { clearFeedback(); setRewardValue(event.target.value); }}
             className="mt-1 bg-white"
           />
           <p className="mt-1 text-[10px] text-slate-400">Ex. 200 points = 5 €</p>
@@ -156,7 +157,7 @@ export const LoyaltyProgramForm = ({ program, disabled, onRefresh, saveProgram }
             min="0"
             step="1"
             value={birthdayBonus}
-            onChange={(event) => setBirthdayBonus(event.target.value)}
+            onChange={(event) => { clearFeedback(); setBirthdayBonus(event.target.value); }}
             className="mt-1 bg-white"
           />
           <p className="mt-1 text-[10px] text-slate-400">Points bonus</p>

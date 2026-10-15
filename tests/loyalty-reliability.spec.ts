@@ -48,6 +48,8 @@ test('settings lock during save and keep the draft after failure', async ({ page
   await expect.poll(() => page.evaluate(() => window.loyaltyFixture.saveCount())).toBe(2);
   await page.evaluate(() => window.loyaltyFixture.finishSave(1));
   await expect(page.getByRole('status')).toHaveText('Programme fidélité enregistré.');
+  await page.getByLabel('Points par euro', { exact: true }).fill('3');
+  await expect(page.getByRole('status')).toHaveCount(0);
 });
 test('refresh does not overwrite a draft or its captured revision', async ({ page }) => {
   await page.goto('/tests/fixtures/loyalty-reliability.html?mode=form');

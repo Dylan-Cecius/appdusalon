@@ -46,7 +46,11 @@ export const useAutomatedReports = () => {
     if (!current() || !contextKey || loading || error || !hasSnapshot) throw new Error('report_context_unavailable');
     return { current, owner: contextKey };
   };
-  const storeReport = (report: AutomatedReport, owner: string) => setSnapshot(previous => previous?.context === owner ? { ...previous, reports: previous.reports.some(row => row.id === report.id) ? previous.reports.map(row => row.id === report.id ? report : row) : [report, ...previous.reports] } : previous);
+  const storeReport = (report: AutomatedReport, owner: string) => {
+    setSnapshot(previous => previous?.context === owner ? { ...previous, reports: previous.reports.some(row => row.id === report.id) ? previous.reports.map(row => row.id === report.id ? report : row) : [report, ...previous.reports] } : previous);
+    // Supersede any read started before the confirmed mutation.
+    void fetchReports();
+  };
   const createReport = async (reportData: CreateAutomatedReportData) => {
     const { current, owner } = mutationContext();
     const { data, error } = await supabase.from('automated_reports').insert({ ...automatedReportFields(reportData), user_id: owner }).select().single();
@@ -85,6 +89,7 @@ export const useAutomatedReports = () => {
       if (!current()) return;
       if (data?.id !== reportId || data.user_id !== owner) throw new Error('report_delete_not_confirmed');
       setSnapshot(previous => previous?.context === owner ? { ...previous, reports: previous.reports.filter(row => row.id !== reportId) } : previous);
+      void fetchReports();
       toast({ title: 'Rapport supprimé' });
     } catch { if (current()) toast({ title: 'Erreur', description: 'Impossible de confirmer la suppression du rapport.', variant: 'destructive' }); }
   };
