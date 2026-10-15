@@ -1,9 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
-import { readLoyaltySnapshot, type LoyaltyProgram } from '@/lib/loyaltyRead';
+import { readLoyaltySnapshot } from '@/lib/loyaltyRead';
+import { persistLoyaltyProgram, type LoyaltyFields, type LoyaltyWriter } from '@/lib/loyaltyPersistence';
 import { useLoyaltySnapshot } from './useLoyaltySnapshot';
 export type { LoyaltyProgram, LoyaltyAccount, LoyaltyEvent } from '@/lib/loyaltyRead';
 
@@ -30,39 +30,24 @@ export const useLoyalty = (clientId?: string) => {
     }, salonId, clientId, current);
   }, [salonId, clientId]);
   const { data, error, loading, refresh, captureContext } = useLoyaltySnapshot(contextKey, read);
-  const saveProgram = async (
-    updates: Omit<LoyaltyProgram, 'salon_id'>
-  ) => {
-    if (!salonId) throw new Error('salon_not_found');
-
-    const payload = {
-      salon_id: salonId,
-      enabled: Boolean(updates.enabled),
-      points_per_euro: Math.max(0, Number(updates.points_per_euro || 0)),
-      reward_threshold: Math.max(1, Math.round(Number(updates.reward_threshold || 1))),
-      reward_value: Math.max(0, Number(updates.reward_value || 0)),
-      birthday_bonus: Math.max(0, Math.round(Number(updates.birthday_bonus || 0))),
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = await (supabase as any)
-      .from('loyalty_programs')
-      .upsert(payload, { onConflict: 'salon_id' });
-
-    if (error) throw error;
-
-    toast({
-      title: 'Programme fidélité mis à jour',
-      description: payload.enabled
-        ? 'Les prochains encaissements liés à un client généreront des points.'
-        : 'Le gain automatique de points est désactivé.',
-    });
-
-    await refresh();
+  const savePending = useRef(false);
+  const adminRef = useRef(permissions.isAdmin);
+  adminRef.current = permissions.isAdmin;
+  const saveProgram = async (updates: LoyaltyFields, expectedRevision: string | null) => {
+    const current = captureContext();
+    if (!current() || !salonId || !adminRef.current || loading || error || !data) throw new Error('loyalty_context_unavailable');
+    if (savePending.current) throw new Error('loyalty_save_pending');
+    savePending.current = true;
+    try {
+      const saved = await persistLoyaltyProgram(supabase as unknown as LoyaltyWriter, salonId, expectedRevision, updates);
+      if (!current() || !adminRef.current) throw new Error('loyalty_context_changed');
+      void refresh();
+      return saved;
+    } finally { savePending.current = false; }
   };
 
   return {
     program: data?.program ?? null, account: data?.account ?? null, events: data?.events ?? [],
-    loading: !isReady || loading, error, refresh, saveProgram, contextKey, captureContext,
+    loading: !isReady || loading, error, refresh, saveProgram, contextKey, canManage: permissions.isAdmin,
   };
 };

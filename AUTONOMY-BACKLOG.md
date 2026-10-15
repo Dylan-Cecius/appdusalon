@@ -119,3 +119,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Fidélité — lecture cohérente
 - Identités/nombres vérifiés, résultat complet, erreurs/reprise et protection des réponses périmées ; 279 unitaires, typecheck/build réussis. Sauvegarde des réglages encore à fiabiliser. Aucun point ni programme réel modifié.
+
+## Fidélité — réglages confirmés
+- Validation sans arrondi silencieux, mise à jour par révision/insert sans écrasement, saisie conservée et verrou d’attente. 299 unitaires, typecheck/build réussis, lint 0 erreur/210 avertissements. Scénarios navigateur et RLS à vérifier ; aucun réglage réel sauvegardé.

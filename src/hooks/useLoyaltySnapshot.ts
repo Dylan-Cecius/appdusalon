@@ -9,12 +9,12 @@ export function useLoyaltySnapshot(contextKey: string | null, read: (current: ()
   const refresh = useCallback(async () => {
     const current = scope.current.begin(contextKey);
     if (!current || !contextKey) return;
-    setState({ context: contextKey, data: null, loading: true, error: null });
+    setState(previous => ({ context: contextKey, data: previous?.context === contextKey ? previous.data : null, loading: true, error: null }));
     try {
       const data = await read(current);
       if (current() && data) setState({ context: contextKey, data, loading: false, error: null });
     } catch {
-      if (current()) setState({ context: contextKey, data: null, loading: false, error: 'Impossible de charger la fidélité. Réessayez pour connaître son état.' });
+      if (current()) setState(previous => ({ context: contextKey, data: previous?.context === contextKey ? previous.data : null, loading: false, error: 'Impossible de charger la fidélité. Réessayez pour connaître son état.' }));
     }
   }, [contextKey, read]);
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readLoyaltySnapshot, defaultLoyaltyProgram, type LoyaltyReader } from './loyaltyRead';
 import { createLatestRequestScope } from './latestRequestScope';
-const program = { ...defaultLoyaltyProgram('s'), enabled: true, points_per_euro: '1.5' };
+const program = { ...defaultLoyaltyProgram('s'), enabled: true, updated_at: '2026-10-15T12:00:00Z', points_per_euro: '1.5' };
 const account = { id: 'a', salon_id: 's', client_id: 'c', points_balance: '12', lifetime_earned: 20, lifetime_redeemed: 8 };
 const event = { id: 'e', salon_id: 's', client_id: 'c', loyalty_account_id: 'a', event_type: 'reversal', points_delta: -8, monetary_value: '0', note: null, created_at: '2026-10-15T12:00:00Z' };
 const result = (data: unknown, error: unknown = null) => Promise.resolve({ data, error });

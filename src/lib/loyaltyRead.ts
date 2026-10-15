@@ -1,5 +1,5 @@
 export type LoyaltyProgram = {
-  salon_id: string; enabled: boolean; points_per_euro: number;
+  salon_id: string; updated_at: string | null; enabled: boolean; points_per_euro: number;
   reward_threshold: number; reward_value: number; birthday_bonus: number;
 };
 export type LoyaltyAccount = {
@@ -11,7 +11,7 @@ export type LoyaltyEvent = {
   points_delta: number; monetary_value: number; note: string | null; created_at: string;
 };
 export type LoyaltySnapshot = { program: LoyaltyProgram; account: LoyaltyAccount | null; events: LoyaltyEvent[] };
-export const defaultLoyaltyProgram = (salonId: string): LoyaltyProgram => ({ salon_id: salonId, enabled: false, points_per_euro: 1, reward_threshold: 200, reward_value: 5, birthday_bonus: 0 });
+export const defaultLoyaltyProgram = (salonId: string): LoyaltyProgram => ({ salon_id: salonId, updated_at: null, enabled: false, points_per_euro: 1, reward_threshold: 200, reward_value: 5, birthday_bonus: 0 });
 
 type Result = { data: unknown; error: unknown };
 export interface LoyaltyReader {
@@ -30,8 +30,8 @@ function number(value: unknown, min = 0, max = Number.MAX_SAFE_INTEGER, integer 
 }
 export function normalizeLoyaltyProgram(value: unknown, salonId: string): LoyaltyProgram {
   const r = record(value);
-  if (r.salon_id !== salonId || typeof r.enabled !== 'boolean') throw new Error('invalid_loyalty_program');
-  return { salon_id: salonId, enabled: r.enabled, points_per_euro: number(r.points_per_euro, 0, 100), reward_threshold: number(r.reward_threshold, 1, 1000000, true), reward_value: number(r.reward_value, 0, 99999999.99), birthday_bonus: number(r.birthday_bonus, 0, 2147483647, true) };
+  if (r.salon_id !== salonId || typeof r.enabled !== 'boolean' || typeof r.updated_at !== 'string' || !Number.isFinite(Date.parse(r.updated_at))) throw new Error('invalid_loyalty_program');
+  return { salon_id: salonId, updated_at: r.updated_at as string, enabled: r.enabled, points_per_euro: number(r.points_per_euro, 0, 100), reward_threshold: number(r.reward_threshold, 1, 1000000, true), reward_value: number(r.reward_value, 0, 99999999.99), birthday_bonus: number(r.birthday_bonus, 0, 2147483647, true) };
 }
 /** Publish one result only after every required read succeeds; no partial/disabled fallback on error. */
 export async function readLoyaltySnapshot(reader: LoyaltyReader, salonId: string, clientId: string | undefined, current: () => boolean): Promise<LoyaltySnapshot | null> {
