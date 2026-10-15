@@ -1,3 +1,5 @@
+import { useTransactions } from '@/contexts/TransactionsContext';
+import TransactionSyncNotice from '@/components/TransactionSyncNotice';
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -76,6 +78,7 @@ const bottomNavItems = [
 
 const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProps) => {
   const { user, signOut } = useAuth();
+  const { error: transactionError, loading: transactionsLoading, refreshTransactions } = useTransactions();
   const { permissions, isLoading: permissionsLoading } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
@@ -218,6 +221,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         </header>
 
         <main className="mx-auto max-w-[1680px] px-4 py-4 pb-24 sm:px-6 sm:py-5 md:pb-8">
+          <TransactionSyncNotice error={transactionError} loading={transactionsLoading} onRetry={() => void refreshTransactions()} />
           {children}
         </main>
       </div>

@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T15-14-35Z",
-  "task": "Transactions : flux partagé et réponses isolées",
+  "task": "Historique : erreurs visibles et actualisation",
   "started_at": "2026-10-15T15:14:35Z",
-  "last_checkpoint_at": "2026-10-15T15:34:36Z",
-  "lease_expires_at": "2026-10-15T16:49:36.000Z",
+  "last_checkpoint_at": "2026-10-15T15:38:22Z",
+  "lease_expires_at": "2026-10-15T16:53:22.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Signaler les historiques non actualisés ; isoler les réponses tardives de la liste clients.",
+  "next_task": "Liste clients : isoler lectures et mutations par session/salon.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "286 tests in 32 files passed; TypeScript passed",
@@ -33,7 +33,8 @@
     "checkout_draft": "11 targeted tests, typecheck and isolated connected build passed; final review and integration UI pending",
     "checkout": "16 targeted synthetic tests passed; TypeScript passed; isolated connected source build passed (3610 modules); browser/native/backend integration not run",
     "client_edit": "11 synthetic tests passed; TypeScript passed; isolated connected source compilation passed; browser/native integration pending",
-    "transaction_scope": "Latest-request/session scope reused (5 tests), shared feed facade (4 tests); full suite 286 passed; no React mount/backend integration test"
+    "transaction_scope": "Latest-request/session scope reused (5 tests), shared feed facade (4 tests); full suite 286 passed; no React mount/backend integration test",
+    "transaction_sync": "9 targeted scope/facade tests passed; TypeScript and isolated connected source build passed (3612 modules); UI/realtime integration pending"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -41,7 +42,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "deae4bca2151ec3abefa21745a5778c9a6106b90",
+  "last_application_commit": "244218ff2d938db1b673d012b680249a6aae1d60",
   "last_run_id": "ios-2026-10-15T15-08-49Z",
   "last_run_started_at": "2026-10-15T15:08:49Z",
   "last_run_finished_at": "2026-10-15T15:13:04Z",

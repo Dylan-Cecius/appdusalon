@@ -9,7 +9,7 @@ function fixture() {
     { id: 'week', items: [], totalAmount: 20, paymentMethod: 'cash', transactionDate: new Date(2026, 9, 13, 10) },
     { id: 'month', items: [], totalAmount: 10, paymentMethod: 'cash', transactionDate: new Date(2026, 9, 2, 10) },
   ];
-  const context = { transactions, loading: false, addTransaction: vi.fn(), deleteTransaction: vi.fn(), refreshTransactions: vi.fn() };
+  const context = { transactions, loading: false, error: false, addTransaction: vi.fn(), deleteTransaction: vi.fn(), refreshTransactions: vi.fn() };
   vi.mocked(useTransactions).mockReturnValue(context);
   return context;
 }
@@ -39,9 +39,9 @@ describe('shared transaction feed compatibility', () => {
   });
   it('observes the empty/loading feed when the provider changes scope', () => {
     fixture();
-    vi.mocked(useTransactions).mockReturnValue({ ...useTransactions(), transactions: [], loading: true });
+    vi.mocked(useTransactions).mockReturnValue({ ...useTransactions(), transactions: [], loading: true, error: true });
     const result = useSupabaseTransactions();
-    expect(result.transactions).toEqual([]); expect(result.loading).toBe(true);
+    expect(result.transactions).toEqual([]); expect(result.loading).toBe(true); expect(result.error).toBe(true);
     expect(result.getStats().monthlyRevenue).toBe(0);
   });
 });

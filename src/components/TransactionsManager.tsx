@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import * as React from 'react';
+import { useState, useMemo } from 'react';
+import TransactionSyncNotice from '@/components/TransactionSyncNotice';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Eye, EyeOff, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Transaction, useTransactions } from '@/contexts/TransactionsContext';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -18,13 +18,13 @@ interface TransactionsManagerProps {
 }
 
 const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
-  const { transactions, deleteTransaction, loading } = useTransactions();
+  const { transactions, deleteTransaction, loading, error, refreshTransactions } = useTransactions();
   const { permissions } = usePermissions();
   const [showDetails, setShowDetails] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), 'yyyy-MM-dd')
   );
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+
 
   const handleDelete = async (transactionId: string) => {
     if (
@@ -40,26 +40,10 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
     setShowDetails(showDetails === transactionId ? null : transactionId);
   };
 
-  const filterTransactionsByDate = (date: string) => {
-    const selectedDay = new Date(date);
-    selectedDay.setHours(0, 0, 0, 0);
-
-    const nextDay = new Date(selectedDay);
-    nextDay.setDate(nextDay.getDate() + 1);
-
-    const filtered = transactions.filter(tx => {
-      const txDate = new Date(tx.transactionDate);
-      return txDate >= selectedDay && txDate < nextDay;
-    });
-
-    setFilteredTransactions(filtered);
-  };
-
-  React.useEffect(() => {
-    filterTransactionsByDate(selectedDate);
-  }, [selectedDate, transactions]);
-
-  const displayedTransactions = filteredTransactions;
+  // Derive from the current feed so a salon change cannot briefly show old rows.
+  const displayedTransactions = useMemo(() => transactions.filter(transaction =>
+    !selectedDate || format(transaction.transactionDate, 'yyyy-MM-dd') === selectedDate
+  ), [transactions, selectedDate]);
 
   if (loading) {
     return (
@@ -83,6 +67,7 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
           <DialogTitle>Gestion des encaissements</DialogTitle>
         </DialogHeader>
 
+        <TransactionSyncNotice error={error} loading={loading} onRetry={() => void refreshTransactions()} />
         <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
           Un encaissement enregistré est immuable. En cas d’erreur, un administrateur peut
           l’annuler ; le stock associé est alors restauré automatiquement.
@@ -102,15 +87,15 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
           </div>
           <div className="text-sm text-muted-foreground">
             {displayedTransactions.length} transaction{displayedTransactions.length !== 1 ? 's' : ''}
-            {selectedDate && ` le ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: fr })}`}
+            {selectedDate && ` le ${format(parseISO(selectedDate), 'dd/MM/yyyy', { locale: fr })}`}
           </div>
         </div>
 
         <div className="space-y-4">
           {displayedTransactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              {selectedDate
-                ? `Aucune transaction le ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: fr })}`
+              {error ? 'Historique indisponible : actualisez pour vérifier cette journée.' : selectedDate
+                ? `Aucune transaction le ${format(parseISO(selectedDate), 'dd/MM/yyyy', { locale: fr })}`
                 : 'Aucune transaction enregistrée'}
             </div>
           ) : (

@@ -9,7 +9,8 @@ import { fr } from 'date-fns/locale';
 import MainLayout from '@/components/MainLayout';
 
 export default function TransactionHistory() {
-  const { transactions, loading } = useTransactions();
+  const { transactions, loading, error } = useTransactions();
+  const totalsUnavailable = transactions.length === 0 && (loading || error);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const selectedDayTransactions = useMemo(
@@ -86,7 +87,7 @@ export default function TransactionHistory() {
                     <TrendingUp className="h-4 w-4 text-primary" />
                   </div>
                   <p className="mt-1 text-2xl font-semibold tracking-tight text-primary">
-                    {dayStats.total.toFixed(2)}€
+                    {totalsUnavailable ? '—' : `${dayStats.total.toFixed(2)}€`}
                   </p>
                 </div>
 
@@ -96,9 +97,9 @@ export default function TransactionHistory() {
                       <Banknote className="h-4 w-4 text-muted-foreground" />
                       <span className="text-xs font-medium">Espèces</span>
                     </div>
-                    <p className="text-lg font-semibold">{dayStats.cashAmount.toFixed(2)}€</p>
+                    <p className="text-lg font-semibold">{totalsUnavailable ? '—' : `${dayStats.cashAmount.toFixed(2)}€`}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {dayStats.cashCount} transaction{dayStats.cashCount > 1 ? 's' : ''}
+                      {totalsUnavailable ? '—' : dayStats.cashCount} transaction{dayStats.cashCount > 1 ? 's' : ''}
                     </p>
                   </div>
 
@@ -107,9 +108,9 @@ export default function TransactionHistory() {
                       <CreditCard className="h-4 w-4 text-muted-foreground" />
                       <span className="text-xs font-medium">Carte</span>
                     </div>
-                    <p className="text-lg font-semibold">{dayStats.cardAmount.toFixed(2)}€</p>
+                    <p className="text-lg font-semibold">{totalsUnavailable ? '—' : `${dayStats.cardAmount.toFixed(2)}€`}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {dayStats.cardCount} transaction{dayStats.cardCount > 1 ? 's' : ''}
+                      {totalsUnavailable ? '—' : dayStats.cardCount} transaction{dayStats.cardCount > 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
@@ -132,9 +133,9 @@ export default function TransactionHistory() {
               ) : sortedTransactions.length === 0 ? (
                 <div className="py-14 text-center">
                   <CalendarIcon className="mx-auto mb-3 h-10 w-10 text-muted-foreground/35" />
-                  <p className="font-medium">Aucun encaissement ce jour</p>
+                  <p className="font-medium">{error ? 'Historique indisponible' : 'Aucun encaissement ce jour'}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Les transactions enregistrées en caisse apparaîtront ici.
+                    {error ? 'Actualisez pour vérifier les encaissements de cette journée.' : 'Les transactions enregistrées en caisse apparaîtront ici.'}
                   </p>
                 </div>
               ) : (

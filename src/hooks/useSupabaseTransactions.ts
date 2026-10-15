@@ -3,7 +3,7 @@ export type { Transaction } from '@/contexts/TransactionsContext';
 
 /** Compatibility facade: all screens share the same scoped feed and subscription. */
 export const useSupabaseTransactions = () => {
-  const { transactions, loading, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
+  const { transactions, loading, error, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
 
   const getStats = () => {
     const today = new Date();
@@ -64,7 +64,7 @@ export const useSupabaseTransactions = () => {
   };
 
   return {
-    transactions, loading, addTransaction, deleteTransaction,
+    transactions, loading, error, addTransaction, deleteTransaction,
     getStats, getCustomStats, refreshTransactions,
   };
 };

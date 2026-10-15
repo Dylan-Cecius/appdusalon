@@ -27,6 +27,7 @@ export interface Transaction {
 interface TransactionsContextType {
   transactions: Transaction[];
   loading: boolean;
+  error: boolean;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => Promise<Transaction>;
   deleteTransaction: (id: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
@@ -40,6 +41,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
   const salonId = permissions.salonId;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const contextKey = !isSupabaseConfigured ? 'local' : isReady && user && salonId ? JSON.stringify([user.id, salonId]) : null;
   const requestScope = useRef(createLatestRequestScope());
   const transactionsContext = useRef<string | null>(null);
@@ -79,8 +81,12 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
       transactionsContext.current = contextKey;
       setTransactions(formattedTransactions);
+      setError(false);
     } catch (error) {
-      if (isCurrent()) console.error('[Transactions] fetch error:', error);
+      if (isCurrent()) {
+        console.error('[Transactions] fetch error:', error);
+        setError(true);
+      }
     } finally {
       if (isCurrent()) setLoading(false);
     }
@@ -247,6 +253,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     const scope = requestScope.current;
     transactionsContext.current = contextKey;
     setTransactions([]);
+    setError(false);
     if (!contextKey) {
       setLoading(!isReady);
       return () => scope.invalidate();
@@ -265,7 +272,12 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
           if (isCurrentContext()) void fetchTransactions();
         }
       )
-      .subscribe();
+      .subscribe(status => {
+        if (!isCurrentContext()) return;
+        // Reconcile the gap between the initial fetch and subscription, and reconnects.
+        if (status === 'SUBSCRIBED') void fetchTransactions();
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setError(true);
+      });
     return () => {
       scope.invalidate();
       void supabase.removeChannel(channel);
@@ -277,6 +289,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       value={{
         transactions: visibleTransactions,
         loading: transactionsContext.current !== contextKey || loading,
+        error: transactionsContext.current === contextKey && error,
         addTransaction,
         deleteTransaction,
         refreshTransactions: fetchTransactions

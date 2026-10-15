@@ -45,3 +45,6 @@ Durée cumulée 922 secondes ; checkpoint précédent 1079373cea6648aee3e88bb0bf
 
 ## 2026-10-15T15:34:36Z — Transactions partagées et isolées par session
 1201 secondes cumulées. Checkpoint précédent deae4bca2151ec3abefa21745a5778c9a6106b90 ; lot actuel dans ce commit. Suite complète 286 tests/32 fichiers, TypeScript et compilation source isolée (3611 modules) passants. Flux unifié et réponses tardives filtrées ; intégration React/realtime/backend/native non exécutée. Prochaine étape : état d’échec d’actualisation visible, puis liste clients. Aucune build Xcode/signée/TestFlight/validation Apple.
+
+## 2026-10-15T15:38:22Z — État d’actualisation visible
+Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae1d60, lot présent dans ce commit. 9 tests ciblés et TypeScript passants ; compilation source isolée 3612 modules réussie. Source des avertissements/réessai prête ; recette navigateur/reconnexion réelle manquante. Aucune nouvelle preuve native ou Apple. Prochaine étape : portée de session de la liste clients.

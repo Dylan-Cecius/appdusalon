@@ -74,3 +74,8 @@
 - [x] Un seul flux transactions partagé avec les statistiques ; façade historique préservée, associations client/prestataire conservées. Rafraîchissements ordonnés après événement/confirmation pour éviter un ancien instantané.
 - [x] Suite complète : 286 tests/32 fichiers ; TypeScript et compilation isolée passants.
 - [ ] Rendre visible l’échec d’actualisation de l’historique ; conserver les dernières données sans les présenter comme à jour.
+
+## Cycle 4 — checkpoint actualisation 2026-10-15T15:38:22Z
+- [x] Erreur d’historique visible dans le cadre commun et la modale ; actualisation manuelle disponible, données connues conservées.
+- [x] Caisse/historique sans faux zéro lors d’un chargement initial en attente/échec ; cents affichés dans le résumé caisse. Liste de la modale dérivée directement pour éviter un rendu de l’ancien salon ; date civile sans conversion UTC implicite.
+- [x] Rafraîchissement après abonnement/reconnexion et signal d’erreur du canal préparés. 9 tests ciblés, TypeScript et compilation isolée passants ; recette réseau/UI restante.

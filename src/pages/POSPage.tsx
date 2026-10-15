@@ -47,7 +47,8 @@ const POSPage = () => {
   const { toast } = useToast();
   const { services, loading: servicesLoading, categories, addService, fetchServices } = useSupabaseServices();
   const { products, createProduct } = useStocks();
-  const { addTransaction, transactions } = useTransactions();
+  const { addTransaction, transactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
+  const totalsUnavailable = transactions.length === 0 && (transactionsLoading || transactionsError);
   const { permissions } = usePermissions();
   const { rights } = useSubscriptionRights();
   const canManageInventory = rights.canManageInventory;
@@ -277,7 +278,7 @@ const POSPage = () => {
             <Euro className="h-4 w-4 text-green-600" />
           </div>
           <div>
-            <p className="text-lg font-semibold tracking-tight text-green-600">{todayStats.totalAmount.toFixed(0)}€</p>
+            <p className="text-lg font-semibold tracking-tight text-green-600">{totalsUnavailable ? '—' : `${todayStats.totalAmount.toFixed(2)}€`}</p>
             <p className="text-[10px] font-medium text-muted-foreground">Encaissé</p>
           </div>
         </div>
@@ -286,7 +287,7 @@ const POSPage = () => {
             <Receipt className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-lg font-semibold tracking-tight text-primary">{todayStats.txCount}</p>
+            <p className="text-lg font-semibold tracking-tight text-primary">{totalsUnavailable ? '—' : todayStats.txCount}</p>
             <p className="text-[10px] font-medium text-muted-foreground">Transactions</p>
           </div>
         </div>
@@ -295,7 +296,7 @@ const POSPage = () => {
             <Scissors className="h-4 w-4 text-accent-foreground" />
           </div>
           <div>
-            <p className="text-lg font-semibold tracking-tight text-accent-foreground">{todayStats.servicesCount}</p>
+            <p className="text-lg font-semibold tracking-tight text-accent-foreground">{totalsUnavailable ? '—' : todayStats.servicesCount}</p>
             <p className="text-[10px] font-medium text-muted-foreground">Services</p>
           </div>
         </div>
