@@ -29,3 +29,16 @@
 - Playwright : navigateurs absents ; installation Chromium/WebKit tentée, archives Chromium invalides. Recette navigateur non exécutée, pas de preuve native.
 - Sources officielles consultées : Apple exige Xcode 26+/SDK iOS 26+ depuis le 28 avril 2026 ; Capacitor 8 nécessite Node 22+, Xcode 26+, cible iOS 15+. Audit du passage de Capacitor 7 à 8 avant génération native.
 - Aucune publication, appel backend, signature, soumission ou dépense. Prochaine tâche : projet iOS démo reproductible.
+
+## 2026-10-15T13:33:00.670Z — Checkpoint 2 : projet iOS démo
+- Checkpoint précédent : cc1565941587ecbf9b70dcf6773a957a5002cef9. Durée écoulée depuis le début de session : 18 minutes.
+- Décision motivée par les exigences Apple et les guides Capacitor 8/8.5 : core/cli/ios/android verrouillés à 8.5.3 ; Node >=22 ; aucun projet natif préexistant à migrer. Le générateur actuel fournit le cycle UIScene.
+- npm run ios:prepare:demo : génération SPM réussie, puis seconde exécution réussie par sync. Le script reconstruit toujours la démo isolée avant copie, force la cible demo et désactive le mode interactif/télémétrie CLI.
+- Source Xcode dans ios-demo/, identifiant local suffixé .demo, appName AppDuSalon Demo, package Swift exact 8.5.3, cible iOS 15. Projet distinct du futur ios/ connecté.
+- Contrôles structurels : plist parsé, SceneDelegate présent dans Sources, manifeste de scène cohérent, aucune équipe Apple renseignée ni exception ATS. Ces contrôles ne sont pas une compilation native.
+- Ressources binaires réelles du template Capacitor conservées ; icône et splash sont des placeholders explicitement documentés, pas des assets de diffusion validés.
+- npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund : succès après mise à jour du lockfile (523 paquets). TypeScript, 136 tests métier et 2 tests de sûreté de build repassés avec succès.
+- Les deux cibles Capacitor ont été chargées et contrôlées : ios-demo/dist-mobile-demo pour demo, ios/dist pour la cible connectée. Aucun URL serveur distant.
+- WebKit a finalement été téléchargé via le miroir fourni par Playwright ; ses bibliothèques Linux manquent encore. Aucun test navigateur exécuté à ce checkpoint.
+- macOS/Xcode absent : compilation, simulateur, signature, TestFlight et revue Apple non réalisés. Pas de publication ni dépense.
+- Complément : playwright install-deps webkit a échoué avec setgroups/seteuid Operation not permitted ; aucun contournement des permissions tenté. Recette navigateur différée.

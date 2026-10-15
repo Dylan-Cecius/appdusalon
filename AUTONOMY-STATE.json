@@ -4,26 +4,26 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T13-14-44-195Z",
-  "task": "P0 native project generation after isolated demo build",
+  "task": "P1 mobile viewport and safe-area adaptation",
   "started_at": "2026-10-15T13:14:44.195Z",
-  "last_checkpoint_at": "2026-10-15T13:22:47.608Z",
-  "lease_expires_at": "2026-10-15T14:37:47.608Z",
+  "last_checkpoint_at": "2026-10-15T13:33:00.670Z",
+  "lease_expires_at": "2026-10-15T14:48:00.670Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Préparer le projet iOS de démonstration avec une version Capacitor alignée sur Xcode 26.",
+  "next_task": "Adapter les zones sûres, le clavier et la navigation iPhone ; exécuter la recette WebKit si les dépendances système peuvent être installées.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "136 tests in 19 files passed; TypeScript passed",
-    "ios_project": "not generated",
-    "native_build": "not run",
+    "ios_project": "generated and re-synced with Capacitor 8.5.3; native structures inspected",
+    "native_build": "not run: Linux host has no Xcode",
     "testflight": "not submitted",
     "apple_review": "not submitted",
     "mobile_demo_build": "passed; 2 build safety tests passed",
-    "browser_tests": "not run: Playwright browser download returned invalid archive"
+    "browser_tests": "not run: WebKit host dependency installation denied by runtime permissions"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -31,5 +31,5 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "a35492e7e2187794d750795cd9b7967c5a1542db"
+  "last_application_commit": "cc1565941587ecbf9b70dcf6773a957a5002cef9"
 }
