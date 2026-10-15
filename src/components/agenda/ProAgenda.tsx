@@ -9,7 +9,7 @@ import CreateAppointmentDialog from './CreateAppointmentDialog';
 import AgendaWorkspace from './AgendaWorkspace';
 
 export default function ProAgenda() {
-  const { appointments, loading, error: appointmentsError, addAppointment, addRecurringAppointments, updateAppointment, moveAppointment, markAsPaid, cancelAppointment, refreshAppointments } = useSupabaseAppointments();
+  const { scopeKey, appointments, loading, error: appointmentsError, addAppointment, addRecurringAppointments, updateAppointment, moveAppointment, markAsPaid, cancelAppointment, refreshAppointments } = useSupabaseAppointments();
   const { services, loading: servicesLoading } = useSupabaseServices();
   const { getScheduleForDate, hasData, loading: hoursLoading } = useOpeningHours();
   const { activeStaff, isLoading: staffLoading } = useStaff();
@@ -17,7 +17,7 @@ export default function ProAgenda() {
   const timeOff = useStaffTimeOff();
   const contacts = useAgendaClients();
 
-  return <AgendaWorkspace
+  return <AgendaWorkspace key={scopeKey}
     moveAppointment={moveAppointment} availabilityLoading={staffLoading || hoursLoading}
     clients={contacts.clients} clientsLoading={contacts.loading} clientsError={contacts.error} appointmentsError={appointmentsError}
     timeOff={timeOff.entries} timeOffLoading={timeOff.loading} timeOffError={timeOff.error}

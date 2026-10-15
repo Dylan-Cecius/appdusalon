@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import type { AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import MoveAppointmentDialog from './MoveAppointmentDialog';
 import { appointmentMoveIssue, moveAppointmentDraft } from '@/lib/appointmentMove';
@@ -967,6 +968,10 @@ export const AgendaWorkspace = ({ moveAppointment, availabilityLoading = false, 
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      {appointmentsError && <div role="alert" className="mb-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <p>{appointments.length ? 'Actualisation impossible. Les rendez-vous affichés peuvent ne plus être à jour.' : 'Impossible de charger les rendez-vous.'} Vérifiez votre connexion puis réessayez.</p>
+        <Button type="button" variant="outline" size="sm" disabled={appointmentsLoading} onClick={() => { void refreshAppointments(); }}>Réessayer le chargement</Button>
+      </div>}
       {timeOffError && <p role="alert" className="mb-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Indisponibilités non chargées : la recherche de créneaux en liste d’attente est suspendue.</p>}
       {body}
       {clientsOpen && <AgendaClientPanel clients={directory} appointments={appointments} initialClient={historyClient}

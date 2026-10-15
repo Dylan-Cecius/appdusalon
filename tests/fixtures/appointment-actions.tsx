@@ -22,7 +22,7 @@ const mutate = () => new Promise<void>((resolve, reject) => {
   controls.reject = () => reject(new Error('Synthetic failure'));
 });
 
-function Fixture() {
+export function Fixture() {
   const [open, setOpen] = useState(true);
   return <main><output aria-label="État de la fiche">{open ? 'Ouverte' : 'Fermée'}</output>
     <EditAppointmentModal isOpen={open} appointment={appointment} onClose={() => setOpen(false)}

@@ -34,7 +34,8 @@ export function cancelledAppointment(appointment: Appointment, result: ReturnTyp
 }
 
 export function confirmedSettlement(data: unknown, appointmentId: string, salonId: string) {
-  const result = data && typeof data === 'object' ? data as Record<string, unknown> : {};
+  const record = Array.isArray(data) && data.length === 1 ? data[0] : data;
+  const result = record && typeof record === 'object' ? record as Record<string, unknown> : {};
   const amount = money(result.total_amount);
   if (typeof result.id !== 'string' || !result.id || result.appointment_id !== appointmentId
     || result.salon_id !== salonId || amount === undefined || amount <= 0) {

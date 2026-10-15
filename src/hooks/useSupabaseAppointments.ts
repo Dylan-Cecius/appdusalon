@@ -1,3 +1,4 @@
+import { createLatestRequestScope } from '@/lib/latestRequestScope';
 import { cancelledAppointment, confirmedCancellation, confirmedSettlement } from '@/lib/appointmentMutationResults';
 import { persistAppointmentContactUpdate, AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import { useState, useEffect, useRef } from 'react';
@@ -56,9 +57,15 @@ export const useSupabaseAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const userIdRef = useRef<string | null>(null);
+  const contextKey = isReady && user && salonId ? JSON.stringify([user.id, salonId]) : null;
+  const requestScope = useRef(createLatestRequestScope());
+  const appointmentsContext = useRef<string | null>(null);
+  requestScope.current.setContext(contextKey);
+  const visibleAppointments = appointmentsContext.current === contextKey ? appointments : [];
 
   const fetchAppointments = async () => {
+    const isCurrent = requestScope.current.begin(contextKey);
+    if (!isCurrent) return;
     console.log('[Appointments] fetch start');
     setLoading(true);
     setError(false);
@@ -104,6 +111,7 @@ export const useSupabaseAppointments = () => {
           .order('position', { ascending: true }),
       ]);
 
+      if (!isCurrent()) return;
       if (error) throw error;
       // Older backends can still show appointments before the segments migration.
       if (segmentError) console.warn('[Appointments] segment details unavailable:', segmentError.message);
@@ -144,11 +152,12 @@ export const useSupabaseAppointments = () => {
       console.log('[Appointments] fetch success', formattedAppointments.length);
       setAppointments(formattedAppointments);
     } catch (error) {
+      if (!isCurrent()) return;
       console.error('[Appointments] fetch error:', error);
       setError(true);
-      setAppointments([]);
+      // Retain the last known list and expose the refresh error; do not invent an empty agenda.
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   };
 
@@ -314,11 +323,14 @@ export const useSupabaseAppointments = () => {
   };
 
   const updateAppointment = async (id: string, updates: AppointmentContactUpdates, original: Appointment) => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
       if (!user || !salonId || original.id !== id) throw new AppointmentContactError('Actualisez l’agenda avant de modifier ce rendez-vous.');
       const saved = await persistAppointmentContactUpdate(supabase, salonId, original, updates);
+      if (!isCurrentContext()) return;
       setAppointments(prev => prev.map(apt => apt.id === id ? { ...apt, ...saved } : apt));
     } catch (error) {
+      if (!isCurrentContext()) throw error;
       console.error('Error updating appointment:', error);
       toast({
         title: "Modification impossible",
@@ -334,6 +346,7 @@ export const useSupabaseAppointments = () => {
     action: 'cancel' | 'no_show' = 'cancel',
     reason = ''
   ) => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
       const { data, error } = await supabase.functions.invoke('cancel-appointment', {
         body: {
@@ -346,7 +359,10 @@ export const useSupabaseAppointments = () => {
       if (error) throw error;
 
       const result = confirmedCancellation(data);
+      if (!isCurrentContext()) return data;
       setAppointments(prev => prev.map(appointment => appointment.id === id ? cancelledAppointment(appointment, result) : appointment));
+      await fetchAppointments();
+      if (!isCurrentContext()) return data;
 
       if (result.alreadyClosed) {
         toast({ title: 'Rendez-vous déjà clos',
@@ -383,6 +399,7 @@ export const useSupabaseAppointments = () => {
 
       return data;
     } catch (error) {
+      if (!isCurrentContext()) throw error;
       console.error('Error cancelling appointment:', error);
       toast({
         title: action === 'no_show' ? "No-show impossible" : "Annulation impossible",
@@ -412,6 +429,7 @@ export const useSupabaseAppointments = () => {
   };
 
   const markAsPaid = async (id: string, method: 'cash' | 'card') => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
       if (!user || !salonId) throw new Error('salon_access_denied');
       const { data, error } = await (supabase as any).rpc('settle_appointment', {
@@ -420,12 +438,16 @@ export const useSupabaseAppointments = () => {
       });
       if (error) throw error;
       const result = confirmedSettlement(data, id, salonId);
+      if (!isCurrentContext()) return;
       setAppointments(prev => prev.map(appointment => appointment.id === id ? { ...appointment, ...result.patch } : appointment));
+      await fetchAppointments();
+      if (!isCurrentContext()) return;
       toast({
         title: result.prepaid ? 'Prestation clôturée' : 'Paiement enregistré',
         description: result.prepaid ? 'La prestation prépayée est clôturée, sans nouvel encaissement.' : 'Le règlement confirmé est visible en caisse.',
       });
     } catch (error) {
+      if (!isCurrentContext()) throw error;
       console.error('Error settling appointment:', error);
       const message =
         error instanceof Error
@@ -453,30 +475,27 @@ export const useSupabaseAppointments = () => {
   };
 
   const getAppointmentsForDate = (date: Date) => {
-    return appointments.filter(apt => 
+    return visibleAppointments.filter(apt =>
       apt.startTime.toDateString() === date.toDateString()
     );
   };
 
-  // Gate on auth readiness
+  // Reload for either identity change; invalidate requests before releasing the subscription.
   useEffect(() => {
-    if (!isReady) return;
-
-    if (!user || !salonId) {
-      setAppointments([]);
-      setLoading(false);
-      userIdRef.current = null;
-      return;
+    const scope = requestScope.current;
+    setAppointments([]);
+    appointmentsContext.current = contextKey;
+    setError(false);
+    if (!isReady || !user || !salonId) {
+      setLoading(!isReady);
+      return () => scope.invalidate();
     }
-
-    if (userIdRef.current === user.id) return;
-    userIdRef.current = user.id;
 
     console.log('[Appointments] effect trigger — fetching for salon', salonId);
     setLoading(true);
     fetchAppointments();
 
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) return () => scope.invalidate();
 
     const subscription = supabase
       .channel(`appointments-${salonId}`)
@@ -492,14 +511,16 @@ export const useSupabaseAppointments = () => {
       .subscribe();
 
     return () => {
+      scope.invalidate();
       subscription.unsubscribe();
     };
   }, [isReady, user?.id, salonId]);
 
   return {
-    appointments,
-    loading,
-    error,
+    scopeKey: contextKey,
+    appointments: visibleAppointments,
+    loading: appointmentsContext.current !== contextKey || loading,
+    error: appointmentsContext.current === contextKey && error,
     addAppointment,
     addRecurringAppointments,
     updateAppointment,

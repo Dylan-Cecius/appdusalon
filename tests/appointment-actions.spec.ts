@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+declare global {
+  interface Window { appointmentActionsFixture: { calls: number; resolve: () => void; reject: () => void }; }
+}
+
 test.beforeEach(async ({ page }) => {
   page.on('dialog', dialog => dialog.accept());
   await page.goto('/tests/fixtures/appointment-actions.html');
@@ -15,15 +19,15 @@ for (const action of ['Sauvegarder', 'Annuler le RDV', 'No-show', 'Espèces · 3
     await expect(dialog.getByLabel('Nom du client')).toBeDisabled();
     await page.keyboard.press('Escape');
     await expect(dialog).toBeVisible();
-    expect(await page.evaluate(() => (window as any).appointmentActionsFixture.calls)).toBe(1);
-    await page.evaluate(() => (window as any).appointmentActionsFixture.reject());
+    expect(await page.evaluate(() => window.appointmentActionsFixture.calls)).toBe(1);
+    await page.evaluate(() => window.appointmentActionsFixture.reject());
     await expect(dialog.getByRole('alert')).toBeVisible();
     await expect(dialog.getByLabel('Notes')).toHaveValue(action === 'Sauvegarder' ? 'Brouillon conservé' : 'Note initiale');
     await dialog.getByRole('button', { name: action, exact: true }).click();
-    await page.evaluate(() => (window as any).appointmentActionsFixture.resolve());
+    await page.evaluate(() => window.appointmentActionsFixture.resolve());
     await expect(dialog).not.toBeVisible();
     await expect(page.getByLabel('État de la fiche')).toHaveText('Fermée');
-    expect(await page.evaluate(() => (window as any).appointmentActionsFixture.calls)).toBe(2);
+    expect(await page.evaluate(() => window.appointmentActionsFixture.calls)).toBe(2);
   });
 }
 

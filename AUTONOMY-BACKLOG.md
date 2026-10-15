@@ -49,3 +49,10 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Encaissement : transaction, rendez-vous, salon et montant validés avant état de succès ; drapeaux et montant payé alignés avec le retour serveur. Clôture prépayée explicitement sans nouvel encaissement. Démo protégée des actions sur dossiers clos.
 - 126 tests unitaires et typecheck réussis, build normal réussi. Aucun fournisseur réel appelé ; contrat testé avec payloads fictifs.
 - À poursuivre : gestion des chargements concurrents et changement de salon dans le hook agenda.
+
+## Checkpoint du 15 octobre — rafraîchissements, lot 5
+- Lot 4 sauvegardé : ceeff4dd697bcba6afeceda53b89d3cc439bf84f.
+- Chargements agenda ordonnés : seule la requête la plus récente du contexte utilisateur/salon actif peut modifier liste, erreur et chargement. Changement de salon du même utilisateur pris en compte ; ancienne fiche fermée par changement de contexte.
+- Échec de rafraîchissement : dernière liste conservée avec avertissement et bouton de reprise, disponibilités toujours bloquées. Les confirmations de mutations d’un contexte précédent ne modifient pas l’écran courant. Rafraîchissement après annulation/encaissement confirmé.
+- 132 unitaires et typecheck réussis ; builds normal et standalone réussis ; lint 0 erreur, 232 avertissements. Dix scénarios navigateur de fiche restent préparés, non exécutés.
+- Vérification de coût du 15 octobre : dépôt public et runner ubuntu-latest standard, minutes gratuites selon GitHub ; le cache npm est activé et sa limite/usage actuel ne sont pas établis. Maintenir [skip ci], aucun dispatch. Aucun workflow modifié.

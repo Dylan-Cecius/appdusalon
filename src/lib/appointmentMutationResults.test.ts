@@ -37,6 +37,11 @@ describe('confirmed appointment mutations', () => {
     expect(confirmedSettlement(transaction, 'rdv', 'salon')).toEqual({ patch: { isPaid: true, status: 'completed', paymentStatus: 'paid', amountPaid: 40 }, prepaid: false });
     expect(confirmedSettlement({ ...transaction, payment_method: 'prepaid' }, 'rdv', 'salon').prepaid).toBe(true);
   });
+  it('accepts a single-row RPC envelope but rejects ambiguous multi-row results', () => {
+    expect(confirmedSettlement([transaction], 'rdv', 'salon').patch.amountPaid).toBe(40);
+    expect(() => confirmedSettlement([transaction, transaction], 'rdv', 'salon')).toThrow('unconfirmed');
+    expect(() => confirmedSettlement([], 'rdv', 'salon')).toThrow('unconfirmed');
+  });
   it('rejects a wrong appointment/salon, missing transaction or invalid amount', () => {
     for (const data of [null, {}, { ...transaction, id: '' }, { ...transaction, appointment_id: 'other' }, { ...transaction, salon_id: 'other' }, ...[null, '', -1, 0, 'NaN', Infinity].map(total_amount => ({ ...transaction, total_amount }))]) {
       expect(() => confirmedSettlement(data, 'rdv', 'salon')).toThrow('unconfirmed');
