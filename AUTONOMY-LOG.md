@@ -53,3 +53,13 @@
 - Revue React : un seul gestionnaire de viewport par racine, événements passifs, nettoyage complet sans état React sur scroll. git diff --check : succès. Aucun comportement visuel certifié sans exécution navigateur/appareil.
 - Source technique consultée : https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport (15 octobre 2026) pour la distinction entre viewport visuel/clavier et viewport de mise en page.
 - Prochaine tâche : audit session native/reconnexion, puis préparation des contrôles nécessaires ; aucun appel aux données réelles.
+
+## 2026-10-15T13:58:23.859Z — Checkpoint 4 : état de session et déconnexion
+- Checkpoint précédent : fd89d5cd0c38bcfc7907411af020c4dd20771b15. Durée écoulée observée : 43 minutes.
+- Audit de useAuth, Auth.tsx, client.ts et auth-js 2.71.1 installé. Session dans une ref non publiée au renouvellement, grace SIGNED_OUT de 30 s et restauration tardive identifiées dans les sources ; corrigées avec un observateur testable et une session React réactive.
+- 7 tests synthétiques couvrent restauration, jeton renouvelé, déconnexion immédiate, priorité des événements, rejet et démontage. Déconnexion explicite corrigée : succès requis avant redirection, erreur générique visible et nouvelle tentative possible, doubles taps exclus ; 4 tests supplémentaires.
+- npm run typecheck : succès. npm run test:mobile:unit : 152 tests dans 22 fichiers passants ; nouvelle commande persistée, envFile:false. Aucun compte ou endpoint réel utilisé.
+- npm run build:mobile:check-connected : succès (3594 modules), variables synthétiques .invalid, .env non chargé, sortie temporaire supprimée. Dernière compilation réussie après la correction de déconnexion. Il s’agit de compilation web, pas d’exécution connectée/native.
+- Audit natif documenté dans docs/mobile/SESSION_AUDIT.md : localStorage actuel, cycle visibilité déjà géré par auth-js, pont App absent, callbacks web à adapter et identité Apple non vérifiée. Pas de configuration native/backend inventée.
+- Revue du diff et git diff --check : succès. Aucun changement des règles métier, des palettes agenda ni des branches des autres agents.
+- Prochaine étape : contrôles finaux du checkpoint et libération du bail ; ensuite callbacks/reprise natifs avec tests synthétiques et exécution visuelle lorsque le runtime le permet.

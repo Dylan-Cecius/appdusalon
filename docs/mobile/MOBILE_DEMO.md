@@ -25,3 +25,6 @@ La sortie est `dist-mobile-demo/index.html`. Cette démo reprend l'agenda et les
 Au checkpoint du 15 octobre : TypeScript et 5 tests unitaires viewport passants ; 8 cas navigateur reconnus avec --list mais non exécutés, bibliothèques WebKit Linux manquantes. Ne pas assimiler la découverte des cas à leur réussite.
 
 Sur appareil : vérifier les safe areas en portrait/paysage, ouvrir un rendez-vous puis le clavier, atteindre le bouton de validation par défilement, fermer le formulaire, zoomer et revenir à l’agenda. Vérifier aussi VoiceOver, taille de texte, menus latéraux et transitions arrière-plan. Les couleurs pastel existantes sont conservées.
+
+## Contrôle des sources connectées sans compte réel
+`npm run test:mobile:unit` lance les tests métier en ignorant les fichiers .env. `npm run build:mobile:check-connected` compile séparément l’application complète avec une configuration synthétique .invalid puis efface la sortie. Cette compilation ne démarre aucun client connecté et ne produit pas de candidat iOS ; voir SESSION_AUDIT.md pour les validations manquantes.

@@ -3,7 +3,7 @@
 Source initiale : Dylan-Cecius/appdusalon, checkpoint web 8a6933c853544e6629bad6d0d62e1097213adaf8.
 Branche de travail : v2/ios-appstore. Agent indépendant de l'agent V2 web et de Nous Deux.
 
-## État observé
+## État initial observé
 - package.json déclare React 18.3.1, Vite 5.4.19, TypeScript 5.8.3 et Capacitor Android/CLI/Core/iOS ^7.4.3 ; vérifier le lockfile avant installation et les exigences SDK actuelles avant compilation.
 - capacitor.config.ts héritait appId app.lovable.bc4f1f063375468ea2e9bd0862a8c643, appName coiff-cash-pro et une URL de live reload Lovable avec cleartext activé.
 - Aucun dossier ios/ ni projet Xcode dans l'arbre Git inspecté. Une ancienne configuration existe, pas une application native terminée.
@@ -23,3 +23,9 @@ La documentation et les APIs étant évolutives, vérifier leur version au momen
 
 ## Reprise
 Lire les fichiers AUTONOMY-* de cette branche, prendre le bail, traiter le premier élément prêt du backlog, vérifier puis sauvegarder avec expected_sha. N'écrire sur aucune autre branche. Ne pas republier l'aperçu Sites web au nom de l'agent iOS.
+
+## État de reprise après le premier cycle de développement
+- Capacitor est maintenant verrouillé à 8.5.3 et Node >=22. Projet démo SPM/UIScene dans ios-demo/, cible iOS 15. Aucune compilation/signature iOS réalisée.
+- Commencer par les preuves les plus récentes de AUTONOMY-LOG.md et IOS_RELEASE_STATUS.md, qui prévalent sur l’inventaire initial ci-dessus.
+- MOBILE_DEMO.md décrit les builds isolées et commandes de tests ; SESSION_AUDIT.md décrit les corrections de session et les manques natifs. Ne pas lancer le build web par défaut ni charger le .env suivi pour les essais.
+- La recette WebKit est préparée mais non exécutée, bibliothèques Linux indisponibles ; ne pas convertir --list en preuve de réussite.

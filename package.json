@@ -8,6 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:mobile:demo": "node scripts/mobile/build-demo.mjs",
+    "test:mobile:unit": "node scripts/mobile/test-unit.mjs",
+    "build:mobile:check-connected": "node scripts/mobile/check-connected.mjs",
     "test:mobile:build": "node --test scripts/mobile/build-demo.test.mjs",
     "test:mobile:browser": "playwright test --config playwright.mobile.config.ts",
     "ios:prepare:demo": "node scripts/mobile/prepare-ios-demo.mjs",
