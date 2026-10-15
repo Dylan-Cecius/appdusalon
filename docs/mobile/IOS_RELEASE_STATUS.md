@@ -84,3 +84,7 @@ Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieu
 ## 2026-10-15T16:22:57Z — Fiche agenda actualisée sans perte de brouillon
 509 secondes cumulées ; précédent b74a18a5302d0de603592e09babcf5a8e1ed54a8, lot présent dans ce commit. 5 tests synthétiques passants ; TypeScript et compilation isolée 3619 modules passants ; révision originale conservée.
 Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Préparer une fixture mobile isolée pour les erreurs de création/édition et la concurrence de fiche ; contrôler les données de disponibilité.
+
+## 2026-10-15T16:26:38Z — Formulaires agenda mobiles et fixture isolée
+730 secondes cumulées ; précédent d50a0f3e080fe108355358c6b254a7157ac5701b, lot présent dans ce commit. 44 cas navigateur découverts, non exécutés ; TypeScript, 2 tests de sûreté et build/sync démo passants (2555 modules). Compilation isolée .invalid réussie, 3619 modules ; aucun backend/native runtime. 44 cases discovered; none executed; WebKit host dependencies still unavailable. 2 safety tests passed; offline demo 2555 modules built and synced; no native compilation.
+Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Contrôler les instantanés de disponibilités et les événements de reconnexion de l’agenda ; exécuter la suite complète pertinente.

@@ -3,7 +3,7 @@ import { AppointmentContactError, type AppointmentContactUpdates } from '@/lib/a
 import { appointmentPalette } from '@/lib/appointmentPalette';
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,7 +116,7 @@ const EditAppointmentModal = ({
   };
 
   const modalContent = (
-    <div className="space-y-4" aria-busy={saving}>
+    <div className="agenda-touch-controls space-y-4" aria-busy={saving}>
       {saving && <p role="status" className="text-sm text-muted-foreground">Traitement en cours…</p>}
       {actionError && <p ref={errorRef} tabIndex={-1} role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{actionError}</p>}
       {changedRemotely && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-950">Ce rendez-vous a changé pendant votre saisie. Vos modifications sont conservées ; copiez-les avant de fermer et rouvrir la fiche.</p>}
@@ -328,15 +328,16 @@ const EditAppointmentModal = ({
   return (
     <>
       {isMobile ? (
-        <Drawer open={isOpen} dismissible={!saving} onOpenChange={open => { if (!open) requestClose(); }}>
-          <DrawerContent className="max-h-[90vh]">
-            <DrawerHeader>
-              <DrawerTitle className="flex items-center gap-2">
+        <Drawer open={isOpen} repositionInputs={false} dismissible={!saving} onOpenChange={open => { if (!open) requestClose(); }}>
+          <DrawerContent className="app-mobile-drawer mt-0 overflow-hidden">
+            <DrawerHeader className="shrink-0">
+              <div className="flex items-center justify-between gap-2"><DrawerTitle className="flex items-center gap-2">
                 <Scissors className="h-5 w-5" />
                 Éditer RDV
-              </DrawerTitle>
+              </DrawerTitle><Button type="button" variant="outline" className="min-h-11 min-w-11" disabled={saving} onClick={requestClose}>Fermer la fiche</Button></div>
+              <DrawerDescription className="sr-only">Détails du rendez-vous et modifications du client.</DrawerDescription>
             </DrawerHeader>
-            <div className="px-4 pb-4 overflow-y-auto">
+            <div data-vaul-no-drag className="min-h-0 overflow-y-auto overscroll-contain px-4 pb-4">
               {modalContent}
             </div>
           </DrawerContent>

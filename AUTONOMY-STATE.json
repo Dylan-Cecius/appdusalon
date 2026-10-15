@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T16-14-28Z",
-  "task": "Fiche agenda actualisée sans perte de brouillon",
+  "task": "Formulaires agenda mobiles et fixture isolée",
   "started_at": "2026-10-15T16:14:28Z",
-  "last_checkpoint_at": "2026-10-15T16:22:57Z",
-  "lease_expires_at": "2026-10-15T17:37:57.000Z",
+  "last_checkpoint_at": "2026-10-15T16:26:38Z",
+  "lease_expires_at": "2026-10-15T17:41:38.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Préparer une fixture mobile isolée pour les erreurs de création/édition et la concurrence de fiche ; contrôler les données de disponibilité.",
+  "next_task": "Contrôler les instantanés de disponibilités et les événements de reconnexion de l’agenda ; exécuter la suite complète pertinente.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "293 tests in 33 files passed; TypeScript passed",
@@ -22,11 +22,11 @@
     "native_build": "not run: Linux host has no Xcode",
     "testflight": "not submitted",
     "apple_review": "not submitted",
-    "mobile_demo_build": "2 safety tests passed with shared cart components; iOS demo assets built and synced (2553 modules), no backend or native plugin",
-    "browser_tests": "32 cases discovered (12 cart cases); not executed due to unavailable WebKit host dependencies",
+    "mobile_demo_build": "2 safety tests passed; offline demo 2555 modules built and synced; no native compilation.",
+    "browser_tests": "44 cases discovered; none executed; WebKit host dependencies still unavailable.",
     "mobile_ergonomics": "Source prepared; 32 browser cases discovered, none executed; isolated demo build/sync passed",
     "auth_session": "11 synthetic session/logout tests passed; no live backend or native authentication tested",
-    "connected_source_build": "passed with synthetic .invalid configuration (3616 modules); no backend/native runtime",
+    "connected_source_build": "Compilation isolée .invalid réussie, 3619 modules ; aucun backend/native runtime.",
     "native_callback_parser": "101 synthetic native tests passed; strict correlated fragment errors; TypeScript passed",
     "native_session_lifecycle": "12 synthetic activity/ownership tests passed; TypeScript and isolated connected build passed; no iOS runtime tested",
     "native_pending_flow": "20 targeted tests passed after immediate-session cleanup; TypeScript passed",
@@ -42,7 +42,8 @@
     "client_csv": "18 synthetic tests passed; TypeScript and isolated connected build passed (3616 modules); no actual export/spreadsheet round-trip",
     "appointment_creation": "10 tests synthétiques passants ; TypeScript et compilation isolée 3617 modules passants.",
     "appointment_mutation_scope": "26 tests ciblés passants ; TypeScript et compilation source isolée passants (3618 modules).",
-    "appointment_edit_draft": "5 tests synthétiques passants ; TypeScript et compilation isolée 3619 modules passants ; révision originale conservée."
+    "appointment_edit_draft": "5 tests synthétiques passants ; TypeScript et compilation isolée 3619 modules passants ; révision originale conservée.",
+    "appointment_mobile": "44 cas navigateur découverts, non exécutés ; TypeScript, 2 tests de sûreté et build/sync démo passants (2555 modules)."
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -50,7 +51,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "b74a18a5302d0de603592e09babcf5a8e1ed54a8",
+  "last_application_commit": "d50a0f3e080fe108355358c6b254a7157ac5701b",
   "last_run_id": "ios-2026-10-15T15-14-35Z",
   "last_run_started_at": "2026-10-15T15:14:35Z",
   "last_run_finished_at": "2026-10-15T16:04:45Z",

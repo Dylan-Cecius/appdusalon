@@ -135,3 +135,7 @@ Clôture 2026-10-15T16:04:45Z : 50 min 10 s observées, dix lots fonctionnels pl
 ## Cycle 5 — 2026-10-15T16:22:57Z : Fiche agenda actualisée sans perte de brouillon
 - [x] Fiche agenda actualisée sans perte de brouillon : sources préparées, preuves et limites dans le journal.
 - [ ] Préparer une fixture mobile isolée pour les erreurs de création/édition et la concurrence de fiche ; contrôler les données de disponibilité.
+
+## Cycle 5 — 2026-10-15T16:26:38Z : Formulaires agenda mobiles et fixture isolée
+- [x] Formulaires agenda mobiles et fixture isolée : sources préparées, preuves et limites dans le journal.
+- [ ] Contrôler les instantanés de disponibilités et les événements de reconnexion de l’agenda ; exécuter la suite complète pertinente.

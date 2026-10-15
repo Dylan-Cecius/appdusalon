@@ -1,7 +1,7 @@
 import AppointmentSlotFinder from './AppointmentSlotFinder';
 import { appointmentSeriesIssue } from '@/lib/appointmentSlots';
 import AgendaClientPicker from './AgendaClientPicker';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { ArrowUp, ArrowDown, Plus, X, Clock3, CheckCircle2 } from 'lucide-react';
 import type { Staff } from '@/hooks/useStaff';
@@ -35,6 +35,8 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
   const [interval, setInterval] = useState('1'), [occurrences, setOccurrences] = useState('4');
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const saving = useRef(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
   const [slotsOpen, setSlotsOpen] = useState(false);
   const availability = useMemo(() => ({ staff, appointments, timeOff, schedule, timezone }), [staff, appointments, timeOff, schedule, timezone]);
   const recurrence = useMemo<Recurrence | null>(() => repeat ? { frequency, interval: Number(interval), occurrences: Number(occurrences) } : null, [repeat, frequency, interval, occurrences]);
@@ -59,7 +61,7 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
     <DialogContent className="max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-3xl overflow-y-auto rounded-2xl p-4 sm:p-6" onInteractOutside={event => { if (busy) event.preventDefault(); }}>
       <DialogHeader><DialogTitle>Nouveau rendez-vous</DialogTitle><DialogDescription>{demo ? 'Testez librement avec un client fictif. Aucun message ne sera envoyé.' : 'Choisissez les prestations dans l’ordre de réalisation.'}</DialogDescription></DialogHeader>
       <form className="agenda-touch-controls" onSubmit={async event => {
-        event.preventDefault(); if (saving.current || !draft || issue) return;
+        event.preventDefault(); if (saving.current || !draft || issue || !clientName.trim()) return;
         saving.current = true; setBusy(true); setError('');
         try { await onSave({ ...draft, clientName: clientName.trim(), clientPhone: phone.trim(), notes: notes.trim() }, recurrence); onCreated?.(draft); onClose(); }
         catch (err) { setError(err instanceof Error ? err.message : 'Le rendez-vous n’a pas pu être enregistré. Vérifiez le créneau et réessayez.'); }
@@ -105,7 +107,7 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
             {onTimeOffClick && <Button type="button" variant="outline" className="w-full whitespace-normal" onClick={onTimeOffClick}>Bloquer un créneau sans rendez-vous</Button>}
           </div>
         </fieldset>
-        {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        {error && <p ref={errorRef} tabIndex={-1} role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <div className="mt-5 flex justify-end gap-2 border-t pt-4"><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Annuler</Button><Button type="submit" disabled={busy || !draft || !!issue || !clientName.trim()}>{busy ? 'Enregistrement…' : repeat ? 'Créer la série' : 'Créer le rendez-vous'}</Button></div>
       </form>
     </DialogContent>

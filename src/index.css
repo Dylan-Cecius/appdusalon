@@ -217,8 +217,9 @@ All colors MUST be HSL.
   }
 }
 
-/* The cart owns viewport placement; Vaul input repositioning is disabled for it. */
-.app-cart-drawer {
+/* These drawers own viewport placement; Vaul input repositioning is disabled. */
+.app-cart-drawer,
+.app-mobile-drawer {
   left: var(--app-safe-left);
   right: var(--app-safe-right);
   bottom: calc(100% - var(--app-viewport-top, 0px) - var(--app-viewport-height, 100vh) + var(--app-safe-bottom));

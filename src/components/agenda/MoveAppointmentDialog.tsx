@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { ArrowRight, CalendarClock } from 'lucide-react';
 import type { Appointment } from '@/data/appointments';
@@ -20,6 +20,8 @@ export default function MoveAppointmentDialog({ appointment, availability, unava
   const [showSlots, setShowSlots] = useState(false), [limit, setLimit] = useState(12);
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const saving = useRef(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
   const draft = useMemo(() => {
     try { return moveAppointmentDraft(appointment, fromZonedTime(`${date}T${time}:00`, timezone), staffId); }
     catch { return null; }
@@ -32,7 +34,7 @@ export default function MoveAppointmentDialog({ appointment, availability, unava
   return <Dialog open onOpenChange={open => { if (!open && !saving.current) onClose(); }}>
     <DialogContent className="max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto rounded-2xl p-4 sm:p-6" onInteractOutside={event => { if (saving.current) event.preventDefault(); }}>
       <DialogHeader><DialogTitle className="flex items-center gap-2"><CalendarClock className="h-5 w-5" />Déplacer le rendez-vous</DialogTitle><DialogDescription>{appointment.clientName} · {appointment.services.map(service => service.name).join(', ')}</DialogDescription></DialogHeader>
-      <form onSubmit={async event => {
+      <form className="agenda-touch-controls" onSubmit={async event => {
         event.preventDefault(); if (!draft || issue || !changed || saving.current) return;
         saving.current = true; setBusy(true); setError('');
         try { await onSave(draft); }
@@ -51,7 +53,7 @@ export default function MoveAppointmentDialog({ appointment, availability, unava
           {draft && <AppointmentTimeline appointment={draft} timezone={timezone} />}
           <p className="text-[10px] text-slate-500">Horaires : {timezone === 'Europe/Brussels' ? 'Bruxelles' : timezone}</p>
         </fieldset>
-        {error && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+        {error && <p ref={errorRef} tabIndex={-1} role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
         <div className="mt-5 flex justify-end gap-2 border-t pt-4"><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Retour</Button><Button type="submit" disabled={busy || !!issue || !changed}>{busy ? 'Déplacement…' : 'Confirmer le déplacement'}</Button></div>
       </form>
     </DialogContent>
