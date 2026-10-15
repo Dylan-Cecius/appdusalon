@@ -76,3 +76,7 @@ Durée 50 min 10 s, bail libéré. Dernier commit source/audit 684d082cd2bca990f
 ## 2026-10-15T16:17:44Z — Créations agenda confirmées
 196 secondes cumulées ; précédent 004f6709f70f8b7dfcaa3b22c34025b28d773884, lot présent dans ce commit. 10 tests synthétiques passants ; TypeScript et compilation isolée 3617 modules passants.
 Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Borner toutes les mutations agenda au contexte courant et vérifier les confirmations de déplacement.
+
+## 2026-10-15T16:20:24Z — Mutations agenda bornées à la session
+356 secondes cumulées ; précédent d399d2864ba75842942fc9552128a52c5f0904ff, lot présent dans ce commit. 26 tests ciblés passants ; TypeScript et compilation source isolée passants (3618 modules).
+Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Réconcilier la fiche ouverte avec les mises à jour de l’agenda en conservant les brouillons et leur révision.

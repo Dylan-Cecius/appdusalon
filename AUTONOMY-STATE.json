@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T16-14-28Z",
-  "task": "Créations agenda confirmées",
+  "task": "Mutations agenda bornées à la session",
   "started_at": "2026-10-15T16:14:28Z",
-  "last_checkpoint_at": "2026-10-15T16:17:44Z",
-  "lease_expires_at": "2026-10-15T17:32:44.000Z",
+  "last_checkpoint_at": "2026-10-15T16:20:24Z",
+  "lease_expires_at": "2026-10-15T17:35:24.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Borner toutes les mutations agenda au contexte courant et vérifier les confirmations de déplacement.",
+  "next_task": "Réconcilier la fiche ouverte avec les mises à jour de l’agenda en conservant les brouillons et leur révision.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "293 tests in 33 files passed; TypeScript passed",
@@ -40,7 +40,8 @@
     "mobile_cart": "Staff selection owned by cart workspace; scope-key remount and error focus prepared; 32 browser cases discovered, not run",
     "client_detail_feed": "Removed duplicate client hook/subscription; current-row lookup; TypeScript and isolated connected build passed; UI integration pending",
     "client_csv": "18 synthetic tests passed; TypeScript and isolated connected build passed (3616 modules); no actual export/spreadsheet round-trip",
-    "appointment_creation": "10 tests synthétiques passants ; TypeScript et compilation isolée 3617 modules passants."
+    "appointment_creation": "10 tests synthétiques passants ; TypeScript et compilation isolée 3617 modules passants.",
+    "appointment_mutation_scope": "26 tests ciblés passants ; TypeScript et compilation source isolée passants (3618 modules)."
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -48,7 +49,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "004f6709f70f8b7dfcaa3b22c34025b28d773884",
+  "last_application_commit": "d399d2864ba75842942fc9552128a52c5f0904ff",
   "last_run_id": "ios-2026-10-15T15-14-35Z",
   "last_run_started_at": "2026-10-15T15:14:35Z",
   "last_run_finished_at": "2026-10-15T16:04:45Z",

@@ -1,3 +1,4 @@
+import { persistAppointmentMove } from '@/lib/appointmentMovePersistence';
 import { confirmedAppointmentCreation } from '@/lib/appointmentCreationResult';
 import { createLatestRequestScope } from '@/lib/latestRequestScope';
 import { cancelledAppointment, confirmedCancellation, confirmedSettlement } from '@/lib/appointmentMutationResults';
@@ -309,23 +310,25 @@ export const useSupabaseAppointments = () => {
   };
 
   const moveAppointment = async (original: Appointment, candidate: Appointment) => {
-    if (!user || !salonId || !original.updatedAt) throw new Error('Actualisez l’agenda avant de déplacer ce rendez-vous.');
-    const { data, error } = await supabase.from('appointments' as any)
-      .update({ start_time: candidate.startTime.toISOString(), end_time: candidate.endTime.toISOString(), staff_id: candidate.staffId })
-      .eq('id', original.id).eq('salon_id', salonId).eq('updated_at', original.updatedAt)
-      .select('id').maybeSingle();
-    if (error) throw new Error(appointmentErrorDescription(error, 'update'));
-    if (!data) throw new Error('Ce rendez-vous a changé ou n’est plus accessible. Actualisez l’agenda et réessayez.');
-    await fetchAppointments();
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
+    if (!isSupabaseConfigured || !user || !salonId || !isCurrentContext()) throw new Error('Actualisez l’agenda avant de déplacer ce rendez-vous.');
+    try {
+      await persistAppointmentMove(supabase, salonId, original, candidate, isCurrentContext);
+    } catch (error) {
+      if (error instanceof Error) throw error;
+      throw new Error(appointmentErrorDescription(error, 'update'));
+    }
+    void fetchAppointments();
   };
 
   const updateAppointment = async (id: string, updates: AppointmentContactUpdates, original: Appointment) => {
     const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
-      if (!user || !salonId || original.id !== id) throw new AppointmentContactError('Actualisez l’agenda avant de modifier ce rendez-vous.');
+      if (!isSupabaseConfigured || !user || !salonId || !isCurrentContext() || original.id !== id) throw new AppointmentContactError('Actualisez l’agenda avant de modifier ce rendez-vous.');
       const saved = await persistAppointmentContactUpdate(supabase, salonId, original, updates);
-      if (!isCurrentContext()) return;
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
       setAppointments(prev => prev.map(apt => apt.id === id ? { ...apt, ...saved } : apt));
+      void fetchAppointments();
     } catch (error) {
       if (!isCurrentContext()) throw error;
       console.error('Error updating appointment:', error);
@@ -345,6 +348,7 @@ export const useSupabaseAppointments = () => {
   ) => {
     const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
+      if (!isSupabaseConfigured || !user || !salonId || !isCurrentContext()) throw new Error('salon_access_denied');
       const { data, error } = await supabase.functions.invoke('cancel-appointment', {
         body: {
           appointment_id: id,
@@ -356,10 +360,10 @@ export const useSupabaseAppointments = () => {
       if (error) throw error;
 
       const result = confirmedCancellation(data);
-      if (!isCurrentContext()) return data;
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
       setAppointments(prev => prev.map(appointment => appointment.id === id ? cancelledAppointment(appointment, result) : appointment));
       await fetchAppointments();
-      if (!isCurrentContext()) return data;
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
 
       if (result.alreadyClosed) {
         toast({ title: 'Rendez-vous déjà clos',
@@ -408,19 +412,21 @@ export const useSupabaseAppointments = () => {
   };
 
   const deleteAppointment = async (id: string) => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
-      const { error } = await supabase
-        .from('appointments' as any)
-        .delete()
-        .eq('id', id);
-
+      if (!isSupabaseConfigured || !user || !salonId || !isCurrentContext()) throw new Error('salon_access_denied');
+      const { data, error } = await supabase.from('appointments' as any)
+        .delete().eq('id', id).eq('salon_id', salonId).select('id').maybeSingle();
       if (error) throw error;
-
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
+      if (!data || (data as any).id !== id) throw new Error('Suppression non confirmée.');
       setAppointments(prev => prev.filter(apt => apt.id !== id));
+      void fetchAppointments();
       toast({ title: "Succès", description: "Rendez-vous supprimé avec succès" });
     } catch (error) {
+      if (!isCurrentContext()) throw error;
       console.error('Error deleting appointment:', error);
-      toast({ title: "Erreur", description: "Impossible de supprimer le rendez-vous", variant: "destructive" });
+      toast({ title: "Erreur", description: "Suppression non confirmée. Vérifiez l’agenda avant de réessayer.", variant: "destructive" });
       throw error;
     }
   };
@@ -428,17 +434,17 @@ export const useSupabaseAppointments = () => {
   const markAsPaid = async (id: string, method: 'cash' | 'card') => {
     const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
-      if (!user || !salonId) throw new Error('salon_access_denied');
+      if (!isSupabaseConfigured || !user || !salonId || !isCurrentContext()) throw new Error('salon_access_denied');
       const { data, error } = await (supabase as any).rpc('settle_appointment', {
         appointment_id_param: id,
         payment_method_param: method,
       });
       if (error) throw error;
       const result = confirmedSettlement(data, id, salonId);
-      if (!isCurrentContext()) return;
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
       setAppointments(prev => prev.map(appointment => appointment.id === id ? { ...appointment, ...result.patch } : appointment));
       await fetchAppointments();
-      if (!isCurrentContext()) return;
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
       toast({
         title: result.prepaid ? 'Prestation clôturée' : 'Paiement enregistré',
         description: result.prepaid ? 'La prestation prépayée est clôturée, sans nouvel encaissement.' : 'Le règlement confirmé est visible en caisse.',

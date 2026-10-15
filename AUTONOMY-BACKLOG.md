@@ -127,3 +127,7 @@ Clôture 2026-10-15T16:04:45Z : 50 min 10 s observées, dix lots fonctionnels pl
 ## Cycle 5 — 2026-10-15T16:17:44Z : Créations agenda confirmées
 - [x] Créations agenda confirmées : sources préparées, preuves et limites dans le journal.
 - [ ] Borner toutes les mutations agenda au contexte courant et vérifier les confirmations de déplacement.
+
+## Cycle 5 — 2026-10-15T16:20:24Z : Mutations agenda bornées à la session
+- [x] Mutations agenda bornées à la session : sources préparées, preuves et limites dans le journal.
+- [ ] Réconcilier la fiche ouverte avec les mises à jour de l’agenda en conservant les brouillons et leur révision.
