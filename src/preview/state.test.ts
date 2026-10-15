@@ -58,6 +58,13 @@ describe('preview storage compatibility', () => {
     expect(() => session.commit(next)).toThrow(/Enregistrement/); expect(session.getState()).toBe(seed);
     fail = false; session.commit(next); expect(session.getState()).toBe(next);
   });
+  it('rejects a cart that cannot render a safe total or a named line', () => {
+    const seed = seedPreviewState();
+    seed.cart.lines = [{ ...previewServices[0], name: ' ' }];
+    expect(() => decodePreviewState(JSON.stringify(seed), seed)).toThrow();
+    seed.cart.lines = Array(100).fill({ ...previewServices[0], price: 90071992547400 });
+    expect(() => decodePreviewState(JSON.stringify(seed), seed)).toThrow();
+  });
   it('keeps session usable when storage access is blocked', () => {
     const seed = seedPreviewState(); const session = createPreviewSession({ getItem: () => { throw Error('blocked'); }, setItem: () => { throw Error('must not write'); } }, 'k', seed);
     session.commit({ ...seed, appointments: [] }); expect(session.getState().appointments).toEqual([]);

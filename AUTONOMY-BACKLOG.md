@@ -146,3 +146,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Démonstration — caisse simulée confirmée
 - Ticket fictif en espèces/carte désormais confirmé localement, persistant et idempotent ; retrait de lignes/client facultatif. 346 unitaires, typecheck/build standalone réussis. Projections clients/statistiques et recette navigateur à poursuivre ; aucun paiement réel.
+
+## Démonstration — indicateurs et contacts cohérents
+- Tableau de bord, contacts et statistiques dérivés des mêmes RDV/tickets ; périodes Bruxelles, annulations/acompte exclus du double compte, règlements agenda non renseignés explicitement. 361 unitaires, typecheck/build standalone réussis, lint 0 erreur/207 avertissements. Parcours navigateur à préparer/exécuter selon disponibilité.

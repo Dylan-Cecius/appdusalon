@@ -29,7 +29,7 @@ const id = z.string().min(1);
 const number = z.number().finite().nonnegative();
 const date = z.union([z.date(), z.string().datetime({ offset: true })]).transform(value => new Date(value));
 const price = number.refine(value => Number.isSafeInteger(Math.round(value * 100)) && Math.abs(value * 100 - Math.round(value * 100)) < 0.000001);
-const service = z.object({ id, name: z.string(), price, duration: number,
+const service = z.object({ id, name: z.string().refine(value => !!value.trim()), price, duration: number,
   category: z.enum(['coupe', 'barbe', 'combo', 'produit']), appointmentBuffer: number.optional(),
 }).passthrough();
 const segment = z.object({ id, label: z.string(), type: z.enum(['work', 'pause', 'cleanup', 'block']),
@@ -54,7 +54,7 @@ const waitlist = z.object({
 const timeOff = z.object({ id, staffId: id, title: z.string(), reason: z.enum(['unavailable', 'break', 'leave', 'training']),
   startTime: date, endTime: date,
 }).passthrough().refine(item => item.endTime > item.startTime);
-const cart = z.object({ id, lines: z.array(service).max(100), clientName: z.string(), clientPhone: z.string() }).passthrough();
+const cart = z.object({ id, lines: z.array(service).max(100), clientName: z.string(), clientPhone: z.string() }).passthrough().refine(item => Number.isSafeInteger(item.lines.reduce((sum, line) => sum + Math.round(line.price * 100), 0)));
 const ticket = z.object({ id, createdAt: date, lines: z.array(service).min(1).max(100), totalCents: number.int().safe(),
   method: z.enum(['cash', 'card']), clientName: z.string(), clientPhone: z.string(),
 }).passthrough().refine(item => item.totalCents === item.lines.reduce((sum, line) => sum + Math.round(line.price * 100), 0));
