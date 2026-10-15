@@ -67,3 +67,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 ## Fin de session — 2026-10-15T12:45:29Z
 - Six lots sauvegardés ; dernier code applicatif : 498c8a487a327c661555a15321ea90fca0030934. Bail libéré. Prochaines priorités et critères inchangés ci-dessus ; ne pas refaire les lots terminés.
 - Contrôles manquants : recette navigateur et intégrations isolées requises, distinctes des 136 tests unitaires locaux. Aperçu publié inchangé.
+
+## Répartition — calcul pur préparé
+- Calcul en centimes et périodes Europe/Brussels : 15 nouveaux tests réussis, suite 151/151. Pas encore utilisé par les écrans à ce checkpoint. À poursuivre : lecture des parts, normalisation et affichage partagé.
