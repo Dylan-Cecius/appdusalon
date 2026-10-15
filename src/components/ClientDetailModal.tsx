@@ -1,3 +1,4 @@
+import TransactionSyncNotice from '@/components/TransactionSyncNotice';
 import { ClientEditError, saveClientEdit } from '@/lib/clientEditDraft';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -62,9 +63,11 @@ const euro = (value: number) =>
   }).format(value);
 
 const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated }: ClientDetailModalProps) => {
-  const { getClientStats, refreshClients } = useClients();
-  const { transactions } = useSupabaseTransactions();
-  const { appointments } = useSupabaseAppointments();
+  const { getClientStats, refreshClients, loading: clientDataLoading } = useClients();
+  const { transactions, loading: transactionsLoading, error: transactionsError, refreshTransactions } = useSupabaseTransactions();
+  const { appointments, loading: appointmentsLoading, error: appointmentsError, refreshAppointments } = useSupabaseAppointments();
+  const revenueUnavailable = transactionsLoading || transactionsError;
+  const appointmentsUnavailable = appointmentsLoading || appointmentsError;
   const { permissions } = usePermissions();
   const { toast } = useToast();
   const { rights } = useSubscriptionRights();
@@ -83,11 +86,9 @@ const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated }: ClientD
   const saveLock = useRef(false);
   const saveErrorRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => { if (saveError) saveErrorRef.current?.focus(); }, [saveError]);
-  const [stats, setStats] = useState<ClientStats>({
-    totalSpent: 0,
-    visitCount: 0,
-    lastVisit: null,
-  });
+  const [stats, setStats] = useState<ClientStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsRefresh, setStatsRefresh] = useState(0);
   const [editedClient, setEditedClient] = useState(client);
   const [rgpdConfirmName, setRgpdConfirmName] = useState('');
   const [isRgpdDeleting, setIsRgpdDeleting] = useState(false);
@@ -100,9 +101,12 @@ const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated }: ClientD
   useEffect(() => {
     if (!open) return;
     let active = true;
-    void getClientStats(client.id).then(result => { if (active) setStats(result); });
+    setStatsLoading(true); setStats(null);
+    void getClientStats(client.id).then(result => {
+      if (active) { setStats(result); setStatsLoading(false); }
+    });
     return () => { active = false; };
-  }, [open, client.id, getClientStats]);
+  }, [open, client.id, getClientStats, statsRefresh]);
 
   useEffect(() => {
     if (!rgpdDialogOpen) setRgpdConfirmName('');
@@ -315,23 +319,32 @@ const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated }: ClientD
         </DialogHeader>
 
         <div className="bg-slate-50/70 p-4 sm:p-6">
+          <TransactionSyncNotice error={transactionsError} loading={transactionsLoading} onRetry={() => void refreshTransactions()} />
+          {appointmentsError && <div role="alert" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+            <p>Historique des rendez-vous non actualisé.</p>
+            <Button variant="outline" disabled={appointmentsLoading} className="mt-2 min-h-11" onClick={() => void refreshAppointments()}>Actualiser les rendez-vous</Button>
+          </div>}
+          {statsLoading || clientDataLoading ? <p role="status" className="mb-4 text-sm text-muted-foreground">Chargement des statistiques client…</p> : !stats && <div role="alert" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+            <p>Les statistiques de visites sont indisponibles.</p>
+            <Button variant="outline" className="mt-2 min-h-11" onClick={() => setStatsRefresh(value => value + 1)}>Réessayer les statistiques</Button>
+          </div>}
           <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 label: 'CA généré',
-                value: euro(insights.paidRevenue),
+                value: revenueUnavailable ? '—' : euro(insights.paidRevenue),
                 icon: DollarSign,
-                helper: clientTransactions.length + ' encaissement' + (clientTransactions.length > 1 ? 's' : ''),
+                helper: revenueUnavailable ? 'historique non confirmé' : clientTransactions.length + ' encaissement' + (clientTransactions.length > 1 ? 's' : ''),
               },
               {
                 label: 'Panier moyen',
-                value: euro(insights.averageBasket),
+                value: revenueUnavailable ? '—' : euro(insights.averageBasket),
                 icon: TrendingUp,
                 helper: 'sur les ventes enregistrées',
               },
               {
                 label: 'Visites',
-                value: String(stats.visitCount),
+                value: stats ? String(stats.visitCount) : '—',
                 icon: UserRound,
                 helper:
                   insights.averageVisitGapDays !== null
@@ -340,10 +353,10 @@ const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated }: ClientD
               },
               {
                 label: 'No-shows',
-                value: String(insights.noShows),
+                value: appointmentsUnavailable ? '—' : String(insights.noShows),
                 icon: UserX,
                 helper:
-                  insights.cancellations > 0
+                  appointmentsUnavailable ? 'historique non confirmé' : insights.cancellations > 0
                     ? insights.cancellations + ' annulation' + (insights.cancellations > 1 ? 's' : '')
                     : 'aucune annulation',
               },
@@ -489,7 +502,7 @@ const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated }: ClientD
                     <div className="flex items-center justify-between gap-4">
                       <dt className="text-sm text-slate-500">Dernière visite</dt>
                       <dd className="text-sm font-semibold text-slate-900">
-                        {stats.lastVisit
+                        {!stats ? '—' : stats.lastVisit
                           ? format(new Date(stats.lastVisit), 'd MMM yyyy', { locale: fr })
                           : 'Jamais'}
                       </dd>

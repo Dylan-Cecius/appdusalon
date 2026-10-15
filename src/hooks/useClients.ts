@@ -1,3 +1,5 @@
+import { confirmedClientStatistics, type ClientStats } from '@/lib/clientStatistics';
+export type { ClientStats } from '@/lib/clientStatistics';
 import { createLatestRequestScope } from '@/lib/latestRequestScope';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,12 +17,6 @@ export interface Client {
   notes?: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface ClientStats {
-  totalSpent: number;
-  visitCount: number;
-  lastVisit: string | null;
 }
 
 export const useClients = () => {
@@ -136,15 +132,15 @@ export const useClients = () => {
     }
   };
 
-  const getClientStats = useCallback(async (clientId: string): Promise<ClientStats> => {
+  const getClientStats = useCallback(async (clientId: string): Promise<ClientStats | null> => {
     const isCurrentContext = requestScope.current.captureContext(contextKey);
-    if (!user || !salonId || !isCurrentContext() || clientsContext.current !== contextKey) return { totalSpent: 0, visitCount: 0, lastVisit: null };
+    if (!user || !salonId || !isCurrentContext() || clientsContext.current !== contextKey) return null;
 
     try {
       const client = clients.find(c => c.id === clientId);
-      if (!client) return { totalSpent: 0, visitCount: 0, lastVisit: null };
+      if (!client) return null;
 
-      const [{ data: transactions }, { data: appointments }] = await Promise.all([
+      const [transactions, appointments] = await Promise.all([
         supabase
           .from('transactions')
           .select('total_amount, transaction_date')
@@ -159,33 +155,11 @@ export const useClients = () => {
           .lte('start_time', new Date().toISOString()),
       ]);
 
-      if (!isCurrentContext()) return { totalSpent: 0, visitCount: 0, lastVisit: null };
-      // Accounting revenue is canonical from POS transactions only.
-      const totalSpent = transactions?.reduce(
-        (sum, transaction) => sum + Number(transaction.total_amount),
-        0
-      ) || 0;
-
-      const transactionDates = transactions?.map(
-        transaction => new Date(transaction.transaction_date)
-      ) || [];
-      const appointmentDates = appointments?.map(
-        appointment => new Date(appointment.start_time)
-      ) || [];
-      const allDates = [...transactionDates, ...appointmentDates];
-
-      const lastVisit = allDates.length > 0
-        ? allDates.sort((a, b) => b.getTime() - a.getTime())[0].toISOString()
-        : null;
-
-      return {
-        totalSpent,
-        visitCount: Math.max(appointments?.length || 0, transactions?.length || 0),
-        lastVisit,
-      };
+      if (!isCurrentContext()) return null;
+      return confirmedClientStatistics(transactions, appointments);
     } catch (error) {
       console.error('Error fetching client stats:', error);
-      return { totalSpent: 0, visitCount: 0, lastVisit: null };
+      return null;
     }
   }, [clients, user?.id, salonId, contextKey]);
 

@@ -51,3 +51,6 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## 2026-10-15T15:41:56Z — Liste clients isolée
 1641 secondes cumulées ; précédent 9bbeed4f170d460d3c573a2979318c2bf31dd358, lot courant dans ce commit. Source des gardes de session/erreur préparée ; 16 tests ciblés existants, TypeScript et compilation isolée passants. Recette UI/backend toujours manquante. Prochaine étape : résultat indisponible des statistiques client. Xcode/signature/TestFlight/validation Apple non réalisés.
+
+## 2026-10-15T15:45:57Z — Statistiques client fiables sur résultat confirmé
+1882 secondes cumulées ; précédent aacf27dcd8f8909fa281de305ba48245575b9619, lot actuel dans ce commit. 7 tests synthétiques ciblés, TypeScript et compilation source isolée 3613 modules passants. Indisponibilité et export incomplet traités dans les sources ; recette UI/export/backend restante. Aucun nouveau résultat Xcode/signature/TestFlight/Apple. Prochaine étape : ergonomie panier iPhone.

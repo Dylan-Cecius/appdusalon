@@ -85,3 +85,8 @@
 - [x] Fiches/brouillons/confirmations réinitialisés lors du changement de session ; export en cours abandonné avant téléchargement si le contexte a changé. Export désactivé avec liste en chargement/échec.
 - [x] 16 tests existants de portée/édition, TypeScript et compilation isolée passants.
 - [ ] Statistiques : les erreurs Supabase retournées sont encore absorbées en zéro ; traiter explicitement l’indisponibilité et l’export incomplet.
+
+## Cycle 4 — checkpoint statistiques client 2026-10-15T15:45:57Z
+- [x] Résultats Supabase en erreur/absents/invalides distingués d’un historique vide ; zéro réservé aux deux requêtes réussies sans ligne. Règles V2 de total/visites conservées.
+- [x] Fiche : états chargement/indisponibilité/réessai, montants inconnus non affichés à zéro. Export incomplet bloqué avant téléchargement, erreur affichée, verrou contre double demande.
+- [x] 7 tests synthétiques ciblés, TypeScript et compilation isolée passants ; aucune donnée/export réel.

@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import NewClientDialog from '@/components/NewClientDialog';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -30,6 +30,8 @@ const ClientsWorkspace = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [exportConfirmType, setExportConfirmType] = useState<'csv' | 'json' | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const exportLock = useRef(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const filteredAndSortedClients = useMemo(() => {
     const filtered = clients.filter(client =>
@@ -51,13 +53,15 @@ const ClientsWorkspace = () => {
 
   const handleExport = useCallback(async (type: 'csv' | 'json') => {
     const isCurrentExport = captureScope();
-    if (!isCurrentExport() || error || loading) return;
-    setIsExporting(true);
+    if (!isCurrentExport() || error || loading || exportLock.current) return;
+    exportLock.current = true;
+    setIsExporting(true); setExportError(null);
     try {
       // Fetch stats for all clients
       const clientsWithStats = await Promise.all(
         clients.map(async (client) => {
           const stats = await getClientStats(client.id);
+          if (!stats) throw new Error('client_statistics_unavailable');
           return { ...client, ...stats };
         })
       );
@@ -98,7 +102,10 @@ const ClientsWorkspace = () => {
         downloadFile(json, `${filename}.json`, 'application/json');
       }
       await logActivity('EXPORT_RGPD', { format: type.toUpperCase(), count: clients.length });
+    } catch {
+      if (isCurrentExport()) setExportError('Export non créé : certaines données client sont indisponibles. Actualisez les fiches puis réessayez.');
     } finally {
+      exportLock.current = false;
       setIsExporting(false);
       setExportConfirmType(null);
     }
@@ -117,6 +124,7 @@ const ClientsWorkspace = () => {
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
+        {exportError && <p role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">{exportError}</p>}
         {error && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
           <p>Liste des clients non actualisée. Les fiches affichées peuvent être incomplètes.</p>
           <Button variant="outline" disabled={loading} className="mt-3 min-h-11" onClick={() => void refreshClients()}>{loading ? 'Actualisation…' : 'Actualiser les clients'}</Button>
@@ -129,11 +137,11 @@ const ClientsWorkspace = () => {
           <div className="flex flex-wrap gap-2">
             {permissions.isAdmin && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0 || loading || error}>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0 || loading || error || isExporting}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter CSV (RGPD)
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0 || loading || error}>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0 || loading || error || isExporting}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter JSON
                 </Button>
@@ -241,7 +249,7 @@ const ClientsWorkspace = () => {
           />
         )}
 
-        <AlertDialog open={!!exportConfirmType} onOpenChange={(open) => !open && setExportConfirmType(null)}>
+        <AlertDialog open={!!exportConfirmType} onOpenChange={(open) => { if (!open && !exportLock.current) setExportConfirmType(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Export RGPD — Confirmation</AlertDialogTitle>
@@ -251,7 +259,7 @@ const ClientsWorkspace = () => {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isExporting}>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={() => exportConfirmType && handleExport(exportConfirmType)} disabled={isExporting}>
+              <AlertDialogAction onClick={event => { event.preventDefault(); if (exportConfirmType) void handleExport(exportConfirmType); }} disabled={isExporting}>
                 {isExporting ? 'Export en cours...' : 'Télécharger'}
               </AlertDialogAction>
             </AlertDialogFooter>

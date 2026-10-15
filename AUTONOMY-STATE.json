@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T15-14-35Z",
-  "task": "Clients : portée utilisateur/salon",
+  "task": "Statistiques client : résultat confirmé ou indisponible",
   "started_at": "2026-10-15T15:14:35Z",
-  "last_checkpoint_at": "2026-10-15T15:41:56Z",
-  "lease_expires_at": "2026-10-15T16:56:56.000Z",
+  "last_checkpoint_at": "2026-10-15T15:45:57Z",
+  "lease_expires_at": "2026-10-15T17:00:57.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Statistiques client : distinguer indisponible de zéro et bloquer un export incomplet.",
+  "next_task": "Panier iPhone : cibles tactiles et défilement du panneau.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "286 tests in 32 files passed; TypeScript passed",
@@ -35,7 +35,8 @@
     "client_edit": "11 synthetic tests passed; TypeScript passed; isolated connected source compilation passed; browser/native integration pending",
     "transaction_scope": "Latest-request/session scope reused (5 tests), shared feed facade (4 tests); full suite 286 passed; no React mount/backend integration test",
     "transaction_sync": "9 targeted scope/facade tests passed; TypeScript and isolated connected source build passed (3612 modules); UI/realtime integration pending",
-    "client_scope": "16 existing scope/edit tests passed; TypeScript and isolated connected source build passed; no browser/backend integration"
+    "client_scope": "16 existing scope/edit tests passed; TypeScript and isolated connected source build passed; no browser/backend integration",
+    "client_statistics": "7 synthetic query-result tests passed; TypeScript and isolated connected source build passed (3613 modules); UI/export/backend integration pending"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -43,7 +44,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "9bbeed4f170d460d3c573a2979318c2bf31dd358",
+  "last_application_commit": "aacf27dcd8f8909fa281de305ba48245575b9619",
   "last_run_id": "ios-2026-10-15T15-08-49Z",
   "last_run_started_at": "2026-10-15T15:08:49Z",
   "last_run_finished_at": "2026-10-15T15:13:04Z",
