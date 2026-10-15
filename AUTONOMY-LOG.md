@@ -8,3 +8,11 @@
 - Aucun changement applicatif, déploiement, backend réel ou message à un tiers. Commit documentaire avec [skip ci] pour ne pas déclencher des runners dont le coût disponible n'a pas été vérifié.
 - Dernières preuves applicatives : CI 38561490094 réussie ; 99 unitaires, 99 navigateur et 6 sécurité. Aucun nouveau test applicatif nécessaire pour cette préparation documentaire.
 - Activation des tâches à confirmer après retour de l'outil Automations ; ce texte ne prétend pas qu'un développeur est actif en permanence.
+
+## 2026-10-15 — activation confirmée
+- Outil Automations : développement activé (id 6ad0bea074788191a2d3c6552cbaea3e), cadence horaire sans restriction de jour, départ programmé le 15 octobre à 13:00, fuseau Etc/GMT-1.
+- Bilan quotidien activé (id 6ad0beb1a5248191b071436ccba6117a), à partir du 16 octobre vers 08:00, même fuseau.
+- Les deux tâches sont rattachées à la conversation 6ace21db-8a04-83ed-b903-a8c8b271d5f7.
+- Le cycle horaire assure le contrôle de reprise et le développement ; aucun agent chef supplémentaire ne crée d'écritures concurrentes.
+- À l'activation, aucun cycle de développement n'a encore été observé. La durée de travail visée ne constitue pas une garantie de durée d'exécution.
+- Le journal conserve les progrès ordinaires ; notifications intermédiaires uniquement pour un nouveau blocage nécessitant Dylan ou un incident.

@@ -6,12 +6,17 @@
   "run_id": null,
   "task": null,
   "started_at": null,
-  "last_checkpoint_at": "2026-10-15T11:49:16Z",
+  "last_checkpoint_at": "2026-10-15T11:53:04.834506+00:00",
   "lease_expires_at": null,
   "last_application_commit": "86e4f6cdfe7aca8ca5a3b835c8903f8562415d76",
   "automation_ids": {
-    "development": null,
-    "daily_report": null
+    "development": "6ad0bea074788191a2d3c6552cbaea3e",
+    "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Lire les consignes, vérifier le dernier état, puis traiter la première priorité prête."
+  "next_task": "Lire les consignes, vérifier le dernier état, puis traiter la première priorité prête.",
+  "schedules": {
+    "development": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261015T130000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
+    "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
+    "timezone": "Etc/GMT-1"
+  }
 }
