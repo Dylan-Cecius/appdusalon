@@ -149,3 +149,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Démonstration — indicateurs et contacts cohérents
 - Tableau de bord, contacts et statistiques dérivés des mêmes RDV/tickets ; périodes Bruxelles, annulations/acompte exclus du double compte, règlements agenda non renseignés explicitement. 361 unitaires, typecheck/build standalone réussis, lint 0 erreur/207 avertissements. Parcours navigateur à préparer/exécuter selon disponibilité.
+
+## Démonstration — parcours navigateur préparés
+- 16 nouveaux cas navigateur préparés et typecheckés/découverts, non exécutés ; total 86 en attente. Couvrent le vrai workspace et sa compatibilité. À corriger après revue : nouvelle saisie de panier à conserver même si localStorage échoue, puis recette navigateur quand disponible.
