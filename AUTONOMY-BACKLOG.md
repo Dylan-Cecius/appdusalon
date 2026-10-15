@@ -123,3 +123,7 @@ Les cases historiques ci-dessus décrivent leur checkpoint ; les points suivants
 - [ ] Recettes ouvertes : 32 cas navigateur, montage React/changement de session réel, tableurs/CSV et iPhone/iPad. Blocages connus : bibliothèques WebKit indisponibles, pas de Xcode/signature/backend isolé. Ne pas retenter les mêmes installations refusées.
 
 Clôture 2026-10-15T16:04:45Z : 50 min 10 s observées, dix lots fonctionnels plus audit 684d082cd2bca990f6138d3aab4c4d9af5efd845. Bail libéré ; priorité prête : agenda mobile et confirmations de mutations. Les contrôles UI/natifs manquants restent ouverts.
+
+## Cycle 5 — 2026-10-15T16:17:44Z : Créations agenda confirmées
+- [x] Créations agenda confirmées : sources préparées, preuves et limites dans le journal.
+- [ ] Borner toutes les mutations agenda au contexte courant et vérifier les confirmations de déplacement.

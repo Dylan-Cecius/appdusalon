@@ -1,3 +1,4 @@
+import { confirmedAppointmentCreation } from '@/lib/appointmentCreationResult';
 import { createLatestRequestScope } from '@/lib/latestRequestScope';
 import { cancelledAppointment, confirmedCancellation, confirmedSettlement } from '@/lib/appointmentMutationResults';
 import { persistAppointmentContactUpdate, AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
@@ -183,23 +184,11 @@ export const useSupabaseAppointments = () => {
   };
 
   const addAppointment = async (appointment: Omit<Appointment, 'id'>) => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
-      if (!isSupabaseConfigured) {
-        const newAppointment: Appointment = {
-          ...appointment,
-          id: Date.now().toString()
-        };
-        setAppointments(prev => [...prev, newAppointment]);
-        toast({ title: "Succès", description: "Rendez-vous ajouté (mode local)" });
-        return newAppointment;
+      if (!isSupabaseConfigured || !user || !salonId || !isCurrentContext()) {
+        throw new Error('Votre session n’est plus disponible. Reconnectez-vous avant de créer un rendez-vous.');
       }
-
-      if (!user) {
-        toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
-        return;
-      }
-
-      const { data: salonId } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
 
       const { data, error } = await supabase
         .from('appointments' as any)
@@ -218,15 +207,18 @@ export const useSupabaseAppointments = () => {
           user_id: user.id,
           salon_id: salonId
         })
-        .select(`id, barber_id, staff_id, start_time, end_time, services, total_price, status, is_paid, notes`)
+        .select(`id, salon_id, client_name, client_phone, updated_at, barber_id, staff_id, start_time, end_time, services, total_price, status, is_paid, notes`)
         .single();
 
       if (error) throw error;
+      confirmedAppointmentCreation(data, salonId);
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
 
       const newAppointment: Appointment = {
         id: (data as any).id,
-        clientName: 'Client',
-        clientPhone: '***-***-****',
+        clientName: (data as any).client_name,
+        clientPhone: (data as any).client_phone || '',
+        updatedAt: (data as any).updated_at,
         services: (data as any).services as any,
         startTime: new Date((data as any).start_time),
         endTime: new Date((data as any).end_time),
@@ -238,11 +230,13 @@ export const useSupabaseAppointments = () => {
         staffId: (data as any).staff_id || undefined
       };
 
-      setAppointments(prev => [...prev, newAppointment]);
+      setAppointments(prev => prev.some(item => item.id === newAppointment.id) ? prev : [...prev, newAppointment]);
+      void fetchAppointments();
       toast({ title: "Succès", description: "Rendez-vous ajouté avec succès" });
 
       return newAppointment;
     } catch (error) {
+      if (!isCurrentContext()) throw error;
       console.error('Error adding appointment:', error);
       toast({
         title: "Rendez-vous impossible",
@@ -264,8 +258,9 @@ export const useSupabaseAppointments = () => {
     interval: number;
     occurrences: number;
   }) => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
     try {
-      if (!user) {
+      if (!isSupabaseConfigured || !user || !salonId || !isCurrentContext()) {
         throw new Error('not_authenticated');
       }
 
@@ -290,8 +285,9 @@ export const useSupabaseAppointments = () => {
       );
 
       if (error) throw error;
-
-      await fetchAppointments();
+      confirmedAppointmentCreation(data, salonId, occurrences, true);
+      if (!isCurrentContext()) throw new Error('Le contexte de session a changé.');
+      void fetchAppointments();
 
       toast({
         title: 'Série créée',
@@ -300,11 +296,12 @@ export const useSupabaseAppointments = () => {
 
       return data;
     } catch (error) {
+      if (!isCurrentContext()) throw error;
       console.error('Error adding recurring appointments:', error);
       toast({
         title: 'Série impossible',
         description:
-          'La série n’a pas été créée. Vérifiez les créneaux et les disponibilités.',
+          'Création de série non confirmée. Vérifiez l’agenda avant de réessayer.',
         variant: 'destructive',
       });
       throw error;

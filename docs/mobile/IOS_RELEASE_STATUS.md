@@ -72,3 +72,7 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## Clôture 2026-10-15T16:04:45Z
 Durée 50 min 10 s, bail libéré. Dernier commit source/audit 684d082cd2bca990f6138d3aab4c4d9af5efd845 ; clôture documentaire dans le présent commit. Dix lots fonctionnels sauvegardés, preuves détaillées ci-dessus. Sources et projet démo préparés ; aucune build iOS signée, aucun TestFlight distribué, aucune validation Apple. Prochaine tâche : parcours agenda mobile.
+
+## 2026-10-15T16:17:44Z — Créations agenda confirmées
+196 secondes cumulées ; précédent 004f6709f70f8b7dfcaa3b22c34025b28d773884, lot présent dans ce commit. 10 tests synthétiques passants ; TypeScript et compilation isolée 3617 modules passants.
+Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Borner toutes les mutations agenda au contexte courant et vérifier les confirmations de déplacement.
