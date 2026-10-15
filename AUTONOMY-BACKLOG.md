@@ -42,4 +42,5 @@
 - [x] Raccorder démarrage à froid/appUrlOpen sous configuration native explicite : 51 tests natifs ciblés, 203 au total ; aucun callback hébergé ni schéma Apple enregistré.
 - [x] Cycle App de rafraîchissement unique préparé et raccordé sous opt-in : 12 tests synthétiques de cycle/remontage passants.
 - [x] Garde des flux locaux avant échange PKCE : marqueur aléatoire consommé une seule fois, 18 tests dédiés ; 239 tests au total.
-- [ ] Traiter les erreurs fournisseur en fragment sans accepter de jeton ; recette native toujours manquante.
+- [x] Erreurs fournisseur en fragment prises en charge sans jeton : 101 tests natifs passants ; recette native toujours manquante.
+- [ ] Agrandir les commandes tactiles de l’agenda et documenter la recette visuelle restante.

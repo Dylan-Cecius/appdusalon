@@ -109,3 +109,11 @@
 - npm run test:mobile:unit -- src/native : 87 tests passants. npm run typecheck : succès. npm run test:mobile:unit : 239 tests dans 28 fichiers passants. npm run test:mobile:build : 2 tests passants. npm run build:mobile:check-connected : succès, 3608 modules, variables synthétiques et sortie supprimée.
 - Documentation Supabase redirect-urls relue le 15 octobre : allowlist et modèles d’e-mail devront conserver flow, à éprouver sur backend isolé. Aucune configuration hébergée ni envoi effectué. Le retour d’erreur en fragment documenté est encore ignoré ; lot suivant dédié.
 - Revue du diff et des composants : état dérivé, effets avec nettoyage ; aucune palette agenda modifiée. Toujours aucun test navigateur/native ni build iOS signée.
+
+## 2026-10-15T14:50:46Z — Cycle 2, checkpoint 5 : erreurs de retour natives
+- Checkpoint précédent : 4f07b198e465995f19d5c5596025710894239cdc. Durée écoulée observée : 36 minutes.
+- La documentation officielle Supabase redirect-urls décrit des erreurs en fragment. Le parseur les refusait intégralement : un échec ne pouvait donc pas présenter le message générique prévu.
+- Ajout d’un format strict : seul flow dans la query, uniquement error/error_code/error_description non dupliqués dans le fragment. Aucun jeton/code mélangé accepté ; contenu fournisseur jamais affiché, ni journalisé. Le flux local est annulé sans appel SDK.
+- npm run test:mobile:unit -- src/native : 101 tests dans 6 fichiers passants, dont 14 nouveaux cas de fragment ; scénario intégré d’annulation/rejeu adapté. npm run typecheck et git diff --check : succès. Suite complète de 239 tests vérifiée au checkpoint précédent ; elle n’a pas été relancée pour ce seul parseur.
+- Recette native à froid/reprise/réseau/MFA listée dans NATIVE_AUTH.md, toujours non exécutée. Aucun e-mail, backend réel, schéma enregistré ni build Xcode.
+- Prochaine tâche prête : les commandes de l’agenda comportent des cibles de 28–36 px dans les sources ; adaptation tactile ciblée sans modification des couleurs métier.

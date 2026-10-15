@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T14-14-40-744Z",
-  "task": "Erreurs de callback natif en fragment",
+  "task": "Cibles tactiles des commandes agenda",
   "started_at": "2026-10-15T14:14:40.744Z",
-  "last_checkpoint_at": "2026-10-15T14:47:36Z",
-  "lease_expires_at": "2026-10-15T16:02:36.000Z",
+  "last_checkpoint_at": "2026-10-15T14:50:46Z",
+  "lease_expires_at": "2026-10-15T16:05:46.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Support strict des erreurs fournisseur en fragment, contrôles finaux et libération du bail.",
+  "next_task": "Adapter les commandes compactes à l’usage tactile, contrôles disponibles et clôture.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "239 tests in 28 files passed; TypeScript passed",
@@ -27,7 +27,7 @@
     "mobile_ergonomics": "safe areas and keyboard source prepared; 5 viewport tests passed; 8 browser cases discovered but not executed",
     "auth_session": "11 synthetic session/logout tests passed; no live backend or native authentication tested",
     "connected_source_build": "passed with synthetic .invalid configuration after native callback integration",
-    "native_callback_parser": "87 synthetic native tests passed including 18 pending-flow cases; no native/backend test",
+    "native_callback_parser": "101 synthetic native tests passed; strict correlated fragment errors; TypeScript passed",
     "native_session_lifecycle": "12 synthetic activity/ownership tests passed; TypeScript and isolated connected build passed; no iOS runtime tested"
   },
   "timezone": "Etc/GMT-1",
@@ -36,7 +36,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "db71da94e8249d2d4fb4550f9d31e10cb549e060",
+  "last_application_commit": "4f07b198e465995f19d5c5596025710894239cdc",
   "last_run_id": "ios-2026-10-15T13-14-44-195Z",
   "last_run_started_at": "2026-10-15T13:14:44.195Z",
   "last_run_finished_at": "2026-10-15T14:01:38.092Z",

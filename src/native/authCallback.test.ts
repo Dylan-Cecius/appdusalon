@@ -38,6 +38,25 @@ describe('native callback allowlist', () => {
   it.each(['', '&flow=short', '&flow=' + 'A'.repeat(32), '&flow=' + flowId + '&flow=' + flowId, '&flow=' + flowId + '&%66low=' + flowId])('rejects missing, invalid or duplicate correlation IDs %#', suffix => {
     expect(parseNativeAuthCallback(redirect + '?code=fixture' + suffix, redirect)).toBeNull();
   });
+  it('accepts a fragment error only when correlated to a local query flow', () => {
+    expect(parseNativeAuthCallback(`${redirect}?flow=${flowId}#error=access_denied&error_code=otp_expired&error_description=private%20detail`, redirect))
+      .toEqual({ kind: 'error', flowId });
+  });
+  it.each([
+    `?flow=${flowId}#`, `?flow=${flowId}#code=fixture`,
+    `?flow=${flowId}#error=denied&access_token=token`,
+    `?flow=${flowId}#error=denied&refresh_token=token`,
+    `?flow=${flowId}#error=denied&error=other`,
+    `?flow=${flowId}#error=denied&%65rror=other`,
+    `?flow=${flowId}#error=denied&flow=${flowId}`,
+    `?flow=${flowId}#error=`, `?flow=${flowId}#error_description=detail`,
+    `?flow=${flowId}&code=fixture#error=denied`,
+    `?flow=${flowId}&error=denied#error=denied`,
+    `?flow=${flowId}#error=denied&next=https://example.invalid`,
+    `?#flow=${flowId}&error=denied`,
+  ])('rejects ambiguous fragment errors %#', suffix => {
+    expect(parseNativeAuthCallback(redirect + suffix, redirect)).toBeNull();
+  });
   it('reduces provider errors to a generic result', () => {
     expect(parseNativeAuthCallback(`${redirect}?flow=${flowId}&error=access_denied&error_description=private%20detail`, redirect)).toEqual({ kind: 'error', flowId });
   });

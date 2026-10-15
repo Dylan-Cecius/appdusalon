@@ -91,7 +91,7 @@ describe('email request correlation', () => {
     f.flow.begin('signup', redirect); await make().handle(link(second)); expect(sdk).not.toHaveBeenCalled();
     await make().handle(link(first)); await make().handle(link(first)); expect(sdk).toHaveBeenCalledTimes(1);
     f.id(second); f.flow.begin('recovery', redirect);
-    await make().handle(`${redirect}?flow=${second}&error=denied`); await make().handle(link(second));
+    await make().handle(`${redirect}?flow=${second}#error=denied&error_description=private`); await make().handle(link(second));
     expect(sdk).toHaveBeenCalledTimes(1); expect(failed).toHaveBeenCalledTimes(1);
   });
 });

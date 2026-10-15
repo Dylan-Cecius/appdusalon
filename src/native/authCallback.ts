@@ -14,22 +14,35 @@ export function validateNativeRedirect(value: unknown): string | null {
   } catch { return null; }
 }
 
-/** Only a PKCE code is accepted. Never install bearer tokens from an incoming URL. */
+function isProviderError(params: URLSearchParams): boolean {
+  const keys = [...params.keys()];
+  return new Set(keys).size === keys.length && !!params.get('error')
+    && keys.every(key => ['error', 'error_code', 'error_description'].includes(key));
+}
+
+/** Only PKCE codes and generic errors are accepted. Never install URL bearer tokens. */
 export function parseNativeAuthCallback(raw: unknown, redirect: string): NativeAuthCallback | null {
   if (!validateNativeRedirect(redirect) || typeof raw !== 'string' || raw.length > 4096 || /[\s\\]/.test(raw)) return null;
   if (!raw.startsWith(`${redirect}?`)) return null;
   try {
     const url = new URL(raw);
-    if (url.hash || raw.includes('#')) return null;
     const keys = [...url.searchParams.keys()];
     if (new Set(keys).size !== keys.length) return null;
     const flowId = url.searchParams.get('flow');
     if (!flowId || !/^[a-f0-9]{32}$/.test(flowId)) return null;
+    if (raw.includes('#')) {
+      // Supabase errors may use fragments. Only the local flow ID belongs in
+      // the query; mixed code/error/token payloads must never reach the SDK.
+      if (keys.length !== 1 || !url.hash) return null;
+      return isProviderError(new URLSearchParams(url.hash.slice(1))) ? { kind: 'error', flowId } : null;
+    }
     if (keys.length === 2 && keys.includes('code')) {
       const code = url.searchParams.get('code')!;
       return /^[A-Za-z0-9._~-]{1,2048}$/.test(code) ? { kind: 'code', code, flowId } : null;
     }
-    if (keys.includes('error') && url.searchParams.get('error') && keys.every(key => ['flow', 'error', 'error_code', 'error_description'].includes(key))) {
+    const errorParams = new URLSearchParams(url.searchParams);
+    errorParams.delete('flow');
+    if (isProviderError(errorParams)) {
       return { kind: 'error', flowId }; // Never expose provider error descriptions/URLs.
     }
     return null;

@@ -4,7 +4,7 @@
 
 La destination est une adresse de retour canonique configurée explicitement. Aucune valeur par défaut ni identité Apple n’est créée. Les exemples `com.example.appdusalon.test://auth/callback` et `https://example.invalid/auth/callback` sont exclusivement synthétiques.
 
-Le parseur exige une corrélation flow locale et un unique code PKCE, ou une erreur fournisseur réduite à un résultat générique. Il refuse les jetons d’accès/rafraîchissement dans les URL, les fragments, les paramètres ambigus et toute destination différente. Le type recovery ne provient jamais d’un paramètre entrant : la demande locale détermine le parcours après un échange PKCE réussi. Aucun champ privé du SDK n’est requis.
+Le parseur exige une corrélation flow locale et un unique code PKCE, ou une erreur fournisseur réduite à un résultat générique. Il refuse les jetons d’accès/rafraîchissement dans les URL, les fragments de session, les paramètres ambigus et toute destination différente. Le type recovery ne provient jamais d’un paramètre entrant : la demande locale détermine le parcours après un échange PKCE réussi. Aucun champ privé du SDK n’est requis.
 
 Le contrôleur sérialise les échanges, ignore les doublons démarrage/événement et borne la file à quatre demandes et le cache à 32 codes en mémoire. Les codes ne sont ni persistés ni journalisés. Après une erreur, demander un nouveau lien ; pas de rejeu automatique. Le démontage supprime les callbacks UI et le travail en attente ; il ne peut pas annuler un échange SDK déjà parti.
 
@@ -34,4 +34,12 @@ La demande d’inscription ou de récupération crée 128 bits aléatoires via c
 
 Le retour exige cet identifiant exact, consomme le marqueur avant l’échange et refuse la répétition même après remontage/rechargement. Une demande plus récente remplace l’ancienne ; un échec tardif ne peut pas l’annuler. Stockage inaccessible, écriture ou suppression non confirmée : aucun échange. Une interruption/erreur après consommation impose un nouveau lien.
 
-87 tests natifs synthétiques sont passants à ce checkpoint, dont 18 sur la corrélation et l’initiation. Le parcours natif reste opt-in et sans configuration réelle. La future recette backend isolée devra démontrer que les URL autorisées et modèles d’e-mail conservent flow ; aucune liste de redirections ni aucun modèle hébergé n’a été modifié. Source relue le 15 octobre 2026 : https://supabase.com/docs/guides/auth/redirect-urls. Les erreurs en fragment décrites par cette documentation restent à traiter dans le lot suivant ; elles sont pour l’instant ignorées.
+101 tests natifs synthétiques sont passants à ce checkpoint, dont 18 sur la corrélation et l’initiation. Le parcours natif reste opt-in et sans configuration réelle. La future recette backend isolée devra démontrer que les URL autorisées et modèles d’e-mail conservent flow ; aucune liste de redirections ni aucun modèle hébergé n’a été modifié. Source relue le 15 octobre 2026 : https://supabase.com/docs/guides/auth/redirect-urls. Les erreurs fournisseur en fragment sont acceptées seulement si la query contient le seul identifiant flow local et le fragment contient exclusivement error/error_code/error_description sans doublon. Le message reste générique ; aucun champ entrant n’est affiché. Tout mélange avec code ou jeton est refusé.
+
+## Recette native restante (aucun cas exécuté sur iOS)
+- Initier une demande synthétique sur le même appareil ; confirmer que le backend isolé et son modèle conservent flow, puis vérifier le formulaire après échange PKCE.
+- Retour à froid puis événement doublon : un seul échange ; redémarrage ultérieur : aucun rejeu. Ancien lien après nouvelle demande : nouvelle demande conservée.
+- Erreur fournisseur en query/fragment : message générique, aucun échange, nouvelle demande nécessaire. Lien expiré/mauvaise destination/jeton : aucun échange.
+- Passer en arrière-plan pendant un renouvellement, revenir, remonter la racine : pas de double propriétaire ; vérifier UIScene et réseau sur appareil.
+- Coupure réseau, jeton expiré/révoqué, stockage indisponible, MFA et déconnexion : aucun succès affiché sans preuve SDK ; nouvelle demande nécessaire après échange interrompu.
+- Un schéma enregistré, l’allowlist backend, le stockage natif adapté et la compilation/signature restent des prérequis distincts ; les fixtures ne les établissent pas.
