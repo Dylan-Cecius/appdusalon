@@ -50,3 +50,12 @@
 - Commandes : npm run typecheck (succès), npm test (119/119, 16 fichiers), VITE_PREVIEW_STANDALONE=true VITE_PREVIEW_DEMO_ONLY=true npm run build (succès), git diff --check (succès). Test ciblé appointmentContactUpdate rejoué après ajout du cas de protection des champs financiers : 6/6. Aucun test SQL ni backend réel : aucune migration modifiée.
 - Les 6 nouveaux tests utilisent uniquement un client de requête fictif : effacement, entrée invalide, filtres et retour serveur, zéro ligne, erreur serveur, prérequis absents. Ils ne constituent pas une validation RLS hébergée. Diff relu ; import type du client Supabase n’ajoute pas de connexion à la démo.
 - Limites de recette navigateur/CI/coût/publication inchangées. Prochain lot : interprétation des réponses d’annulation et d’encaissement. Bail renouvelé.
+
+## 2026-10-15T12:20:22Z — checkpoint 4 : réponse confirmée, pas statut supposé
+- Lot 3 confirmé : 9b9ac86e1d50ec45f173f6f04cc829dd2674430c. Durée cumulée : 20.9 min.
+- Défauts établis par lecture du hook et des contrats SQL/Edge : réponse already_closed ignorée au profit du statut demandé ; payload vide d’annulation/encaissement traité comme succès ; drapeaux paymentStatus/amountPaid non actualisés après RPC ; toast carte même pour prestation prépayée.
+- Correction : parseurs purs des réponses, statut réel d’annulation et signal de remboursement échoué conservés, suppression de l’expiration locale après clôture, transaction retournée contrôlée (id, appointment_id, salon_id, montant). Montant confirmé dans l’état local ; toast prépayé distinct. Démo : contrôle de statut avec état courant atomique, aucun paiement réel. Aucun RPC ni migration modifié.
+- Commit : « fix(agenda): reconcile confirmed cancellation and settlement results [skip ci] », parent 9b9ac86e1d50ec45f173f6f04cc829dd2674430c.
+- Commandes : premier npm run typecheck a relevé un élargissement TypeScript du statut, corrigé ; second npm run typecheck réussi ; npm test 126/126 (17 fichiers, 7 nouveaux tests de contrats) ; npm run build réussi en 7.71 s ; git diff --check réussi. Diff relu. Les tests n’appellent pas Supabase/Stripe ni un autre fournisseur.
+- Limites : recette navigateur et fournisseurs hébergés non exécutés, contrôle du build standalone final prévu après le lot suivant, pas de publication.
+- Prochaine tâche concrète repérée : userIdRef empêche le rechargement quand le salon change pour le même utilisateur ; les requêtes concurrentes peuvent rétablir une liste plus ancienne. Bail renouvelé.

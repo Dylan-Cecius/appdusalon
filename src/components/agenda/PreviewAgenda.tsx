@@ -1,3 +1,4 @@
+import { getAppointmentDetails } from '@/lib/appointmentDetails';
 import { appointmentContactPatch, AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import { appointmentMoveIssue, moveAppointmentDraft } from '@/lib/appointmentMove';
 import CreateAppointmentDialog from './CreateAppointmentDialog';
@@ -106,7 +107,6 @@ export default function PreviewAgenda() {
   const { appointments, waitlist, timeOff } = state;
   const currentState = useRef(state);
   currentState.current = state;
-  const setAppointments = (action: SetStateAction<Appointment[]>) => setState(current => ({ ...current, appointments: typeof action === 'function' ? action(current.appointments) : action }));
   const setWaitlist = (action: SetStateAction<BookingWaitlistEntry[]>) => setState(current => ({ ...current, waitlist: typeof action === 'function' ? action(current.waitlist) : action }));
   const [revision, setRevision] = useState(0);
   useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* Session remains usable without persistence. */ } }, [state]);
@@ -165,8 +165,23 @@ export default function PreviewAgenda() {
         currentState.current = next; setState(next);
       }}
       updateAppointment={updateAppointment} refreshAppointments={refresh}
-      markAsPaid={async id => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: 'completed', paymentStatus: 'paid', isPaid: true, amountPaid: item.totalPrice } : item)); toast({ title: 'Paiement simulé', description: 'Le rendez-vous est maintenant marqué payé.' }); }}
-      cancelAppointment={async (id, action) => { setAppointments(current => current.map(item => item.id === id ? { ...item, status: action === 'cancel' ? 'cancelled' : 'no_show' } : item)); }}
+      markAsPaid={async id => {
+        const current = currentState.current;
+        const target = current.appointments.find(item => item.id === id);
+        const details = target && getAppointmentDetails(target);
+        if (!details || (!details.canCollectBalance && !details.canCompletePrepaid)) throw new Error('Ce rendez-vous ne peut plus être encaissé.');
+        const next: PreviewState = { ...current, appointments: current.appointments.map(item => item.id === id ? { ...item, status: 'completed', paymentStatus: 'paid', isPaid: true, amountPaid: item.totalPrice } : item) };
+        currentState.current = next; setState(next);
+        toast({ title: details.canCompletePrepaid ? 'Clôture simulée' : 'Paiement simulé', description: 'Aucun paiement réel n’a été effectué.' });
+      }}
+      cancelAppointment={async (id, action) => {
+        const current = currentState.current;
+        const target = current.appointments.find(item => item.id === id);
+        if (!target || !getAppointmentDetails(target).canEdit) throw new Error('Ce rendez-vous est déjà clos.');
+        const next: PreviewState = { ...current, appointments: current.appointments.map(item => item.id === id ? { ...item, status: action === 'cancel' ? 'cancelled' : 'no_show', paymentExpiresAt: undefined,
+          paymentStatus: action === 'cancel' && item.paymentStatus === 'pending' ? 'expired' : item.paymentStatus } : item) };
+        currentState.current = next; setState(next);
+      }}
       renderCreateDialog={props => props.isOpen ? <CreateAppointmentDialog {...props} demo services={services} staff={members} appointments={appointments} timeOff={timeOff} schedule={schedule} onSave={async (draft, recurrence) => {
         const current = currentState.current;
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;

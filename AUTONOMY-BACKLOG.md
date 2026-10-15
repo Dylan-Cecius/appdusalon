@@ -42,3 +42,10 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Coordonnées : effacement du téléphone/notes transmis, champs de réservation et paiement exclus du formulaire, mise à jour conditionnée au salon et à la révision de la fiche ouverte, absence de ligne retournée traitée comme conflit. Démo alignée sur le contrôle de concurrence.
 - 119 tests unitaires et typecheck réussis ; build standalone réussi. Six tests de persistance avec faux client Supabase ; aucun appel hébergé.
 - À poursuivre : réponses d’annulation idempotentes et montants après règlement confirmé.
+
+## Checkpoint du 15 octobre — résultats des mutations, lot 4
+- Lot 3 sauvegardé : 9b9ac86e1d50ec45f173f6f04cc829dd2674430c.
+- Annulation : statut confirmé conservé sur réponse idempotente, absence/remboursement distingués, acompte conservé, paiement en attente expiré uniquement à l’annulation.
+- Encaissement : transaction, rendez-vous, salon et montant validés avant état de succès ; drapeaux et montant payé alignés avec le retour serveur. Clôture prépayée explicitement sans nouvel encaissement. Démo protégée des actions sur dossiers clos.
+- 126 tests unitaires et typecheck réussis, build normal réussi. Aucun fournisseur réel appelé ; contrat testé avec payloads fictifs.
+- À poursuivre : gestion des chargements concurrents et changement de salon dans le hook agenda.

@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-2026-10-15T11-59-28-462Z",
-  "task": "Checkpoint 3 : sauvegarde de coordonnées avec révision et confirmation",
+  "task": "Checkpoint 4 : appliquer les réponses confirmées des mutations",
   "started_at": "2026-10-15T11:59:28.462Z",
-  "last_checkpoint_at": "2026-10-15T12:15:34Z",
-  "lease_expires_at": "2026-10-15T13:30:34Z",
-  "last_application_commit": "b5867d1a19500518ce925c59e8e1f2561469f0e8",
+  "last_checkpoint_at": "2026-10-15T12:20:22Z",
+  "lease_expires_at": "2026-10-15T13:35:22Z",
+  "last_application_commit": "9b9ac86e1d50ec45f173f6f04cc829dd2674430c",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Vérifier les réponses de clôture/annulation et la cohérence locale après confirmation.",
+  "next_task": "Prévenir les réponses de chargement hors ordre et recharger lors d’un changement de salon.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",

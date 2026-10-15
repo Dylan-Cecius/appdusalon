@@ -1,3 +1,4 @@
+import { cancelledAppointment, confirmedCancellation, confirmedSettlement } from '@/lib/appointmentMutationResults';
 import { persistAppointmentContactUpdate, AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import { useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
@@ -344,41 +345,35 @@ export const useSupabaseAppointments = () => {
 
       if (error) throw error;
 
-      const nextStatus: Appointment['status'] =
-        action === 'no_show' ? 'no_show' : 'cancelled';
+      const result = confirmedCancellation(data);
+      setAppointments(prev => prev.map(appointment => appointment.id === id ? cancelledAppointment(appointment, result) : appointment));
 
-      setAppointments(prev =>
-        prev.map(appointment =>
-          appointment.id === id
-            ? {
-                ...appointment,
-                status: nextStatus,
-                paymentStatus:
-                  data?.refund_status === 'refunded'
-                    ? 'refunded'
-                    : appointment.paymentStatus,
-              }
-            : appointment
-        )
-      );
+      if (result.alreadyClosed) {
+        toast({ title: 'Rendez-vous déjà clos',
+          description: result.refundStatus === 'failed' ? 'Le rendez-vous est déjà clos, mais son remboursement doit être vérifié.'
+            : result.status === 'cancelled' ? 'Ce rendez-vous est déjà annulé.' : 'Ce rendez-vous est déjà marqué absent.',
+          variant: result.refundStatus === 'failed' ? 'destructive' : 'default',
+        });
+        return data;
+      }
 
-      if (action === 'no_show') {
+      if (result.status === 'no_show') {
         toast({
           title: "No-show enregistré",
           description:
-            Number(data?.deposit_kept || 0) > 0
-              ? `L'acompte de ${Number(data.deposit_kept).toFixed(2)} € est conservé.`
+            (result.depositKept || 0) > 0
+              ? `L'acompte de ${result.depositKept!.toFixed(2)} € est conservé.`
               : "Le rendez-vous a été marqué comme non honoré.",
         });
       } else {
-        const refundStatus = String(data?.refund_status || 'not_applicable');
-        const refundAmount = Number(data?.refund_amount || 0);
+        const refundStatus = result.refundStatus;
+        const refundAmount = result.refundAmount;
 
         toast({
           title: "Rendez-vous annulé",
           description:
             refundStatus === 'refunded'
-              ? `Remboursement de ${refundAmount.toFixed(2)} € effectué.`
+              ? refundAmount !== undefined ? `Remboursement de ${refundAmount.toFixed(2)} € effectué.` : 'Remboursement confirmé.'
               : refundStatus === 'failed'
                 ? "Le rendez-vous est annulé, mais le remboursement doit être vérifié."
                 : "Le créneau est de nouveau disponible.",
@@ -418,24 +413,17 @@ export const useSupabaseAppointments = () => {
 
   const markAsPaid = async (id: string, method: 'cash' | 'card') => {
     try {
-      const { error } = await (supabase as any).rpc('settle_appointment', {
+      if (!user || !salonId) throw new Error('salon_access_denied');
+      const { data, error } = await (supabase as any).rpc('settle_appointment', {
         appointment_id_param: id,
         payment_method_param: method,
       });
-
       if (error) throw error;
-
-      setAppointments(prev =>
-        prev.map(appointment =>
-          appointment.id === id
-            ? { ...appointment, isPaid: true, status: 'completed' }
-            : appointment
-        )
-      );
-
+      const result = confirmedSettlement(data, id, salonId);
+      setAppointments(prev => prev.map(appointment => appointment.id === id ? { ...appointment, ...result.patch } : appointment));
       toast({
-        title: "Paiement enregistré",
-        description: `Le rendez-vous a été encaissé par ${method === 'cash' ? 'espèces' : 'carte'}.`,
+        title: result.prepaid ? 'Prestation clôturée' : 'Paiement enregistré',
+        description: result.prepaid ? 'La prestation prépayée est clôturée, sans nouvel encaissement.' : 'Le règlement confirmé est visible en caisse.',
       });
     } catch (error) {
       console.error('Error settling appointment:', error);
