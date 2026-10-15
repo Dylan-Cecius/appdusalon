@@ -1,3 +1,4 @@
+import { ClientsProvider } from '@/contexts/ClientsContext';
 import NewClientDialog from '@/components/NewClientDialog';
 import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
@@ -16,8 +17,8 @@ import type { Client } from '@/hooks/useClients';
 import { format } from 'date-fns';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 
-const ClientsPage = () => {
-  const { clients, loading, addClient, getClientStats } = useClients();
+const ClientsWorkspace = () => {
+  const { clients, loading, error, hasSnapshot, addClient, getClientStats, refreshClients } = useClients();
   const { permissions } = usePermissions();
   const { salonSettings } = useSupabaseSettings();
   const { logActivity } = useActivityLog();
@@ -25,7 +26,9 @@ const ClientsPage = () => {
   const canUseClientNotes = rights.canAccessFullClientNotes;
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const selectedClient = clients.find(client => client.id === selectedClientId) ?? null;
+  const [exportError, setExportError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [exportConfirmType, setExportConfirmType] = useState<'csv' | 'json' | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -49,6 +52,8 @@ const ClientsPage = () => {
   const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
 
   const handleExport = useCallback(async (type: 'csv' | 'json') => {
+    if (loading || error || !hasSnapshot) return;
+    setExportError(null);
     setIsExporting(true);
     try {
       // Fetch stats for all clients
@@ -94,11 +99,13 @@ const ClientsPage = () => {
         downloadFile(json, `${filename}.json`, 'application/json');
       }
       await logActivity('EXPORT_RGPD', { format: type.toUpperCase(), count: clients.length });
+    } catch {
+      setExportError('Export interrompu : les données complètes n’ont pas pu être vérifiées. Réessayez.');
     } finally {
       setIsExporting(false);
       setExportConfirmType(null);
     }
-  }, [clients, getClientStats, salonSettings]);
+  }, [clients, getClientStats, salonSettings, loading, error, hasSnapshot, logActivity]);
 
   const downloadFile = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob(['\uFEFF' + content], { type: mimeType });
@@ -121,18 +128,18 @@ const ClientsPage = () => {
           <div className="flex flex-wrap gap-2">
             {permissions.isAdmin && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0}>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0 || loading || !!error || !hasSnapshot || isExporting}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter CSV (RGPD)
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0}>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0 || loading || !!error || !hasSnapshot || isExporting}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter JSON
                 </Button>
               </>
             )}
             <NewClientDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} canUseNotes={canUseClientNotes}
-              trigger={<Button className="w-full sm:w-auto min-h-[44px]"><Plus className="mr-2 h-4 w-4" />Nouveau Client</Button>}
+              trigger={<Button disabled={loading || !!error || !hasSnapshot} className="w-full sm:w-auto min-h-[44px]"><Plus className="mr-2 h-4 w-4" />Nouveau Client</Button>}
               onCreate={async input => {
                 const client = await addClient(input);
                 if (client) await logActivity('CLIENT_CREATED', { client_name: client.name });
@@ -170,7 +177,10 @@ const ClientsPage = () => {
           </p>
         </div>
 
-        {loading ? (
+        {exportError && <p role="alert" className="text-sm text-destructive">{exportError}</p>}
+        {error ? (
+          <div role="alert" className="rounded-xl border border-destructive/30 p-4"><p>{error}</p><Button className="mt-2" variant="outline" onClick={() => void refreshClients()}>Réessayer</Button></div>
+        ) : loading || !hasSnapshot ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Chargement des clients...</p>
           </div>
@@ -196,7 +206,7 @@ const ClientsPage = () => {
                 <button
                   key={client.id}
                   type="button"
-                  onClick={() => setSelectedClient(client)}
+                  onClick={() => setSelectedClientId(client.id)}
                   className="grid w-full gap-2 px-4 py-3 text-left transition-colors hover:bg-slate-50 md:grid-cols-[minmax(220px,1.4fr)_1fr_1.2fr_80px] md:items-center md:gap-3"
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -222,11 +232,11 @@ const ClientsPage = () => {
           </div>
         )}
 
-        {selectedClient && (
+        {selectedClient && hasSnapshot && (
           <ClientDetailModal
             client={selectedClient}
             open={!!selectedClient}
-            onClose={() => setSelectedClient(null)}
+            onClose={() => setSelectedClientId(null)}
           />
         )}
 
@@ -251,4 +261,10 @@ const ClientsPage = () => {
   );
 };
 
-export default ClientsPage;
+function ScopedClientsWorkspace() {
+  const { contextKey } = useClients();
+  return <ClientsWorkspace key={contextKey || 'no-salon'} />;
+}
+export default function ClientsPage() {
+  return <ClientsProvider><ScopedClientsWorkspace /></ClientsProvider>;
+}

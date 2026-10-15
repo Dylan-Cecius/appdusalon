@@ -60,7 +60,7 @@ const euro = (value: number) =>
   }).format(value);
 
 const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps) => {
-  const { updateClient, getClientStats, refreshClients } = useClients();
+  const { updateClient, getClientStats, refreshClients, error: clientsError, loading: clientsLoading } = useClients();
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
   const { permissions } = usePermissions();
@@ -271,13 +271,13 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                     <X className="mr-1 h-4 w-4" />
                     Annuler
                   </Button>
-                  <Button size="sm" onClick={handleSave}>
+                  <Button disabled={!!clientsError || clientsLoading} size="sm" onClick={handleSave}>
                     <Save className="mr-1 h-4 w-4" />
                     Enregistrer
                   </Button>
                 </>
               ) : (
-                <Button size="sm" variant="outline" onClick={() => { setEditedClient(client); setIsEditing(true); }}>
+                <Button disabled={!!clientsError || clientsLoading} size="sm" variant="outline" onClick={() => { setEditedClient(client); setIsEditing(true); }}>
                   <Edit2 className="mr-1 h-4 w-4" />
                   Modifier
                 </Button>
@@ -287,6 +287,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
         </DialogHeader>
 
         <div className="bg-slate-50/70 p-4 sm:p-6">
+          {clientsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{clientsError} Votre saisie reste conservée.</p><Button variant="outline" size="sm" onClick={() => void refreshClients()}>Recharger les clients</Button></div>}
           {statsLoading && <p role="status" className="mb-3 text-sm text-muted-foreground">Chargement des statistiques…</p>}
           {statsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{statsError}</p><Button variant="outline" size="sm" onClick={retryStats}>Réessayer les statistiques</Button></div>}
           <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

@@ -94,3 +94,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Clients — stabilité de la fiche
 - Lecture des statistiques stabilisée et séparée du brouillon ; réponses après fermeture/changement ignorées. Typecheck, 189 unitaires et build réussis ; six cas navigateur supplémentaires préparés (48 cumulés), non exécutés. Source Clients et erreurs/pagination à poursuivre.
+
+## Clients — liste complète par salon
+- Source partagée, pagination et réponses périmées protégées ; erreurs/reprise explicites. Détail suit son identifiant, changement de salon ferme les formulaires. 199 unitaires et typecheck/build réussis. Statistiques paginées et confirmation de modification restent prioritaires.
