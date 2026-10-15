@@ -6,6 +6,8 @@ This document separates machine-verified release guarantees from checks that sti
 
 ## Current candidate — 15 October 2026
 
+Application source: `498c8a487a327c661555a15321ea90fca0030934` (15 October 2026).
+
 Six application checkpoints prepare appointment-action reliability, terminal-state handling, confirmed contact writes, mutation-response reconciliation, refresh ordering/salon isolation and client-creation recovery. See `AUTONOMY-LOG.md` for exact commits and observed checks.
 
 - Local TypeScript check: passed. Unit suite: 136 passed in 19 files.

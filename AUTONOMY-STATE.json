@@ -2,13 +2,13 @@
   "schema_version": 1,
   "project": "AppDuSalon V2",
   "branch": "v2/chatgpt-rebuild",
-  "status": "running",
-  "run_id": "salon-v2-2026-10-15T11-59-28-462Z",
-  "task": "Checkpoint 6 : création client sans perte de brouillon et audit des prochains lots",
-  "started_at": "2026-10-15T11:59:28.462Z",
-  "last_checkpoint_at": "2026-10-15T12:40:38Z",
-  "lease_expires_at": "2026-10-15T13:55:38Z",
-  "last_application_commit": "182d15d9e72629d47012ee2d177116bc2b957864",
+  "status": "idle",
+  "run_id": null,
+  "task": null,
+  "started_at": null,
+  "last_checkpoint_at": "2026-10-15T12:45:29Z",
+  "lease_expires_at": null,
+  "last_application_commit": "498c8a487a327c661555a15321ea90fca0030934",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
@@ -18,5 +18,8 @@
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Europe/Brussels"
-  }
+  },
+  "last_run_id": "salon-v2-2026-10-15T11-59-28-462Z",
+  "last_run_started_at": "2026-10-15T11:59:28.462Z",
+  "finished_at": "2026-10-15T12:45:29Z"
 }
