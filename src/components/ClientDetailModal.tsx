@@ -1,3 +1,5 @@
+import { useClientRead } from '@/hooks/useClientRead';
+import { formatInTimeZone } from 'date-fns-tz';
 import { runExclusiveAction } from '@/lib/exclusiveAction';
 import { useClientDetailStats } from '@/hooks/useClientDetailStats';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -19,7 +21,6 @@ import {
   UserX,
   X,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { useClients, type Client, type ClientStats } from '@/hooks/useClients';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
-import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
@@ -61,9 +61,9 @@ const euro = (value: number) =>
   }).format(value);
 
 const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps) => {
-  const { updateClient, getClientStats, refreshClients, error: clientsError, loading: clientsLoading } = useClients();
+  const { updateClient, getClientStats, getClientAppointments, refreshClients, error: clientsError, loading: clientsLoading } = useClients();
   const { transactions, loading: transactionsLoading, error: transactionsError, hasSnapshot: transactionsReady, refreshTransactions } = useSupabaseTransactions();
-  const { appointments, loading: appointmentsLoading, error: appointmentsError, refreshAppointments } = useSupabaseAppointments();
+  const { data: appointments, loading: appointmentsLoading, error: appointmentsError, retry: refreshAppointments } = useClientRead(open ? client.id : null, getClientAppointments, 'Impossible de charger tous les rendez-vous de cette fiche.');
   const historyReady = transactionsReady && !transactionsLoading && !transactionsError && !appointmentsLoading && !appointmentsError;
   const { permissions } = usePermissions();
   const { toast } = useToast();
@@ -99,8 +99,8 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
   );
 
   const clientAppointments = useMemo(
-    () => appointments.filter((appointment) => appointment.clientPhone === client.phone),
-    [appointments, client.phone]
+    () => appointments || [],
+    [appointments]
   );
 
   const insights = useMemo(() => {
@@ -134,8 +134,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
     clientAppointments
       .filter(
         (appointment) =>
-          appointment.status !== 'cancelled' &&
-          appointment.status !== 'no_show' &&
+          appointment.status === 'completed' &&
           new Date(appointment.startTime).getTime() <= now
       )
       .forEach((appointment) => {
@@ -151,7 +150,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
       [...serviceCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
     const paidVisitDates = clientTransactions
-      .map((transaction) => new Date(transaction.transactionDate).getTime())
+      .map((transaction) => new Date(transaction.transactionInstant || transaction.transactionDate).getTime())
       .filter(Number.isFinite)
       .sort((a, b) => a - b);
 
@@ -180,7 +179,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
       [
         ...clientTransactions.map((transaction) => ({
           id: transaction.id,
-          date: new Date(transaction.transactionDate),
+          date: new Date(transaction.transactionInstant || transaction.transactionDate),
           type: 'transaction' as const,
           amount: transaction.totalAmount,
           items: transaction.items,
@@ -271,7 +270,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                     </span>
                   )}
                   <span>
-                    Client depuis {format(new Date(client.created_at), 'MMM yyyy', { locale: fr })}
+                    Client depuis {formatInTimeZone(client.created_at, 'Europe/Brussels', 'MMM yyyy', { locale: fr })}
                   </span>
                 </DialogDescription>
               </div>
@@ -303,7 +302,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
           {saveError && <p role="alert" ref={saveErrorRef} tabIndex={-1} className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{saveError}</p>}
           {isSaving && <p role="status" className="mb-3 text-sm">Enregistrement en cours…</p>}
           {clientsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{clientsError} Votre saisie reste conservée.</p><Button variant="outline" size="sm" onClick={() => void refreshClients()}>Recharger les clients</Button></div>}
-          <p className="mb-3 text-xs text-muted-foreground">Les passages regroupent les rendez-vous terminés et les ventes. Un rendez-vous lié à son ticket compte une fois ; les anciens tickets sans lien restent indépendants.</p>
+          <p className="mb-3 text-xs text-muted-foreground">Les rendez-vous sont associés au téléphone de cette fiche. Les passages regroupent les rendez-vous terminés et les ventes. Un rendez-vous lié à son ticket compte une fois ; les anciens tickets sans lien restent indépendants.</p>
           {(transactionsError || appointmentsError) && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>Une partie de l’historique ne peut pas être chargée.</p><Button variant="outline" size="sm" onClick={() => { void refreshTransactions(); void refreshAppointments(); }}>Recharger l’historique</Button></div>}
           {statsLoading && <p role="status" className="mb-3 text-sm text-muted-foreground">Chargement des statistiques…</p>}
           {statsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{statsError}</p><Button variant="outline" size="sm" onClick={retryStats}>Réessayer les statistiques</Button></div>}
@@ -442,12 +441,12 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                   {!historyReady ? <p className="mt-4 text-sm text-muted-foreground">Historique en cours de vérification.</p> : insights.upcoming ? (
                     <div className="mt-4">
                       <div className="text-xl font-semibold text-slate-950">
-                        {format(new Date(insights.upcoming.startTime), 'EEEE d MMMM', {
+                        {formatInTimeZone(insights.upcoming.startTime, 'Europe/Brussels', 'EEEE d MMMM', {
                           locale: fr,
                         })}
                       </div>
                       <div className="mt-1 text-sm text-slate-500">
-                        {format(new Date(insights.upcoming.startTime), 'HH:mm')} ·{' '}
+                        {formatInTimeZone(insights.upcoming.startTime, 'Europe/Brussels', 'HH:mm')} ·{' '}
                         {insights.upcoming.services.map((service) => service.name).join(', ')}
                       </div>
                       <div className="mt-3 inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-700">
@@ -482,7 +481,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                       <dt className="text-sm text-slate-500">Dernière visite</dt>
                       <dd className="text-sm font-semibold text-slate-900">
                         {stats?.lastVisit
-                          ? format(new Date(stats.lastVisit), 'd MMM yyyy', { locale: fr })
+                          ? formatInTimeZone(stats.lastVisit, 'Europe/Brussels', 'd MMM yyyy', { locale: fr })
                           : stats ? 'Jamais' : '—'}
                       </dd>
                     </div>
@@ -548,7 +547,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                             </span>
                           </div>
                           <p className="mt-0.5 text-xs text-slate-400">
-                            {format(visit.date, 'EEEE d MMMM yyyy · HH:mm', { locale: fr })}
+                            {formatInTimeZone(visit.date, 'Europe/Brussels', 'EEEE d MMMM yyyy · HH:mm', { locale: fr })}
                           </p>
                           <div className="mt-1.5 truncate text-xs text-slate-500">
                             {visit.type === 'transaction'

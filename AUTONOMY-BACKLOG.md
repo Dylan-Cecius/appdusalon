@@ -109,3 +109,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Clients — export CSV/JSON
 - Préparation bornée, erreurs/contexte/droits contrôlés, textes CSV échappés et JSON brut conservé. 247 unitaires, typecheck/build réussis ; aucun export réel. Historique détaillé de fiche encore dépendant de la liste agenda globale à remplacer par une lecture client paginée.
+
+## Clients — historique détaillé
+- Lecture des rendez-vous propre à la fiche et paginée, indépendante des segments/mutations agenda ; horaires du salon et prestation favorite limitée aux RDV terminés. 258 unitaires, typecheck/builds réussis, lint 0 erreur/215 avertissements. Association par téléphone et tests navigateur/hébergés restent des limites explicites.

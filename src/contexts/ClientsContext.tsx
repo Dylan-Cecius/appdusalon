@@ -1,3 +1,4 @@
+import { normalizeClientAppointment, type ClientAppointment } from '@/lib/clientAppointments';
 import { readClientStats, type ClientStatsTransaction } from '@/lib/clientStats';
 import { clientCreateFields, persistClientEdit, type ClientWriter } from '@/lib/clientPersistence';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
@@ -15,6 +16,7 @@ interface ClientsValue {
   addClient: (input: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<Client | null>;
   updateClient: (id: string, updates: Partial<Client>, expectedRevision: string) => Promise<Client | null>;
   getClientStats: (id: string) => Promise<ClientStats>;
+  getClientAppointments: (id: string) => Promise<ClientAppointment[]>;
   refreshClients: () => Promise<void>;
   captureContext: () => () => boolean;
 }
@@ -104,6 +106,20 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     return result;
   }, [visibleClients, contextKey, salonId, hasSnapshot, error, statsRevision]);
 
+  const getClientAppointments = useCallback(async (clientId: string): Promise<ClientAppointment[]> => {
+    const contextIsCurrent = scope.current.captureContext(contextKey);
+    const current = () => contextIsCurrent() && statsRevisionRef.current === statsRevision;
+    if (!current() || !salonId || !hasSnapshot || error) throw new Error('client_context_unavailable');
+    const client = visibleClients.find(row => row.id === clientId);
+    if (!client) throw new Error('client_unavailable');
+    const rows = await readCompleteRows(async (from, to) => {
+      return await supabase.from('appointments').select('id, client_name, client_phone, start_time, end_time, services, status, total_price, is_paid', { count: 'exact' })
+        .eq('salon_id', salonId).eq('client_phone', client.phone).order('start_time').order('id').range(from, to);
+    }, current);
+    if (!current() || rows === null) throw new Error('client_context_changed');
+    return rows.map(normalizeClientAppointment);
+  }, [contextKey, salonId, hasSnapshot, error, visibleClients, statsRevision]);
+
   useEffect(() => {
     const requestScope = scope.current;
     if (!contextKey) { setSnapshot(null); setReadState(null); return; }
@@ -115,7 +131,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
       .subscribe();
     return () => { requestScope.invalidate(); void supabase.removeChannel(channel); };
   }, [contextKey, salonId, fetchClients]);
-  return <ClientsContext.Provider value={{ clients: visibleClients, loading, error, hasSnapshot, contextKey, addClient, updateClient, getClientStats, refreshClients: fetchClients, captureContext: () => scope.current.captureContext(contextKey) }}>{children}</ClientsContext.Provider>;
+  return <ClientsContext.Provider value={{ clients: visibleClients, loading, error, hasSnapshot, contextKey, addClient, updateClient, getClientStats, getClientAppointments, refreshClients: fetchClients, captureContext: () => scope.current.captureContext(contextKey) }}>{children}</ClientsContext.Provider>;
 }
 export function useClients() {
   const value = useContext(ClientsContext);
