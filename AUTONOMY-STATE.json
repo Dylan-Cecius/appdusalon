@@ -6,13 +6,13 @@
   "run_id": null,
   "task": null,
   "started_at": null,
-  "last_checkpoint_at": "2026-10-15T12:59:44.893Z",
+  "last_checkpoint_at": "2026-10-15T13:02:16.195Z",
   "lease_expires_at": null,
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
-    "development": null,
-    "daily_report": null
+    "development": "6ad0ce94a6ac8191b8dd4338752547bd",
+    "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
   "next_task": "P0 : build mobile isolée et reproductible, sans backend réel ; vérifier les prérequis Capacitor/iOS actuels.",
   "validation": {
@@ -23,5 +23,11 @@
     "testflight": "not submitted",
     "apple_review": "not submitted"
   },
-  "timezone": "Etc/GMT-1"
+  "timezone": "Etc/GMT-1",
+  "schedules": {
+    "development": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261015T141500\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
+    "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
+    "timezone": "Etc/GMT-1"
+  },
+  "last_application_commit": "a35492e7e2187794d750795cd9b7967c5a1542db"
 }

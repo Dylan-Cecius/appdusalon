@@ -11,3 +11,9 @@
 - Durée de travail : environ cinq minutes à ce checkpoint ; pas une session de développement d'une heure.
 - Prochaine tâche : P0 build mobile isolée et vérification des prérequis natifs.
 - Activation des automations : confirmer leurs identifiants dans AUTONOMY-STATE.json après création réussie.
+
+## 2026-10-15T13:02:16.195Z — Activation vérifiée
+- Deux automations créées et relues avec is_enabled=true : Développement AppDuSalon iOS et Bilan AppDuSalon iOS.
+- Cycles horaires à :15 dès 14:15 le 15 octobre 2026, bilan quotidien vers 08:00 dès le 16 octobre ; fuseau fourni par la conversation : Etc/GMT-1.
+- Identifiants et calendriers enregistrés dans AUTONOMY-STATE.json. Les deux agents existants n'ont pas été modifiés.
+- Branche distante relue au commit a35492e7e2187794d750795cd9b7967c5a1542db. La création d'une tâche ne prouve pas encore l'exécution de son premier cycle.
