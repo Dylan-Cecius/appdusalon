@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { createCartTransaction, type CartItem } from '@/lib/cartCheckout';
+import { useState, useMemo, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package, Boxes } from 'lucide-react';
@@ -22,17 +23,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  duration: number;
-  quantity: number;
-  kind?: 'service' | 'product';
-  stock?: number;
-}
-
-const POSPage = () => {
+const POSWorkspace = () => {
+  const checkoutPending = useRef(false);
+  const [checkoutSaving, setCheckoutSaving] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
@@ -67,6 +60,7 @@ const POSPage = () => {
   }, [transactions]);
 
   const addToCart = (service: any) => {
+    if (checkoutPending.current) return;
     setCartItems(prev => {
       const existing = prev.find(item => item.id === service.id);
       if (existing) {
@@ -91,6 +85,7 @@ const POSPage = () => {
   };
 
   const addProductToCart = (product: (typeof products)[number]) => {
+    if (checkoutPending.current) return;
     if (product.current_stock <= 0) {
       toast({
         title: 'Rupture de stock',
@@ -135,6 +130,7 @@ const POSPage = () => {
   };
 
   const updateQuantity = (id: string, quantity: number) => {
+    if (checkoutPending.current) return;
     if (quantity <= 0) {
       removeFromCart(id);
       return;
@@ -145,26 +141,22 @@ const POSPage = () => {
   };
 
   const removeFromCart = (id: string) => {
+    if (checkoutPending.current) return;
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
   const handleCheckout = async (method: 'cash' | 'card', staffId?: string) => {
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    if (checkoutPending.current) throw new Error('checkout_pending');
+    checkoutPending.current = true;
+    setCheckoutSaving(true);
     try {
-      await addTransaction({
-        items: cartItems,
-        totalAmount: total,
-        paymentMethod: method,
-        staffId,
-      });
-
+      const result = await createCartTransaction(cartItems, method, staffId, addTransaction);
       setCartItems([]);
       setIsCartOpen(false);
-    } catch (error) {
-      console.error('Checkout failed:', error);
+      return result;
+    } finally {
+      checkoutPending.current = false;
+      setCheckoutSaving(false);
     }
   };
 
@@ -407,6 +399,7 @@ const POSPage = () => {
             <div className="sticky top-20 rounded-2xl">
               <CartSidebar
                 items={cartItems}
+                busy={checkoutSaving}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}
                 onCheckout={handleCheckout}
@@ -418,20 +411,18 @@ const POSPage = () => {
 
       {/* Mobile Cart Drawer */}
       {isMobile && (
-        <Drawer open={isCartOpen} onOpenChange={setIsCartOpen}>
-          <DrawerContent className="max-h-[80vh]">
+        <Drawer open={isCartOpen} dismissible={!checkoutSaving} onOpenChange={open => { if (!checkoutPending.current) setIsCartOpen(open); }}>
+          <DrawerContent className="max-h-[80vh] overflow-y-auto">
             <DrawerHeader>
               <DrawerTitle>Panier</DrawerTitle>
             </DrawerHeader>
             <div className="px-4 pb-4">
               <CartSidebar
                 items={cartItems}
+                busy={checkoutSaving}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}
-                onCheckout={method => {
-                  handleCheckout(method);
-                  setIsCartOpen(false);
-                }}
+                onCheckout={handleCheckout}
               />
             </div>
           </DrawerContent>
@@ -515,4 +506,7 @@ const POSPage = () => {
   );
 };
 
-export default POSPage;
+export default function POSPage() {
+  const { contextKey } = useTransactions();
+  return <POSWorkspace key={contextKey || 'no-salon'} />;
+}

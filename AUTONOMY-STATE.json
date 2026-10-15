@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-2026-10-15T12-58-10-670Z",
-  "task": "Génération locale des rapports alignée ; fiabilisation du panier mobile",
+  "task": "Panier confirmé et verrouillé ; revue finale des six lots",
   "started_at": "2026-10-15T12:58:10.670Z",
-  "last_checkpoint_at": "2026-10-15T13:26:29.854966+00:00",
-  "lease_expires_at": "2026-10-15T14:41:29.854966+00:00",
-  "last_application_commit": "7f60bf6ea53e2414daf64a3f5a6f2c9350798e2b",
+  "last_checkpoint_at": "2026-10-15T13:35:56.327467+00:00",
+  "lease_expires_at": "2026-10-15T14:50:56.327467+00:00",
+  "last_application_commit": "76b5af5b92912397c21545c89707cbf092c11e06",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Préserver le prestataire sur caisse mobile et attendre la confirmation avant fermeture ; prévenir les soumissions simultanées.",
+  "next_task": "Revue finale, build standalone et documentation des critères Clients/rapports automatiques ; libérer le bail.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
