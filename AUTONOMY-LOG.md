@@ -17,3 +17,15 @@
 - Cycles horaires à :15 dès 14:15 le 15 octobre 2026, bilan quotidien vers 08:00 dès le 16 octobre ; fuseau fourni par la conversation : Etc/GMT-1.
 - Identifiants et calendriers enregistrés dans AUTONOMY-STATE.json. Les deux agents existants n'ont pas été modifiés.
 - Branche distante relue au commit a35492e7e2187794d750795cd9b7967c5a1542db. La création d'une tâche ne prouve pas encore l'exécution de son premier cycle.
+
+## 2026-10-15T13:22:47.608Z — Checkpoint 1 : démonstration mobile isolée
+- Session ios-2026-10-15T13-14-44-195Z, début 2026-10-15T13:14:44.195Z, durée écoulée observée 8 minutes.
+- Checkout Git complet récupéré, assets présents. npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund : succès (521 paquets).
+- Nouvelle entrée mobile/index.html + src/mobile-demo.tsx : données synthétiques uniquement, ressources locales, CSP connect-src 'none', pas de police externe.
+- npm run build:mobile:demo : succès ; Vite InlineConfig envFile=false ignore les fichiers .env et variables VITE héritées. Le graphe de modules interdit App/main et les clients Supabase.
+- npm run test:mobile:build : 2 tests passants (import connecté interdit, environnement backend hostile ignoré). Aucun secret du .env suivi chargé par ces commandes.
+- npm run typecheck : succès. Suite métier via startVitest('test', ['src'], {run:true}, {envFile:false}) : 136 tests dans 19 fichiers, tous passants.
+- Avertissements : bundle démo JS 552,21 kB avant compression ; base Browserslist ancienne. Pas de mise à niveau non motivée effectuée.
+- Playwright : navigateurs absents ; installation Chromium/WebKit tentée, archives Chromium invalides. Recette navigateur non exécutée, pas de preuve native.
+- Sources officielles consultées : Apple exige Xcode 26+/SDK iOS 26+ depuis le 28 avril 2026 ; Capacitor 8 nécessite Node 22+, Xcode 26+, cible iOS 15+. Audit du passage de Capacitor 7 à 8 avant génération native.
+- Aucune publication, appel backend, signature, soumission ou dépense. Prochaine tâche : projet iOS démo reproductible.

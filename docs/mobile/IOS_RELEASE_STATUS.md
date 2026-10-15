@@ -3,7 +3,9 @@
 ## État initial — 15 octobre 2026
 - Base V2 et configuration Capacitor : présentes.
 - Configuration locale embarquée : corrigée et chargée avec succès sous Node 24.
-- Tests complets sur la branche iOS : non exécutés.
+- Vérification TypeScript et 136 tests métier : passants (pas des tests natifs).
+- Build mobile démo isolée : produite, 2 tests de sûreté passants ; fichiers .env non chargés, ressources locales et connexions réseau bloquées par CSP.
+- Recette navigateur : non exécutée, téléchargement du binaire invalide.
 - Projet Xcode : non généré.
 - Compilation iOS / simulateur / iPhone réel : non réalisés.
 - Identifiant, signature et équipe Apple : non vérifiés.
