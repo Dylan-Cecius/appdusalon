@@ -13,12 +13,11 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Aperçu privé Sites : déploiement appgdep_6acf7158d7288191a2ace0a51208bac2, source 740f8758eab36e5a30cf03a14f9f76dfe5605dd3.
 
 ## Priorités prêtes
-1. Exécuter la recette des 48 nouveaux cas navigateur préparés dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ajouter les parcours connectés Clients (contexte, sauvegarde, export), transactions et vrai tiroir mobile. Découverte/typecheck ne valent pas exécution.
-2. Fiabiliser la lecture du programme fidélité : réponses périmées, résultat partiel et erreur actuellement masquée par un programme désactivé. Audit et critères dans docs/V2_REVIEW_2026-10-15.md ; travailler uniquement sur lecteurs/fixtures, sans attribution ni utilisation réelle de points.
-3. Auditer puis préparer les rapports automatiques serveur : erreurs, pagination, périodes civiles du salon ; contrôles Deno isolés indispensables avant changement Edge, aucun envoi réel.
-4. Les sept lots Clients sont préparés : stabilité, source commune, sauvegarde révisée, statistiques, recherche, export et historique paginé. Ne pas les refaire. Association des RDV au téléphone et anciens tickets sans lien restent des limites ; futur schéma éventuel nécessite une base jetable.
-5. Préparer un parcours fictif complet agenda → caisse → historique client → statistiques avec état partagé, pour remplacer les écrans de démonstration encore statiques. Préserver les composants communs/pastels et le même aperçu privé ; aucune connexion réelle.
-6. Poursuivre les validations isolées et critères de livraison de V2_RELEASE_STATUS.md. Aucun renommage commercial ni fonction redondante sans besoin démontré.
+1. Exécuter les 70 nouveaux cas navigateur préparés dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ajouter la recette des hooks connectés (contexte/droits/RLS, mutations, erreurs/reprises), du vrai tiroir mobile et des dialogues. Découverte/typecheck ne valent pas exécution.
+2. Prochain développement local gratuit : état fictif partagé pour la démonstration agenda → caisse → clients → statistiques. Commencer par contrat/migration du stockage et catalogues, préserver clé quotidienne/ancien format agenda, étapes/pastels/absences/liste d’attente ; critères dans docs/V2_REVIEW_2026-10-15.md. Aucun backend ni second aperçu.
+3. Rapports automatiques serveur : erreurs/pagination/périodes civiles, contenu stats absent, compte des clients servis, résultat fournisseur négatif/succès partiel et last_sent_at. Deno et contrôles isolés nécessaires avant modification ; aucun envoi réel.
+4. Lots Clients, fidélité et configuration des rapports sont préparés ; ne pas les refaire. Poursuivre les recettes et traiter séparément identité client par téléphone, horodatage fidélité sans trigger, configuration de rapports liée au propriétaire et idempotence serveur. Tests SQL uniquement sur base jetable.
+5. Validations de livraison selon V2_RELEASE_STATUS.md. Aucun renommage commercial ni fonction redondante ; pas de publication d’un candidat dont les contrôles nécessaires manquent.
 
 ## Bloqués par prérequis
 - CI distante et publication supplémentaires : preuve actuelle d'absence de coût additionnel, sinon tests dans le runtime disponible et commits [skip ci].
@@ -134,3 +133,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Régressions fidélité/rapports — checkpoints complets
 - 22 nouveaux cas navigateur préparés, total 70 non exécutés ; 317 unitaires, typecheck/build réussis, lint 0 erreur/207 avertissements. Dernière relecture après mutation protège les rapports ; feedback fidélité effacé à la nouvelle saisie. Contrôles hébergés et publication toujours distincts.
+
+## Fin du cycle fidélité/rapports — 2026-10-15T15:30:57.292711+00:00
+- Six checkpoints sauvegardés, dernière source 8d54f1b2e0d3425972de378f4a259f3432171bcc ; 317 unitaires et contrôles locaux réussis, 70 nouveaux cas navigateur encore non exécutés. Aperçu inchangé.
+- Bail libéré ; prochain développement : état fictif partagé et compatibilité du stockage agenda. Serveur rapports différé faute de Deno, sans envoi réel.
