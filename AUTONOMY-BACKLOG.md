@@ -131,3 +131,7 @@ Clôture 2026-10-15T16:04:45Z : 50 min 10 s observées, dix lots fonctionnels pl
 ## Cycle 5 — 2026-10-15T16:20:24Z : Mutations agenda bornées à la session
 - [x] Mutations agenda bornées à la session : sources préparées, preuves et limites dans le journal.
 - [ ] Réconcilier la fiche ouverte avec les mises à jour de l’agenda en conservant les brouillons et leur révision.
+
+## Cycle 5 — 2026-10-15T16:22:57Z : Fiche agenda actualisée sans perte de brouillon
+- [x] Fiche agenda actualisée sans perte de brouillon : sources préparées, preuves et limites dans le journal.
+- [ ] Préparer une fixture mobile isolée pour les erreurs de création/édition et la concurrence de fiche ; contrôler les données de disponibilité.

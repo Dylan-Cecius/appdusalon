@@ -1,3 +1,4 @@
+import { appointmentEditState, appointmentEditChanged, reconcileAppointmentEdit } from '@/lib/appointmentEditState';
 import { AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import { appointmentPalette } from '@/lib/appointmentPalette';
 import { useState, useEffect, useRef } from 'react';
@@ -26,7 +27,7 @@ interface EditAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: Appointment | null;
-  onUpdate: (id: string, updates: AppointmentContactUpdates) => Promise<void> | void;
+  onUpdate: (id: string, updates: AppointmentContactUpdates, original: Appointment) => Promise<void> | void;
   onCancel: (id: string) => Promise<unknown>;
   onNoShow: (id: string) => Promise<unknown>;
   onPay: (id: string, method: 'cash' | 'card') => Promise<unknown>;
@@ -41,24 +42,23 @@ const EditAppointmentModal = ({
   onNoShow,
   onPay, onClientHistory, onReschedule, serviceColors = {}
 }: EditAppointmentModalProps) => {
-  const [editedAppointment, setEditedAppointment] = useState<AppointmentContactUpdates>({});
+  const [edit, setEdit] = useState(() => appointment ? appointmentEditState(appointment) : null);
   const [saving, setSaving] = useState(false);
   const pendingAction = useRef(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (actionError) errorRef.current?.focus(); }, [actionError]);
   useEffect(() => {
-    if (appointment) {
-      setActionError(null);
-      setEditedAppointment({
-        clientName: appointment.clientName,
-        clientPhone: appointment.clientPhone,
-        notes: appointment.notes || '',
-      });
-    }
+    if (appointment) setEdit(current => reconcileAppointmentEdit(current, appointment, pendingAction.current));
   }, [appointment]);
 
-  if (!appointment) return null;
+  if (!appointment || !edit) return null;
+  const editedAppointment = edit.draft;
+  const clientDraftChanged = appointmentEditChanged(edit);
+  const changedRemotely = clientDraftChanged && edit.base.updatedAt !== appointment.updatedAt;
+  const setEditedAppointment = (draft: AppointmentContactUpdates) => setEdit(current => current ? { ...current, draft } : current);
   const {
     amountPaid, remainingAmount, hasDeposit, canEdit: canCloseAppointment,
     paymentPending: isPaymentPending, showBalance, canCompletePrepaid, canCollectBalance, paidAmountLabel,
@@ -89,7 +89,7 @@ const EditAppointmentModal = ({
       setActionError('Le nom du client est requis.');
       return;
     }
-    await performAction(async () => onUpdate(appointment.id, editedAppointment),
+    await performAction(async () => onUpdate(appointment.id, editedAppointment, edit.base),
       'Modification impossible. Vos saisies sont conservées ; vérifiez votre connexion et réessayez.', true);
   };
 
@@ -115,13 +115,11 @@ const EditAppointmentModal = ({
       'Encaissement non confirmé. Vérifiez l’agenda et la caisse avant de réessayer.');
   };
 
-  const clientDraftChanged = ['clientName', 'clientPhone', 'notes'].some(field =>
-    (editedAppointment[field as keyof Appointment] || '') !== (appointment[field as keyof Appointment] || ''));
-
   const modalContent = (
     <div className="space-y-4" aria-busy={saving}>
       {saving && <p role="status" className="text-sm text-muted-foreground">Traitement en cours…</p>}
-      {actionError && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{actionError}</p>}
+      {actionError && <p ref={errorRef} tabIndex={-1} role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{actionError}</p>}
+      {changedRemotely && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-950">Ce rendez-vous a changé pendant votre saisie. Vos modifications sont conservées ; copiez-les avant de fermer et rouvrir la fiche.</p>}
       {/* Informations générales */}
       <div className="p-3 sm:p-4 bg-muted rounded-lg">
         <div className={`flex items-center justify-between mb-2 ${isMobile ? 'flex-col gap-2' : ''}`}>

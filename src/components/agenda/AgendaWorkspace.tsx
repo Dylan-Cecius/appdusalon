@@ -199,6 +199,7 @@ export const AgendaWorkspace = ({ moveAppointment, availabilityLoading = false, 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const currentAppointment = selectedAppointment ? appointments.find(item => item.id === selectedAppointment.id) : null;
   const [moveTarget, setMoveTarget] = useState<Appointment | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [selectedBarberId, setSelectedBarberId] = useState('');
@@ -1049,22 +1050,23 @@ export const AgendaWorkspace = ({ moveAppointment, availabilityLoading = false, 
       {moveTarget && <MoveAppointmentDialog appointment={moveTarget} availability={availability} unavailable={availabilityUnavailable}
         onClose={() => { setSelectedAppointment(moveTarget); setIsEditModalOpen(true); setMoveTarget(null); }}
         onSave={async candidate => { await applyMove(moveTarget, candidate); setMoveTarget(null); }} />}
-      {selectedAppointment && (
+      {currentAppointment && (
         <EditAppointmentModal
+          key={currentAppointment.id}
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
             setSelectedAppointment(null);
           }}
-          appointment={selectedAppointment}
+          appointment={currentAppointment}
           serviceColors={Object.fromEntries(dbServices.map(service => [service.id, service.color]))}
-          onReschedule={() => { setMoveTarget(selectedAppointment); setSelectedAppointment(null); setIsEditModalOpen(false); }}
+          onReschedule={() => { setMoveTarget(currentAppointment); setSelectedAppointment(null); setIsEditModalOpen(false); }}
           onClientHistory={() => {
-            setHistoryClient(clientFromAppointment(selectedAppointment));
+            setHistoryClient(clientFromAppointment(currentAppointment));
             setIsEditModalOpen(false); setSelectedAppointment(null); setClientsOpen(true);
           }}
-          onUpdate={async (id, updates) => {
-            await updateAppointment(id, updates, selectedAppointment);
+          onUpdate={async (id, updates, original) => {
+            await updateAppointment(id, updates, original);
             await refreshAppointments();
           }}
           onCancel={id => cancelAppointment(id, 'cancel')}

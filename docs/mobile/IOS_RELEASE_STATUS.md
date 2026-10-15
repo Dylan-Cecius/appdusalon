@@ -80,3 +80,7 @@ Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieu
 ## 2026-10-15T16:20:24Z — Mutations agenda bornées à la session
 356 secondes cumulées ; précédent d399d2864ba75842942fc9552128a52c5f0904ff, lot présent dans ce commit. 26 tests ciblés passants ; TypeScript et compilation source isolée passants (3618 modules).
 Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Réconcilier la fiche ouverte avec les mises à jour de l’agenda en conservant les brouillons et leur révision.
+
+## 2026-10-15T16:22:57Z — Fiche agenda actualisée sans perte de brouillon
+509 secondes cumulées ; précédent b74a18a5302d0de603592e09babcf5a8e1ed54a8, lot présent dans ce commit. 5 tests synthétiques passants ; TypeScript et compilation isolée 3619 modules passants ; révision originale conservée.
+Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Préparer une fixture mobile isolée pour les erreurs de création/édition et la concurrence de fiche ; contrôler les données de disponibilité.
