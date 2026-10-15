@@ -1,3 +1,4 @@
+import { paymentMethodLabel } from '@/lib/transactions';
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -202,7 +203,7 @@ const CustomDateRangeStats = () => {
                     <div className="text-right">
                       <p className="font-semibold">{transaction.totalAmount.toFixed(2)}€</p>
                       <p className="text-xs text-muted-foreground">
-                        {transaction.paymentMethod === 'cash' ? 'Espèces' : 'Carte'}
+                        {paymentMethodLabel[transaction.paymentMethod]}
                       </p>
                     </div>
                   </div>

@@ -1,3 +1,4 @@
+import { paymentMethodLabel } from '@/lib/transactions';
 import { useState } from 'react';
 import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -129,7 +130,7 @@ const TransactionsManager = ({ isOpen, onClose }: TransactionsManagerProps) => {
                       </div>
 
                       <Badge variant={transaction.paymentMethod === 'cash' ? 'secondary' : 'default'}>
-                        {transaction.paymentMethod === 'cash' ? 'Espèces' : 'Carte'}
+                        {paymentMethodLabel[transaction.paymentMethod]}
                       </Badge>
 
                       <div className="text-sm text-muted-foreground">

@@ -5,22 +5,9 @@ import { toZonedTime } from 'date-fns-tz';
 import { useAuth } from './useAuth';
 import { usePermissions } from './usePermissions';
 
-export interface Transaction {
-  id: string;
-  items: Array<{
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    kind?: 'service' | 'product';
-    type?: 'service' | 'product';
-  }>;
-  totalAmount: number;
-  paymentMethod: 'cash' | 'card';
-  transactionDate: Date;
-  clientId?: string;
-  staffId?: string;
-}
+import { normalizeTransaction, type Transaction, type NewTransaction } from '@/lib/transactions';
+export type { Transaction } from '@/lib/transactions';
+import { buildCombinedStats } from '@/lib/paymentStats';
 
 export const useSupabaseTransactions = () => {
   const { user, isReady } = useAuth();
@@ -41,21 +28,13 @@ export const useSupabaseTransactions = () => {
 
       const { data, error } = await supabase
         .from('transactions' as any)
-        .select('*')
+        .select('*, transaction_payments(id, amount, method, paid_at)')
         .eq('salon_id', salonId)
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
 
-      const formattedTransactions = data?.map((tx: any) => ({
-        id: tx.id,
-        items: tx.items as any,
-        totalAmount: tx.total_amount,
-        paymentMethod: tx.payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Brussels'),
-        clientId: tx.client_id || undefined,
-        staffId: tx.staff_id || undefined
-      })) || [];
+      const formattedTransactions = (data || []).map(normalizeTransaction);
 
       setTransactions(formattedTransactions);
     } catch (error) {
@@ -66,13 +45,14 @@ export const useSupabaseTransactions = () => {
     }
   };
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => {
+  const addTransaction = async (transaction: NewTransaction) => {
     try {
       if (!isSupabaseConfigured) {
         const newTransaction: Transaction = {
           ...transaction,
           id: Date.now().toString(),
-          transactionDate: toZonedTime(new Date(), 'Europe/Brussels')
+          transactionDate: toZonedTime(new Date(), 'Europe/Brussels'),
+          transactionInstant: new Date().toISOString()
         };
         setTransactions(prev => [newTransaction, ...prev]);
         return newTransaction;
@@ -96,15 +76,7 @@ export const useSupabaseTransactions = () => {
       const data = Array.isArray(rpcData) ? rpcData[0] : rpcData;
       if (!data) throw new Error('Transaction non créée');
 
-      const newTransaction: Transaction = {
-        id: data.id,
-        items: data.items as Transaction['items'],
-        totalAmount: Number(data.total_amount),
-        paymentMethod: data.payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date(data.transaction_date), 'Europe/Brussels'),
-        clientId: data.client_id || undefined,
-        staffId: data.staff_id || undefined,
-      };
+      const newTransaction = normalizeTransaction(data);
 
       setTransactions(prev => [newTransaction, ...prev]);
 
@@ -138,51 +110,7 @@ export const useSupabaseTransactions = () => {
     }
   };
 
-  const getStats = () => {
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    const startOfWeek = new Date(today);
-    const dayOfWeek = startOfWeek.getDay();
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    startOfWeek.setDate(startOfWeek.getDate() + daysToMonday);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const todayTransactions = transactions.filter(tx => tx.transactionDate >= startOfToday);
-    const weekTransactions = transactions.filter(tx => tx.transactionDate >= startOfWeek);
-    const monthTransactions = transactions.filter(tx => tx.transactionDate >= startOfMonth);
-
-    const todayRevenue = todayTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const todayClients = todayTransactions.length;
-    const weeklyRevenue = weekTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const weeklyClients = weekTransactions.length;
-    const monthlyRevenue = monthTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const monthlyClients = monthTransactions.length;
-
-    const todayCash = todayTransactions.filter(tx => tx.paymentMethod === 'cash').length;
-    const todayCard = todayTransactions.filter(tx => tx.paymentMethod === 'card').length;
-    const weeklyCash = weekTransactions.filter(tx => tx.paymentMethod === 'cash').length;
-    const weeklyCard = weekTransactions.filter(tx => tx.paymentMethod === 'card').length;
-    const monthlyCash = monthTransactions.filter(tx => tx.paymentMethod === 'cash').length;
-    const monthlyCard = monthTransactions.filter(tx => tx.paymentMethod === 'card').length;
-
-    const todayCashPercent = todayClients > 0 ? (todayCash / todayClients) * 100 : 0;
-    const todayCardPercent = todayClients > 0 ? (todayCard / todayClients) * 100 : 0;
-    const weeklyCashPercent = weeklyClients > 0 ? (weeklyCash / weeklyClients) * 100 : 0;
-    const weeklyCardPercent = weeklyClients > 0 ? (weeklyCard / weeklyClients) * 100 : 0;
-    const monthlyCashPercent = monthlyClients > 0 ? (monthlyCash / monthlyClients) * 100 : 0;
-    const monthlyCardPercent = monthlyClients > 0 ? (monthlyCard / monthlyClients) * 100 : 0;
-
-    return {
-      todayRevenue, todayClients, weeklyRevenue, weeklyClients, monthlyRevenue, monthlyClients,
-      paymentStats: {
-        today: { cash: todayCash, card: todayCard, cashPercent: todayCashPercent, cardPercent: todayCardPercent },
-        weekly: { cash: weeklyCash, card: weeklyCard, cashPercent: weeklyCashPercent, cardPercent: weeklyCardPercent },
-        monthly: { cash: monthlyCash, card: monthlyCard, cashPercent: monthlyCashPercent, cardPercent: monthlyCardPercent }
-      }
-    };
-  };
+  const getStats = () => buildCombinedStats(transactions);
 
   const getCustomStats = (startDate: Date, endDate: Date) => {
     const rangeTransactions = transactions.filter(tx => 
@@ -219,43 +147,15 @@ export const useSupabaseTransactions = () => {
       .channel(`transactions-hook-realtime-${salonId}`)
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const newRecord = payload.new as any;
-          const newTransaction: Transaction = {
-            id: newRecord.id,
-            items: newRecord.items,
-            totalAmount: newRecord.total_amount,
-            paymentMethod: newRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Brussels')
-          };
-          setTransactions(prev => {
-            if (prev.some(tx => tx.id === newTransaction.id)) return prev;
-            return [newTransaction, ...prev];
-          });
-        }
+        () => { void fetchTransactions(); }
       )
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const updatedRecord = payload.new as any;
-          const updatedTransaction: Transaction = {
-            id: updatedRecord.id,
-            items: updatedRecord.items,
-            totalAmount: updatedRecord.total_amount,
-            paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Brussels')
-          };
-          setTransactions(prev => 
-            prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
-          );
-        }
+        () => { void fetchTransactions(); }
       )
       .on('postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const deletedRecord = payload.old as any;
-          setTransactions(prev => prev.filter(tx => tx.id !== deletedRecord.id));
-        }
+        () => { void fetchTransactions(); }
       )
       .subscribe();
 

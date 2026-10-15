@@ -4,6 +4,13 @@ Branch: `v2/chatgpt-rebuild`
 
 This document separates machine-verified release guarantees from checks that still require an isolated deployed staging environment.
 
+## Payment-statistics follow-up — 15 October 2026
+
+- Funding allocation integrated into period statistics, selected-day statistics and transaction history. Cash/card/prepayment/unallocated amounts reconcile to recorded sales without counting a deposit twice. This is not a cash-flow report by payment date.
+- Local checks: TypeScript passed, 157 unit tests passed, normal build passed (9.67 s), lint 0 errors/222 warnings.
+- Four more browser cases prepared and typechecked, not executed (30 new pending cases including the earlier agenda/client work).
+- Remaining detailed/export/email report filters and loading-context handling are tracked in AUTONOMY-BACKLOG.md. Hosted RLS/relationship reads are unverified; no backend or preview deployment performed.
+
 ## Current candidate — 15 October 2026
 
 Application source: `498c8a487a327c661555a15321ea90fca0030934` (15 October 2026).

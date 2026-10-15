@@ -14,7 +14,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Priorités prêtes
 1. Lire les nouveaux checkpoints puis exécuter la recette des 26 nouveaux cas de fiche RDV/création client sur ordinateur/mobile dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ne pas confondre découverte/typecheck des tests et exécution.
-2. Corriger les statistiques de paiement cash/card/mixed/prepaid : voir docs/V2_REVIEW_2026-10-15.md. Lire les lignes transaction_payments, ne pas attribuer un paiement mixte entier à carte/espèces, ne pas compter deux fois un acompte. Développer sur fixtures synthétiques, aucune transaction réelle.
+2. Répartition principale et historique corrigés : poursuivre les rapports détaillés/export/e-mail encore filtrés cash/card. Réutiliser paymentStats et clarifier financement des ventes versus date de réception des fonds. Aucun envoi réel.
 3. Vérifier le chargement et le changement de salon du TransactionsContext et de useSupabaseTransactions ; le contrôle limité à userId existe encore. Réutiliser les principes du périmètre de requêtes testé, sans refonte globale.
 4. Revoir chargement/erreur de la liste Clients, recherche accents/téléphones et cohérence du détail ; la création a été corrigée au lot 6, ne pas la refaire. Recette mobile/clavier des longs formulaires, focus après échec et fermeture à vérifier.
 5. Préparer un parcours fictif complet agenda → caisse → historique client → statistiques, avec un état partagé, pour remplacer progressivement les écrans de démonstration encore statiques. Conserver les composants partagés et distinguer simulation/connexion réelle.
@@ -70,3 +70,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Répartition — calcul pur préparé
 - Calcul en centimes et périodes Europe/Brussels : 15 nouveaux tests réussis, suite 151/151. Pas encore utilisé par les écrans à ce checkpoint. À poursuivre : lecture des parts, normalisation et affichage partagé.
+
+## Répartition — intégration réalisée
+- Statistiques principales, jours personnalisés et historique utilisent le calcul commun et les parts de paiement. 157 tests réussis, typecheck/build réussis ; 4 nouveaux cas navigateur préparés, non exécutés (30 avec les lots précédents).
+- Chargement/contexte des transactions et autres rapports restent à traiter. Aperçu non actualisé.

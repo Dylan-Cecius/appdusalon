@@ -1,10 +1,13 @@
+import PaymentBreakdown, { paymentPeriodExplanation } from '@/components/PaymentBreakdown';
+import { buildPaymentStats, transactionSalonDay } from '@/lib/paymentStats';
+import { paymentMethodLabel } from '@/lib/transactions';
 import { useMemo, useState } from 'react';
 import { useTransactions } from '@/contexts/TransactionsContext';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Banknote, TrendingUp, Calendar as CalendarIcon, ReceiptText } from 'lucide-react';
-import { format, isSameDay, startOfDay } from 'date-fns';
+import { Calendar as CalendarIcon, ReceiptText } from 'lucide-react';
+import { format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import MainLayout from '@/components/MainLayout';
 
@@ -13,22 +16,11 @@ export default function TransactionHistory() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const selectedDayTransactions = useMemo(
-    () => transactions.filter(tx => isSameDay(tx.transactionDate, selectedDate)),
+    () => transactions.filter(tx => transactionSalonDay(tx) === format(selectedDate, 'yyyy-MM-dd')),
     [transactions, selectedDate]
   );
 
-  const dayStats = useMemo(() => {
-    const cash = selectedDayTransactions.filter(tx => tx.paymentMethod === 'cash');
-    const card = selectedDayTransactions.filter(tx => tx.paymentMethod === 'card');
-
-    return {
-      total: selectedDayTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0),
-      cashCount: cash.length,
-      cardCount: card.length,
-      cashAmount: cash.reduce((sum, tx) => sum + tx.totalAmount, 0),
-      cardAmount: card.reduce((sum, tx) => sum + tx.totalAmount, 0),
-    };
-  }, [selectedDayTransactions]);
+  const dayStats = useMemo(() => buildPaymentStats(selectedDayTransactions), [selectedDayTransactions]);
 
   const transactionDates = useMemo(
     () => transactions.map(tx => startOfDay(tx.transactionDate)),
@@ -80,39 +72,9 @@ export default function TransactionHistory() {
               />
 
               <div className="mt-4 space-y-3">
-                <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">CA encaissé</span>
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-primary">
-                    {dayStats.total.toFixed(2)}€
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border bg-card p-3">
-                    <div className="mb-1 flex items-center gap-2">
-                      <Banknote className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-medium">Espèces</span>
-                    </div>
-                    <p className="text-lg font-semibold">{dayStats.cashAmount.toFixed(2)}€</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {dayStats.cashCount} transaction{dayStats.cashCount > 1 ? 's' : ''}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border bg-card p-3">
-                    <div className="mb-1 flex items-center gap-2">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-medium">Carte</span>
-                    </div>
-                    <p className="text-lg font-semibold">{dayStats.cardAmount.toFixed(2)}€</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {dayStats.cardCount} transaction{dayStats.cardCount > 1 ? 's' : ''}
-                    </p>
-                  </div>
-                </div>
+                <h3 className="text-sm font-medium">Ventes enregistrées</h3>
+                <PaymentBreakdown stats={dayStats} />
+                <p className="text-xs text-muted-foreground">{paymentPeriodExplanation}</p>
               </div>
             </CardContent>
           </Card>
@@ -155,11 +117,7 @@ export default function TransactionHistory() {
                         </div>
 
                         <Badge variant={transaction.paymentMethod === 'cash' ? 'default' : 'secondary'}>
-                          {transaction.paymentMethod === 'cash' ? (
-                            <><Banknote className="mr-1 h-3 w-3" />Espèces</>
-                          ) : (
-                            <><CreditCard className="mr-1 h-3 w-3" />Carte</>
-                          )}
+                          {paymentMethodLabel[transaction.paymentMethod]}
                         </Badge>
                       </div>
 

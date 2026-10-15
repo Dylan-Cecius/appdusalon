@@ -5,27 +5,13 @@ import { toZonedTime } from 'date-fns-tz';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 
-export interface Transaction {
-  id: string;
-  items: Array<{
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    kind?: 'service' | 'product';
-    type?: 'service' | 'product';
-  }>;
-  totalAmount: number;
-  paymentMethod: 'cash' | 'card';
-  transactionDate: Date;
-  clientId?: string;
-  staffId?: string;
-}
+import { normalizeTransaction, type Transaction, type NewTransaction } from '@/lib/transactions';
+export type { Transaction } from '@/lib/transactions';
 
 interface TransactionsContextType {
   transactions: Transaction[];
   loading: boolean;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => Promise<Transaction | undefined>;
+  addTransaction: (transaction: NewTransaction) => Promise<Transaction | undefined>;
   deleteTransaction: (id: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
 }
@@ -52,21 +38,13 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
       const { data, error } = await supabase
         .from('transactions' as any)
-        .select('*')
+        .select('*, transaction_payments(id, amount, method, paid_at)')
         .eq('salon_id', salonId)
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
 
-      const formattedTransactions = data?.map((tx: any) => ({
-        id: tx.id,
-        items: tx.items as any,
-        totalAmount: tx.total_amount,
-        paymentMethod: tx.payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Brussels'),
-        clientId: tx.client_id || undefined,
-        staffId: tx.staff_id || undefined
-      })) || [];
+      const formattedTransactions = (data || []).map(normalizeTransaction);
 
       console.log('[Transactions] fetch success', formattedTransactions.length, 'transactions');
       setTransactions(formattedTransactions);
@@ -79,13 +57,14 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Add new transaction
-  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => {
+  const addTransaction = async (transaction: NewTransaction) => {
     try {
       if (!isSupabaseConfigured) {
         const newTransaction: Transaction = {
           ...transaction,
           id: Date.now().toString(),
-          transactionDate: toZonedTime(new Date(), 'Europe/Brussels')
+          transactionDate: toZonedTime(new Date(), 'Europe/Brussels'),
+          transactionInstant: new Date().toISOString()
         };
         setTransactions(prev => [newTransaction, ...prev]);
         return newTransaction;
@@ -113,15 +92,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       const data = Array.isArray(rpcData) ? rpcData[0] : rpcData;
       if (!data) throw new Error('Transaction non créée');
 
-      const newTransaction: Transaction = {
-        id: data.id,
-        items: data.items as Transaction['items'],
-        totalAmount: Number(data.total_amount),
-        paymentMethod: data.payment_method as 'cash' | 'card',
-        transactionDate: toZonedTime(new Date(data.transaction_date), 'Europe/Brussels'),
-        clientId: data.client_id || undefined,
-        staffId: data.staff_id || undefined,
-      };
+      const newTransaction = normalizeTransaction(data);
 
       setTransactions(prev => [newTransaction, ...prev]);
 
@@ -269,47 +240,15 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       .channel(`transactions-realtime-${salonId}`)
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const newRecord = payload.new as any;
-          const newTransaction: Transaction = {
-            id: newRecord.id,
-            items: newRecord.items,
-            totalAmount: newRecord.total_amount,
-            paymentMethod: newRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Brussels'),
-            clientId: newRecord.client_id || undefined,
-            staffId: newRecord.staff_id || undefined
-          };
-          setTransactions(prev => {
-            if (prev.some(tx => tx.id === newTransaction.id)) return prev;
-            return [newTransaction, ...prev];
-          });
-        }
+        () => { void fetchTransactions(); }
       )
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const updatedRecord = payload.new as any;
-          const updatedTransaction: Transaction = {
-            id: updatedRecord.id,
-            items: updatedRecord.items,
-            totalAmount: updatedRecord.total_amount,
-            paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Brussels'),
-            clientId: updatedRecord.client_id || undefined,
-            staffId: updatedRecord.staff_id || undefined
-          };
-          setTransactions(prev => 
-            prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
-          );
-        }
+        () => { void fetchTransactions(); }
       )
       .on('postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const deletedRecord = payload.old as any;
-          setTransactions(prev => prev.filter(tx => tx.id !== deletedRecord.id));
-        }
+        () => { void fetchTransactions(); }
       )
       .subscribe();
 
