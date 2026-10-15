@@ -16,3 +16,9 @@
 - Le cycle horaire assure le contrôle de reprise et le développement ; aucun agent chef supplémentaire ne crée d'écritures concurrentes.
 - À l'activation, aucun cycle de développement n'a encore été observé. La durée de travail visée ne constitue pas une garantie de durée d'exécution.
 - Le journal conserve les progrès ordinaires ; notifications intermédiaires uniquement pour un nouveau blocage nécessitant Dylan ou un incident.
+
+## 2026-10-15 — correction du fuseau demandée par Dylan
+- Dylan précise qu’il est 13:56 chez lui au moment où le contexte technique indique 12:56. Les deux tâches ont été corrigées vers Europe/Brussels (heure belge, avec changements saisonniers).
+- Développement : premier cycle programmé le 15 octobre à 14:00, puis chaque heure. L’instant du premier cycle reste le même que 13:00 dans l’ancien fuseau fixe UTC+1 ; son affichage local est corrigé.
+- Bilan : chaque jour vers 08:00 heure belge, à partir du 16 octobre. Les prompts, autorisations et limites restent inchangés.
+- Mises à jour confirmées par l’outil Automations. Aucune exécution de développement n’est encore constatée dans ces retours.
