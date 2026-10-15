@@ -1061,21 +1061,9 @@ export const AgendaWorkspace = ({ moveAppointment, availabilityLoading = false, 
             await updateAppointment(id, updates);
             await refreshAppointments();
           }}
-          onCancel={(id) => {
-            void cancelAppointment(id, 'cancel');
-            setIsEditModalOpen(false);
-            setSelectedAppointment(null);
-          }}
-          onNoShow={(id) => {
-            void cancelAppointment(id, 'no_show');
-            setIsEditModalOpen(false);
-            setSelectedAppointment(null);
-          }}
-          onPay={async (id, method) => {
-            await markAsPaid(id, method);
-            setIsEditModalOpen(false);
-            setSelectedAppointment(null);
-          }}
+          onCancel={id => cancelAppointment(id, 'cancel')}
+          onNoShow={id => cancelAppointment(id, 'no_show')}
+          onPay={markAsPaid}
         />
       )}
     </DndContext>

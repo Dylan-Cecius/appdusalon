@@ -24,3 +24,9 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - CI distante et publication supplémentaires : preuve actuelle d'absence de coût additionnel, sinon tests dans le runtime disponible et commits [skip ci].
 - Backend hébergé isolé : projet et configuration validés, coût nul vérifié, autorisation spécifique, puis recette des fournisseurs de V2_RELEASE_STATUS.md.
 - Production/main/stores, données réelles et opérations financières : hors autorisation.
+
+## Checkpoint du 15 octobre — fiche rendez-vous, lot 1
+- Checkout GitHub restauré et dépendances verrouillées installées dans le cloud.
+- Attente des mutations de fiche, verrou commun contre les doubles actions, erreurs visibles et conservation des saisies après échec. Annulation/absence/encaissement attendent la sauvegarde d’un brouillon.
+- Typecheck et 101 tests unitaires réussis ; build standalone réussi. Six scénarios navigateur ajoutés pour ordinateur/mobile, non exécutés dans cet environnement.
+- À poursuivre : statuts terminaux, informations de paiement et sauvegarde des coordonnées ; recette navigateur requise avant publication.

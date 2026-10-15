@@ -1,5 +1,5 @@
 import { appointmentPalette } from '@/lib/appointmentPalette';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { Appointment } from '@/data/appointments';
+import { runExclusiveAction } from '@/lib/exclusiveAction';
 import AppointmentTimeline from './agenda/AppointmentTimeline';
 
 interface EditAppointmentModalProps {
@@ -24,9 +25,9 @@ interface EditAppointmentModalProps {
   onClose: () => void;
   appointment: Appointment | null;
   onUpdate: (id: string, updates: Partial<Appointment>) => Promise<void> | void;
-  onCancel: (id: string) => void;
-  onNoShow: (id: string) => void;
-  onPay: (id: string, method: 'cash' | 'card') => void;
+  onCancel: (id: string) => Promise<unknown>;
+  onNoShow: (id: string) => Promise<unknown>;
+  onPay: (id: string, method: 'cash' | 'card') => Promise<unknown>;
 }
 
 const EditAppointmentModal = ({ 
@@ -40,10 +41,13 @@ const EditAppointmentModal = ({
 }: EditAppointmentModalProps) => {
   const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment>>({});
   const [saving, setSaving] = useState(false);
+  const pendingAction = useRef(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     if (appointment) {
+      setActionError(null);
       setEditedAppointment({
         clientName: appointment.clientName,
         clientPhone: appointment.clientPhone,
@@ -74,45 +78,55 @@ const EditAppointmentModal = ({
             ? '✓ Payé'
             : 'À encaisser';
 
+  const requestClose = () => {
+    if (!pendingAction.current) onClose();
+  };
+
+  const performAction = (operation: () => Promise<unknown>, errorMessage: string, saved = false) =>
+    runExclusiveAction(pendingAction, async () => {
+      setSaving(true);
+      setActionError(null);
+      try {
+        await operation();
+        if (saved) toast({ title: 'Succès', description: 'Rendez-vous mis à jour avec succès' });
+        onClose();
+      } catch {
+        setActionError(errorMessage);
+      } finally {
+        setSaving(false);
+      }
+    });
+
   const handleSave = async () => {
+    if (pendingAction.current) return;
     if (!editedAppointment.clientName?.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Le nom du client est requis",
-        variant: "destructive"
-      });
+      setActionError('Le nom du client est requis.');
       return;
     }
-
-    setSaving(true);
-    try {
-      await onUpdate(appointment.id, editedAppointment);
-      onClose();
-      toast({ title: 'Succès', description: 'Rendez-vous mis à jour avec succès' });
-    } catch {
-      toast({ title: 'Modification impossible', description: 'Vérifiez le créneau et réessayez.', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
+    await performAction(async () => onUpdate(appointment.id, editedAppointment),
+      'Modification impossible. Vos saisies sont conservées ; vérifiez votre connexion et réessayez.', true);
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    if (pendingAction.current || clientDraftChanged) return;
     if (confirm('Annuler ce rendez-vous ? Le créneau sera libéré et l’historique sera conservé.')) {
-      onCancel(appointment.id);
-      onClose();
+      await performAction(() => onCancel(appointment.id),
+        'Annulation non confirmée. La fiche reste ouverte ; vérifiez l’agenda avant de réessayer.');
     }
   };
 
-  const handleNoShow = () => {
+  const handleNoShow = async () => {
+    if (pendingAction.current || clientDraftChanged) return;
     if (confirm('Marquer ce client comme absent (no-show) ?')) {
-      onNoShow(appointment.id);
-      onClose();
+      await performAction(() => onNoShow(appointment.id),
+        'Absence non confirmée. La fiche reste ouverte ; vérifiez l’agenda avant de réessayer.');
     }
   };
 
-  const handlePay = (method: 'cash' | 'card') => {
-    onPay(appointment.id, method);
-    onClose();
+  const handlePay = async (method: 'cash' | 'card') => {
+    if (pendingAction.current || clientDraftChanged) return;
+    await performAction(() => onPay(appointment.id, method),
+      'Encaissement non confirmé. Vérifiez l’agenda et la caisse avant de réessayer.');
   };
 
   const clientDraftChanged = ['clientName', 'clientPhone', 'notes'].some(field =>
@@ -122,7 +136,9 @@ const EditAppointmentModal = ({
     !['completed', 'cancelled', 'no_show'].includes(appointment.status);
 
   const modalContent = (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-busy={saving}>
+      {saving && <p role="status" className="text-sm text-muted-foreground">Traitement en cours…</p>}
+      {actionError && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{actionError}</p>}
       {/* Informations générales */}
       <div className="p-3 sm:p-4 bg-muted rounded-lg">
         <div className={`flex items-center justify-between mb-2 ${isMobile ? 'flex-col gap-2' : ''}`}>
@@ -197,6 +213,7 @@ const EditAppointmentModal = ({
           <Label htmlFor="clientName">Nom du client</Label>
           <Input 
             id="clientName"
+            disabled={saving}
             value={editedAppointment.clientName || ''}
             onChange={(e) => setEditedAppointment({
               ...editedAppointment, 
@@ -210,6 +227,7 @@ const EditAppointmentModal = ({
           <Label htmlFor="clientPhone">Téléphone</Label>
           <Input 
             id="clientPhone"
+            disabled={saving}
             value={editedAppointment.clientPhone || ''}
             onChange={(e) => setEditedAppointment({
               ...editedAppointment, 
@@ -224,6 +242,7 @@ const EditAppointmentModal = ({
           <Label htmlFor="notes">Notes</Label>
           <Textarea 
             id="notes"
+            disabled={saving}
             value={editedAppointment.notes || ''}
             onChange={(e) => setEditedAppointment({
               ...editedAppointment, 
@@ -249,7 +268,7 @@ const EditAppointmentModal = ({
           <p className="mb-3 text-sm text-muted-foreground">
             Aucun solde à encaisser. Clôturez simplement la prestation une fois terminée.
           </p>
-          <Button onClick={() => handlePay('card')} className="w-full">
+          <Button disabled={saving || clientDraftChanged} onClick={() => handlePay('card')} className="w-full">
             <CreditCard className="mr-2 h-4 w-4" />
             Clôturer la prestation
           </Button>
@@ -264,6 +283,7 @@ const EditAppointmentModal = ({
           )}
           <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
             <Button
+              disabled={saving || clientDraftChanged}
               onClick={() => handlePay('cash')}
               className="bg-green-600 text-white hover:bg-green-700"
             >
@@ -271,6 +291,7 @@ const EditAppointmentModal = ({
               Espèces · {remainingAmount.toFixed(2)} €
             </Button>
             <Button
+              disabled={saving || clientDraftChanged}
               onClick={() => handlePay('card')}
               className="bg-blue-600 text-white hover:bg-blue-700"
             >
@@ -282,12 +303,14 @@ const EditAppointmentModal = ({
       ) : null}
 
       {/* Actions */}
+      {clientDraftChanged && <p className="text-sm text-muted-foreground">Enregistrez vos modifications avant d’annuler, de signaler une absence ou d’encaisser.</p>}
       <div className="space-y-2 pt-4">
         {canCloseAppointment && (
           <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
             <Button
               type="button"
               variant="outline"
+              disabled={saving || clientDraftChanged}
               onClick={handleNoShow}
               className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
             >
@@ -297,6 +320,7 @@ const EditAppointmentModal = ({
             <Button
               type="button"
               variant="outline"
+              disabled={saving || clientDraftChanged}
               onClick={handleCancel}
               className="border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
             >
@@ -306,7 +330,7 @@ const EditAppointmentModal = ({
           </div>
         )}
         <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          <Button type="button" variant="outline" disabled={saving} onClick={requestClose} className="flex-1">
             Fermer
           </Button>
           {canCloseAppointment && (
@@ -322,7 +346,7 @@ const EditAppointmentModal = ({
   return (
     <>
       {isMobile ? (
-        <Drawer open={isOpen} onOpenChange={onClose}>
+        <Drawer open={isOpen} dismissible={!saving} onOpenChange={open => { if (!open) requestClose(); }}>
           <DrawerContent className="max-h-[90vh]">
             <DrawerHeader>
               <DrawerTitle className="flex items-center gap-2">
@@ -336,7 +360,7 @@ const EditAppointmentModal = ({
           </DrawerContent>
         </Drawer>
       ) : (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={open => { if (!open) requestClose(); }}>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">

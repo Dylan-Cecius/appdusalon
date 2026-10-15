@@ -22,3 +22,13 @@
 - Développement : premier cycle programmé le 15 octobre à 14:00, puis chaque heure. L’instant du premier cycle reste le même que 13:00 dans l’ancien fuseau fixe UTC+1 ; son affichage local est corrigé.
 - Bilan : chaque jour vers 08:00 heure belge, à partir du 16 octobre. Les prompts, autorisations et limites restent inchangés.
 - Mises à jour confirmées par l’outil Automations. Aucune exécution de développement n’est encore constatée dans ces retours.
+
+## 2026-10-15T12:07:12Z — checkpoint 1 : confirmation des actions de fiche
+- Session salon-v2-2026-10-15T11-59-28-462Z. Durée observée depuis prise du bail : 7.7 min.
+- Défaut établi par lecture : les callbacks annuler/absent lançaient une promesse ignorée et fermaient immédiatement la fiche ; encaisser fermait aussi avant confirmation dans le modal.
+- Modifications : callbacks attendus jusqu’au résultat, verrou synchrone commun, boutons/champs bloqués pendant la requête, fermeture clavier/extérieur différée, erreur affichée sans perdre les saisies. Brouillon à sauvegarder avant action de statut.
+- Checkpoint applicatif : commit « fix(agenda): await appointment actions and retain failed forms [skip ci] », parent ce33499bd7fc8c86579aee212395eacab7fa070a ; SHA exact à reporter au prochain checkpoint.
+- Commandes observées : git clone --single-branch --branch v2/chatgpt-rebuild ; npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund (521 paquets, succès) ; npm run typecheck (succès) ; npm test (101/101, 14 fichiers) ; VITE_PREVIEW_STANDALONE=true VITE_PREVIEW_DEMO_ONLY=true npm run build (succès, 4.02 s) ; git diff --check (succès). Diff relu et revue React : promesses propagées, verrou en ref, état d’erreur accessible.
+- Tests ajoutés : 2 unitaires de concurrence/échec/reprise exécutés ; 6 scénarios Playwright sur fiche réelle avec mutations fictives différées, préparés mais NON exécutés. Ces unitaires ne remplacent pas la recette navigateur.
+- Limites : environnement Sites géré sans control-browser ; pas de serveur de preview ni contournement navigateur. CI distante et publication différées faute de preuve actuelle de coût nul. Aucun appel à un backend réel, aucune donnée réelle, aucun workflow lancé, aperçu précédent conservé.
+- Prochaine tâche : règles d’action et montants affichés pour rendez-vous annulés/absents/terminés. Bail renouvelé.
