@@ -106,3 +106,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Clients — recherche
 - Recherche accents, mots du nom/e-mail et téléphone formaté ; normalisation partagée avec agenda. 233 unitaires, typecheck/build réussis. Export à fiabiliser.
+
+## Clients — export CSV/JSON
+- Préparation bornée, erreurs/contexte/droits contrôlés, textes CSV échappés et JSON brut conservé. 247 unitaires, typecheck/build réussis ; aucun export réel. Historique détaillé de fiche encore dépendant de la liste agenda globale à remplacer par une lecture client paginée.

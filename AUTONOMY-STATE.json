@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-clients-2026-10-15T14-00-21Z",
-  "task": "Recherche Clients alignée ; export à fiabiliser",
+  "task": "Export Clients borné et vérifié ; historique détaillé à compléter",
   "started_at": "2026-10-15T14:00:21Z",
-  "last_checkpoint_at": "2026-10-15T14:22:12.013676+00:00",
-  "lease_expires_at": "2026-10-15T15:37:12.013676+00:00",
-  "last_application_commit": "c7f0e468169fdbc66738568f3040e3840f5b0196",
+  "last_checkpoint_at": "2026-10-15T14:28:20.303059+00:00",
+  "lease_expires_at": "2026-10-15T15:43:20.303059+00:00",
+  "last_application_commit": "ae0b3a97ee915d0021094ad19cff015d8ed235c2",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "CSV/JSON avec échappement, lectures bornées, confirmation et annulation au changement de contexte.",
+  "next_task": "Paginer les rendez-vous de la fiche au lieu de charger l’agenda global potentiellement tronqué ; puis revue finale.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",

@@ -16,6 +16,7 @@ interface ClientsValue {
   updateClient: (id: string, updates: Partial<Client>, expectedRevision: string) => Promise<Client | null>;
   getClientStats: (id: string) => Promise<ClientStats>;
   refreshClients: () => Promise<void>;
+  captureContext: () => () => boolean;
 }
 const ClientsContext = createContext<ClientsValue | null>(null);
 export function ClientsProvider({ children }: { children: ReactNode }) {
@@ -27,6 +28,8 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   const scope = useRef(createLatestRequestScope());
   scope.current.setContext(contextKey);
   const [statsRevision, setStatsRevision] = useState(0);
+  const statsRevisionRef = useRef(statsRevision);
+  statsRevisionRef.current = statsRevision;
   const [snapshot, setSnapshot] = useState<{ context: string; clients: Client[] } | null>(null);
   const [readState, setReadState] = useState<{ context: string; loading: boolean; error: string | null } | null>(null);
   const hasSnapshot = !!contextKey && snapshot?.context === contextKey;
@@ -82,7 +85,8 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     }
   };
   const getClientStats = useCallback(async (clientId: string): Promise<ClientStats> => {
-    const current = scope.current.captureContext(contextKey);
+    const contextIsCurrent = scope.current.captureContext(contextKey);
+    const current = () => contextIsCurrent() && statsRevisionRef.current === statsRevision;
     if (!current() || !salonId || !hasSnapshot || error) throw new Error('client_context_unavailable');
     const client = visibleClients.find(row => row.id === clientId);
     if (!client) throw new Error('client_unavailable');
@@ -101,6 +105,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   }, [visibleClients, contextKey, salonId, hasSnapshot, error, statsRevision]);
 
   useEffect(() => {
+    const requestScope = scope.current;
     if (!contextKey) { setSnapshot(null); setReadState(null); return; }
     void fetchClients();
     const channel = supabase.channel(`clients-changes-${salonId}`)
@@ -108,9 +113,9 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` }, () => setStatsRevision(value => value + 1))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `salon_id=eq.${salonId}` }, () => setStatsRevision(value => value + 1))
       .subscribe();
-    return () => { scope.current.invalidate(); void supabase.removeChannel(channel); };
+    return () => { requestScope.invalidate(); void supabase.removeChannel(channel); };
   }, [contextKey, salonId, fetchClients]);
-  return <ClientsContext.Provider value={{ clients: visibleClients, loading, error, hasSnapshot, contextKey, addClient, updateClient, getClientStats, refreshClients: fetchClients }}>{children}</ClientsContext.Provider>;
+  return <ClientsContext.Provider value={{ clients: visibleClients, loading, error, hasSnapshot, contextKey, addClient, updateClient, getClientStats, refreshClients: fetchClients, captureContext: () => scope.current.captureContext(contextKey) }}>{children}</ClientsContext.Provider>;
 }
 export function useClients() {
   const value = useContext(ClientsContext);
