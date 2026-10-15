@@ -1,144 +1,35 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { readLoyaltySnapshot, type LoyaltyProgram } from '@/lib/loyaltyRead';
+import { useLoyaltySnapshot } from './useLoyaltySnapshot';
+export type { LoyaltyProgram, LoyaltyAccount, LoyaltyEvent } from '@/lib/loyaltyRead';
 
-export type LoyaltyProgram = {
-  salon_id: string;
-  enabled: boolean;
-  points_per_euro: number;
-  reward_threshold: number;
-  reward_value: number;
-  birthday_bonus: number;
-};
-
-export type LoyaltyAccount = {
-  id: string;
-  salon_id: string;
-  client_id: string;
-  points_balance: number;
-  lifetime_earned: number;
-  lifetime_redeemed: number;
-};
-
-export type LoyaltyEvent = {
-  id: string;
-  event_type: 'earn' | 'redeem' | 'adjust' | 'reversal' | 'birthday';
-  points_delta: number;
-  monetary_value: number;
-  note: string | null;
-  created_at: string;
-};
-
-const defaultProgram = (salonId: string): LoyaltyProgram => ({
-  salon_id: salonId,
-  enabled: false,
-  points_per_euro: 1,
-  reward_threshold: 200,
-  reward_value: 5,
-  birthday_bonus: 0,
-});
-
+interface Query extends PromiseLike<{ data: unknown; error: unknown }> {
+  eq: (key: string, value: string) => Query;
+  order: (key: string, options: { ascending: boolean }) => Query;
+  limit: (count: number) => Query;
+  maybeSingle: () => PromiseLike<{ data: unknown; error: unknown }>;
+}
+interface Reader { from: (table: string) => { select: (fields: string) => Query } }
+// Generated schema predates loyalty tables; narrow adapter, validated read results.
+const reader = supabase as unknown as Reader;
 export const useLoyalty = (clientId?: string) => {
   const { permissions } = usePermissions();
+  const { user, isReady } = useAuth();
   const salonId = permissions.salonId;
-
-  const [program, setProgram] = useState<LoyaltyProgram | null>(null);
-  const [account, setAccount] = useState<LoyaltyAccount | null>(null);
-  const [events, setEvents] = useState<LoyaltyEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
-    if (!salonId) {
-      setProgram(null);
-      setAccount(null);
-      setEvents([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data: programData, error: programError } = await (supabase as any)
-        .from('loyalty_programs')
-        .select('*')
-        .eq('salon_id', salonId)
-        .maybeSingle();
-
-      if (programError) throw programError;
-
-      const resolvedProgram = programData
-        ? {
-            ...programData,
-            points_per_euro: Number(programData.points_per_euro || 0),
-            reward_threshold: Number(programData.reward_threshold || 200),
-            reward_value: Number(programData.reward_value || 0),
-            birthday_bonus: Number(programData.birthday_bonus || 0),
-          }
-        : defaultProgram(salonId);
-
-      setProgram(resolvedProgram);
-
-      if (!clientId) {
-        setAccount(null);
-        setEvents([]);
-        return;
-      }
-
-      const { data: accountData, error: accountError } = await (supabase as any)
-        .from('client_loyalty_accounts')
-        .select('*')
-        .eq('salon_id', salonId)
-        .eq('client_id', clientId)
-        .maybeSingle();
-
-      if (accountError) throw accountError;
-
-      const resolvedAccount = accountData
-        ? {
-            ...accountData,
-            points_balance: Number(accountData.points_balance || 0),
-            lifetime_earned: Number(accountData.lifetime_earned || 0),
-            lifetime_redeemed: Number(accountData.lifetime_redeemed || 0),
-          }
-        : null;
-
-      setAccount(resolvedAccount);
-
-      if (resolvedAccount?.id) {
-        const { data: eventData, error: eventError } = await (supabase as any)
-          .from('loyalty_events')
-          .select('id,event_type,points_delta,monetary_value,note,created_at')
-          .eq('loyalty_account_id', resolvedAccount.id)
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        if (eventError) throw eventError;
-
-        setEvents(
-          (eventData || []).map((event: any) => ({
-            ...event,
-            points_delta: Number(event.points_delta || 0),
-            monetary_value: Number(event.monetary_value || 0),
-          }))
-        );
-      } else {
-        setEvents([]);
-      }
-    } catch (error) {
-      console.error('[Loyalty] refresh failed', error);
-      setProgram(salonId ? defaultProgram(salonId) : null);
-      setAccount(null);
-      setEvents([]);
-    } finally {
-      setLoading(false);
-    }
+  const contextKey = isReady && user && salonId ? JSON.stringify([user.id, salonId, clientId ?? null]) : null;
+  const read = useCallback(async (current: () => boolean) => {
+    if (!salonId) return null;
+    return readLoyaltySnapshot({
+      program: () => reader.from('loyalty_programs').select('*').eq('salon_id', salonId).maybeSingle(),
+      account: () => reader.from('client_loyalty_accounts').select('*').eq('salon_id', salonId).eq('client_id', clientId!).maybeSingle(),
+      events: accountId => reader.from('loyalty_events').select('id,salon_id,client_id,loyalty_account_id,event_type,points_delta,monetary_value,note,created_at').eq('salon_id', salonId).eq('client_id', clientId!).eq('loyalty_account_id', accountId).order('created_at', { ascending: false }).order('id', { ascending: false }).limit(20),
+    }, salonId, clientId, current);
   }, [salonId, clientId]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
+  const { data, error, loading, refresh, captureContext } = useLoyaltySnapshot(contextKey, read);
   const saveProgram = async (
     updates: Omit<LoyaltyProgram, 'salon_id'>
   ) => {
@@ -171,11 +62,7 @@ export const useLoyalty = (clientId?: string) => {
   };
 
   return {
-    program,
-    account,
-    events,
-    loading,
-    refresh,
-    saveProgram,
+    program: data?.program ?? null, account: data?.account ?? null, events: data?.events ?? [],
+    loading: !isReady || loading, error, refresh, saveProgram, contextKey, captureContext,
   };
 };

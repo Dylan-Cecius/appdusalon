@@ -116,3 +116,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 ## Fin du cycle Clients — 2026-10-15T14:40:25.360202+00:00
 - Sept lots sauvegardés, source 80e1349d60eb85694c165f5a4be519cf1d435f94 ; 258 unitaires, typecheck/builds réussis, lint 0 erreur/215 avertissements. 48 nouveaux cas navigateur non exécutés, aperçu inchangé.
 - Bail libéré ; prochain lot : lectures fidélité cohérentes et erreurs explicites sur données fictives. Limites et preuves détaillées dans le journal et le statut de livraison.
+
+## Fidélité — lecture cohérente
+- Identités/nombres vérifiés, résultat complet, erreurs/reprise et protection des réponses périmées ; 279 unitaires, typecheck/build réussis. Sauvegarde des réglages encore à fiabiliser. Aucun point ni programme réel modifié.

@@ -74,6 +74,8 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
     account: loyaltyAccount,
     events: loyaltyEvents,
     loading: loyaltyLoading,
+    error: loyaltyError,
+    refresh: refreshLoyalty,
   } = useLoyalty(client.id);
   const { logActivity } = useActivityLog();
 
@@ -365,7 +367,9 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
             </TabsList>
 
             <TabsContent value="overview" className="mt-4 space-y-4">
-              {loyaltyProgram?.enabled && (
+              {loyaltyLoading && <p role="status" className="text-sm text-muted-foreground">Chargement de la fidélité…</p>}
+              {loyaltyError && <div role="alert" className="rounded-xl border p-4 text-sm"><p>{loyaltyError}</p><Button variant="outline" onClick={() => void refreshLoyalty()}>Réessayer la fidélité</Button></div>}
+              {!loyaltyLoading && !loyaltyError && loyaltyProgram?.enabled && (
                 <div className="rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 p-4 shadow-sm">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">

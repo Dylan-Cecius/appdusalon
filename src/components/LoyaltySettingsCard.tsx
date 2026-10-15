@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useLoyalty } from '@/hooks/useLoyalty';
 
 const LoyaltySettingsCard = () => {
-  const { program, loading, saveProgram } = useLoyalty();
+  const { program, loading, error, refresh, saveProgram } = useLoyalty();
   const [enabled, setEnabled] = useState(false);
   const [pointsPerEuro, setPointsPerEuro] = useState('1');
   const [rewardThreshold, setRewardThreshold] = useState('200');
@@ -41,6 +41,8 @@ const LoyaltySettingsCard = () => {
     }
   };
 
+  if (error) return <Card className="p-4"><p role="alert">{error}</p><Button variant="outline" onClick={() => void refresh()}>Réessayer la fidélité</Button></Card>;
+  if (!loading && !program) return <p role="status">Sélectionnez un salon pour consulter la fidélité.</p>;
   if (loading || !program) {
     return <div className="h-52 animate-pulse rounded-2xl border bg-white" />;
   }
