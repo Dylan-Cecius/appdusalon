@@ -58,7 +58,7 @@ const CartPanel = ({ activeStaff, selectedStaffId, onStaffChange, processing = f
       {processing && <p role="status" className="mb-3 text-sm text-muted-foreground">Enregistrement en cours…</p>}
       {error && <p role="alert" ref={errorRef} tabIndex={-1} className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
       <h2 className="text-xl font-bold mb-4 text-primary">Commande en cours</h2>
-      
+
       <div className="flex-1 space-y-3 mb-6">
         {items.map((item, index) => (
           <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-background rounded-lg border hover:shadow-md transition-all duration-200 hover:scale-[1.01] hover:border-accent/30 group"
@@ -115,7 +115,7 @@ const CartPanel = ({ activeStaff, selectedStaffId, onStaffChange, processing = f
       </div>
 
       <Separator className="my-4" />
-      
+
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="flex justify-between items-center">
@@ -153,9 +153,9 @@ const CartPanel = ({ activeStaff, selectedStaffId, onStaffChange, processing = f
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
-          <Button 
+          <Button
             disabled={processing}
             onClick={() => onCheckout('cash', selectedStaffId === 'none' ? undefined : selectedStaffId)}
             className="bg-pos-cash hover:bg-pos-cash/90 text-pos-success-foreground flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"
@@ -163,7 +163,7 @@ const CartPanel = ({ activeStaff, selectedStaffId, onStaffChange, processing = f
             <Banknote className="h-4 w-4 transition-transform duration-200 hover:rotate-12" />
             Cash
           </Button>
-          <Button 
+          <Button
             disabled={processing}
             onClick={() => onCheckout('card', selectedStaffId === 'none' ? undefined : selectedStaffId)}
             className="bg-pos-card hover:bg-pos-card/90 text-white flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"

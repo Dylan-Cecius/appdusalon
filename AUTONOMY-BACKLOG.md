@@ -114,3 +114,10 @@
 - [x] Tous les champs CSV échappés (guillemets, virgules, sauts de ligne), séparateurs CRLF ; préfixe tabulation sur texte potentiellement interprétable en formule. JSON conserve les valeurs pour réimportation ; indication dans la confirmation CSV.
 - [x] 18 tests synthétiques, TypeScript et compilation isolée passants. Aucun export réel.
 - [ ] Vérifier ouverture/réenregistrement avec les tableurs cibles : aucun mécanisme CSV universel contre les formules. Vérifier le téléchargement natif avant diffusion.
+
+## Reprise prioritaire après les dix lots du cycle 4 — 2026-10-15T16:04:04Z
+Les cases historiques ci-dessus décrivent leur checkpoint ; les points suivants font foi pour la reprise.
+- [x] Caisse confirmée, édition client, portées de session/listes, erreurs/statistiques, panier tactile/prestataire et CSV : sources préparées dans dix lots indépendants ; limites UI/native conservées.
+- [ ] Prochain lot gratuit : auditer le parcours mobile de création/modification de rendez-vous (confirmation de mutation, saisies conservées, contexte session/salon, navigation sans drag obligatoire) sur le code actuel et fixtures synthétiques. Conserver les couleurs pastel.
+- [ ] Ensuite : audit de restitution des statistiques en cas d’erreur/chargement, et téléchargement/partage natif des exports (aucune dépendance ni service payant sans preuve).
+- [ ] Recettes ouvertes : 32 cas navigateur, montage React/changement de session réel, tableurs/CSV et iPhone/iPad. Blocages connus : bibliothèques WebKit indisponibles, pas de Xcode/signature/backend isolé. Ne pas retenter les mêmes installations refusées.

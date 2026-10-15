@@ -1,15 +1,15 @@
 # État de livraison iOS
 
-## État initial — 15 octobre 2026
+## État courant — 15 octobre 2026
 - Base V2 et configuration Capacitor : présentes.
 - Configuration locale embarquée : corrigée et chargée avec succès sous Node 24.
-- Vérification TypeScript et 253 tests unitaires (suite complète au checkpoint 7), puis 20 tests ciblés de flux incluant deux ajouts : passants (pas des tests natifs).
+- TypeScript passant. Dernière suite complète observée : 293 tests/33 fichiers ; puis 18 tests CSV ciblés passants. Aucun total extrapolé, pas des tests natifs.
 - Build mobile démo isolée : produite, 2 tests de sûreté passants ; fichiers .env non chargés, ressources locales et connexions réseau bloquées par CSP.
 - Recette navigateur : non exécutée à ce checkpoint ; Chromium indisponible, WebKit téléchargé mais bibliothèques Linux indisponibles (installation refusée par les permissions du runtime).
 - Projet Xcode démo : généré dans ios-demo/ avec Capacitor 8.5.3, SPM et UIScene ; synchronisation répétée réussie.
 - Icône et splash : placeholders réels du template Capacitor, à remplacer avant diffusion.
-- Ergonomie : safe areas, clavier, navigation, panneaux latéraux et cibles tactiles agenda adaptés dans les sources ; 5 tests viewport passants. 20 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
-- Dernier checkpoint de code récupéré et vérifié : 2078b4178d9618b9513e8e60a79f4c2f7410ed5d (2026-10-15T15:03:54Z).
+- Ergonomie : safe areas, clavier, navigation, panneaux latéraux et cibles tactiles agenda adaptés dans les sources ; 5 tests viewport passants. 32 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
+- Dernier lot fonctionnel récupéré et vérifié : 4e699530c8efd8344f3a6c621f8f54970f38dda6 (2026-10-15T16:04:04Z) ; dix lots caisse/clients/panier/CSV, puis nettoyage d’espaces sans changement sémantique.
 - Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; liens entrants raccordés sous opt-in, cycle App raccordé sous opt-in (12 tests ciblés), stockage natif encore à réaliser. Voir SESSION_AUDIT.md.
 - Callbacks natifs : parseur, contrôleur et pont App préparés sous configuration explicite, 101 tests natifs synthétiques passants ; aucun essai natif ni retour hébergé configuré.
 - Sources connectées : compilation isolée réussie (configuration .invalid, sortie supprimée) ; aucun backend connecté testé.
@@ -66,3 +66,6 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## 2026-10-15T16:02:22Z — CSV client préparé
 2867 secondes cumulées ; précédent b0ffe187befebbdcf35a106831537dbf08f4819b, lot présent dans ce commit. 18 tests synthétiques ciblés, TypeScript et compilation isolée (3616 modules) passants. CSV échappé et textes risqués préfixés, JSON sans transformation des valeurs. Recette tableur/téléchargement native manquante ; aucune build iOS/signée/TestFlight/validation Apple. Prochaine étape : clôture et sauvegarde.
+
+## 2026-10-15T16:04:04Z — Audit final
+2969 secondes observées ; dix checkpoints fonctionnels référencés dans le journal. Dernier code fonctionnel 4e699530c8efd8344f3a6c621f8f54970f38dda6. Contrôle global des différences corrigé (espaces fin de ligne uniquement), .env/workflows/PreviewStandalone inchangés. Sources préparées et contrôles web passants ; 32 recettes navigateur restent non exécutées, aucune compilation/signature/distribution/acceptation Apple. Reprise : parcours mobile agenda et confirmations de mutation.

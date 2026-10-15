@@ -4,10 +4,10 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T15-14-35Z",
-  "task": "Export CSV client : encodage et traitement des formules",
+  "task": "Contrôle final et préparation de reprise",
   "started_at": "2026-10-15T15:14:35Z",
-  "last_checkpoint_at": "2026-10-15T16:02:22Z",
-  "lease_expires_at": "2026-10-15T17:17:22.000Z",
+  "last_checkpoint_at": "2026-10-15T16:04:04Z",
+  "lease_expires_at": "2026-10-15T17:19:04.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
@@ -24,13 +24,13 @@
     "apple_review": "not submitted",
     "mobile_demo_build": "2 safety tests passed with shared cart components; iOS demo assets built and synced (2553 modules), no backend or native plugin",
     "browser_tests": "32 cases discovered (12 cart cases); not executed due to unavailable WebKit host dependencies",
-    "mobile_ergonomics": "Touch targets and sheets prepared; 20 browser cases discovered, none executed; isolated demo sync passed",
+    "mobile_ergonomics": "Source prepared; 32 browser cases discovered, none executed; isolated demo build/sync passed",
     "auth_session": "11 synthetic session/logout tests passed; no live backend or native authentication tested",
-    "connected_source_build": "passed with synthetic .invalid configuration after shared transaction feed (3611 modules); no backend/native runtime",
+    "connected_source_build": "passed with synthetic .invalid configuration (3616 modules); no backend/native runtime",
     "native_callback_parser": "101 synthetic native tests passed; strict correlated fragment errors; TypeScript passed",
     "native_session_lifecycle": "12 synthetic activity/ownership tests passed; TypeScript and isolated connected build passed; no iOS runtime tested",
     "native_pending_flow": "20 targeted tests passed after immediate-session cleanup; TypeScript passed",
-    "checkout_draft": "11 targeted tests, typecheck and isolated connected build passed; final review and integration UI pending",
+    "checkout_draft": "507f006 reviewed and completed in 1079373; subsequent UI/source changes checkpointed; browser/backend integration still pending",
     "checkout": "16 targeted synthetic tests passed; TypeScript passed; isolated connected source build passed (3610 modules); browser/native/backend integration not run",
     "client_edit": "11 synthetic tests passed; TypeScript passed; isolated connected source compilation passed; browser/native integration pending",
     "transaction_scope": "Latest-request/session scope reused (5 tests), shared feed facade (4 tests); full suite 286 passed; no React mount/backend integration test",
@@ -47,10 +47,10 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "b0ffe187befebbdcf35a106831537dbf08f4819b",
+  "last_application_commit": "4e699530c8efd8344f3a6c621f8f54970f38dda6",
   "last_run_id": "ios-2026-10-15T15-08-49Z",
   "last_run_started_at": "2026-10-15T15:08:49Z",
   "last_run_finished_at": "2026-10-15T15:13:04Z",
   "last_run_duration_seconds": 255,
-  "draft_checkpoint": "507f006644b1e5140b33397c2dca0ae9eaddb576 reviewed and completed by current checkpoint; browser integration still pending"
+  "draft_checkpoint": null
 }
