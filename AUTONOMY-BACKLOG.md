@@ -39,4 +39,5 @@
 
 ## Cycle 2 en cours
 - [x] Contrat de callbacks PKCE strict et contrôleur indépendant : 42 tests synthétiques passants.
-- [ ] Raccorder démarrage à froid/appUrlOpen et cycle App sous configuration native explicite ; aucun callback hébergé ni schéma Apple enregistré.
+- [x] Raccorder démarrage à froid/appUrlOpen sous configuration native explicite : 51 tests natifs ciblés, 203 au total ; aucun callback hébergé ni schéma Apple enregistré.
+- [ ] Cycle App de rafraîchissement unique et garde des flux locaux avant échange PKCE ; tests puis recette native.

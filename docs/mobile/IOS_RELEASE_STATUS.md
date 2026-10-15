@@ -3,15 +3,15 @@
 ## État initial — 15 octobre 2026
 - Base V2 et configuration Capacitor : présentes.
 - Configuration locale embarquée : corrigée et chargée avec succès sous Node 24.
-- Vérification TypeScript et 152 tests métier : passants (pas des tests natifs).
+- Vérification TypeScript et 203 tests métier : passants (pas des tests natifs).
 - Build mobile démo isolée : produite, 2 tests de sûreté passants ; fichiers .env non chargés, ressources locales et connexions réseau bloquées par CSP.
 - Recette navigateur : non exécutée à ce checkpoint ; Chromium indisponible, WebKit téléchargé mais bibliothèques Linux indisponibles (installation refusée par les permissions du runtime).
 - Projet Xcode démo : généré dans ios-demo/ avec Capacitor 8.5.3, SPM et UIScene ; synchronisation répétée réussie.
 - Icône et splash : placeholders réels du template Capacitor, à remplacer avant diffusion.
 - Ergonomie : safe areas, clavier et navigation adaptés dans les sources ; 5 tests viewport passants. 8 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
 - Dernier checkpoint de code récupéré et vérifié : 52220ffb195b357acefeac27ef2dd89968e177a2 (2026-10-15T14:01:38.092Z).
-- Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; pont App, liens entrants et stockage natif non implémentés. Voir SESSION_AUDIT.md.
-- Callbacks natifs : parseur strict et contrôleur préparés, 42 tests ciblés passants ; raccordement App encore à réaliser.
+- Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; liens entrants raccordés sous opt-in, cycle App et stockage natif encore à réaliser. Voir SESSION_AUDIT.md.
+- Callbacks natifs : parseur, contrôleur et pont App préparés sous configuration explicite, 51 tests ciblés passants ; aucun essai natif ni retour hébergé configuré.
 - Sources connectées : compilation isolée réussie (configuration .invalid, sortie supprimée) ; aucun backend connecté testé.
 - Compilation iOS / simulateur / iPhone réel : non réalisés.
 - Identifiant, signature et équipe Apple : non vérifiés.

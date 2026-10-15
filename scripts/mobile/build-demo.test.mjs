@@ -11,6 +11,7 @@ test('a connected module accidentally imported into the demo fails closed', () =
     '/project/node_modules/@supabase/supabase-js/dist/module/index.js',
     'C:\\project\\src\\App.tsx',
     '/project/src/main.tsx',
+    '/project/src/native/NativeAuthBridge.tsx',
   ]) assert.throws(() => assertDemoModuleGraph([id]), /connected application modules/);
   assert.doesNotThrow(() => assertDemoModuleGraph(['/project/src/components/agenda/PreviewAgenda.tsx']));
 });
@@ -22,6 +23,8 @@ test('the built demo stays offline even when the shell supplies backend configur
     VITE_PREVIEW_DEMO_ONLY: 'false',
     VITE_SUPABASE_URL: 'https://must-never-ship.example.invalid',
     VITE_SUPABASE_PUBLISHABLE_KEY: 'must-never-ship-key',
+    VITE_NATIVE_AUTH_ENABLED: 'true',
+    VITE_NATIVE_AUTH_REDIRECT_URL: 'com.example.must-never-ship://auth/callback',
   };
   const previous = Object.fromEntries(Object.keys(poison).map(key => [key, process.env[key]]));
   Object.assign(process.env, poison);

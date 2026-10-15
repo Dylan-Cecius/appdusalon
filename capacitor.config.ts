@@ -13,6 +13,8 @@ const config: CapacitorConfig = {
   webDir: demo ? 'dist-mobile-demo' : 'dist',
   backgroundColor: '#f8fafc',
   ios: { path: demo ? 'ios-demo' : 'ios' },
+  // The offline demo does not need native authentication plugins.
+  ...(demo ? { includePlugins: [] } : {}),
 };
 
 export default config;

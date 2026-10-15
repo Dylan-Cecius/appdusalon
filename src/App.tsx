@@ -13,6 +13,7 @@ import { useSubscriptionRights } from "@/hooks/useSubscriptionRights";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
 import { isAllowedPreviewUser, isDemoOnlyPreview } from "@/lib/previewSafety";
 import { supabase } from "@/integrations/supabase/client";
+import { NativeAuthBridge } from './native/NativeAuthBridge';
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -157,6 +158,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <NativeAuthBridge />
               <Routes>
                 <Route path="/auth" element={<LazyPage><Auth /></LazyPage>} />
                 <Route path="/admin" element={<AuthGuard><LazyPage><Admin /></LazyPage></AuthGuard>} />

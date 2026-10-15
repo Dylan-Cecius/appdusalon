@@ -4,30 +4,30 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T14-14-40-744Z",
-  "task": "Raccorder les événements App aux callbacks PKCE et préparer la reprise",
+  "task": "P1 reprise native et garde des flux PKCE",
   "started_at": "2026-10-15T14:14:40.744Z",
-  "last_checkpoint_at": "2026-10-15T14:21:10.326Z",
-  "lease_expires_at": "2026-10-15T15:36:10.326Z",
+  "last_checkpoint_at": "2026-10-15T14:29:35.390Z",
+  "lease_expires_at": "2026-10-15T15:44:35.390Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Installer App 8.1.2 verrouillé, intégrer les événements natifs sous configuration explicite et tester les courses démarrage/démontage.",
+  "next_task": "Raccorder un propriétaire unique du rafraîchissement à appStateChange ; protéger les retours sans flux local en attente.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
-    "full_app_suite": "152 tests in 22 files passed; TypeScript passed",
+    "full_app_suite": "203 tests in 25 files passed; TypeScript passed",
     "ios_project": "generated and re-synced with Capacitor 8.5.3; native structures inspected",
     "native_build": "not run: Linux host has no Xcode",
     "testflight": "not submitted",
     "apple_review": "not submitted",
-    "mobile_demo_build": "passed; 2 build safety tests passed",
+    "mobile_demo_build": "2 safety tests passed including native module exclusion; iOS demo sync passed without App plugin",
     "browser_tests": "not run: WebKit host dependency installation denied by runtime permissions",
     "mobile_ergonomics": "safe areas and keyboard source prepared; 5 viewport tests passed; 8 browser cases discovered but not executed",
     "auth_session": "11 synthetic session/logout tests passed; no live backend or native authentication tested",
-    "connected_source_build": "passed with envFile:false and synthetic .invalid configuration; output deleted",
-    "native_callback_parser": "42 targeted synthetic tests passed; TypeScript passed; not yet wired to native events"
+    "connected_source_build": "passed with synthetic .invalid configuration after native callback integration",
+    "native_callback_parser": "51 native contract/configuration/link tests passed; bridge gated behind explicit configuration"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -35,7 +35,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "52220ffb195b357acefeac27ef2dd89968e177a2",
+  "last_application_commit": "e66b2a4c09fb6a45bf471f3562aac857bbdb3b44",
   "last_run_id": "ios-2026-10-15T13-14-44-195Z",
   "last_run_started_at": "2026-10-15T13:14:44.195Z",
   "last_run_finished_at": "2026-10-15T14:01:38.092Z",

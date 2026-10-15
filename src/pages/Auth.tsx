@@ -7,7 +7,9 @@ import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, ShieldCheck, CalendarDays, BarChart3, Scissors, Sparkles } from 'lucide-react';
 import logoImg from '@/assets/logo-auth.png';
 import { toast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { nativeAuth } from '@/native/config';
+import { resolveAuthRedirect } from '@/native/authConfiguration';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { isDemoOnlyPreview, isAllowedPreviewUser } from '@/lib/previewSafety';
 
@@ -27,6 +29,7 @@ const Auth = () => {
   const [mfaCode, setMfaCode] = useState('');
   const [mfaVerifying, setMfaVerifying] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const authFormRef = useRef<HTMLFormElement>(null);
   const forgotFormRef = useRef<HTMLFormElement>(null);
 
@@ -75,8 +78,9 @@ const Auth = () => {
     }
   };
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const searchParams = new URLSearchParams(window.location.search);
+    let cancelled = false;
+    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+    const searchParams = new URLSearchParams(location.search);
     const linkType = hashParams.get('type') || searchParams.get('type');
     const isPasswordFlowLink = linkType === 'invite' || linkType === 'recovery';
 
@@ -99,6 +103,7 @@ const Auth = () => {
 
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
 
       if (session && !isAllowedPreviewUser(session.user.email)) {
         await supabase.auth.signOut();
@@ -109,6 +114,7 @@ const Auth = () => {
         const { data: aalData, error: aalError } =
           await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
+        if (cancelled) return;
         if (aalError) {
           console.error('[Auth] MFA assurance check failed:', aalError);
           return;
@@ -118,6 +124,7 @@ const Auth = () => {
           const { data: factorsData, error: factorsError } =
             await supabase.auth.mfa.listFactors();
 
+          if (cancelled) return;
           if (factorsError) {
             console.error('[Auth] MFA factor lookup failed:', factorsError);
             return;
@@ -142,11 +149,16 @@ const Auth = () => {
     void checkUser();
 
     return () => {
+      cancelled = true;
       authListener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location.hash, location.search]);
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    if (nativeAuth.nativeIOS) {
+      toast({ title: 'Connexion par e-mail', description: 'Cette connexion n’est pas encore disponible dans l’application. Utilisez votre e-mail et votre mot de passe.' });
+      return;
+    }
     if (isDemoOnlyPreview) {
       toast({
         title: "Preview sécurisée",
@@ -242,7 +254,11 @@ const Auth = () => {
           }
         }
       } else {
-        const redirectUrl = `${window.location.origin}/`;
+        const redirectUrl = resolveAuthRedirect(nativeAuth, window.location.origin, 'signup');
+        if (!redirectUrl) {
+          toast({ title: 'Inscription indisponible', description: 'La confirmation de compte n’est pas encore disponible dans cette application.', variant: 'destructive' });
+          return;
+        }
         
         const { error } = await supabase.auth.signUp({
           email,
@@ -310,8 +326,13 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      const redirectTo = resolveAuthRedirect(nativeAuth, window.location.origin, 'recovery');
+      if (!redirectTo) {
+        toast({ title: 'Récupération indisponible', description: 'La récupération de compte n’est pas encore disponible dans cette application.', variant: 'destructive' });
+        return;
+      }
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo,
       });
 
       if (error) {

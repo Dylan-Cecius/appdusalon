@@ -9,7 +9,7 @@ export const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 export function assertDemoModuleGraph(moduleIds) {
   const forbidden = moduleIds.filter(id => {
     const normalized = id.replaceAll('\\', '/').split('?')[0];
-    return /\/(?:node_modules\/@supabase|src\/integrations|supabase)\//.test(normalized)
+    return /\/(?:node_modules\/@supabase|src\/integrations|src\/native|supabase)\//.test(normalized)
       || /\/src\/(?:App|main)\.tsx$/.test(normalized);
   });
   if (forbidden.length) {

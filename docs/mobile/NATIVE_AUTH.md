@@ -14,3 +14,12 @@ Le contrôleur sérialise les échanges, ignore les doublons démarrage/événem
 - https://capacitorjs.com/docs/apis/app : événements d’URL et lecture de l’URL de démarrage.
 - https://supabase.com/docs/guides/auth/sessions/pkce-flow : vérificateur local et initiation/retour sur le même appareil. Les options expérimentales multi-flux récentes ne sont pas utilisées avec auth-js 2.71.1.
 - https://supabase.com/docs/reference/javascript/auth-exchangecodeforsession : échange du code, distinct de l’installation de jetons reçus par URL.
+
+## Raccordement sous configuration explicite
+Le pont connecté nécessite iOS, `VITE_NATIVE_AUTH_ENABLED=true` et `VITE_NATIVE_AUTH_REDIRECT_URL` valide. Aucun de ces paramètres n’est fourni par la démo. App 8.1.2 est verrouillé ; le projet démo l’exclut avec includePlugins=[] et sa frontière de build interdit src/native.
+
+Le pont écoute avant de lire getLaunchUrl, donne priorité à un callback récent et retire les écouteurs après un démontage, même si leur inscription était encore en attente. 51 cas ciblés passent (contrat, configuration, raccordement synthétique). La page Auth suit le Router pour afficher la récupération après échange ; les vérifications précédentes sont invalidées.
+
+Le client iOS utilise PKCE et n’installe pas de session à partir d’une URL détectée automatiquement. Les retours d’inscription/récupération exigent une destination configurée ; OAuth natif reste indisponible tant que le parcours de navigateur système n’est pas implémenté. Le web conserve son comportement.
+
+Limites de ce checkpoint : reprise de rafraîchissement à raccorder, garde de flux local et rejeu après rechargement à traiter, stockage Keychain absent, aucune destination Apple/backend enregistrée. La compilation isolée des sources connectées ne valide pas ces parcours sur appareil.

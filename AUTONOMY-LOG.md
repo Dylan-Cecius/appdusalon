@@ -81,3 +81,13 @@
 - npm run test:mobile:unit -- src/native/authCallback.test.ts : 42 tests synthétiques passants. npm run typecheck et git diff --check : succès. Ce lot n’est pas encore relié au plugin natif ; aucun appel Supabase.
 - Documentation officielle relue le 15 octobre : Capacitor App, Supabase PKCE/exchangeCodeForSession. Le code auth-js 2.71.1 installé retourne redirectType issu du vérificateur local ; les nouvelles options expérimentales multi-flux des docs actuelles ne sont pas présentes dans cette version et ne sont pas utilisées.
 - Prochaine étape : raccordement App et cycle de reprise, sous opt-in explicite ; absence de Xcode/backend isolé inchangée.
+
+## 2026-10-15T14:29:35.390Z — Cycle 2, checkpoint 2 : pont de liens natifs sous opt-in
+- Checkpoint précédent : e66b2a4c09fb6a45bf471f3562aac857bbdb3b44. Durée écoulée observée : 14 minutes.
+- @capacitor/app 8.1.2 vérifié dans le registre (peer core >=8) et verrouillé ; installation locale avec --ignore-scripts --legacy-peer-deps --no-audit --no-fund, un paquet ajouté. Aucun service distant de build.
+- Pont App connecté à la racine Router de la cible connectée : appUrlOpen puis getLaunchUrl, priorité au callback vivant, déduplication et nettoyage asynchrone. Six tests synthétiques de source App ; trois de configuration/redirection, 51 tests natifs ciblés au total.
+- Activation seulement sur iOS avec VITE_NATIVE_AUTH_ENABLED=true et une VITE_NATIVE_AUTH_REDIRECT_URL valide. Aucune valeur réelle fournie/enregistrée. PKCE côté iOS et détection automatique des jetons d’URL désactivée. Inscription/récupération sans adresse native configurée sont bloquées avant l’appel ; OAuth natif reste indisponible avant son parcours navigateur dédié.
+- Auth.tsx suit les changements de recherche/fragment du Router pour le retour recovery et ignore ses anciennes vérifications après changement de route. Le type recovery provient du vérificateur local via le résultat auth-js, jamais de la chaîne entrante.
+- npm run typecheck : succès ; npm run test:mobile:unit : 203 tests dans 25 fichiers passants ; npm run test:mobile:build : 2 tests passants, y compris frontière src/native et variables natives hostiles.
+- npm run build:mobile:check-connected : succès, configuration synthétique et sortie supprimée. npm run ios:prepare:demo : succès. Assertions : includePlugins=[] et aucun CapacitorApp dans le package démo, version App du lockfile exacte. Pas de build/signature ni essai iOS.
+- Revue des composants React et git diff --check : succès. Prochaine tâche : propriétaire du rafraîchissement et garde des flux natifs en attente, notamment contre le rejeu d’une ancienne URL au redémarrage.
