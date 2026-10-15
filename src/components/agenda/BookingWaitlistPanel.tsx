@@ -59,7 +59,7 @@ const BookingWaitlistPanel = ({
   };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[92vw] p-0 sm:max-w-md">
+      <SheetContent side="right" className="flex flex-col gap-0 w-[92vw] p-0 sm:max-w-md">
         <SheetHeader className="border-b border-border px-5 py-4 text-left">
           <SheetTitle className="flex items-center gap-2">
             <BellRing className="h-5 w-5 text-primary" />
@@ -67,7 +67,7 @@ const BookingWaitlistPanel = ({
           </SheetTitle>
         </SheetHeader>
 
-        <div className="h-[calc(100vh-72px)] overflow-y-auto bg-slate-50 p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-3">
           <div className="mb-3 space-y-2">
             {onAdd && <Button className="w-full" disabled={busy || !services.length} onClick={() => setAdding(value => !value)}>Ajouter une demande</Button>}
             {adding && onAdd && <WaitlistRequestForm services={services} staff={staff} timezone={timezone} onCancel={() => setAdding(false)} onSave={async entry => { await onAdd(entry); setAdding(false); setQuery(''); }} />}

@@ -125,3 +125,11 @@
 - npm run test:mobile:build : 2 contrôles passants. npm run ios:prepare:demo : build isolée et sync réussies (2539 modules). Il ne s’agit pas de compilation Xcode ni de recette visuelle.
 - Revue React/CSS : aucun nouvel effet ou état, boutons réellement agrandis sans agrandir seulement les icônes ; flex-shrink conservé pour éviter un débordement du libellé de date.
 - Prochaine tâche : les SheetContent partagés sont encore plein écran fixe sans marges clavier/safe areas ; navigation mobile, attente et indisponibilités concernés.
+
+## 2026-10-15T14:59:02Z — Cycle 2, checkpoint 7 : panneaux mobiles et clavier
+- Checkpoint précédent : 981a646086309683b04630c93d1d1eef333ef048. Durée écoulée observée : 44 minutes.
+- SheetContent utilisait h-full et deux contenus imposaient 100vh-72px, indépendamment du clavier. Les panneaux utilisent maintenant le viewport visible et les marges sûres, avec défilement contenu ; menu et attente emploient un corps flex-1 min-h-0 sous un en-tête non rétrécissable.
+- Fermeture 44 px avec libellé Fermer et marge réservée dans l’en-tête. La largeur maximale reste celle des variantes sur sm+, limitée aux marges sûres sur petits écrans. Couleurs/transactions métier inchangées.
+- npm run typecheck : succès. npm run test:mobile:unit : 253 tests dans 28 fichiers passants. npm run test:mobile:browser -- --list : 20 cas reconnus, aucun exécuté ; nouveaux cas panneaux attente/indisponibilités avec viewport synthétique réduit.
+- npm run ios:prepare:demo : build isolée et sync réussies, 2539 modules ; pas de build iOS. git diff --check et revue React/CSS : succès, aucun nouvel état ou effet ajouté. Compilation connectée finale lancée, résultat consigné au checkpoint suivant.
+- Rendu WebKit/appareil et transitions clavier réelles toujours non validés. Prochain petit défaut à traiter : l’inscription native peut renvoyer directement une session et ne doit alors pas conserver de marqueur en attente.

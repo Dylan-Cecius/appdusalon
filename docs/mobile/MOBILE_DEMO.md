@@ -22,7 +22,7 @@ La sortie est `dist-mobile-demo/index.html`. Cette démo reprend l'agenda et les
 ## Recette mobile isolée
 `npm run test:mobile:browser` utilise un serveur loopback construit avec envFile=false, sans la configuration Vite connectée. Quatre profils WebKit couvrent petit iPhone, portrait, paysage et iPad. Les tests de clavier injectent une géométrie synthétique : ils ne remplacent pas une recette avec clavier iOS réel.
 
-Au checkpoint du 15 octobre : TypeScript et 5 tests unitaires viewport passants ; 8 cas navigateur reconnus avec --list mais non exécutés, bibliothèques WebKit Linux manquantes. Ne pas assimiler la découverte des cas à leur réussite.
+Au checkpoint du 15 octobre : TypeScript et 5 tests unitaires viewport passants ; 20 cas navigateur reconnus avec --list mais non exécutés, bibliothèques WebKit Linux manquantes. Ne pas assimiler la découverte des cas à leur réussite.
 
 Sur appareil : vérifier les safe areas en portrait/paysage, ouvrir un rendez-vous puis le clavier, atteindre le bouton de validation par défilement, fermer le formulaire, zoomer et revenir à l’agenda. Vérifier aussi VoiceOver, taille de texte, menus latéraux et transitions arrière-plan. Les couleurs pastel existantes sont conservées.
 

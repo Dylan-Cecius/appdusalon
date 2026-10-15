@@ -164,6 +164,33 @@ All colors MUST be HSL.
   overscroll-behavior-y: contain;
   scroll-padding-block: 1.5rem;
 }
+/* Keep sheets inside the usable viewport when the keyboard changes its height. */
+.app-safe-sheet {
+  --app-sheet-top: calc(var(--app-viewport-top, 0px) + var(--app-safe-top));
+  --app-sheet-height: max(0px, calc(var(--app-viewport-height, 100vh) - var(--app-safe-top) - var(--app-safe-bottom)));
+  max-height: var(--app-sheet-height);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-padding-block: 1.5rem;
+}
+.app-safe-sheet:is([data-side="left"], [data-side="right"]) {
+  top: var(--app-sheet-top);
+  bottom: auto;
+  height: var(--app-sheet-height);
+}
+.app-safe-sheet[data-side="left"] { left: var(--app-safe-left); }
+.app-safe-sheet[data-side="right"] { right: var(--app-safe-right); }
+.app-safe-sheet:is([data-side="top"], [data-side="bottom"]) {
+  left: var(--app-safe-left);
+  right: var(--app-safe-right);
+}
+.app-safe-sheet[data-side="top"] { top: var(--app-sheet-top); }
+.app-safe-sheet[data-side="bottom"] {
+  bottom: calc(100% - var(--app-sheet-top) - var(--app-sheet-height));
+}
+@media (max-width: 639px) {
+  .app-safe-sheet { max-width: calc(100vw - var(--app-safe-left) - var(--app-safe-right)); }
+}
 @media (max-width: 767px), (pointer: coarse) {
   :root :is(input, select, textarea) { font-size: max(1rem, 16px); }
   /* Enlarge the actual hit area; compact desktop controls remain unchanged.

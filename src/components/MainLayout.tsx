@@ -256,11 +256,11 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
       </nav>
 
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="right" className="w-[86vw] max-w-sm p-0">
+        <SheetContent side="right" className="flex flex-col gap-0 w-[86vw] max-w-sm p-0">
           <SheetHeader className="border-b border-border p-5 text-left">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
-          <div className="h-[calc(100vh-72px)] overflow-y-auto px-3 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
             <div className="space-y-5">
               {visibleNavGroups.map((group) => (
                 <div key={group.label}>

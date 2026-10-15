@@ -29,3 +29,8 @@ Lire les fichiers AUTONOMY-* de cette branche, prendre le bail, traiter le premi
 - Commencer par les preuves les plus récentes de AUTONOMY-LOG.md et IOS_RELEASE_STATUS.md, qui prévalent sur l’inventaire initial ci-dessus.
 - MOBILE_DEMO.md décrit les builds isolées et commandes de tests ; SESSION_AUDIT.md décrit les corrections de session et les manques natifs. Ne pas lancer le build web par défaut ni charger le .env suivi pour les essais.
 - La recette WebKit est préparée mais non exécutée, bibliothèques Linux indisponibles ; ne pas convertir --list en preuve de réussite.
+
+## Reprise après les lots du 2026-10-15T14:59:02Z
+- Pont App 8.1.2, liens PKCE corrélés et cycle de session préparés sous opt-in explicite ; aucune configuration Apple/backend réelle. Voir NATIVE_AUTH.md et SESSION_AUDIT.md.
+- Dernière suite observée : 253 tests/28 fichiers passants ; recette navigateur étendue à 20 cas découverts, toujours non exécutés. Aucun binaire iOS compilé/signé.
+- Les commandes agenda et panneaux latéraux ont reçu des adaptations tactiles/safe areas/clavier. Les preuves unitaires et de build ne valident pas leur rendu sur iPhone.

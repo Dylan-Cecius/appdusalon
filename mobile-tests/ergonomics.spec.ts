@@ -85,3 +85,31 @@ test('agenda commands and appointment actions expose full touch targets', async 
   expect(bounds.x).toBeGreaterThanOrEqual(16);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual((await page.evaluate(() => innerWidth)) - 16);
 });
+
+for (const panel of ['waitlist', 'time-off'] as const) {
+  test(`${panel} sheet follows the usable viewport and keeps its close target reachable`, async ({ page }) => {
+    const trigger = panel === 'waitlist'
+      ? page.getByRole('button', { name: /^Liste d’attente/ })
+      : page.getByRole('button', { name: 'Indisponibilités', exact: true });
+    await trigger.click();
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toBeVisible();
+    if (panel === 'waitlist') await sheet.getByRole('textbox', { name: 'Rechercher dans la liste d’attente' }).fill('Fictif');
+    await page.evaluate(() => {
+      Object.assign(window.visualViewport!, { height: 280, offsetTop: 30 });
+      window.visualViewport!.dispatchEvent(new Event('resize'));
+    });
+    await expect.poll(async () => (await sheet.boundingBox())!.height).toBeLessThanOrEqual(236 + 1);
+    const bounds = (await sheet.boundingBox())!;
+    expect(bounds.y).toBeGreaterThanOrEqual(54);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(291);
+    expect(bounds.x).toBeGreaterThanOrEqual(16);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual((await page.evaluate(() => innerWidth)) - 16);
+    const close = sheet.getByRole('button', { name: 'Fermer', exact: true });
+    const closeBounds = (await close.boundingBox())!;
+    expect(closeBounds.width).toBeGreaterThanOrEqual(44);
+    expect(closeBounds.height).toBeGreaterThanOrEqual(44);
+    await expect(close).toBeInViewport();
+    await close.click(); await expect(sheet).toBeHidden();
+  });
+}
