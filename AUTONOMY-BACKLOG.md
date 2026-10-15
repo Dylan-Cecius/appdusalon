@@ -155,3 +155,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Démonstration — brouillon conservé et contacts repris
 - Nouvelle saisie conservée en mémoire sur échec du stockage, confirmation de ticket toujours refusée tant que l’écriture échoue. Sélection de contacts fictifs existants ajoutée. 363 unitaires, typecheck/builds réussis, lint 0 erreur/207 avertissements ; 88 nouveaux cas navigateur restent non exécutés.
+
+## Démonstration — navigation et rechargement
+- Vue conservée dans l’URL, rechargement et précédent/suivant raccordés ; provider/panier partagés préservés. Typecheck/build standalone réussis, lint 0 erreur/206 avertissements. 22 cas navigateur standalone préparés, total 92 nouveaux cas non exécutés. Dernière suite unitaire : 363 réussis avant l’ajustement de navigation.

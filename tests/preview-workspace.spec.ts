@@ -152,3 +152,23 @@ test('reuses an agenda contact and combines only its confirmed visits', async ({
   await expect(row).toHaveCount(1); await expect(row.getByRole('cell').nth(1)).toHaveText('1');
   await expect(row).toContainText(/25,00/);
 });
+
+test('keeps the selected view on reload and restores browser history without losing the cart', async ({ page }) => {
+  await page.goto(url + '?view=pos&keep=demo');
+  await expect(page.getByRole('heading', { name: 'Caisse', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Coupe homme/ }).click();
+  await navigate(page, 'Clients'); await navigate(page, 'Statistiques');
+  await expect(page).toHaveURL(/view=stats/); await expect(page).toHaveURL(/keep=demo/);
+  await page.reload(); await expect(page.getByRole('heading', { name: 'Statistiques', exact: true })).toBeVisible();
+  await page.goBack(); await expect(page.getByRole('heading', { name: 'Clients', exact: true })).toBeVisible();
+  await page.goBack(); await expect(page.getByRole('heading', { name: 'Caisse', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retirer Coupe homme, ligne 1' })).toBeVisible();
+  await page.goForward(); await expect(page.getByRole('button', { name: 'Clients', exact: true })).toHaveAttribute('aria-current', 'page');
+});
+
+test('an unknown view uses the dashboard and subsequent navigation remains local', async ({ page }) => {
+  await page.goto(url + '?view=https%3A%2F%2Finvalid.example%2F');
+  await expect(page.getByRole('heading', { name: 'Bonjour Dylan' })).toBeVisible();
+  await navigate(page, 'Agenda');
+  await expect(page).toHaveURL(/standalone.html\?view=agenda$/);
+});
