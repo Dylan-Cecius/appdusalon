@@ -1,0 +1,26 @@
+# Priorités de développement autonome AppDuSalon V2
+
+Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâches ci-dessous sont des priorités à examiner, pas des défauts affirmés.
+
+## Réalisé et sauvegardé
+- Recherche agenda, filtres et badges ; grille et étapes réservées ; couleurs pastel.
+- Liste d'attente, indisponibilités, création composée et séries.
+- Contacts/historique, déplacements guidés avec conservation du prix et de l'acompte.
+- Recherche de créneaux à la création pour un collaborateur ou toute l'équipe, y compris séries.
+- Dernier code applicatif validé : 86e4f6cdfe7aca8ca5a3b835c8903f8562415d76. Documentation de reprise : 9e4465a333fafa6a1c17f7c74f17606e3b3bff9a.
+- CI applicative 38561490094 : 99 unitaires, 99 navigateur, 6 sécurité d'aperçu ; 3 scénarios de grille ignorés sur mobile ; lint 0 erreur, 234 avertissements.
+- Dernier SQL inchangé depuis CI base 38444612019. Ces preuves historiques ne valident pas une modification future.
+- Aperçu privé Sites : déploiement appgdep_6acf7158d7288191a2ace0a51208bac2, source 740f8758eab36e5a30cf03a14f9f76dfe5605dd3.
+
+## Priorités prêtes
+1. Restaurer un environnement reproductible et vérifier la dernière révision, les tâches ouvertes et les limites d'exécution/coût. Choisir ensuite un lot utile ; ne pas refaire les fonctionnalités listées comme réalisées.
+2. Revoir le parcours de fiche après création/déplacement : annulation, absent, sauvegarde, erreur serveur et rafraîchissement. Reproduire avant de corriger ; préserver les acomptes et éviter tout faux succès. Utiliser des données fictives.
+3. Recette agenda sur mobile et clavier : changements de date/collaborateur, formulaires longs, chargement/erreur/état vide et cohérence après rechargement. Améliorer les points concrets observés sans refonte arbitraire.
+4. Évaluer les écrans Caisse, Clients et statistiques existants : repérer les écarts fonctionnels entre l'application connectée et l'aperçu, prioriser un parcours complet utile et les incohérences de statut/montants. Ne pas présenter une simulation comme un encaissement réel.
+5. Compléter les scénarios d'intégration isolés manquants, la documentation de reprise et les critères de livraison, sans déployer un backend réel.
+6. Une fois ces priorités couvertes, réexaminer les besoins déjà convenus et proposer dans le backlog les prochains lots à valeur démontrable. Ne pas empiler des fonctionnalités redondantes ni modifier le nom commercial sans décision de Dylan.
+
+## Bloqués par prérequis
+- CI distante et publication supplémentaires : preuve actuelle d'absence de coût additionnel, sinon tests dans le runtime disponible et commits [skip ci].
+- Backend hébergé isolé : projet et configuration validés, coût nul vérifié, autorisation spécifique, puis recette des fournisseurs de V2_RELEASE_STATUS.md.
+- Production/main/stores, données réelles et opérations financières : hors autorisation.

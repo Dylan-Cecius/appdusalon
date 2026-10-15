@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "project": "AppDuSalon V2",
+  "branch": "v2/chatgpt-rebuild",
+  "status": "idle",
+  "run_id": null,
+  "task": null,
+  "started_at": null,
+  "last_checkpoint_at": "2026-10-15T11:49:16Z",
+  "lease_expires_at": null,
+  "last_application_commit": "86e4f6cdfe7aca8ca5a3b835c8903f8562415d76",
+  "automation_ids": {
+    "development": null,
+    "daily_report": null
+  },
+  "next_task": "Lire les consignes, vérifier le dernier état, puis traiter la première priorité prête."
+}
