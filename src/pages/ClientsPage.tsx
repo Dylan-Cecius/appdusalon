@@ -28,6 +28,7 @@ const ClientsWorkspace = () => {
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'newest' | 'oldest'>('name-asc');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const activeClient = selectedClient ? clients.find(client => client.id === selectedClient.id) : null;
   const [exportConfirmType, setExportConfirmType] = useState<'csv' | 'json' | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const exportLock = useRef(false);
@@ -238,13 +239,16 @@ const ClientsWorkspace = () => {
           </div>
         )}
 
-        {selectedClient && (
+        {activeClient && (
           <ClientDetailModal
-            key={selectedClient.id}
-            client={selectedClient}
+            key={activeClient.id}
+            client={activeClient}
+            getClientStats={getClientStats}
+            refreshClients={refreshClients}
+            clientsLoading={loading}
             onSave={updateClient}
             onUpdated={setSelectedClient}
-            open={!!selectedClient}
+            open={!!activeClient}
             onClose={() => setSelectedClient(null)}
           />
         )}

@@ -28,7 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { useClients, type Client, type ClientStats } from '@/hooks/useClients';
+import type { Client, ClientStats } from '@/hooks/useClients';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -54,6 +54,9 @@ interface ClientDetailModalProps {
   onClose: () => void;
   onSave: (id: string, updates: Partial<Client>) => Promise<Client | null>;
   onUpdated: (client: Client) => void;
+  getClientStats: (id: string) => Promise<ClientStats | null>;
+  refreshClients: () => Promise<void>;
+  clientsLoading: boolean;
 }
 
 const euro = (value: number) =>
@@ -62,8 +65,7 @@ const euro = (value: number) =>
     currency: 'EUR',
   }).format(value);
 
-const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated }: ClientDetailModalProps) => {
-  const { getClientStats, refreshClients, loading: clientDataLoading } = useClients();
+const ClientDetailModal = ({ client, open, onClose, onSave, onUpdated, getClientStats, refreshClients, clientsLoading: clientDataLoading }: ClientDetailModalProps) => {
   const { transactions, loading: transactionsLoading, error: transactionsError, refreshTransactions } = useSupabaseTransactions();
   const { appointments, loading: appointmentsLoading, error: appointmentsError, refreshAppointments } = useSupabaseAppointments();
   const revenueUnavailable = transactionsLoading || transactionsError;

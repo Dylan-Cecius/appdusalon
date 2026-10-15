@@ -60,3 +60,6 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## 2026-10-15T15:55:03Z — Panier conservé dans son contexte
 2428 secondes cumulées ; précédent ca22754d1091d9aab34fb4a7cd90a013fcd54e40, lot courant dans ce commit. 293 tests/33 fichiers passants, TypeScript/compilation isolée/build-sync démo passants. 32 cas navigateur préparés mais non exécutés ; aucun essai natif. Prochaine étape : revue finale et sauvegarde. Signature/TestFlight/Apple restent non réalisés.
+
+## 2026-10-15T15:57:20Z — Fiche et liste partagent leurs données
+2565 secondes cumulées ; précédent 79e8aff3f5e990aa3e85e1ece13a9ab9f3e68c87, lot présent dans ce commit. TypeScript et compilation isolée passants ; pas de test UI/backend natif ajouté. Les preuves complètes les plus récentes restent 293 tests/33 fichiers, 32 cas navigateur non exécutés. Prochaine étape : encodage CSV, puis contrôle final et libération du bail.

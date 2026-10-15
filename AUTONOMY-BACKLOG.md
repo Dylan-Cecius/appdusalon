@@ -104,3 +104,8 @@
 - [x] Erreur de panier focalisée pour être visible après un appui en bas d’une liste longue.
 - [x] Suite complète 293 tests/33 fichiers, TypeScript, compilation isolée et build/sync démo passants.
 - [ ] 32 cas navigateur préparés/découverts (12 panier), aucun exécuté ; rotation, fermeture et changements de session restent à recetter en UI/native.
+
+## Cycle 4 — checkpoint source de fiche 2026-10-15T15:57:20Z
+- [x] Fiche alimentée par les fonctions/lignes de sa page : plus de second chargement/abonnement clients ni de dépendance à une copie non chargée pour réessayer les statistiques.
+- [x] Lecture de la ligne courante pour la fiche ; édition en cours conservée face au rafraîchissement. TypeScript et compilation isolée passants.
+- [ ] Export CSV : seuls les guillemets des notes sont actuellement échappés ; traiter tous les champs texte et les valeurs interprétables en formule avant clôture.
