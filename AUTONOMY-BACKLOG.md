@@ -139,3 +139,7 @@ Clôture 2026-10-15T16:04:45Z : 50 min 10 s observées, dix lots fonctionnels pl
 ## Cycle 5 — 2026-10-15T16:26:38Z : Formulaires agenda mobiles et fixture isolée
 - [x] Formulaires agenda mobiles et fixture isolée : sources préparées, preuves et limites dans le journal.
 - [ ] Contrôler les instantanés de disponibilités et les événements de reconnexion de l’agenda ; exécuter la suite complète pertinente.
+
+## Cycle 5 — 2026-10-15T16:29:05Z : Disponibilités et reconnexion agenda explicites
+- [x] Disponibilités et reconnexion agenda explicites : sources préparées, preuves et limites dans le journal.
+- [ ] Isoler aussi les indisponibilités de l’équipe par utilisateur et confirmer leurs mutations avant fermeture.

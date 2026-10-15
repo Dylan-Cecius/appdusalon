@@ -1,3 +1,4 @@
+import { confirmedAppointmentSnapshot } from '@/lib/appointmentSnapshot';
 import { persistAppointmentMove } from '@/lib/appointmentMovePersistence';
 import { confirmedAppointmentCreation } from '@/lib/appointmentCreationResult';
 import { createLatestRequestScope } from '@/lib/latestRequestScope';
@@ -59,6 +60,7 @@ export const useSupabaseAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [realtimeError, setRealtimeError] = useState(false);
   const contextKey = isReady && user && salonId ? JSON.stringify([user.id, salonId]) : null;
   const requestScope = useRef(createLatestRequestScope());
   const appointmentsContext = useRef<string | null>(null);
@@ -70,12 +72,9 @@ export const useSupabaseAppointments = () => {
     if (!isCurrent) return;
     console.log('[Appointments] fetch start');
     setLoading(true);
-    setError(false);
     try {
       if (!isSupabaseConfigured || !user || !salonId) {
-        setAppointments([]);
-        setLoading(false);
-        return;
+        throw new Error('appointment_source_unavailable');
       }
 
       const [{ data, error }, { data: segmentData, error: segmentError }] = await Promise.all([supabase
@@ -114,18 +113,17 @@ export const useSupabaseAppointments = () => {
       ]);
 
       if (!isCurrent()) return;
-      if (error) throw error;
-      // Older backends can still show appointments before the segments migration.
-      if (segmentError) console.warn('[Appointments] segment details unavailable:', segmentError.message);
+      const snapshot = confirmedAppointmentSnapshot({ data, error }, { data: segmentData, error: segmentError });
+      // Partial rows remain readable, but creation/moves must wait for complete availability.
       const segmentsByAppointment = new Map<string, AppointmentSegment[]>();
-      for (const segment of segmentData || []) {
+      for (const segment of snapshot.segments) {
         const segments = segmentsByAppointment.get(segment.appointment_id) || [];
         segments.push({ id: segment.id, type: segment.segment_type as AppointmentSegment['type'], label: segment.label,
           startTime: new Date(segment.starts_at), endTime: new Date(segment.ends_at), occupiesStaff: segment.occupies_staff });
         segmentsByAppointment.set(segment.appointment_id, segments);
       }
 
-      const formattedAppointments = data?.map((apt: any) => ({
+      const formattedAppointments = snapshot.appointments.map((apt: any) => ({
         id: apt.id,
         updatedAt: apt.updated_at,
         clientName: apt.client_name || 'Client',
@@ -153,6 +151,7 @@ export const useSupabaseAppointments = () => {
 
       console.log('[Appointments] fetch success', formattedAppointments.length);
       setAppointments(formattedAppointments);
+      setError(!snapshot.availabilityVerified);
     } catch (error) {
       if (!isCurrent()) return;
       console.error('[Appointments] fetch error:', error);
@@ -489,6 +488,7 @@ export const useSupabaseAppointments = () => {
     setAppointments([]);
     appointmentsContext.current = contextKey;
     setError(false);
+    setRealtimeError(false);
     if (!isReady || !user || !salonId) {
       setLoading(!isReady);
       return () => scope.invalidate();
@@ -500,6 +500,11 @@ export const useSupabaseAppointments = () => {
 
     if (!isSupabaseConfigured) return () => scope.invalidate();
 
+    const isCurrentSubscription = scope.captureContext(contextKey);
+    const refresh = () => { if (isCurrentSubscription()) void fetchAppointments(); };
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', onVisible);
     const subscription = supabase
       .channel(`appointments-${salonId}`)
       .on('postgres_changes',
@@ -509,12 +514,18 @@ export const useSupabaseAppointments = () => {
           table: 'appointments',
           filter: `salon_id=eq.${salonId}`,
         },
-        () => { void fetchAppointments(); }
+        refresh
       )
-      .subscribe();
+      .subscribe(status => {
+        if (!isCurrentSubscription()) return;
+        if (status === 'SUBSCRIBED') { setRealtimeError(false); refresh(); }
+        else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) setRealtimeError(true);
+      });
 
     return () => {
       scope.invalidate();
+      window.removeEventListener('online', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
       subscription.unsubscribe();
     };
   }, [isReady, user?.id, salonId]);
@@ -523,7 +534,7 @@ export const useSupabaseAppointments = () => {
     scopeKey: contextKey,
     appointments: visibleAppointments,
     loading: appointmentsContext.current !== contextKey || loading,
-    error: appointmentsContext.current === contextKey && error,
+    error: appointmentsContext.current === contextKey && (error || realtimeError),
     addAppointment,
     addRecurringAppointments,
     updateAppointment,
