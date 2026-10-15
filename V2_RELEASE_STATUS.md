@@ -4,6 +4,21 @@ Branch: `v2/chatgpt-rebuild`
 
 This document separates machine-verified release guarantees from checks that still require an isolated deployed staging environment.
 
+## Current candidate — 15 October 2026
+
+Six application checkpoints prepare appointment-action reliability, terminal-state handling, confirmed contact writes, mutation-response reconciliation, refresh ordering/salon isolation and client-creation recovery. See `AUTONOMY-LOG.md` for exact commits and observed checks.
+
+- Local TypeScript check: passed. Unit suite: 136 passed in 19 files.
+- Normal build: passed. Standalone build for the shared agenda changes: passed with both preview flags enabled; the subsequent connected-client form is not part of that standalone entry.
+- Lint: 0 errors, 232 warnings.
+- 26 new browser cases (13 scenarios × desktop/mobile) were discovered and their new specs/fixtures typechecked, but **not executed**. Historical browser/preview-safety CI results do not validate this candidate.
+- No remote CI, hosted integration test, database migration or deployment was run. All new persistence/response tests use synthetic data and mocked query clients.
+- The owner-private Sites preview remains the previously published deployment `appgdep_6acf7158d7288191a2ace0a51208bac2`. Prepared GitHub code is newer than that preview.
+- Public-repository standard runner minutes were verified as free on 15 October, but current cache-storage cost conditions remain unverified; commits retain `[skip ci]`. No workflow was changed. Sites cost/verification prerequisites also remain required.
+
+The machine-verified list below describes existing gates and historical evidence, not a claim that the current candidate passed every gate.
+
+
 ## Machine-verified
 
 The following are enforced by CI and/or disposable local Supabase rebuilds:

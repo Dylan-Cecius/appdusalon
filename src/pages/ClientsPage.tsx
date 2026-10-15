@@ -1,3 +1,4 @@
+import NewClientDialog from '@/components/NewClientDialog';
 import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useClients } from '@/hooks/useClients';
@@ -7,9 +8,6 @@ import { useActivityLog } from '@/hooks/useActivityLog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Search, User, Phone, Mail, FileText, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,13 +29,6 @@ const ClientsPage = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [exportConfirmType, setExportConfirmType] = useState<'csv' | 'json' | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [newClient, setNewClient] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    birth_date: '',
-    notes: '',
-  });
 
   const filteredAndSortedClients = useMemo(() => {
     const filtered = clients.filter(client =>
@@ -54,20 +45,6 @@ const ClientsPage = () => {
       }
     });
   }, [clients, searchQuery, sortBy]);
-
-  const handleAddClient = async () => {
-    if (!newClient.name || !newClient.phone) return;
-    
-    const result = await addClient({
-      ...newClient,
-      notes: canUseClientNotes ? newClient.notes : '',
-    });
-    if (result) {
-      await logActivity('CLIENT_CREATED', { client_name: newClient.name });
-    }
-    setNewClient({ name: '', phone: '', email: '', birth_date: '', notes: '' });
-    setIsAddDialogOpen(false);
-  };
 
   const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
 
@@ -154,88 +131,13 @@ const ClientsPage = () => {
                 </Button>
               </>
             )}
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto min-h-[44px]">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nouveau Client
-                </Button>
-              </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Ajouter un client</DialogTitle>
-                <DialogDescription>
-                  Créez une fiche pour un nouveau client
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nom complet *</Label>
-                  <Input
-                    id="name"
-                    value={newClient.name}
-                    onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                    placeholder="Jean Dupont"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Téléphone *</Label>
-                  <Input
-                    id="phone"
-                    value={newClient.phone}
-                    onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                    placeholder="0123456789"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newClient.email}
-                    onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                    placeholder="jean@example.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="birth-date">Date de naissance</Label>
-                  <Input
-                    id="birth-date"
-                    type="date"
-                    value={newClient.birth_date}
-                    onChange={(e) => setNewClient({ ...newClient, birth_date: e.target.value })}
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Utilisée pour les automatisations anniversaire et le bonus fidélité.
-                  </p>
-                </div>
-                {canUseClientNotes ? (
-                  <div>
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={newClient.notes}
-                      onChange={(e) => setNewClient({ ...newClient, notes: e.target.value })}
-                      placeholder="Préférences, allergies, remarques..."
-                      rows={3}
-                    />
-                  </div>
-                ) : (
-                  <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
-                    Les notes client complètes sont disponibles à partir du plan Solo.
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Annuler
-                </Button>
-                <Button onClick={handleAddClient} disabled={!newClient.name || !newClient.phone}>
-                  Ajouter
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-            </Dialog>
+            <NewClientDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} canUseNotes={canUseClientNotes}
+              trigger={<Button className="w-full sm:w-auto min-h-[44px]"><Plus className="mr-2 h-4 w-4" />Nouveau Client</Button>}
+              onCreate={async input => {
+                const client = await addClient(input);
+                if (client) await logActivity('CLIENT_CREATED', { client_name: client.name });
+                return client;
+              }} />
           </div>
         </div>
 

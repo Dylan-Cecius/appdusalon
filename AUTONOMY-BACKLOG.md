@@ -7,18 +7,18 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Liste d'attente, indisponibilités, création composée et séries.
 - Contacts/historique, déplacements guidés avec conservation du prix et de l'acompte.
 - Recherche de créneaux à la création pour un collaborateur ou toute l'équipe, y compris séries.
-- Dernier code applicatif validé : 86e4f6cdfe7aca8ca5a3b835c8903f8562415d76. Documentation de reprise : 9e4465a333fafa6a1c17f7c74f17606e3b3bff9a.
+- Dernière référence applicative validée par la CI complète : 86e4f6cdfe7aca8ca5a3b835c8903f8562415d76. Documentation de reprise : 9e4465a333fafa6a1c17f7c74f17606e3b3bff9a.
 - CI applicative 38561490094 : 99 unitaires, 99 navigateur, 6 sécurité d'aperçu ; 3 scénarios de grille ignorés sur mobile ; lint 0 erreur, 234 avertissements.
 - Dernier SQL inchangé depuis CI base 38444612019. Ces preuves historiques ne valident pas une modification future.
 - Aperçu privé Sites : déploiement appgdep_6acf7158d7288191a2ace0a51208bac2, source 740f8758eab36e5a30cf03a14f9f76dfe5605dd3.
 
 ## Priorités prêtes
-1. Restaurer un environnement reproductible et vérifier la dernière révision, les tâches ouvertes et les limites d'exécution/coût. Choisir ensuite un lot utile ; ne pas refaire les fonctionnalités listées comme réalisées.
-2. Revoir le parcours de fiche après création/déplacement : annulation, absent, sauvegarde, erreur serveur et rafraîchissement. Reproduire avant de corriger ; préserver les acomptes et éviter tout faux succès. Utiliser des données fictives.
-3. Recette agenda sur mobile et clavier : changements de date/collaborateur, formulaires longs, chargement/erreur/état vide et cohérence après rechargement. Améliorer les points concrets observés sans refonte arbitraire.
-4. Évaluer les écrans Caisse, Clients et statistiques existants : repérer les écarts fonctionnels entre l'application connectée et l'aperçu, prioriser un parcours complet utile et les incohérences de statut/montants. Ne pas présenter une simulation comme un encaissement réel.
-5. Compléter les scénarios d'intégration isolés manquants, la documentation de reprise et les critères de livraison, sans déployer un backend réel.
-6. Une fois ces priorités couvertes, réexaminer les besoins déjà convenus et proposer dans le backlog les prochains lots à valeur démontrable. Ne pas empiler des fonctionnalités redondantes ni modifier le nom commercial sans décision de Dylan.
+1. Lire les nouveaux checkpoints puis exécuter la recette des 26 nouveaux cas de fiche RDV/création client sur ordinateur/mobile dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ne pas confondre découverte/typecheck des tests et exécution.
+2. Corriger les statistiques de paiement cash/card/mixed/prepaid : voir docs/V2_REVIEW_2026-10-15.md. Lire les lignes transaction_payments, ne pas attribuer un paiement mixte entier à carte/espèces, ne pas compter deux fois un acompte. Développer sur fixtures synthétiques, aucune transaction réelle.
+3. Vérifier le chargement et le changement de salon du TransactionsContext et de useSupabaseTransactions ; le contrôle limité à userId existe encore. Réutiliser les principes du périmètre de requêtes testé, sans refonte globale.
+4. Revoir chargement/erreur de la liste Clients, recherche accents/téléphones et cohérence du détail ; la création a été corrigée au lot 6, ne pas la refaire. Recette mobile/clavier des longs formulaires, focus après échec et fermeture à vérifier.
+5. Préparer un parcours fictif complet agenda → caisse → historique client → statistiques, avec un état partagé, pour remplacer progressivement les écrans de démonstration encore statiques. Conserver les composants partagés et distinguer simulation/connexion réelle.
+6. Poursuivre les validations d’intégration isolées et critères de livraison suivant V2_RELEASE_STATUS.md. Aucun renommage commercial ni nouvelle fonction redondante sans besoin démontré.
 
 ## Bloqués par prérequis
 - CI distante et publication supplémentaires : preuve actuelle d'absence de coût additionnel, sinon tests dans le runtime disponible et commits [skip ci].
@@ -56,3 +56,10 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Échec de rafraîchissement : dernière liste conservée avec avertissement et bouton de reprise, disponibilités toujours bloquées. Les confirmations de mutations d’un contexte précédent ne modifient pas l’écran courant. Rafraîchissement après annulation/encaissement confirmé.
 - 132 unitaires et typecheck réussis ; builds normal et standalone réussis ; lint 0 erreur, 232 avertissements. Dix scénarios navigateur de fiche restent préparés, non exécutés.
 - Vérification de coût du 15 octobre : dépôt public et runner ubuntu-latest standard, minutes gratuites selon GitHub ; le cache npm est activé et sa limite/usage actuel ne sont pas établis. Maintenir [skip ci], aucun dispatch. Aucun workflow modifié.
+
+## Checkpoint du 15 octobre — création client, lot 6
+- Lot 5 sauvegardé : 182d15d9e72629d47012ee2d177116bc2b957864.
+- Nouveau client : fermeture/effacement uniquement après résultat confirmé, saisies conservées sur retour null ou exception, verrou de soumission partagé, erreur accessible avec focus, défilement de formulaire long, restauration du focus via DialogTrigger.
+- Date de naissance facultative omise lorsqu’elle est vide (colonne DATE) ; nom/téléphone normalisés, droits sur notes conservés. Aucun contact réel créé.
+- 136 unitaires et typecheck réussis ; build normal final réussi ; lint 0 erreur/232 avertissements. Quatre fixtures/specs nouvelles vérifiées par TypeScript. 26 cas navigateur découverts, non exécutés.
+- Audit des écarts et critères du prochain lot : docs/V2_REVIEW_2026-10-15.md. Le code préparé n’est pas la version publiée de l’aperçu.
