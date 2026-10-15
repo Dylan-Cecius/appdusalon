@@ -13,12 +13,12 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Aperçu privé Sites : déploiement appgdep_6acf7158d7288191a2ace0a51208bac2, source 740f8758eab36e5a30cf03a14f9f76dfe5605dd3.
 
 ## Priorités prêtes
-1. Lire les nouveaux checkpoints puis exécuter la recette des 42 nouveaux cas de fiche RDV/création client/statistiques/rapports/panier sur ordinateur/mobile dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ne pas confondre découverte/typecheck des tests et exécution.
-2. Stabiliser la fiche client : getClientStats recréé à chaque rendu relance son effet et peut réinitialiser les saisies. Séparer brouillon et lecture, ignorer les réponses périmées ; critères détaillés dans docs/V2_REVIEW_2026-10-15.md. Ensuite auditer les rapports automatiques serveur (erreurs/pagination/périodes), sans envoi réel. Panier mobile et rapports interactifs déjà corrigés.
-3. Source transactions unifiée, changement de salon et pagination protégés : recette navigateur/hébergée à faire, notamment erreurs et reprises avec plusieurs pages. Ne pas refaire la lecture commune.
-4. Revoir chargement/erreur de la liste Clients, recherche accents/téléphones et cohérence du détail ; la création a été corrigée au lot 6, ne pas la refaire. Recette mobile/clavier des longs formulaires, focus après échec et fermeture à vérifier.
-5. Préparer un parcours fictif complet agenda → caisse → historique client → statistiques, avec un état partagé, pour remplacer progressivement les écrans de démonstration encore statiques. Conserver les composants partagés et distinguer simulation/connexion réelle.
-6. Poursuivre les validations d’intégration isolées et critères de livraison suivant V2_RELEASE_STATUS.md. Aucun renommage commercial ni nouvelle fonction redondante sans besoin démontré.
+1. Exécuter la recette des 48 nouveaux cas navigateur préparés dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ajouter les parcours connectés Clients (contexte, sauvegarde, export), transactions et vrai tiroir mobile. Découverte/typecheck ne valent pas exécution.
+2. Fiabiliser la lecture du programme fidélité : réponses périmées, résultat partiel et erreur actuellement masquée par un programme désactivé. Audit et critères dans docs/V2_REVIEW_2026-10-15.md ; travailler uniquement sur lecteurs/fixtures, sans attribution ni utilisation réelle de points.
+3. Auditer puis préparer les rapports automatiques serveur : erreurs, pagination, périodes civiles du salon ; contrôles Deno isolés indispensables avant changement Edge, aucun envoi réel.
+4. Les sept lots Clients sont préparés : stabilité, source commune, sauvegarde révisée, statistiques, recherche, export et historique paginé. Ne pas les refaire. Association des RDV au téléphone et anciens tickets sans lien restent des limites ; futur schéma éventuel nécessite une base jetable.
+5. Préparer un parcours fictif complet agenda → caisse → historique client → statistiques avec état partagé, pour remplacer les écrans de démonstration encore statiques. Préserver les composants communs/pastels et le même aperçu privé ; aucune connexion réelle.
+6. Poursuivre les validations isolées et critères de livraison de V2_RELEASE_STATUS.md. Aucun renommage commercial ni fonction redondante sans besoin démontré.
 
 ## Bloqués par prérequis
 - CI distante et publication supplémentaires : preuve actuelle d'absence de coût additionnel, sinon tests dans le runtime disponible et commits [skip ci].
@@ -112,3 +112,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Clients — historique détaillé
 - Lecture des rendez-vous propre à la fiche et paginée, indépendante des segments/mutations agenda ; horaires du salon et prestation favorite limitée aux RDV terminés. 258 unitaires, typecheck/builds réussis, lint 0 erreur/215 avertissements. Association par téléphone et tests navigateur/hébergés restent des limites explicites.
+
+## Fin du cycle Clients — 2026-10-15T14:40:25.360202+00:00
+- Sept lots sauvegardés, source 80e1349d60eb85694c165f5a4be519cf1d435f94 ; 258 unitaires, typecheck/builds réussis, lint 0 erreur/215 avertissements. 48 nouveaux cas navigateur non exécutés, aperçu inchangé.
+- Bail libéré ; prochain lot : lectures fidélité cohérentes et erreurs explicites sur données fictives. Limites et preuves détaillées dans le journal et le statut de livraison.

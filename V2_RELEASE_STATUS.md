@@ -6,14 +6,15 @@ This document separates machine-verified release guarantees from checks that sti
 
 ## Current prepared source — 15 October 2026
 
-Application source: `06d846510550e2c37af74a4dc932797cb0ce940b`. Six additional checkpoints cover payment funding statistics, complete salon transaction reads, report filters/text and POS cart confirmation. All are saved on V2 with `[skip ci]`.
+Application source: `80e1349d60eb85694c165f5a4be519cf1d435f94`. Seven additional client checkpoints cover stable detail reads/drafts, shared salon-scoped lists, revision-checked edits, complete statistics, search, bounded exports and independent appointment history. Saved on V2 with `[skip ci]`.
 
-- TypeScript passed; 189 unit tests passed in 25 files; normal build passed (8.76 s); standalone build passed (4.09 s) with VITE_PREVIEW_STANDALONE=true and VITE_PREVIEW_DEMO_ONLY=true.
-- Lint: 0 errors, 216 warnings. Diff reviewed and whitespace checks passed. No package, workflow, SQL or Edge Function changes in this cycle.
-- 42 newly prepared browser cases across the two cycles remain **unexecuted**. Discovery and fixture/spec typechecks are not browser validation. Connected provider/error/retry, email form and real mobile drawer also need integration coverage.
-- No hosted mutation, actual financial operation, email/SMS, remote CI or publication occurred. Unit cases use synthetic data and mocks only. Existing SQL/provider/CI gates below remain required at the exact eventual release commit.
+- TypeScript passed; 258 unit tests passed in 31 files; final normal build passed (9.13 s); standalone build passed (4.73 s) with VITE_PREVIEW_STANDALONE=true and VITE_PREVIEW_DEMO_ONLY=true. The final date/favorite-service UI adjustments were typechecked and built after the unit run.
+- Lint: 0 errors, 215 warnings. Full-cycle diff reviewed and whitespace checks passed. No package, workflow, SQL or Edge Function changes in this cycle.
+- 48 newly prepared browser cases across three cycles remain **unexecuted**. Discovery and fixture/spec typechecks are not browser validation. Connected providers, client editing/export, email form and real mobile drawer still need integration coverage.
+- No hosted mutation, actual financial operation, email/SMS, real client export, remote CI or publication occurred. Unit cases use synthetic data and mocks only. Existing SQL/provider/CI gates below remain required at the exact eventual release commit.
+- Appointment association still uses the current client phone; shared/changed phones and legacy unlinked transactions remain explicit limitations. Paging checks do not guarantee a cross-table transactional snapshot.
 - The same owner-private preview remains deployment `appgdep_6acf7158d7288191a2ace0a51208bac2`, source `740f8758eab36e5a30cf03a14f9f76dfe5605dd3`; this prepared source is not published there. Current cache/Sites cost prerequisites remain unresolved.
-- Next ready task: stabilize client-detail reads and preserve its editing draft, then salon-scoped client loading/errors. Audit criteria: docs/V2_REVIEW_2026-10-15.md.
+- Next free task: coherent loyalty reads, stale-response protection and visible errors, using only fixtures/mocks. Audit criteria: docs/V2_REVIEW_2026-10-15.md.
 
 The dated follow-ups below are historical checkpoint evidence; later checkpoints supersede their outstanding-task lists.
 
