@@ -36,3 +36,7 @@
 - Dernier code : 52220ffb195b357acefeac27ef2dd89968e177a2. Quatre checkpoints de développement, 46 minutes observées ; bail libéré.
 - Premier lot encore prêt : spécifier et tester strictement les callbacks natifs sur fixtures (origine/chemin autorisés, type de flux, doublons, démarrage/reprise), puis raccorder le pont App lorsque ses prérequis sont établis. Voir SESSION_AUDIT.md.
 - Garder ouverts les contrôles visuels des marges/clavier/menus et les essais iOS ; ne pas les cocher sur la base des tests unitaires ou de --list.
+
+## Cycle 2 en cours
+- [x] Contrat de callbacks PKCE strict et contrôleur indépendant : 42 tests synthétiques passants.
+- [ ] Raccorder démarrage à froid/appUrlOpen et cycle App sous configuration native explicite ; aucun callback hébergé ni schéma Apple enregistré.

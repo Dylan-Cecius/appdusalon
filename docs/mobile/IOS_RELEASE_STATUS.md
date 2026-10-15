@@ -11,6 +11,7 @@
 - Ergonomie : safe areas, clavier et navigation adaptés dans les sources ; 5 tests viewport passants. 8 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
 - Dernier checkpoint de code récupéré et vérifié : 52220ffb195b357acefeac27ef2dd89968e177a2 (2026-10-15T14:01:38.092Z).
 - Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; pont App, liens entrants et stockage natif non implémentés. Voir SESSION_AUDIT.md.
+- Callbacks natifs : parseur strict et contrôleur préparés, 42 tests ciblés passants ; raccordement App encore à réaliser.
 - Sources connectées : compilation isolée réussie (configuration .invalid, sortie supprimée) ; aucun backend connecté testé.
 - Compilation iOS / simulateur / iPhone réel : non réalisés.
 - Identifiant, signature et équipe Apple : non vérifiés.

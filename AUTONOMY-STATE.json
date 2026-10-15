@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T14-14-40-744Z",
-  "task": "P1 native callbacks and session lifecycle",
+  "task": "Raccorder les événements App aux callbacks PKCE et préparer la reprise",
   "started_at": "2026-10-15T14:14:40.744Z",
-  "last_checkpoint_at": "2026-10-15T14:14:40.744Z",
-  "lease_expires_at": "2026-10-15T15:29:40.744Z",
+  "last_checkpoint_at": "2026-10-15T14:21:10.326Z",
+  "lease_expires_at": "2026-10-15T15:36:10.326Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "P1 : préparer et tester les callbacks natifs stricts (démarrage/reprise), puis pont de visibilité unique et stockage adapté ; exécution visuelle/native toujours à réaliser.",
+  "next_task": "Installer App 8.1.2 verrouillé, intégrer les événements natifs sous configuration explicite et tester les courses démarrage/démontage.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "152 tests in 22 files passed; TypeScript passed",
@@ -26,7 +26,8 @@
     "browser_tests": "not run: WebKit host dependency installation denied by runtime permissions",
     "mobile_ergonomics": "safe areas and keyboard source prepared; 5 viewport tests passed; 8 browser cases discovered but not executed",
     "auth_session": "11 synthetic session/logout tests passed; no live backend or native authentication tested",
-    "connected_source_build": "passed with envFile:false and synthetic .invalid configuration; output deleted"
+    "connected_source_build": "passed with envFile:false and synthetic .invalid configuration; output deleted",
+    "native_callback_parser": "42 targeted synthetic tests passed; TypeScript passed; not yet wired to native events"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
