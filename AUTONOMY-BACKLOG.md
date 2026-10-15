@@ -143,3 +143,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Démonstration — état partagé intégré
 - Provider local unique, agenda et panier raccordés, catalogue/équipe communs ; persistance avant succès et erreurs visibles. 332 unitaires et typecheck/build standalone réussis. Clôture simulée et statistiques restent à réaliser, navigateur non exécuté.
+
+## Démonstration — caisse simulée confirmée
+- Ticket fictif en espèces/carte désormais confirmé localement, persistant et idempotent ; retrait de lignes/client facultatif. 346 unitaires, typecheck/build standalone réussis. Projections clients/statistiques et recette navigateur à poursuivre ; aucun paiement réel.

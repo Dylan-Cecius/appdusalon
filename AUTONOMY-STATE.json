@@ -4,10 +4,10 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-preview-2026-10-15T16-01-00Z",
-  "task": "Démonstration — état partagé intégré",
+  "task": "Démonstration — caisse simulée confirmée",
   "started_at": "2026-10-15T16:01:00Z",
-  "last_checkpoint_at": "2026-10-15T16:08:21.801192+00:00",
-  "lease_expires_at": "2026-10-15T17:18:21.801192+00:00",
+  "last_checkpoint_at": "2026-10-15T16:11:56.837136+00:00",
+  "lease_expires_at": "2026-10-15T17:21:56.837136+00:00",
   "last_application_commit": "8d54f1b2e0d3425972de378f4a259f3432171bcc",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",

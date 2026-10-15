@@ -1,4 +1,5 @@
-import { PreviewProvider, usePreview } from './preview/PreviewProvider';
+import PreviewPOS from './preview/PreviewPOS';
+import { PreviewProvider } from './preview/PreviewProvider';
 import { previewServices as services, previewMembers } from './preview/data';
 import PreviewAgenda from './components/agenda/PreviewAgenda';
 import { useMemo, useState } from 'react';
@@ -101,25 +102,6 @@ function Dashboard(){
   </div>
 }
 
-function POS(){
-  const {state, setState} = usePreview();
-  const cart = state.cart.lines;
-  const setCart = (action: (lines: typeof cart) => typeof cart) => {
-    try { setState(current => ({ ...current, cart: { ...current.cart, lines: action(current.cart.lines) } })); } catch { /* Provider displays the storage error. */ }
-  };
-  const total=cart.reduce((s,x)=>s+x.price,0);
-  return <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
-    <div><h1 className="text-3xl font-semibold">Caisse</h1><p className="mt-1 text-slate-500">Clique sur une prestation pour l’ajouter au ticket.</p>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{services.map(s=><button key={s.id} onClick={()=>setCart(c=>[...c,s])} className="rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"><div className="flex justify-between"><Scissors className="text-indigo-600"/><span className="font-semibold">{money(s.price)}</span></div><p className="mt-4 font-medium">{s.name}</p><p className="text-sm text-slate-500">{s.duration} min</p></button>)}</div>
-    </div>
-    <Card className="h-fit p-5 lg:sticky lg:top-6"><div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Ticket</h2><ReceiptText className="text-slate-400"/></div>
-      <div className="mt-4 min-h-48 space-y-2">{cart.length===0?<div className="flex h-44 flex-col items-center justify-center text-center text-slate-400"><ShoppingCart/><p className="mt-2 text-sm">Aucune prestation</p></div>:cart.map((x,i)=><div key={i} className="flex justify-between rounded-xl bg-slate-50 p-3 text-sm"><span>{x.name}</span><span className="font-medium">{money(x.price)}</span></div>)}</div>
-      <div className="mt-4 border-t pt-4"><div className="flex justify-between text-xl font-semibold"><span>Total</span><span>{money(total)}</span></div><div className="mt-4 grid grid-cols-2 gap-2"><button disabled={!cart.length} className="rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white disabled:opacity-40"><WalletCards className="mx-auto mb-1" size={18}/>Espèces</button><button disabled={!cart.length} className="rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white disabled:opacity-40"><CreditCard className="mx-auto mb-1" size={18}/>Carte</button></div>{cart.length>0&&<button onClick={()=>setCart(()=>[])} className="mt-2 w-full rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-50">Vider le ticket</button>}</div>
-    </Card>
-  </div>
-}
-
-
 function Clients(){const[q,setQ]=useState('');const data=clients.filter(c=>c.join(' ').toLowerCase().includes(q.toLowerCase()));return <div><div className="flex items-end justify-between"><div><h1 className="text-3xl font-semibold">Clients</h1><p className="mt-1 text-slate-500">327 clients enregistrés</p></div><button className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white"><Plus size={16} className="mr-1 inline"/>Ajouter</button></div><div className="relative mt-5 max-w-md"><Search className="absolute left-3 top-3 text-slate-400" size={18}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Rechercher un client..." className="w-full rounded-xl border bg-white py-2.5 pl-10 pr-3 outline-none focus:ring-2 focus:ring-indigo-200"/></div><Card className="mt-4 overflow-hidden"><div className="grid grid-cols-[1.4fr_1fr_.7fr_.7fr] bg-slate-50 p-3 text-xs font-medium uppercase tracking-wide text-slate-500"><span>Client</span><span>Téléphone</span><span>Visites</span><span>CA</span></div>{data.map(c=><div key={c[0]} className="grid grid-cols-[1.4fr_1fr_.7fr_.7fr] border-t p-4 text-sm"><span className="font-medium">{c[0]}</span><span className="text-slate-500">{c[1]}</span><span>{c[2]}</span><span className="font-medium">{c[3]}</span></div>)}</Card></div>}
 
 function SimpleTable({title,subtitle,rows,kind}:{title:string;subtitle:string;rows:string[][];kind:'service'|'product'|'team'}){return <div><div className="flex items-end justify-between"><div><h1 className="text-3xl font-semibold">{title}</h1><p className="mt-1 text-slate-500">{subtitle}</p></div><button className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white"><Plus size={16} className="mr-1 inline"/>Ajouter</button></div><Card className="mt-5 overflow-hidden">{rows.map((r,i)=><div key={i} className="flex items-center gap-4 border-b p-4 last:border-0"><div className="rounded-xl bg-indigo-50 p-2 text-indigo-600">{kind==='service'?<Scissors/>:kind==='product'?<Boxes/>:<UserRound/>}</div><div className="flex-1"><p className="font-medium">{r[0]}</p><p className="text-sm text-slate-500">{r.slice(1).join(' · ')}</p></div><ChevronRight className="text-slate-400" size={18}/></div>)}</Card></div>}
@@ -144,7 +126,7 @@ function PreviewShell(){
         <div className="md:hidden flex gap-2 overflow-x-auto border-b bg-white px-3 py-2">{nav.map(n=><button key={n.id} onClick={()=>setView(n.id)} className={'whitespace-nowrap rounded-full px-3 py-1.5 text-xs '+(view===n.id?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600')}>{n.label}</button>)}</div>
         <div className="p-4 md:p-7">
           {view==='dashboard'&&<Dashboard/>}
-          {view==='pos'&&<POS/>}
+          {view==='pos'&&<PreviewPOS/>}
           {view==='agenda'&&<PreviewAgenda/>}
           {view==='clients'&&<Clients/>}
           {view==='services'&&<SimpleTable title="Services" subtitle="Prestations proposées au salon" kind="service" rows={services.map(s=>[s.name,money(s.price),s.duration+' min'])}/>}
