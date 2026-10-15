@@ -429,10 +429,7 @@ const POSPage = () => {
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}
-                onCheckout={method => {
-                  handleCheckout(method);
-                  setIsCartOpen(false);
-                }}
+                onCheckout={handleCheckout}
               />
             </div>
           </DrawerContent>

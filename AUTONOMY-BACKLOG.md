@@ -56,3 +56,9 @@
 - [ ] Revoir le lot caisse sauvegardé : verrou synchrone anti-double-appui, panier conservé sans résultat identifié, contrôles désactivés pendant l’enregistrement. 11 tests ciblés et TypeScript passants ; compilation connectée isolée passante. Revue finale et recette d’intégration restantes.
 - [ ] Priorité suivante : isoler les alertes stock/journal après le RPC confirmé ; leur échec ne doit pas transformer une vente déjà enregistrée en échec à réessayer. Dédupliquer également réponse RPC/événement temps réel.
 - [ ] Fiche client : updateClient absorbe les échecs et handleSave ferme l’édition ; conserver les saisies et exiger confirmation avant fermeture.
+
+## Cycle 4 — checkpoint caisse 2026-10-15T15:25:33Z
+- [x] Brouillon 507f006 revu : traitement mobile partagé, prestataire transmis et panneau conservé jusqu’à confirmation ; échecs stock/journal séparés de la vente confirmée ; déduplication RPC/INSERT.
+- [x] 16 tests synthétiques ciblés, TypeScript et compilation source isolée passants ; recette UI/backend/native toujours restante.
+- [ ] Isoler les données de transaction lors d’un changement de session/salon et les retours asynchrones tardifs.
+- Prochaine priorité prête : confirmation d’édition de fiche client, puis périmètre des données de caisse.

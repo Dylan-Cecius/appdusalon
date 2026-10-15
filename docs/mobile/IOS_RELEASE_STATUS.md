@@ -36,3 +36,6 @@ Prochaine étape : parcours métier mobiles et recettes restantes. Le projet dé
 
 ## 2026-10-15T15:13:04Z — Brouillon caisse, validation partielle
 Verrou anti-double-appui et confirmation de résultat préparés. 11 tests ciblés, TypeScript et compilation connectée isolée passants. Revue finale et intégration UI non terminées : ne pas considérer ce lot comme validé. Arrêt anticipé après 255 secondes, budget de contexte épuisé ; détails dans le journal. Aucune nouvelle preuve native.
+
+## 2026-10-15T15:25:33Z — Caisse : brouillon revu et complété
+658 secondes observées depuis le début du cycle. Source caisse mobile corrigée (confirmation, prestataire, déduplication, suivi stock/journal indépendant). 16 tests ciblés, TypeScript et compilation source isolée passants. Le commit est celui de cette entrée ; la recette UI/backend/native reste manquante. Aucun changement au statut de compilation/signature/distribution Apple. Prochaine étape : édition client puis protection des réponses tardives.

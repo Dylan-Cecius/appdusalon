@@ -4,6 +4,7 @@ import { toast } from '@/components/ui/use-toast';
 import { toZonedTime } from 'date-fns-tz';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
+import { insertTransactionOnce, startTransactionFollowups } from '@/lib/transactionConfirmation';
 
 export interface Transaction {
   id: string;
@@ -104,7 +105,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
 
       const data = Array.isArray(rpcData) ? rpcData[0] : rpcData;
-      if (!data) throw new Error('Transaction non créée');
+      if (!data || typeof data.id !== 'string' || !data.id.trim()) throw new Error('Transaction non confirmée');
 
       const newTransaction: Transaction = {
         id: data.id,
@@ -116,48 +117,37 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         staffId: data.staff_id || undefined,
       };
 
-      setTransactions(prev => [newTransaction, ...prev]);
+      setTransactions(prev => insertTransactionOnce(prev, newTransaction));
 
-      const { data: lowStockProducts } = await supabase
-        .from('products' as any)
-        .select('id, name, current_stock, min_stock')
-        .in(
-          'id',
-          transaction.items
-            .filter(item => item.kind === 'product')
-            .map(item => item.id)
-        );
+      // The sale is confirmed. Stock warnings and the activity journal are best effort;
+      // their latency/failure must not invite the cashier to record the same sale again.
+      startTransactionFollowups({
+        checkStock: async () => {
+          const productIds = transaction.items.filter(item => item.kind === 'product').map(item => item.id);
+          if (!productIds.length) return;
+          const { data: products, error: stockError } = await supabase
+            .from('products' as any)
+            .select('id, name, current_stock, min_stock')
+            .eq('salon_id', salonId)
+            .in('id', productIds);
+          if (stockError) throw stockError;
+          const alerts = (products || [])
+            .filter((product: any) => product.current_stock <= product.min_stock)
+            .map((product: any) => `${product.name} (${product.current_stock} restant${product.current_stock > 1 ? 's' : ''})`);
+          if (alerts.length) toast({ title: '⚠️ Stock bas', description: alerts.join(', '), variant: 'destructive' });
+        },
+        logActivity: async () => {
+          const { error: logError } = await supabase.from('activity_logs' as any).insert({
+            salon_id: salonId,
+            user_id: user.id,
+            user_email: user.email || '',
+            action: 'TRANSACTION_CREATED',
+            details: { amount: newTransaction.totalAmount, items: newTransaction.items.map(item => item.name).join(', ') },
+          });
+          if (logError) throw logError;
+        },
+      }, (task, error) => console.error(`Transaction confirmed; ${task} failed:`, error));
 
-      const alerts = (lowStockProducts || [])
-        .filter((product: any) => product.current_stock <= product.min_stock)
-        .map((product: any) =>
-          `${product.name} (${product.current_stock} restant${product.current_stock > 1 ? 's' : ''})`
-        );
-
-      if (alerts.length > 0) {
-        toast({
-          title: "⚠️ Stock bas",
-          description: alerts.join(', '),
-          variant: "destructive",
-        });
-      }
-
-      const { data: salonIdData } = await supabase.rpc('get_user_salon_id', { _user_id: user.id });
-
-      // Log activity
-      try {
-        const clientName = transaction.items?.map(i => i.name).join(', ') || '';
-        await supabase.from('activity_logs' as any).insert({
-          salon_id: salonIdData,
-          user_id: user.id,
-          user_email: user.email || '',
-          action: 'TRANSACTION_CREATED',
-          details: { amount: transaction.totalAmount, items: clientName },
-        });
-      } catch (logError) {
-        console.error('Error logging transaction activity:', logError);
-      }
-      
       return newTransaction;
     } catch (error) {
       console.error('Error adding transaction:', error);
@@ -273,10 +263,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
             clientId: newRecord.client_id || undefined,
             staffId: newRecord.staff_id || undefined
           };
-          setTransactions(prev => {
-            if (prev.some(tx => tx.id === newTransaction.id)) return prev;
-            return [newTransaction, ...prev];
-          });
+          setTransactions(prev => insertTransactionOnce(prev, newTransaction));
         }
       )
       .on('postgres_changes',
