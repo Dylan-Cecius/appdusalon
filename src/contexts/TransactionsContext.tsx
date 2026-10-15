@@ -25,7 +25,7 @@ export interface Transaction {
 interface TransactionsContextType {
   transactions: Transaction[];
   loading: boolean;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => Promise<Transaction | undefined>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => Promise<Transaction>;
   deleteTransaction: (id: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
 }
@@ -91,14 +91,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         return newTransaction;
       }
 
-      if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté",
-          variant: "destructive"
-        });
-        return;
-      }
+      if (!user || !salonId) throw new Error('authentication_required');
 
       const { data: rpcData, error } = await (supabase as any).rpc('record_pos_transaction', {
         items_param: transaction.items,

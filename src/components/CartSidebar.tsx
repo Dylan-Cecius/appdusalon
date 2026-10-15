@@ -17,13 +17,15 @@ interface CartItem {
 }
 
 interface CartSidebarProps {
+  processing?: boolean;
+  error?: string | null;
   items: CartItem[];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemoveItem: (id: string) => void;
   onCheckout: (method: 'cash' | 'card', staffId?: string) => void;
 }
 
-const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: CartSidebarProps) => {
+const CartSidebar = ({ processing = false, error, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartSidebarProps) => {
   const { activeStaff } = useStaff();
   const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -34,7 +36,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
 
   if (items.length === 0) {
     return (
-      <Card className="p-6 h-full bg-card">
+      <Card className="p-6 h-full bg-card" aria-busy={processing}>
         <div className="text-center text-muted-foreground">
           <div className="mb-4">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3 hover:scale-105 transition-transform duration-300 hover:bg-muted/80">
@@ -49,7 +51,9 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
   }
 
   return (
-    <Card className="p-6 h-full bg-card">
+    <Card className="p-6 h-full bg-card" aria-busy={processing}>
+      {processing && <p role="status" className="mb-3 text-sm text-muted-foreground">Enregistrement en cours…</p>}
+      {error && <p role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
       <h2 className="text-xl font-bold mb-4 text-primary">Commande en cours</h2>
       
       <div className="flex-1 space-y-3 mb-6">
@@ -73,6 +77,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
                 <Button
                   variant="ghost"
                   size="sm"
+                  disabled={processing}
                   onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                   className="h-7 w-7 p-0 hover:bg-primary/10 hover:scale-110 active:scale-95 transition-all duration-200"
                 >
@@ -83,7 +88,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
                   variant="ghost"
                   size="sm"
                   onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                  disabled={item.kind === 'product' && item.stock !== undefined && item.quantity >= item.stock}
+                  disabled={processing || (item.kind === 'product' && item.stock !== undefined && item.quantity >= item.stock)}
                   className="h-7 w-7 p-0 hover:bg-primary/10 hover:scale-110 active:scale-95 transition-all duration-200"
                 >
                   +
@@ -92,6 +97,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
               <Button
                 variant="ghost"
                 size="sm"
+                disabled={processing}
                 onClick={() => onRemoveItem(item.id)}
                 className="h-8 w-8 p-0 hover:scale-110 active:scale-95 transition-all duration-200"
               >
@@ -121,7 +127,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
             <Users className="h-4 w-4" />
             Prestataire (optionnel)
           </label>
-          <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+          <Select disabled={processing} value={selectedStaffId} onValueChange={setSelectedStaffId}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un prestataire" />
             </SelectTrigger>
@@ -144,6 +150,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
         
         <div className="grid grid-cols-2 gap-3">
           <Button 
+            disabled={processing}
             onClick={() => onCheckout('cash', selectedStaffId === 'none' ? undefined : selectedStaffId)}
             className="bg-pos-cash hover:bg-pos-cash/90 text-pos-success-foreground flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"
           >
@@ -151,6 +158,7 @@ const CartSidebar = ({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
             Cash
           </Button>
           <Button 
+            disabled={processing}
             onClick={() => onCheckout('card', selectedStaffId === 'none' ? undefined : selectedStaffId)}
             className="bg-pos-card hover:bg-pos-card/90 text-white flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 hover:shadow-lg"
           >

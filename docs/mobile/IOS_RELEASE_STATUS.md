@@ -33,3 +33,6 @@ Ne jamais présenter une étape non réalisée comme terminée et ne pas calcule
 Huit checkpoints sur la branche iOS, 49 min 13 s observées. Sources natives opt-in et ergonomie préparées ; preuves détaillées dans AUTONOMY-LOG.md. Le bail est libéré. La suite complète la plus récente compte 253 tests passants ; les 20 tests ciblés de flux ont ensuite été repassés avec deux cas supplémentaires. Aucun total global extrapolé.
 
 Prochaine étape : parcours métier mobiles et recettes restantes. Le projet démo généré/synchronisé reste distinct d’une build iOS, d’une build signée, d’une distribution TestFlight et d’une acceptation Apple : aucune de ces quatre dernières étapes n’a été réalisée.
+
+## 2026-10-15T15:13:04Z — Brouillon caisse, validation partielle
+Verrou anti-double-appui et confirmation de résultat préparés. 11 tests ciblés, TypeScript et compilation connectée isolée passants. Revue finale et intégration UI non terminées : ne pas considérer ce lot comme validé. Arrêt anticipé après 255 secondes, budget de contexte épuisé ; détails dans le journal. Aucune nouvelle preuve native.

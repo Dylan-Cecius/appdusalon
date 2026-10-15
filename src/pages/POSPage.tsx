@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { runCartCheckout } from '@/lib/cartCheckout';
+import { useState, useMemo, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Euro, Receipt, Scissors, ClipboardList, Plus, Package, Boxes } from 'lucide-react';
@@ -33,6 +34,9 @@ interface CartItem {
 }
 
 const POSPage = () => {
+  const checkoutLock = useRef(false);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
@@ -67,6 +71,7 @@ const POSPage = () => {
   }, [transactions]);
 
   const addToCart = (service: any) => {
+    if (checkoutLock.current) return;
     setCartItems(prev => {
       const existing = prev.find(item => item.id === service.id);
       if (existing) {
@@ -91,6 +96,7 @@ const POSPage = () => {
   };
 
   const addProductToCart = (product: (typeof products)[number]) => {
+    if (checkoutLock.current) return;
     if (product.current_stock <= 0) {
       toast({
         title: 'Rupture de stock',
@@ -135,6 +141,7 @@ const POSPage = () => {
   };
 
   const updateQuantity = (id: string, quantity: number) => {
+    if (checkoutLock.current) return;
     if (quantity <= 0) {
       removeFromCart(id);
       return;
@@ -145,27 +152,21 @@ const POSPage = () => {
   };
 
   const removeFromCart = (id: string) => {
+    if (checkoutLock.current) return;
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
   const handleCheckout = async (method: 'cash' | 'card', staffId?: string) => {
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    if (checkoutLock.current) return;
+    setCheckingOut(true); setCheckoutError(null);
     try {
-      await addTransaction({
-        items: cartItems,
-        totalAmount: total,
-        paymentMethod: method,
-        staffId,
+      await runCartCheckout(checkoutLock, {
+        items: cartItems, paymentMethod: method, staffId, record: addTransaction,
+        confirmed: () => { setCartItems([]); setIsCartOpen(false); },
       });
-
-      setCartItems([]);
-      setIsCartOpen(false);
-    } catch (error) {
-      console.error('Checkout failed:', error);
-    }
+    } catch {
+      setCheckoutError('Enregistrement non confirmé. Le panier est conservé. Vérifiez l’historique avant de réessayer pour éviter un doublon.');
+    } finally { setCheckingOut(false); }
   };
 
   const handleAddService = async (e: React.FormEvent) => {
@@ -405,7 +406,7 @@ const POSPage = () => {
         {!isMobile && (
           <div className="">
             <div className="sticky top-20 rounded-2xl">
-              <CartSidebar
+              <CartSidebar processing={checkingOut} error={checkoutError}
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}
@@ -418,13 +419,13 @@ const POSPage = () => {
 
       {/* Mobile Cart Drawer */}
       {isMobile && (
-        <Drawer open={isCartOpen} onOpenChange={setIsCartOpen}>
+        <Drawer open={isCartOpen} onOpenChange={open => { if (!checkoutLock.current) setIsCartOpen(open); }}>
           <DrawerContent className="max-h-[80vh]">
             <DrawerHeader>
               <DrawerTitle>Panier</DrawerTitle>
             </DrawerHeader>
             <div className="px-4 pb-4">
-              <CartSidebar
+              <CartSidebar processing={checkingOut} error={checkoutError}
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}

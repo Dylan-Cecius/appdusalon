@@ -51,3 +51,8 @@
 - Huit checkpoints indépendants ; dernier code 2078b4178d9618b9513e8e60a79f4c2f7410ed5d. Durée observée : 49 min 13 s ; bail libéré.
 - Prochain lot gratuit prêt : audit et corrections des parcours mobiles agenda/clients/caisse (sélecteur de date, déplacement sans drag obligatoire, formulaires et confirmation des mutations), avec fixtures synthétiques. Reprendre le code courant et sélectionner un défaut concret avant chaque correction.
 - Conserver ouverts les 20 cas WebKit non exécutés et la recette native des liens/UIScene/clavier ; absence de Xcode, stockage Keychain et backend isolé toujours non résolue. La préparation opt-in ne constitue pas un candidat connecté distribuable.
+
+## Cycle 3 — brouillon à reprendre
+- [ ] Revoir le lot caisse sauvegardé : verrou synchrone anti-double-appui, panier conservé sans résultat identifié, contrôles désactivés pendant l’enregistrement. 11 tests ciblés et TypeScript passants ; compilation connectée isolée passante. Revue finale et recette d’intégration restantes.
+- [ ] Priorité suivante : isoler les alertes stock/journal après le RPC confirmé ; leur échec ne doit pas transformer une vente déjà enregistrée en échec à réessayer. Dédupliquer également réponse RPC/événement temps réel.
+- [ ] Fiche client : updateClient absorbe les échecs et handleSave ferme l’édition ; conserver les saisies et exiger confirmation avant fermeture.

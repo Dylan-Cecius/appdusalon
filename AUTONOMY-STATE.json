@@ -2,19 +2,19 @@
   "schema_version": 1,
   "project": "AppDuSalon V2 iOS / App Store",
   "branch": "v2/ios-appstore",
-  "status": "running",
-  "run_id": "ios-2026-10-15T15-08-49Z",
-  "task": "Audit des parcours métier mobiles : agenda, clients, caisse",
-  "started_at": "2026-10-15T15:08:49Z",
-  "last_checkpoint_at": "2026-10-15T15:08:49Z",
-  "lease_expires_at": "2026-10-15T16:23:49.000Z",
+  "status": "idle",
+  "run_id": null,
+  "task": null,
+  "started_at": null,
+  "last_checkpoint_at": "2026-10-15T15:13:04Z",
+  "lease_expires_at": null,
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Vérifier dates/fuseau et mutations tactiles sur fixtures, corriger puis enregistrer chaque lot.",
+  "next_task": "Revoir le brouillon caisse de ce checkpoint ; isoler les échecs auxiliaires après RPC confirmé et dédupliquer RPC/realtime, puis fiche client.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "253 tests in 28 files passed; TypeScript passed",
@@ -29,7 +29,8 @@
     "connected_source_build": "passed after sheet changes with synthetic .invalid configuration; no backend/native runtime",
     "native_callback_parser": "101 synthetic native tests passed; strict correlated fragment errors; TypeScript passed",
     "native_session_lifecycle": "12 synthetic activity/ownership tests passed; TypeScript and isolated connected build passed; no iOS runtime tested",
-    "native_pending_flow": "20 targeted tests passed after immediate-session cleanup; TypeScript passed"
+    "native_pending_flow": "20 targeted tests passed after immediate-session cleanup; TypeScript passed",
+    "checkout_draft": "11 targeted tests, typecheck and isolated connected build passed; final review and integration UI pending"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -38,8 +39,9 @@
     "timezone": "Etc/GMT-1"
   },
   "last_application_commit": "2078b4178d9618b9513e8e60a79f4c2f7410ed5d",
-  "last_run_id": "ios-2026-10-15T14-14-40-744Z",
-  "last_run_started_at": "2026-10-15T14:14:40.744Z",
-  "last_run_finished_at": "2026-10-15T15:03:54Z",
-  "last_run_duration_seconds": 2953
+  "last_run_id": "ios-2026-10-15T15-08-49Z",
+  "last_run_started_at": "2026-10-15T15:08:49Z",
+  "last_run_finished_at": "2026-10-15T15:13:04Z",
+  "last_run_duration_seconds": 255,
+  "draft_checkpoint": "Current Git commit containing this state: checkout guard draft, final review incomplete"
 }
