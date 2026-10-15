@@ -1,3 +1,4 @@
+import { persistAppointmentContactUpdate, AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import { useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -6,6 +7,7 @@ import { useAuth } from './useAuth';
 import { usePermissions } from './usePermissions';
 
 const appointmentErrorDescription = (error: unknown, action: 'add' | 'update') => {
+  if (error instanceof AppointmentContactError) return error.message;
   const message =
     error instanceof Error
       ? error.message
@@ -310,33 +312,11 @@ export const useSupabaseAppointments = () => {
     await fetchAppointments();
   };
 
-  const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
+  const updateAppointment = async (id: string, updates: AppointmentContactUpdates, original: Appointment) => {
     try {
-      const updateData: any = {};
-      if (updates.clientName) updateData.client_name = updates.clientName;
-      if (updates.clientPhone) updateData.client_phone = updates.clientPhone;
-      if (updates.services) updateData.services = updates.services;
-      if (updates.startTime) updateData.start_time = updates.startTime.toISOString();
-      if (updates.endTime) updateData.end_time = updates.endTime.toISOString();
-      if (updates.status) updateData.status = updates.status;
-      if (updates.totalPrice !== undefined) updateData.total_price = updates.totalPrice;
-      if (updates.notes !== undefined) updateData.notes = updates.notes;
-      if (updates.isPaid !== undefined) updateData.is_paid = updates.isPaid;
-      if (updates.barberId !== undefined) updateData.barber_id = updates.barberId;
-      if (updates.staffId !== undefined) updateData.staff_id = updates.staffId;
-
-      const { error } = await supabase
-        .from('appointments' as any)
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setAppointments(prev => 
-        prev.map(apt => apt.id === id ? { ...apt, ...updates } : apt)
-      );
-
-      toast({ title: "Succès", description: "Rendez-vous mis à jour avec succès" });
+      if (!user || !salonId || original.id !== id) throw new AppointmentContactError('Actualisez l’agenda avant de modifier ce rendez-vous.');
+      const saved = await persistAppointmentContactUpdate(supabase, salonId, original, updates);
+      setAppointments(prev => prev.map(apt => apt.id === id ? { ...apt, ...saved } : apt));
     } catch (error) {
       console.error('Error updating appointment:', error);
       toast({

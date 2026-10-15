@@ -36,3 +36,9 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Règles de fiche centralisées : historique en lecture seule ; aucun encaissement/achèvement pour terminé/annulé/absent, paiement en attente/remboursé/expiré. Acompte préservé, solde uniquement pour dossier pertinent, prépaiement sans nouvel encaissement. Badge partagé avec l’agenda.
 - 113 tests unitaires et typecheck réussis ; build standalone réussi. Dix scénarios navigateur de fiche préparés (20 cas ordinateur/mobile), toujours non exécutés.
 - Prochaine priorité : mise à jour des coordonnées et détection de faux succès côté persistance.
+
+## Checkpoint du 15 octobre — sauvegarde, lot 3
+- Lot 2 sauvegardé : b5867d1a19500518ce925c59e8e1f2561469f0e8.
+- Coordonnées : effacement du téléphone/notes transmis, champs de réservation et paiement exclus du formulaire, mise à jour conditionnée au salon et à la révision de la fiche ouverte, absence de ligne retournée traitée comme conflit. Démo alignée sur le contrôle de concurrence.
+- 119 tests unitaires et typecheck réussis ; build standalone réussi. Six tests de persistance avec faux client Supabase ; aucun appel hébergé.
+- À poursuivre : réponses d’annulation idempotentes et montants après règlement confirmé.

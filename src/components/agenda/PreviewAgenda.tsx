@@ -1,3 +1,4 @@
+import { appointmentContactPatch, AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import { appointmentMoveIssue, moveAppointmentDraft } from '@/lib/appointmentMove';
 import CreateAppointmentDialog from './CreateAppointmentDialog';
 import { appointmentDraftSeries, appointmentDraftConflict } from '@/lib/appointmentDraft';
@@ -6,7 +7,7 @@ import { useEffect, useRef, useState, type SetStateAction } from 'react';
 import { addDays, format } from 'date-fns';
 import { RotateCcw } from 'lucide-react';
 import type { Appointment, AppointmentSegment } from '@/data/appointments';
-import { appointmentOccupancyOverlaps, getAppointmentSegments, shiftAppointmentSegments } from '@/lib/appointmentSegments';
+import { appointmentOccupancyOverlaps } from '@/lib/appointmentSegments';
 import { findWaitlistSlots, waitlistAppointment, type WaitlistService } from '@/lib/waitlistSlots';
 import type { Staff } from '@/hooks/useStaff';
 import type { DaySchedule } from '@/hooks/useOpeningHours';
@@ -109,17 +110,20 @@ export default function PreviewAgenda() {
   const setWaitlist = (action: SetStateAction<BookingWaitlistEntry[]>) => setState(current => ({ ...current, waitlist: typeof action === 'function' ? action(current.waitlist) : action }));
   const [revision, setRevision] = useState(0);
   useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* Session remains usable without persistence. */ } }, [state]);
-  const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
-    const original = appointments.find(item => item.id === id);
-    if (!original) throw new Error('Rendez-vous introuvable');
-    const next = { ...original, ...updates };
-    if (getAppointmentSegments(original).length > 0) {
-      const duration = new Date(original.endTime).getTime() - new Date(original.startTime).getTime();
-      if (new Date(next.endTime).getTime() - new Date(next.startTime).getTime() !== duration) throw new Error('Conservez la durée des étapes de la prestation.');
-      next.segments = shiftAppointmentSegments(original, new Date(next.startTime));
+  const updateAppointment = async (id: string, updates: AppointmentContactUpdates, original: Appointment) => {
+    const current = currentState.current;
+    const target = current.appointments.find(item => item.id === id);
+    if (!target || target !== original || !['scheduled', 'pending_payment'].includes(target.status)) {
+      throw new AppointmentContactError('Ce rendez-vous a changé. Copiez vos saisies et rouvrez la fiche.');
     }
-    validateAppointment(next, appointments, timeOff);
-    setAppointments(current => current.map(item => item.id === id ? next : item));
+    const patch = appointmentContactPatch(updates);
+    const saved = { ...target,
+      ...(patch.client_name !== undefined ? { clientName: patch.client_name } : {}),
+      ...(patch.client_phone !== undefined ? { clientPhone: patch.client_phone } : {}),
+      ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+    };
+    const next = { ...current, appointments: current.appointments.map(item => item.id === id ? saved : item) };
+    currentState.current = next; setState(next);
   };
 
   return <TooltipProvider>

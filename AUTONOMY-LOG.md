@@ -41,3 +41,12 @@
 - Commandes : npm run typecheck (succès), npm test (113/113, dont 12 nouveaux tests de politique), VITE_PREVIEW_STANDALONE=true VITE_PREVIEW_DEMO_ONLY=true npm run build (succès), git diff --check (succès). Diff et règles financières existantes relus.
 - Playwright --list : 20 cas découverts pour la fixture (10 scénarios sur 2 formats), sans lancer serveur ni navigateur. Ceci n’est PAS une exécution de recette. Quatre scénarios de statuts ajoutés au lot précédent.
 - Limites inchangées : navigateur, CI distante et publication non réalisés ; ancien aperçu conservé. Prochain lot : coordonnées/sauvegarde concurrente. Bail renouvelé.
+
+## 2026-10-15T12:15:34Z — checkpoint 3 : coordonnées et concurrence
+- Lot 2 confirmé : b5867d1a19500518ce925c59e8e1f2561469f0e8. Durée cumulée : 16.1 min.
+- Défauts établis : test de vérité sur clientPhone omettant une chaîne vide ; update sans select ni révision annonçant un succès pour zéro ligne ; toast de succès doublé entre hook et modal.
+- Correction : patch de coordonnées explicite, nom normalisé, téléphone/notes effaçables, select de confirmation avec filtre salon/id/updated_at et statut actif. La révision vient de la fiche ouverte, pas d’un état rafraîchi qui pourrait masquer un conflit. Erreur visible avec conservation du brouillon. Démo : modification des seules coordonnées sans revalider à tort les horaires et étapes inchangés. Toast de succès unique.
+- Commit : « fix(agenda): confirm contact writes and reject stale forms [skip ci] », parent b5867d1a19500518ce925c59e8e1f2561469f0e8.
+- Commandes : npm run typecheck (succès), npm test (119/119, 16 fichiers), VITE_PREVIEW_STANDALONE=true VITE_PREVIEW_DEMO_ONLY=true npm run build (succès), git diff --check (succès). Test ciblé appointmentContactUpdate rejoué après ajout du cas de protection des champs financiers : 6/6. Aucun test SQL ni backend réel : aucune migration modifiée.
+- Les 6 nouveaux tests utilisent uniquement un client de requête fictif : effacement, entrée invalide, filtres et retour serveur, zéro ligne, erreur serveur, prérequis absents. Ils ne constituent pas une validation RLS hébergée. Diff relu ; import type du client Supabase n’ajoute pas de connexion à la démo.
+- Limites de recette navigateur/CI/coût/publication inchangées. Prochain lot : interprétation des réponses d’annulation et d’encaissement. Bail renouvelé.

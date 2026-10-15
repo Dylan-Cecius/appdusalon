@@ -1,3 +1,4 @@
+import { AppointmentContactError, type AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import { appointmentPalette } from '@/lib/appointmentPalette';
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -25,7 +26,7 @@ interface EditAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: Appointment | null;
-  onUpdate: (id: string, updates: Partial<Appointment>) => Promise<void> | void;
+  onUpdate: (id: string, updates: AppointmentContactUpdates) => Promise<void> | void;
   onCancel: (id: string) => Promise<unknown>;
   onNoShow: (id: string) => Promise<unknown>;
   onPay: (id: string, method: 'cash' | 'card') => Promise<unknown>;
@@ -40,7 +41,7 @@ const EditAppointmentModal = ({
   onNoShow,
   onPay, onClientHistory, onReschedule, serviceColors = {}
 }: EditAppointmentModalProps) => {
-  const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment>>({});
+  const [editedAppointment, setEditedAppointment] = useState<AppointmentContactUpdates>({});
   const [saving, setSaving] = useState(false);
   const pendingAction = useRef(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -75,8 +76,8 @@ const EditAppointmentModal = ({
         await operation();
         if (saved) toast({ title: 'Succès', description: 'Rendez-vous mis à jour avec succès' });
         onClose();
-      } catch {
-        setActionError(errorMessage);
+      } catch (error) {
+        setActionError(error instanceof AppointmentContactError ? error.message : errorMessage);
       } finally {
         setSaving(false);
       }

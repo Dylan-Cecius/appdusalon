@@ -1,3 +1,4 @@
+import type { AppointmentContactUpdates } from '@/lib/appointmentContactUpdate';
 import MoveAppointmentDialog from './MoveAppointmentDialog';
 import { appointmentMoveIssue, moveAppointmentDraft } from '@/lib/appointmentMove';
 import AgendaClientPanel from './AgendaClientPanel';
@@ -174,7 +175,7 @@ export type AgendaWorkspaceProps = {
   addWaitlistEntry?: (entry: WaitlistRequest) => Promise<void>;
   bookWaitlistEntry?: (entry: BookingWaitlistEntry, slot: WaitlistSlot) => Promise<void>;
   waitlistTimezone?: string;
-  updateAppointment: (id: string, updates: Partial<Appointment>) => Promise<void>;
+  updateAppointment: (id: string, updates: AppointmentContactUpdates, original: Appointment) => Promise<void>;
   markAsPaid: (id: string, method: 'cash' | 'card') => Promise<void>;
   cancelAppointment: (id: string, action: 'cancel' | 'no_show') => Promise<void>;
   refreshAppointments: () => Promise<void>;
@@ -1058,7 +1059,7 @@ export const AgendaWorkspace = ({ moveAppointment, availabilityLoading = false, 
             setIsEditModalOpen(false); setSelectedAppointment(null); setClientsOpen(true);
           }}
           onUpdate={async (id, updates) => {
-            await updateAppointment(id, updates);
+            await updateAppointment(id, updates, selectedAppointment);
             await refreshAppointments();
           }}
           onCancel={id => cancelAppointment(id, 'cancel')}
