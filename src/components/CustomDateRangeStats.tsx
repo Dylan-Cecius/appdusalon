@@ -1,3 +1,6 @@
+import { paymentAmountFor, paymentReport, paymentReportFilters, paymentReportExplanation, type PaymentFilter } from '@/lib/paymentReports';
+import { transactionSalonDay } from '@/lib/paymentStats';
+import { formatInTimeZone } from 'date-fns-tz';
 import { paymentMethodLabel } from '@/lib/transactions';
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
@@ -12,7 +15,7 @@ import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { usePermissions } from '@/hooks/usePermissions';
 
-type PaymentFilter = 'all' | 'cash' | 'card';
+
 
 const CustomDateRangeStats = () => {
   const { transactions } = useSupabaseTransactions();
@@ -28,15 +31,15 @@ const CustomDateRangeStats = () => {
     if (!appliedRange) return null;
 
     const filteredTransactions = transactions.filter(transaction => {
-      const date = new Date(transaction.transactionDate);
-      const matchesDate = date >= appliedRange.start && date <= appliedRange.end;
+      const day = transactionSalonDay(transaction);
+      const matchesDate = day >= format(appliedRange.start, 'yyyy-MM-dd') && day <= format(appliedRange.end, 'yyyy-MM-dd');
       const matchesPayment =
-        paymentFilter === 'all' || transaction.paymentMethod === paymentFilter;
+        paymentFilter === 'all' || paymentAmountFor(transaction, paymentFilter) > 0;
       return matchesDate && matchesPayment;
     });
 
     const filteredAppointments = appointments.filter(appointment => {
-      const date = new Date(appointment.startTime);
+      const day = formatInTimeZone(appointment.startTime, 'Europe/Brussels', 'yyyy-MM-dd');
       const belongsToViewer =
         permissions.isAdmin ||
         (permissions.employeeId && appointment.staffId === permissions.employeeId);
@@ -44,8 +47,8 @@ const CustomDateRangeStats = () => {
       return (
         belongsToViewer &&
         appointment.status !== 'cancelled' &&
-        date >= appliedRange.start &&
-        date <= appliedRange.end
+        day >= format(appliedRange.start, 'yyyy-MM-dd') &&
+        day <= format(appliedRange.end, 'yyyy-MM-dd')
       );
     });
 
@@ -56,10 +59,7 @@ const CustomDateRangeStats = () => {
       transaction => !transaction.clientId
     ).length;
 
-    const revenue = filteredTransactions.reduce(
-      (sum, transaction) => sum + transaction.totalAmount,
-      0
-    );
+    const revenue = paymentReport(filteredTransactions, paymentFilter).totalAmount;
 
     return {
       revenue,
@@ -101,7 +101,7 @@ const CustomDateRangeStats = () => {
         <div>
           <h3 className="text-lg font-semibold">Période personnalisée</h3>
           <p className="text-xs text-muted-foreground">
-            Le CA correspond uniquement aux encaissements réellement enregistrés en caisse.
+            {paymentReportExplanation}
           </p>
         </div>
       </div>
@@ -136,9 +136,7 @@ const CustomDateRangeStats = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les paiements</SelectItem>
-              <SelectItem value="cash">Espèces</SelectItem>
-              <SelectItem value="card">Bancontact / Carte</SelectItem>
+              {paymentReportFilters.map(option => <SelectItem key={option.key} value={option.key}>{option.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -166,7 +164,7 @@ const CustomDateRangeStats = () => {
             <Card className="v2-kpi p-4 text-center">
               <Euro className="mx-auto mb-2 h-5 w-5 text-primary" />
               <p className="text-2xl font-bold">{periodData.revenue.toFixed(2)}€</p>
-              <p className="text-xs text-muted-foreground">CA encaissé</p>
+              <p className="text-xs text-muted-foreground">{paymentFilter === 'all' ? 'Montant des ventes' : 'Part du paiement sélectionné'}</p>
             </Card>
 
             <Card className="v2-kpi p-4 text-center">
@@ -190,7 +188,7 @@ const CustomDateRangeStats = () => {
 
           {periodData.transactions.length > 0 && (
             <div>
-              <h5 className="mb-3 font-medium">Derniers encaissements de la période</h5>
+              <h5 className="mb-3 font-medium">Dernières ventes de la période</h5>
               <div className="max-h-52 space-y-2 overflow-y-auto">
                 {periodData.transactions.slice(0, 30).map(transaction => (
                   <div
@@ -201,7 +199,7 @@ const CustomDateRangeStats = () => {
                       {format(new Date(transaction.transactionDate), 'dd/MM à HH:mm', { locale: fr })}
                     </span>
                     <div className="text-right">
-                      <p className="font-semibold">{transaction.totalAmount.toFixed(2)}€</p>
+                      <p className="font-semibold">{paymentAmountFor(transaction, paymentFilter).toFixed(2)}€</p>
                       <p className="text-xs text-muted-foreground">
                         {paymentMethodLabel[transaction.paymentMethod]}
                       </p>

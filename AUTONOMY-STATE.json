@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-2026-10-15T12-58-10-670Z",
-  "task": "Transactions partagées et lectures complètes ; suite rapports détaillés",
+  "task": "Rapports détaillés corrigés ; aperçu des rapports e-mail à aligner",
   "started_at": "2026-10-15T12:58:10.670Z",
-  "last_checkpoint_at": "2026-10-15T13:14:06.115395+00:00",
-  "lease_expires_at": "2026-10-15T14:29:06.115395+00:00",
-  "last_application_commit": "f4211939c421545467449217dc5e344b248959e7",
+  "last_checkpoint_at": "2026-10-15T13:21:00.855816+00:00",
+  "lease_expires_at": "2026-10-15T14:36:00.855816+00:00",
+  "last_application_commit": "475ca56ca27ba166064bda618eb7b71d14f5d7cd",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Corriger les rapports détaillés cash/card et leur total sur paiements mixtes/prépayés, sans envoi.",
+  "next_task": "Aligner la génération locale du rapport e-mail sur le calcul commun, sans envoi ni fournisseur.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",

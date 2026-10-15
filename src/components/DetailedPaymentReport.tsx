@@ -1,0 +1,263 @@
+import { dailyPaymentReports, sumPaymentReports, validReportRange, paymentReportFilters, paymentReportExplanation, type PaymentFilter } from '@/lib/paymentReports';
+import { toZonedTime } from 'date-fns-tz';
+import { useState, useMemo } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Calendar, Euro, Users, TrendingUp } from 'lucide-react';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import type { Transaction } from '@/lib/transactions';
+
+type PeriodType = 'daily' | 'weekly' | 'monthly' | 'custom';
+
+
+export const DetailedPaymentReport = ({ transactions }: { transactions: Transaction[] }) => {
+  const [periodType, setPeriodType] = useState<PeriodType>('daily');
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
+  const [selectedDate, setSelectedDate] = useState(format(toZonedTime(new Date(), 'Europe/Brussels'), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(toZonedTime(new Date(), 'Europe/Brussels'), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(toZonedTime(new Date(), 'Europe/Brussels'), 'yyyy-MM-dd'));
+
+  // Calculate date range based on period type
+  const dateRange = useMemo(() => {
+    const refDate = parseISO(selectedDate);
+
+    switch (periodType) {
+      case 'daily':
+        return {
+          start: startOfDay(refDate),
+          end: endOfDay(refDate)
+        };
+      case 'weekly':
+        return {
+          start: startOfWeek(refDate, { weekStartsOn: 1 }),
+          end: endOfWeek(refDate, { weekStartsOn: 1 })
+        };
+      case 'monthly':
+        return {
+          start: startOfMonth(refDate),
+          end: endOfMonth(refDate)
+        };
+      case 'custom':
+        return {
+          start: startOfDay(parseISO(startDate)),
+          end: endOfDay(parseISO(endDate))
+        };
+    }
+  }, [periodType, selectedDate, startDate, endDate]);
+
+  const validRange = validReportRange(dateRange.start, dateRange.end);
+  const dailyBreakdown = useMemo(() => dailyPaymentReports(transactions, dateRange.start, dateRange.end, paymentFilter), [dateRange, transactions, paymentFilter]);
+  const totals = useMemo(() => sumPaymentReports(dailyBreakdown), [dailyBreakdown]);
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      {/* Filters Card */}
+      <Card className="v2-panel p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <h3 className="text-base sm:text-lg font-semibold">Rapports Détaillés</h3>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          {/* Period Type */}
+          <div className="w-full">
+            <Label htmlFor="periodType" className="text-sm sm:text-base">Période</Label>
+            <Select value={periodType} onValueChange={(value: PeriodType) => setPeriodType(value)}>
+              <SelectTrigger id="periodType" className="w-full min-h-[44px]">
+                <SelectValue placeholder="Sélectionner..." />
+              </SelectTrigger>
+              <SelectContent className="bg-background border z-50">
+                <SelectItem value="daily">Journalier</SelectItem>
+                <SelectItem value="weekly">Hebdomadaire</SelectItem>
+                <SelectItem value="monthly">Mensuel</SelectItem>
+                <SelectItem value="custom">Personnalisé</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date Selector for daily/weekly/monthly */}
+          {periodType !== 'custom' && (
+            <div className="w-full">
+              <Label htmlFor="selectedDate" className="flex items-center gap-2 text-sm sm:text-base">
+                <Calendar className="h-4 w-4" />
+                Date de référence
+              </Label>
+              <Input
+                id="selectedDate"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full min-h-[44px]"
+              />
+            </div>
+          )}
+
+          {/* Custom Date Range */}
+          {periodType === 'custom' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="w-full">
+                <Label htmlFor="startDate" className="text-sm sm:text-base">Date de début</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full min-h-[44px]"
+                />
+              </div>
+              <div className="w-full">
+                <Label htmlFor="endDate" className="text-sm sm:text-base">Date de fin</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate}
+                  className="w-full min-h-[44px]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Payment Filter */}
+          <div className="w-full">
+            <Label className="mb-3 block text-sm sm:text-base">Moyen de paiement</Label>
+            <RadioGroup
+              value={paymentFilter}
+              onValueChange={(value: PaymentFilter) => {
+                setPaymentFilter(value);
+              }}
+              className="flex flex-wrap gap-4"
+            >
+              {paymentReportFilters.map(option => <div key={option.key} className="flex items-center space-x-2">
+                <RadioGroupItem value={option.key} id={`detailed-${option.key}`} className="min-h-[24px] min-w-[24px]" />
+                <Label htmlFor={`detailed-${option.key}`}>{option.label}</Label>
+              </div>)}
+            </RadioGroup>
+          </div>
+        </div>
+      </Card>
+
+      <p className="text-sm text-muted-foreground">{paymentReportExplanation}</p>
+      {!validRange && <p role="alert" className="text-sm text-destructive">Choisissez des dates valides, avec la fin après le début.</p>}
+      {validRange && <>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <Card className="p-4 sm:p-6 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="p-3 rounded-lg bg-accent/10 text-accent-foreground">
+              <Euro className="h-6 w-6 sm:h-8 sm:w-8" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">
+            {totals.totalAmount.toFixed(2)}€
+          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{paymentFilter === 'all' ? 'Montant des ventes' : 'Part du paiement sélectionné'}</p>
+        </Card>
+
+        <Card className="p-4 sm:p-6 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="p-3 rounded-lg bg-primary/10 text-primary">
+              <Users className="h-6 w-6 sm:h-8 sm:w-8" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">
+            {totals.transactions}
+          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Total Transactions</p>
+        </Card>
+
+        {paymentFilter === 'all' && (
+          <Card className="p-4 sm:p-6 text-center sm:col-span-2 md:col-span-1">
+            <div className="flex justify-center mb-3">
+              <div className="p-3 rounded-lg bg-secondary/10 text-secondary-foreground">
+                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-base sm:text-lg font-semibold text-primary">
+                Espèces: {totals.cashAmount.toFixed(2)}€
+              </p>
+              <p className="text-base sm:text-lg font-semibold text-primary">
+                Carte: {totals.cardAmount.toFixed(2)}€
+              </p>
+            </div>
+            <p className="text-sm">Prépayé : {totals.prepaidAmount.toFixed(2)}€</p>
+            <p className="text-sm">Non renseigné : {totals.unallocatedAmount.toFixed(2)}€</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">Répartition Paiements</p>
+          </Card>
+        )}
+      </div>
+
+      {/* Daily Breakdown Table */}
+      <Card className="p-4 sm:p-6">
+        <h4 className="text-base sm:text-lg font-semibold mb-4">
+          Détail Jour par Jour
+          <span className="text-xs sm:text-sm text-muted-foreground block sm:inline sm:ml-2 mt-1 sm:mt-0">
+            ({format(dateRange.start, 'dd/MM/yyyy', { locale: fr })} - {format(dateRange.end, 'dd/MM/yyyy', { locale: fr })})
+          </span>
+        </h4>
+
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <Table className="min-w-[600px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs sm:text-sm">Date</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm">Trans.</TableHead>
+                {(paymentFilter === 'all' || paymentFilter === 'cash') && (
+                  <TableHead className="text-right text-xs sm:text-sm">Cash</TableHead>
+                )}
+                {(paymentFilter === 'all' || paymentFilter === 'card') && (
+                  <TableHead className="text-right text-xs sm:text-sm">Carte</TableHead>
+                )}
+                {(paymentFilter === 'all' || paymentFilter === 'prepaid') && <TableHead className="text-right">Prépayé</TableHead>}
+                {(paymentFilter === 'all' || paymentFilter === 'unallocated') && <TableHead className="text-right">Non renseigné</TableHead>}
+                <TableHead className="text-right text-xs sm:text-sm">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dailyBreakdown.map((day, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium text-xs sm:text-sm">
+                    {format(day.date, 'dd/MM/yyyy', { locale: fr })}
+                  </TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm">{day.transactions}</TableCell>
+                  {(paymentFilter === 'all' || paymentFilter === 'cash') && (
+                    <TableCell className="text-right text-xs sm:text-sm">{day.cashAmount.toFixed(2)}€</TableCell>
+                  )}
+                  {(paymentFilter === 'all' || paymentFilter === 'card') && (
+                    <TableCell className="text-right text-xs sm:text-sm">{day.cardAmount.toFixed(2)}€</TableCell>
+                  )}
+                  {(paymentFilter === 'all' || paymentFilter === 'prepaid') && <TableCell className="text-right">{day.prepaidAmount.toFixed(2)}€</TableCell>}
+                  {(paymentFilter === 'all' || paymentFilter === 'unallocated') && <TableCell className="text-right">{day.unallocatedAmount.toFixed(2)}€</TableCell>}
+                  <TableCell className="text-right font-semibold text-xs sm:text-sm">{day.totalAmount.toFixed(2)}€</TableCell>
+                </TableRow>
+              ))}
+              {/* Total Row */}
+              <TableRow className="bg-primary/5 font-bold">
+                <TableCell className="text-xs sm:text-sm">TOTAL</TableCell>
+                <TableCell className="text-center text-xs sm:text-sm">{totals.transactions}</TableCell>
+                {(paymentFilter === 'all' || paymentFilter === 'cash') && (
+                  <TableCell className="text-right text-xs sm:text-sm">{totals.cashAmount.toFixed(2)}€</TableCell>
+                )}
+                {(paymentFilter === 'all' || paymentFilter === 'card') && (
+                  <TableCell className="text-right text-xs sm:text-sm">{totals.cardAmount.toFixed(2)}€</TableCell>
+                )}
+                {(paymentFilter === 'all' || paymentFilter === 'prepaid') && <TableCell className="text-right">{totals.prepaidAmount.toFixed(2)}€</TableCell>}
+                {(paymentFilter === 'all' || paymentFilter === 'unallocated') && <TableCell className="text-right">{totals.unallocatedAmount.toFixed(2)}€</TableCell>}
+                <TableCell className="text-right text-xs sm:text-sm">{totals.totalAmount.toFixed(2)}€</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+      </>}
+    </div>
+  );
+};

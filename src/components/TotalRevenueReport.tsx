@@ -1,3 +1,6 @@
+import { paymentAmountFor, paymentReport, paymentReportFilters, paymentReportExplanation, validReportRange, type PaymentFilter } from '@/lib/paymentReports';
+import { transactionSalonDay } from '@/lib/paymentStats';
+import { toZonedTime } from 'date-fns-tz';
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,7 +54,7 @@ import { cn } from '@/lib/utils';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 
 type PeriodKey = 'today' | 'week' | 'month' | 'year' | 'custom';
-type PaymentFilter = 'all' | 'cash' | 'card';
+
 type CustomMode = 'range' | 'single';
 
 const CASH_COLOR = '#10b981';
@@ -80,7 +83,7 @@ const TotalRevenueReport = () => {
 
   // Resolve the active interval based on the selected period
   const { rangeStart, rangeEnd } = useMemo(() => {
-    const now = new Date();
+    const now = toZonedTime(new Date(), 'Europe/Brussels');
     switch (period) {
       case 'today':
         return { rangeStart: startOfDay(now), rangeEnd: endOfDay(now) };
@@ -111,32 +114,24 @@ const TotalRevenueReport = () => {
 
   // Transactions filtered by period + payment method
   const filtered = useMemo(() => {
-    if (!rangeStart || !rangeEnd) return [];
+    if (!rangeStart || !rangeEnd || !validReportRange(rangeStart, rangeEnd)) return [];
     return transactions.filter((tx) => {
-      const d = new Date(tx.transactionDate);
-      if (d < rangeStart || d > rangeEnd) return false;
-      if (paymentFilter !== 'all' && tx.paymentMethod !== paymentFilter) return false;
+      const day = transactionSalonDay(tx);
+      if (day < format(rangeStart, 'yyyy-MM-dd') || day > format(rangeEnd, 'yyyy-MM-dd')) return false;
+      if (paymentFilter !== 'all' && paymentAmountFor(tx, paymentFilter) <= 0) return false;
       return true;
     });
   }, [transactions, rangeStart, rangeEnd, paymentFilter]);
 
-  // KPI values
   const kpis = useMemo(() => {
-    const total = filtered.reduce((sum, tx) => sum + tx.totalAmount, 0);
-    const count = filtered.length;
-    const avg = count > 0 ? total / count : 0;
-    const cash = filtered
-      .filter((tx) => tx.paymentMethod === 'cash')
-      .reduce((s, tx) => s + tx.totalAmount, 0);
-    const card = filtered
-      .filter((tx) => tx.paymentMethod === 'card')
-      .reduce((s, tx) => s + tx.totalAmount, 0);
-    return { total, count, avg, cash, card };
-  }, [filtered]);
+    const stats = paymentReport(filtered, paymentFilter);
+    return { total: stats.totalAmount, count: stats.transactions, avg: stats.transactions ? stats.totalAmount / stats.transactions : 0,
+      cash: stats.cashAmount, card: stats.cardAmount, prepaid: stats.prepaidAmount, unallocated: stats.unallocatedAmount };
+  }, [filtered, paymentFilter]);
 
   // Auto-granularity time-series for the BarChart
   const chartData = useMemo(() => {
-    if (!rangeStart || !rangeEnd) return [];
+    if (!rangeStart || !rangeEnd || !validReportRange(rangeStart, rangeEnd)) return [];
     const days = differenceInDays(rangeEnd, rangeStart);
 
     let buckets: Date[] = [];
@@ -170,23 +165,26 @@ const TotalRevenueReport = () => {
             : bucket;
       const value = filtered
         .filter((tx) => matcher(new Date(tx.transactionDate), ref))
-        .reduce((s, tx) => s + tx.totalAmount, 0);
+        .reduce((sum, tx) => sum + Math.round(paymentAmountFor(tx, paymentFilter) * 100), 0) / 100;
       return { label: format(bucket, labelFmt, { locale: fr }), value };
     });
-  }, [filtered, rangeStart, rangeEnd]);
+  }, [filtered, rangeStart, rangeEnd, paymentFilter]);
 
   // Pie data Cash vs Bancontact
   const pieData = useMemo(
     () =>
       [
         { name: 'Cash', value: kpis.cash, color: CASH_COLOR },
-        { name: 'Bancontact', value: kpis.card, color: CARD_COLOR },
+        { name: 'Carte', value: kpis.card, color: CARD_COLOR },
+        { name: 'Prépayé', value: kpis.prepaid, color: '#a78bfa' },
+        { name: 'Non renseigné', value: kpis.unallocated, color: '#fbbf24' },
       ].filter((d) => d.value > 0),
-    [kpis.cash, kpis.card],
+    [kpis.cash, kpis.card, kpis.prepaid, kpis.unallocated],
   );
 
   // Top 5 services
   const topServices = useMemo(() => {
+    if (paymentFilter !== 'all') return { top: [], max: 0 };
     const map = new Map<string, { revenue: number; qty: number }>();
     filtered.forEach((tx) => {
       (tx.items || []).forEach((item) => {
@@ -203,11 +201,11 @@ const TotalRevenueReport = () => {
     const top = arr.slice(0, 5);
     const max = top.length ? top[0].revenue : 0;
     return { top, max };
-  }, [filtered]);
+  }, [filtered, paymentFilter]);
 
   const kpiCards = [
     {
-      label: 'CA Total',
+      label: paymentFilter === 'all' ? 'Montant des ventes' : 'Part du paiement sélectionné',
       value: fmtEuro(kpis.total),
       icon: TrendingUp,
       gradient: 'from-emerald-500 to-emerald-600',
@@ -221,7 +219,7 @@ const TotalRevenueReport = () => {
       glow: 'shadow-blue-500/20',
     },
     {
-      label: 'Panier moyen',
+      label: paymentFilter === 'all' ? 'Panier moyen' : 'Part moyenne par vente',
       value: fmtEuro(kpis.avg),
       icon: ShoppingBag,
       gradient: 'from-violet-500 to-violet-600',
@@ -236,14 +234,12 @@ const TotalRevenueReport = () => {
     },
   ];
 
-  const paymentFilters: { key: PaymentFilter; label: string }[] = [
-    { key: 'all', label: 'Tous' },
-    { key: 'cash', label: 'Cash' },
-    { key: 'card', label: 'Bancontact' },
-  ];
+  const paymentFilters = paymentReportFilters;
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">{paymentReportExplanation}</p>
+      {rangeStart && rangeEnd && !validReportRange(rangeStart, rangeEnd) && <p role="alert" className="text-sm text-destructive">La date de fin doit suivre la date de début.</p>}
       {/* Period pills */}
       <div className="flex flex-wrap gap-2">
         {PERIODS.map((p) => (
@@ -369,7 +365,7 @@ const TotalRevenueReport = () => {
         <Card className="p-5 lg:col-span-2">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            Évolution du chiffre d'affaires
+            {paymentFilter === 'all' ? 'Évolution du montant des ventes' : 'Évolution de la part sélectionnée'}
           </h3>
           {chartData.length === 0 ? (
             <p className="text-sm text-muted-foreground py-12 text-center">Aucune donnée sur cette période.</p>
@@ -388,7 +384,7 @@ const TotalRevenueReport = () => {
                     color: 'hsl(var(--foreground))',
                   }}
                 />
-                <Bar dataKey="value" name="CA" fill={CARD_COLOR} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" name={paymentFilter === 'all' ? 'Ventes' : 'Part sélectionnée'} fill={CARD_COLOR} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -425,8 +421,9 @@ const TotalRevenueReport = () => {
         </Card>
       </div>
 
+      {paymentFilter !== 'all' && <p className="text-sm text-muted-foreground">Le détail par prestation est disponible avec le filtre « Tous » : la part d’un paiement ne peut pas être attribuée à un article précis.</p>}
       {/* Top 5 services */}
-      <Card className="p-5">
+      {paymentFilter === 'all' && <Card className="p-5">
         <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
           <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           Top 5 prestations
@@ -454,7 +451,7 @@ const TotalRevenueReport = () => {
             ))}
           </div>
         )}
-      </Card>
+      </Card>}
     </div>
   );
 };

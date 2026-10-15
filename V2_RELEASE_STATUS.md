@@ -17,6 +17,12 @@ This document separates machine-verified release guarantees from checks that sti
 - Local checks: TypeScript passed, 166 unit tests passed, normal build passed (8.31 s), lint 0 errors/218 warnings. Nine new pagination/concurrency tests use a fake reader.
 - Hosted paging/RLS and browser error/retry flows remain unverified. Cross-page count checks do not provide a database transaction snapshot.
 
+## Detailed-report follow-up — 15 October 2026
+
+- Detailed, total-revenue and custom-period views now select actual funding portions, including mixed sales; prepayment and unknown-allocation categories remain visible. Original transaction totals are preserved.
+- TypeScript passed; 173 unit tests passed; final normal build passed (9.48 s). Six additional browser cases prepared and typechecked, not executed (36 cumulative pending cases).
+- Email report generation remains a separate follow-up. No real email/export, hosted transaction or publication performed.
+
 ## Current candidate — 15 October 2026
 
 Application source: `498c8a487a327c661555a15321ea90fca0030934` (15 October 2026).
