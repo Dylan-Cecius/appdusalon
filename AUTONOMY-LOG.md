@@ -181,3 +181,10 @@
 - CA de la fiche issu du calcul paginé ; signaux Realtime transaction/RDV relancent les statistiques via une révision stable. Échec d’historique n’affiche plus de faux zéro et propose une reprise. Les listes générales agenda/historique utilisées pour les autres indicateurs gardent leurs limites existantes, notamment la pagination agenda : ne pas déclarer tous les insights exhaustifs.
 - Neuf nouveaux tests synthétiques (liens, statuts, dates, centimes, pages, erreur et changement de salon). Typecheck, npm test 219/219 dans 28 fichiers et build normal réussis ; dernier build réussi en 8.63 s. git diff --check réussi. Aucun backend, SQL, navigateur ou paiement réel.
 - Commit prévu : fix(clients): paginate statistics and deduplicate linked passages [skip ci], parent 7e1c3bd7ae07f2e3b2d0407512164dd86b2246a1. Prochain lot : recherche, puis export borné/sûr sur fixtures.
+
+## 2026-10-15T14:22:12.013676+00:00 — recherche client avec accents et téléphones formatés
+- Durée cumulée 21.9 min. Statistiques confirmées : c7f0e468169fdbc66738568f3040e3840f5b0196.
+- Normalisation texte de l’agenda extraite sans changement de règle, partagée avec Clients. Recherche multi-mots nom/e-mail, accents/casse/espaces normalisés, chiffres de téléphone sans séparateurs lorsque la requête est uniquement téléphonique. Pas de repli numérique pour une recherche textuelle ; aucun changement des coordonnées stockées ni équivalence internationale supposée.
+- Champ de recherche nommé pour lecteurs d’écran, aide mise à jour. Quatorze tests de recherche ajoutés, tests agenda existants conservés.
+- Contrôles : npm run typecheck réussi ; npm test 233/233 dans 29 fichiers ; npm run build 8.49 s ; git diff --check réussi. Aucune recette navigateur ou données réelles.
+- Commit prévu : fix(clients): share accent-aware name and phone search [skip ci], parent c7f0e468169fdbc66738568f3040e3840f5b0196. Prochain lot : export CSV/JSON local, sans export de données réelles.

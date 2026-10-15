@@ -1,3 +1,4 @@
+import { matchesClientSearch } from '@/lib/searchText';
 import { ClientsProvider } from '@/contexts/ClientsContext';
 import NewClientDialog from '@/components/NewClientDialog';
 import { useState, useMemo, useCallback } from 'react';
@@ -34,10 +35,7 @@ const ClientsWorkspace = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const filteredAndSortedClients = useMemo(() => {
-    const filtered = clients.filter(client =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.phone.includes(searchQuery)
-    );
+    const filtered = clients.filter(client => matchesClientSearch(client, searchQuery));
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name-asc': return a.name.localeCompare(b.name);
@@ -153,7 +151,8 @@ const ClientsWorkspace = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               className="pl-10"
-              placeholder="Rechercher un client par nom ou téléphone..."
+              aria-label="Rechercher un client"
+              placeholder="Nom, téléphone ou e-mail…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

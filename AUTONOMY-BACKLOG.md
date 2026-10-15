@@ -103,3 +103,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Clients — statistiques et passages
 - Montants paginés, erreurs explicites, passages liés dédoublonnés et statuts confirmés. 219 unitaires, typecheck/build réussis. Lecture hébergée/RLS et recette navigateur encore manquantes ; recherche/export à poursuivre.
+
+## Clients — recherche
+- Recherche accents, mots du nom/e-mail et téléphone formaté ; normalisation partagée avec agenda. 233 unitaires, typecheck/build réussis. Export à fiabiliser.

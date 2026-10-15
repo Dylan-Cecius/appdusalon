@@ -1,3 +1,4 @@
+import { normalizeSearchText as normalize } from './searchText';
 import type { Appointment } from '@/data/appointments';
 
 export type AgendaSearchFilter = 'all' | 'upcoming' | 'unpaid' | 'deposit' | 'cancelled';
@@ -9,8 +10,6 @@ export const agendaSearchFilters: { value: AgendaSearchFilter; label: string }[]
   { value: 'deposit', label: 'Acompte payé' },
   { value: 'cancelled', label: 'Annulés / absents' },
 ];
-
-const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 export function getAppointmentState(appointment: Appointment) {
   if (appointment.status === 'cancelled') return { label: 'Annulé', tone: 'muted' } as const;
