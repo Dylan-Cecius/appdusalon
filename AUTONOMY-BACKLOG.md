@@ -128,3 +128,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Rapports automatiques — source de configuration
 - Une seule source par workspace, liste paginée du propriétaire, erreurs/reprise et réponses périmées protégées. 299 unitaires, typecheck/build réussis. Formulaire de configuration à confirmer ; Edge et limites multi-salon restent séparés, aucun envoi réel.
+
+## Rapports automatiques — formulaire confirmé
+- Validation des champs, révision capturée, saisie conservée, fermeture après confirmation et verrou des actions. 317 unitaires, typecheck/build réussis ; lint 0 erreur/206 avertissements. Recette navigateur/serveur encore manquante, aucun envoi ni configuration réelle.

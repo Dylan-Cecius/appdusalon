@@ -1,277 +1,31 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Plus, 
-  Mail, 
-  Clock, 
-  Calendar, 
-  BarChart3, 
-  DollarSign, 
-  Users,
-  Trash2,
-  Play,
-  Edit,
-  Settings
-} from "lucide-react";
+import { useRef, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Mail, Clock, Trash2, Play, Edit, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useAutomatedReports, CreateAutomatedReportData, AutomatedReport } from "@/hooks/useAutomatedReports";
+import { useAutomatedReports, type AutomatedReport } from "@/hooks/useAutomatedReports";
 import { useFeatureAccess } from "@/components/FeatureGate";
 import { useAuth } from '@/hooks/useAuth';
 import { formatInTimeZone } from "date-fns-tz";
 import { fr } from "date-fns/locale";
 
-const REPORT_TYPES = [
-  { id: 'revenue', label: 'Revenus et ventes', icon: DollarSign },
-  { id: 'appointments', label: 'Rendez-vous', icon: Calendar },
-  { id: 'stats', label: 'Statistiques avancées', icon: BarChart3 },
-  { id: 'clients', label: 'Données clients', icon: Users },
-];
-
-const FREQUENCY_OPTIONS = [
-  { value: 'daily', label: 'Quotidien' },
-  { value: 'weekly', label: 'Hebdomadaire' },
-  { value: 'monthly', label: 'Mensuel' },
-];
-
-const DAYS_OF_WEEK = [
-  { value: 1, label: 'Lundi' },
-  { value: 2, label: 'Mardi' },
-  { value: 3, label: 'Mercredi' },
-  { value: 4, label: 'Jeudi' },
-  { value: 5, label: 'Vendredi' },
-  { value: 6, label: 'Samedi' },
-  { value: 7, label: 'Dimanche' },
-];
-
-interface ReportFormData {
-  report_name: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  recipient_emails: string[];
-  report_types: string[];
-  time_of_day: string;
-  day_of_week?: number;
-  day_of_month?: number;
-}
-
-const AutomatedReportForm = ({ 
-  onSubmit, 
-  editingReport,
-  onClose 
-}: { 
-  onSubmit: (data: CreateAutomatedReportData) => void;
-  editingReport?: AutomatedReport;
-  onClose: () => void;
-}) => {
-  const [formData, setFormData] = useState<ReportFormData>({
-    report_name: editingReport?.report_name || '',
-    frequency: editingReport?.frequency || 'weekly',
-    recipient_emails: editingReport?.recipient_emails || [],
-    report_types: editingReport?.report_types || [],
-    time_of_day: editingReport?.time_of_day || '09:00',
-    day_of_week: editingReport?.day_of_week || 1,
-    day_of_month: editingReport?.day_of_month || 1,
-  });
-
-  const [emailInput, setEmailInput] = useState('');
-
-  const handleAddEmail = () => {
-    const email = emailInput.trim();
-    if (email && !formData.recipient_emails.includes(email)) {
-      setFormData(prev => ({
-        ...prev,
-        recipient_emails: [...prev.recipient_emails, email]
-      }));
-      setEmailInput('');
-    }
-  };
-
-  const handleRemoveEmail = (email: string) => {
-    setFormData(prev => ({
-      ...prev,
-      recipient_emails: prev.recipient_emails.filter(e => e !== email)
-    }));
-  };
-
-  const handleReportTypeChange = (reportType: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      report_types: checked 
-        ? [...prev.report_types, reportType]
-        : prev.report_types.filter(t => t !== reportType)
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-    onClose();
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="report_name">Nom du rapport</Label>
-        <Input
-          id="report_name"
-          value={formData.report_name}
-          onChange={(e) => setFormData(prev => ({ ...prev, report_name: e.target.value }))}
-          placeholder="Ex: Rapport hebdomadaire"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Fréquence d'envoi</Label>
-        <Select 
-          value={formData.frequency} 
-          onValueChange={(value: 'daily' | 'weekly' | 'monthly') => 
-            setFormData(prev => ({ ...prev, frequency: value }))
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FREQUENCY_OPTIONS.map(option => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="time_of_day">Heure d'envoi</Label>
-        <Input
-          id="time_of_day"
-          type="time"
-          value={formData.time_of_day}
-          onChange={(e) => setFormData(prev => ({ ...prev, time_of_day: e.target.value }))}
-          required
-        />
-      </div>
-
-      {formData.frequency === 'weekly' && (
-        <div className="space-y-2">
-          <Label>Jour de la semaine</Label>
-          <Select 
-            value={formData.day_of_week?.toString()} 
-            onValueChange={(value) => 
-              setFormData(prev => ({ ...prev, day_of_week: parseInt(value) }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DAYS_OF_WEEK.map(day => (
-                <SelectItem key={day.value} value={day.value.toString()}>
-                  {day.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {formData.frequency === 'monthly' && (
-        <div className="space-y-2">
-          <Label htmlFor="day_of_month">Jour du mois (1-28)</Label>
-          <Input
-            id="day_of_month"
-            type="number"
-            min="1"
-            max="28"
-            value={formData.day_of_month || 1}
-            onChange={(e) => setFormData(prev => ({ ...prev, day_of_month: parseInt(e.target.value) }))}
-            required
-          />
-        </div>
-      )}
-
-      <div className="space-y-3">
-        <Label>Types de rapports à inclure</Label>
-        <div className="grid grid-cols-1 gap-3">
-          {REPORT_TYPES.map(reportType => {
-            const IconComponent = reportType.icon;
-            return (
-              <div key={reportType.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={reportType.id}
-                  checked={formData.report_types.includes(reportType.id)}
-                  onCheckedChange={(checked) => 
-                    handleReportTypeChange(reportType.id, checked as boolean)
-                  }
-                />
-                <IconComponent className="h-4 w-4" />
-                <Label htmlFor={reportType.id}>{reportType.label}</Label>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Label>Destinataires</Label>
-        <div className="flex gap-2">
-          <Input
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
-            placeholder="email@exemple.com"
-            type="email"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleAddEmail();
-              }
-            }}
-          />
-          <Button type="button" onClick={handleAddEmail} variant="outline">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {formData.recipient_emails.map(email => (
-            <Badge key={email} variant="secondary" className="flex items-center gap-1">
-              {email}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 hover:bg-transparent"
-                onClick={() => handleRemoveEmail(email)}
-              >
-                ×
-              </Button>
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Annuler
-        </Button>
-        <Button type="submit" disabled={!formData.report_name || formData.report_types.length === 0 || formData.recipient_emails.length === 0}>
-          {editingReport ? 'Mettre à jour' : 'Créer le rapport'}
-        </Button>
-      </div>
-    </form>
-  );
-};
+import { AutomatedReportForm } from './AutomatedReportForm';
+import { REPORT_TYPES, FREQUENCY_OPTIONS } from './automatedReportOptions';
 
 const ReportCard = ({ report, actions, disabled }: { report: AutomatedReport; actions: ReturnType<typeof useAutomatedReports>; disabled: boolean }) => {
   const { toggleReportStatus, deleteReport, testReport, updateReport } = actions;
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const pendingRef = useRef(false);
+  const [pending, setPending] = useState(false);
+  const onPendingChange = (value: boolean) => { pendingRef.current = value; setPending(value); };
+
+  const runAction = async (action: () => Promise<void>) => {
+    if (disabled || pendingRef.current) return;
+    onPendingChange(true);
+    try { await action(); } finally { onPendingChange(false); }
+  };
 
   const getFrequencyLabel = (frequency: string) => {
     const option = FREQUENCY_OPTIONS.find(o => o.value === frequency);
@@ -305,10 +59,10 @@ const ReportCard = ({ report, actions, disabled }: { report: AutomatedReport; ac
         </div>
         <div className="flex items-center gap-2">
           <Switch
-            disabled={disabled}
+            disabled={disabled || pending}
             aria-label={`Activer ${report.report_name}`}
             checked={report.is_active}
-            onCheckedChange={(checked) => toggleReportStatus(report.id, checked)}
+            onCheckedChange={(checked) => void runAction(() => toggleReportStatus(report.id, checked))}
           />
           <Badge variant={report.is_active ? "default" : "secondary"}>
             {report.is_active ? 'Actif' : 'Inactif'}
@@ -339,20 +93,21 @@ const ReportCard = ({ report, actions, disabled }: { report: AutomatedReport; ac
         </div>
       </div>
 
+      {pending && <p role="status" className="mb-2 text-sm">Opération en cours…</p>}
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
           size="sm"
-          disabled={disabled}
-          onClick={() => void testReport(report.id)}
+          disabled={disabled || pending}
+          onClick={() => void runAction(() => testReport(report.id))}
         >
           <Play className="h-3 w-3 mr-1" />
           Test
         </Button>
         
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <Dialog open={editDialogOpen} onOpenChange={open => { if (!pendingRef.current) setEditDialogOpen(open); }}>
           <DialogTrigger asChild>
-            <Button disabled={disabled} variant="outline" size="sm">
+            <Button disabled={disabled || pending} variant="outline" size="sm">
               <Edit className="h-3 w-3 mr-1" />
               Modifier
             </Button>
@@ -365,7 +120,9 @@ const ReportCard = ({ report, actions, disabled }: { report: AutomatedReport; ac
               </DialogDescription>
             </DialogHeader>
             <AutomatedReportForm
-              onSubmit={(data) => updateReport(report.id, data)}
+              disabled={disabled}
+              onPendingChange={onPendingChange}
+              onSubmit={(data, revision) => updateReport(report.id, data, revision!)}
               editingReport={report}
               onClose={() => setEditDialogOpen(false)}
             />
@@ -375,8 +132,8 @@ const ReportCard = ({ report, actions, disabled }: { report: AutomatedReport; ac
         <Button
           variant="destructive"
           size="sm"
-          disabled={disabled} aria-label={`Supprimer ${report.report_name}`}
-          onClick={() => void deleteReport(report.id)}
+          disabled={disabled || pending} aria-label={`Supprimer ${report.report_name}`}
+          onClick={() => void runAction(() => deleteReport(report.id))}
         >
           <Trash2 className="h-3 w-3" />
         </Button>
@@ -391,6 +148,9 @@ const AutomatedReportsWorkspace = () => {
   const disabled = loading || !!error || !hasSnapshot;
   const { checkFeature } = useFeatureAccess();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const pendingRef = useRef(false);
+  const [pending, setPending] = useState(false);
+  const onPendingChange = (value: boolean) => { pendingRef.current = value; setPending(value); };
 
   const canExportReports = checkFeature('canExportReports');
 
@@ -422,6 +182,7 @@ const AutomatedReportsWorkspace = () => {
 
   return (
     <div className="space-y-6">
+      <Button variant="outline" disabled={loading || pending} onClick={() => void fetchReports()}>Actualiser les rapports</Button>
       {error && <Card className="p-4"><p role="alert">{error}</p><Button variant="outline" onClick={() => void fetchReports()}>Recharger les rapports</Button></Card>}
       <Card>
         <CardHeader>
@@ -436,9 +197,9 @@ const AutomatedReportsWorkspace = () => {
               </CardDescription>
             </div>
             
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={open => { if (!pendingRef.current) setDialogOpen(open); }}>
               <DialogTrigger asChild>
-                <Button disabled={disabled}>
+                <Button disabled={disabled || pending}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nouveau rapport
                 </Button>
@@ -451,6 +212,8 @@ const AutomatedReportsWorkspace = () => {
                   </DialogDescription>
                 </DialogHeader>
                 <AutomatedReportForm
+                  disabled={disabled}
+                  onPendingChange={onPendingChange}
                   onSubmit={createReport}
                   onClose={() => setDialogOpen(false)}
                 />
@@ -468,9 +231,9 @@ const AutomatedReportsWorkspace = () => {
             <p className="text-muted-foreground mb-4">
               Créez votre premier rapport automatisé pour recevoir des mises à jour régulières.
             </p>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={open => { if (!pendingRef.current) setDialogOpen(open); }}>
               <DialogTrigger asChild>
-                <Button disabled={disabled}>
+                <Button disabled={disabled || pending}>
                   <Plus className="h-4 w-4 mr-2" />
                   Créer un rapport
                 </Button>
@@ -481,7 +244,7 @@ const AutomatedReportsWorkspace = () => {
       ) : (
         <div className="grid gap-4">
           {reports.map(report => (
-            <ReportCard key={report.id} report={report} actions={actions} disabled={disabled} />
+            <ReportCard key={report.id} report={report} actions={actions} disabled={disabled || pending} />
           ))}
         </div>
       )}

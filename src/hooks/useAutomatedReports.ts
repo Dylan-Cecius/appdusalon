@@ -5,32 +5,8 @@ import { useToast } from './use-toast';
 import { createLatestRequestScope } from '@/lib/latestRequestScope';
 import { readCompleteRows } from '@/lib/readCompleteRows';
 
-export interface AutomatedReport {
-  id: string;
-  user_id: string;
-  report_name: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  recipient_emails: string[];
-  report_types: string[];
-  is_active: boolean;
-  last_sent_at: string | null;
-  next_send_at: string | null;
-  time_of_day: string;
-  day_of_week: number | null;
-  day_of_month: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateAutomatedReportData {
-  report_name: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  recipient_emails: string[];
-  report_types: string[];
-  time_of_day: string;
-  day_of_week?: number;
-  day_of_month?: number;
-}
+import { automatedReportFields, type AutomatedReport, type CreateAutomatedReportData } from '@/lib/automatedReportConfig';
+export type { AutomatedReport, CreateAutomatedReportData } from '@/lib/automatedReportConfig';
 
 const emptyReports: AutomatedReport[] = [];
 export const useAutomatedReports = () => {
@@ -73,15 +49,16 @@ export const useAutomatedReports = () => {
   const storeReport = (report: AutomatedReport, owner: string) => setSnapshot(previous => previous?.context === owner ? { ...previous, reports: previous.reports.some(row => row.id === report.id) ? previous.reports.map(row => row.id === report.id ? report : row) : [report, ...previous.reports] } : previous);
   const createReport = async (reportData: CreateAutomatedReportData) => {
     const { current, owner } = mutationContext();
-    const { data, error } = await supabase.from('automated_reports').insert({ ...reportData, user_id: owner }).select().single();
+    const { data, error } = await supabase.from('automated_reports').insert({ ...automatedReportFields(reportData), user_id: owner }).select().single();
     if (error) throw error;
     if (!current() || !data?.id || data.user_id !== owner) throw new Error('report_create_not_confirmed');
     storeReport(data as AutomatedReport, owner);
     return data as AutomatedReport;
   };
-  const updateReport = async (reportId: string, updates: Partial<CreateAutomatedReportData>) => {
+  const updateReport = async (reportId: string, updates: CreateAutomatedReportData, expectedRevision: string) => {
     const { current, owner } = mutationContext();
-    const { data, error } = await supabase.from('automated_reports').update(updates).eq('id', reportId).eq('user_id', owner).select().single();
+    if (!expectedRevision) throw new Error('report_revision_required');
+    const { data, error } = await supabase.from('automated_reports').update(automatedReportFields(updates)).eq('id', reportId).eq('user_id', owner).eq('updated_at', expectedRevision).select().single();
     if (error) throw error;
     if (!current() || data?.id !== reportId || data.user_id !== owner) throw new Error('report_update_not_confirmed');
     storeReport(data as AutomatedReport, owner);
