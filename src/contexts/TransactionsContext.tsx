@@ -4,6 +4,7 @@ import { toast } from '@/components/ui/use-toast';
 import { toZonedTime } from 'date-fns-tz';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
+import { createLatestRequestScope } from '@/lib/latestRequestScope';
 import { insertTransactionOnce, startTransactionFollowups } from '@/lib/transactionConfirmation';
 
 export interface Transaction {
@@ -39,11 +40,17 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
   const salonId = permissions.salonId;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const userIdRef = useRef<string | null>(null);
+  const contextKey = !isSupabaseConfigured ? 'local' : isReady && user && salonId ? JSON.stringify([user.id, salonId]) : null;
+  const requestScope = useRef(createLatestRequestScope());
+  const transactionsContext = useRef<string | null>(null);
+  requestScope.current.setContext(contextKey);
+  const visibleTransactions = transactionsContext.current === contextKey ? transactions : [];
 
   // Fetch transactions from Supabase
   const fetchTransactions = async () => {
-    console.log('[Transactions] fetch start', { salonId });
+    const isCurrent = requestScope.current.begin(contextKey);
+    if (!isCurrent) return;
+    setLoading(true);
     try {
       if (!isSupabaseConfigured || !user || !salonId) {
         setTransactions([]);
@@ -57,30 +64,32 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         .eq('salon_id', salonId)
         .order('transaction_date', { ascending: false });
 
+      if (!isCurrent()) return;
       if (error) throw error;
 
       const formattedTransactions = data?.map((tx: any) => ({
         id: tx.id,
         items: tx.items as any,
-        totalAmount: tx.total_amount,
+        totalAmount: Number(tx.total_amount),
         paymentMethod: tx.payment_method as 'cash' | 'card',
         transactionDate: toZonedTime(new Date(tx.transaction_date), 'Europe/Brussels'),
         clientId: tx.client_id || undefined,
         staffId: tx.staff_id || undefined
       })) || [];
 
-      console.log('[Transactions] fetch success', formattedTransactions.length, 'transactions');
+      transactionsContext.current = contextKey;
       setTransactions(formattedTransactions);
     } catch (error) {
-      console.error('[Transactions] fetch error:', error);
-      setTransactions([]);
+      if (isCurrent()) console.error('[Transactions] fetch error:', error);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   };
 
   // Add new transaction
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'transactionDate'>) => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
+    if (!isCurrentContext()) throw new Error('authentication_required');
     try {
       if (!isSupabaseConfigured) {
         const newTransaction: Transaction = {
@@ -117,12 +126,16 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         staffId: data.staff_id || undefined,
       };
 
+      if (!isCurrentContext()) return newTransaction;
       setTransactions(prev => insertTransactionOnce(prev, newTransaction));
+      // Supersede any pre-confirmation snapshot. Failure retains the confirmed row.
+      void fetchTransactions();
 
       // The sale is confirmed. Stock warnings and the activity journal are best effort;
       // their latency/failure must not invite the cashier to record the same sale again.
       startTransactionFollowups({
         checkStock: async () => {
+          if (!isCurrentContext()) return;
           const productIds = transaction.items.filter(item => item.kind === 'product').map(item => item.id);
           if (!productIds.length) return;
           const { data: products, error: stockError } = await supabase
@@ -130,6 +143,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
             .select('id, name, current_stock, min_stock')
             .eq('salon_id', salonId)
             .in('id', productIds);
+          if (!isCurrentContext()) return;
           if (stockError) throw stockError;
           const alerts = (products || [])
             .filter((product: any) => product.current_stock <= product.min_stock)
@@ -137,6 +151,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
           if (alerts.length) toast({ title: '⚠️ Stock bas', description: alerts.join(', '), variant: 'destructive' });
         },
         logActivity: async () => {
+          if (!isCurrentContext()) return;
           const { error: logError } = await supabase.from('activity_logs' as any).insert({
             salon_id: salonId,
             user_id: user.id,
@@ -150,6 +165,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
       return newTransaction;
     } catch (error) {
+      if (!isCurrentContext()) throw error;
       console.error('Error adding transaction:', error);
 
       const message =
@@ -185,6 +201,8 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
   // Delete transaction with atomic stock restoration
   const deleteTransaction = async (id: string) => {
+    const isCurrentContext = requestScope.current.captureContext(contextKey);
+    if (!isCurrentContext()) return;
     try {
       if (!isSupabaseConfigured) {
         setTransactions(prev => prev.filter(tx => tx.id !== id));
@@ -204,7 +222,9 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
+      if (!isCurrentContext()) return;
       setTransactions(prev => prev.filter(tx => tx.id !== id));
+      void fetchTransactions();
 
       toast({
         title: "Succès",
@@ -212,6 +232,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
         duration: 2000
       });
     } catch (error) {
+      if (!isCurrentContext()) return;
       console.error('Error deleting transaction:', error);
       toast({
         title: "Erreur",
@@ -221,88 +242,41 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Gate fetching on auth readiness + user
+  // The subscription and every response belong to one identity/salon generation.
   useEffect(() => {
-    if (!isReady) {
-      console.log('[Transactions] effect: auth not ready yet');
-      return;
+    const scope = requestScope.current;
+    transactionsContext.current = contextKey;
+    setTransactions([]);
+    if (!contextKey) {
+      setLoading(!isReady);
+      return () => scope.invalidate();
     }
+    void fetchTransactions();
+    if (!isSupabaseConfigured) return () => scope.invalidate();
 
-    if (!user || !salonId) {
-      console.log('[Transactions] effect: no salon — clearing state');
-      setTransactions([]);
-      setLoading(false);
-      userIdRef.current = null;
-      return;
-    }
-
-    // Avoid duplicate fetch if user hasn't changed
-    if (userIdRef.current === user.id) {
-      return;
-    }
-    userIdRef.current = user.id;
-
-    console.log('[Transactions] effect trigger — fetching for salon', salonId);
-    setLoading(true);
-    fetchTransactions();
-
-    if (!isSupabaseConfigured) return;
-
+    const isCurrentContext = scope.captureContext(contextKey);
     const channel = supabase
       .channel(`transactions-realtime-${salonId}`)
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const newRecord = payload.new as any;
-          const newTransaction: Transaction = {
-            id: newRecord.id,
-            items: newRecord.items,
-            totalAmount: newRecord.total_amount,
-            paymentMethod: newRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(newRecord.transaction_date), 'Europe/Brussels'),
-            clientId: newRecord.client_id || undefined,
-            staffId: newRecord.staff_id || undefined
-          };
-          setTransactions(prev => insertTransactionOnce(prev, newTransaction));
-        }
-      )
       .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const updatedRecord = payload.new as any;
-          const updatedTransaction: Transaction = {
-            id: updatedRecord.id,
-            items: updatedRecord.items,
-            totalAmount: updatedRecord.total_amount,
-            paymentMethod: updatedRecord.payment_method as 'cash' | 'card',
-            transactionDate: toZonedTime(new Date(updatedRecord.transaction_date), 'Europe/Brussels'),
-            clientId: updatedRecord.client_id || undefined,
-            staffId: updatedRecord.staff_id || undefined
-          };
-          setTransactions(prev => 
-            prev.map(tx => tx.id === updatedTransaction.id ? updatedTransaction : tx)
-          );
-        }
-      )
-      .on('postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
-        (payload) => {
-          const deletedRecord = payload.old as any;
-          setTransactions(prev => prev.filter(tx => tx.id !== deletedRecord.id));
+        { event: '*', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` },
+        () => {
+          // A fresh ordered snapshot handles INSERT/UPDATE/DELETE consistently,
+          // including an event racing the initial fetch or a confirmed RPC.
+          if (isCurrentContext()) void fetchTransactions();
         }
       )
       .subscribe();
-
     return () => {
-      supabase.removeChannel(channel);
+      scope.invalidate();
+      void supabase.removeChannel(channel);
     };
-  }, [isReady, user?.id, salonId]);
+  }, [contextKey, isReady]);
 
   return (
     <TransactionsContext.Provider
       value={{
-        transactions,
-        loading,
+        transactions: visibleTransactions,
+        loading: transactionsContext.current !== contextKey || loading,
         addTransaction,
         deleteTransaction,
         refreshTransactions: fetchTransactions

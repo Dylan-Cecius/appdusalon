@@ -4,20 +4,20 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T15-14-35Z",
-  "task": "Fiche client : brouillon préservé et confirmation",
+  "task": "Transactions : flux partagé et réponses isolées",
   "started_at": "2026-10-15T15:14:35Z",
-  "last_checkpoint_at": "2026-10-15T15:29:57Z",
-  "lease_expires_at": "2026-10-15T16:44:57.000Z",
+  "last_checkpoint_at": "2026-10-15T15:34:36Z",
+  "lease_expires_at": "2026-10-15T16:49:36.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Caisse : invalider réponses et abonnements d’une ancienne session ou d’un ancien salon.",
+  "next_task": "Signaler les historiques non actualisés ; isoler les réponses tardives de la liste clients.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
-    "full_app_suite": "253 tests in 28 files passed; TypeScript passed",
+    "full_app_suite": "286 tests in 32 files passed; TypeScript passed",
     "ios_project": "generated and re-synced with Capacitor 8.5.3; native structures inspected",
     "native_build": "not run: Linux host has no Xcode",
     "testflight": "not submitted",
@@ -26,13 +26,14 @@
     "browser_tests": "not run: WebKit host dependency installation denied by runtime permissions",
     "mobile_ergonomics": "Touch targets and sheets prepared; 20 browser cases discovered, none executed; isolated demo sync passed",
     "auth_session": "11 synthetic session/logout tests passed; no live backend or native authentication tested",
-    "connected_source_build": "passed after sheet changes with synthetic .invalid configuration; no backend/native runtime",
+    "connected_source_build": "passed with synthetic .invalid configuration after shared transaction feed (3611 modules); no backend/native runtime",
     "native_callback_parser": "101 synthetic native tests passed; strict correlated fragment errors; TypeScript passed",
     "native_session_lifecycle": "12 synthetic activity/ownership tests passed; TypeScript and isolated connected build passed; no iOS runtime tested",
     "native_pending_flow": "20 targeted tests passed after immediate-session cleanup; TypeScript passed",
     "checkout_draft": "11 targeted tests, typecheck and isolated connected build passed; final review and integration UI pending",
     "checkout": "16 targeted synthetic tests passed; TypeScript passed; isolated connected source build passed (3610 modules); browser/native/backend integration not run",
-    "client_edit": "11 synthetic tests passed; TypeScript passed; isolated connected source compilation passed; browser/native integration pending"
+    "client_edit": "11 synthetic tests passed; TypeScript passed; isolated connected source compilation passed; browser/native integration pending",
+    "transaction_scope": "Latest-request/session scope reused (5 tests), shared feed facade (4 tests); full suite 286 passed; no React mount/backend integration test"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -40,7 +41,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "1079373cea6648aee3e88bb0bf57de2b85c83132",
+  "last_application_commit": "deae4bca2151ec3abefa21745a5778c9a6106b90",
   "last_run_id": "ios-2026-10-15T15-08-49Z",
   "last_run_started_at": "2026-10-15T15:08:49Z",
   "last_run_finished_at": "2026-10-15T15:13:04Z",

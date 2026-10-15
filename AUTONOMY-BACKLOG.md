@@ -68,3 +68,9 @@
 - [x] Statistiques : callback stabilisé et réponse de fiche fermée ignorée ; chargement séparé du brouillon pour éviter les réinitialisations pendant la saisie.
 - [x] Patch limité aux champs éditables ; notes omises sans droit, filtre salon ajouté à la mise à jour. 11 tests ciblés/TypeScript/compilation source isolée passants.
 - [ ] Recette interactive réelle du formulaire et limites de session des listes clients restent à traiter.
+
+## Cycle 4 — checkpoint flux transactions 2026-10-15T15:34:36Z
+- [x] Requêtes, mutations et événements bornés à la génération utilisateur/salon ; données anciennes masquées au rendu, abonnements nettoyés puis recréés au remontage.
+- [x] Un seul flux transactions partagé avec les statistiques ; façade historique préservée, associations client/prestataire conservées. Rafraîchissements ordonnés après événement/confirmation pour éviter un ancien instantané.
+- [x] Suite complète : 286 tests/32 fichiers ; TypeScript et compilation isolée passants.
+- [ ] Rendre visible l’échec d’actualisation de l’historique ; conserver les dernières données sans les présenter comme à jour.

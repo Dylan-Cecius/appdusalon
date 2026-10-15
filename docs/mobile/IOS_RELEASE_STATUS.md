@@ -42,3 +42,6 @@ Verrou anti-double-appui et confirmation de résultat préparés. 11 tests cibl�
 
 ## 2026-10-15T15:29:57Z — Édition client préparée
 Durée cumulée 922 secondes ; checkpoint précédent 1079373cea6648aee3e88bb0bf57de2b85c83132, lot présent dans le commit de cette entrée. 11 tests synthétiques ciblés, TypeScript et compilation source isolée passants. Les saisies sont conservées sans confirmation et les champs envoyés limités. Recette UI/backend/native restante ; aucune preuve Apple ajoutée. Prochaine étape : isolation de session des transactions.
+
+## 2026-10-15T15:34:36Z — Transactions partagées et isolées par session
+1201 secondes cumulées. Checkpoint précédent deae4bca2151ec3abefa21745a5778c9a6106b90 ; lot actuel dans ce commit. Suite complète 286 tests/32 fichiers, TypeScript et compilation source isolée (3611 modules) passants. Flux unifié et réponses tardives filtrées ; intégration React/realtime/backend/native non exécutée. Prochaine étape : état d’échec d’actualisation visible, puis liste clients. Aucune build Xcode/signée/TestFlight/validation Apple.
