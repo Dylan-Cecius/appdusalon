@@ -133,3 +133,11 @@
 - npm run typecheck : succès. npm run test:mobile:unit : 253 tests dans 28 fichiers passants. npm run test:mobile:browser -- --list : 20 cas reconnus, aucun exécuté ; nouveaux cas panneaux attente/indisponibilités avec viewport synthétique réduit.
 - npm run ios:prepare:demo : build isolée et sync réussies, 2539 modules ; pas de build iOS. git diff --check et revue React/CSS : succès, aucun nouvel état ou effet ajouté. Compilation connectée finale lancée, résultat consigné au checkpoint suivant.
 - Rendu WebKit/appareil et transitions clavier réelles toujours non validés. Prochain petit défaut à traiter : l’inscription native peut renvoyer directement une session et ne doit alors pas conserver de marqueur en attente.
+
+## 2026-10-15T15:01:53Z — Cycle 2, checkpoint 8 : fin d’une demande sans retour attendu
+- Checkpoint précédent : 6beb6c8efcc622f26972a53b58d45f7b08bee613. Durée observée : 47 minutes.
+- Le contrat installé de signUp peut retourner une session ; le garde natif conservait son marqueur dès que error était vide. Un prédicat completed supprime désormais ce marqueur quand le résultat contient déjà une session, sans modifier la récupération ni la session du SDK.
+- Deux fixtures supplémentaires opposent résultat avec/sans session ; npm run test:mobile:unit -- src/native/pendingAuthFlow.test.ts : 20 tests passants. npm run typecheck et git diff --check : succès. Dernière suite complète observée au checkpoint 7 : 253 tests ; pas de total extrapolé après les deux ajouts.
+- Documentation officielle signUp relue : https://supabase.com/docs/reference/javascript/auth-signup indique que PKCE ne s’utilise pas avec autoconfirm. Ce nettoyage est défensif au contrat SDK, pas une activation ni une validation de ce mode. Aucune configuration backend modifiée.
+- npm run build:mobile:check-connected lancé au checkpoint 7 : succès observé (3608 modules, sortie temporaire supprimée), couvrant les derniers panneaux. Pas de compilation supplémentaire nécessaire pour ce prédicat testé/typé ; aucun appel Supabase réel.
+- Prochaine étape : revue finale des commits, des frontières et des traces, puis libération du bail. Le prochain lot utile portera sur les parcours agenda/clients/caisse et les risques tactiles restants ; stockage natif et validations iOS demeurent ouverts.

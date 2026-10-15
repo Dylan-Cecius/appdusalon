@@ -63,6 +63,13 @@ describe('email request correlation', () => {
     await requestNativeEmailAuth({ flow: f.flow, purpose: 'recovery', redirect, request });
     expect(request).toHaveBeenCalledWith(`${redirect}?flow=${first}`); expect(f.flow.isPending(first)).toBe(true);
   });
+  it.each([true, false])('keeps a marker only when the SDK still needs a callback (session=%s)', hasSession => {
+    const f = fixture();
+    return requestNativeEmailAuth({ flow: f.flow, purpose: 'signup', redirect,
+      request: async () => ({ error: null, data: { session: hasSession ? { synthetic: true } : null } }),
+      completed: result => !!result.data.session,
+    }).then(() => { expect(f.flow.isPending(first)).toBe(!hasSession); });
+  });
   it.each(['returned', 'thrown'])('cancels a %s request failure', async kind => {
     const f = fixture();
     await requestNativeEmailAuth({ flow: f.flow, purpose: 'signup', redirect, request: async () => {

@@ -43,3 +43,5 @@ Le retour exige cet identifiant exact, consomme le marqueur avant l’échange e
 - Passer en arrière-plan pendant un renouvellement, revenir, remonter la racine : pas de double propriétaire ; vérifier UIScene et réseau sur appareil.
 - Coupure réseau, jeton expiré/révoqué, stockage indisponible, MFA et déconnexion : aucun succès affiché sans preuve SDK ; nouvelle demande nécessaire après échange interrompu.
 - Un schéma enregistré, l’allowlist backend, le stockage natif adapté et la compilation/signature restent des prérequis distincts ; les fixtures ne les établissent pas.
+
+Nettoyage défensif : si le contrat signUp retourne déjà une session, le marqueur local est supprimé ; 20 tests ciblés de flux passent après cet ajout. Cela ne rend pas le flux PKCE compatible avec autoconfirm (restriction officielle relue le 15 octobre 2026 : https://supabase.com/docs/reference/javascript/auth-signup).

@@ -49,13 +49,14 @@ export async function requestNativeEmailAuth<T extends { error: unknown }>(optio
   purpose: Purpose;
   redirect: string;
   request: (redirectTo: string) => Promise<T>;
+  completed?: (result: T) => boolean;
 }): Promise<T> {
   const pending = options.flow.begin(options.purpose, options.redirect);
   if (!pending) throw new Error('Impossible de préparer le retour de connexion sur cet appareil.');
   let accepted = false;
   try {
     const result = await options.request(pending.redirectTo);
-    accepted = !result.error;
+    accepted = !result.error && !options.completed?.(result);
     return result;
   } finally { if (!accepted) options.flow.cancel(pending.id); }
 }

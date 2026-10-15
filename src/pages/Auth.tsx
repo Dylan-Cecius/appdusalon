@@ -274,7 +274,7 @@ const Auth = () => {
           }
         });
         const { error } = nativeAuth.nativeIOS
-          ? await requestNativeEmailAuth({ flow: pendingNativeAuth, purpose: 'signup', redirect: redirectUrl, request })
+          ? await requestNativeEmailAuth({ flow: pendingNativeAuth, purpose: 'signup', redirect: redirectUrl, request, completed: result => !!result.data.session })
           : await request(redirectUrl);
 
         if (error) {

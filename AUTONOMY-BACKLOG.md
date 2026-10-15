@@ -45,4 +45,4 @@
 - [x] Erreurs fournisseur en fragment prises en charge sans jeton : 101 tests natifs passants ; recette native toujours manquante.
 - [x] Commandes tactiles de l’agenda/création : minimum 44 px en petit écran ou pointeur grossier ; 12 cas navigateur préparés, non exécutés.
 - [x] Panneaux latéraux adaptés au viewport visible et aux safe areas ; fermeture 44 px/français, hauteurs internes flexibles. 20 cas navigateur découverts, non exécutés.
-- [ ] Nettoyer le marqueur natif quand une inscription retourne immédiatement une session, puis clôturer les preuves.
+- [x] Nettoyage défensif du marqueur si le contrat SDK retourne déjà une session : 20 tests ciblés passants ; ne rend pas PKCE compatible avec autoconfirm.
