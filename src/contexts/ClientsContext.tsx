@@ -1,3 +1,4 @@
+import { readClientStats, type ClientStatsTransaction } from '@/lib/clientStats';
 import { clientCreateFields, persistClientEdit, type ClientWriter } from '@/lib/clientPersistence';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -25,6 +26,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   const contextKey = isReady && user && salonId ? JSON.stringify([user.id, salonId]) : null;
   const scope = useRef(createLatestRequestScope());
   scope.current.setContext(contextKey);
+  const [statsRevision, setStatsRevision] = useState(0);
   const [snapshot, setSnapshot] = useState<{ context: string; clients: Client[] } | null>(null);
   const [readState, setReadState] = useState<{ context: string; loading: boolean; error: string | null } | null>(null);
   const hasSnapshot = !!contextKey && snapshot?.context === contextKey;
@@ -81,63 +83,31 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   };
   const getClientStats = useCallback(async (clientId: string): Promise<ClientStats> => {
     const current = scope.current.captureContext(contextKey);
-    if (!current() || !salonId) throw new Error('client_context_changed');
-
-    try {
-      const client = visibleClients.find(c => c.id === clientId);
-      if (!client) throw new Error('client_unavailable');
-
-      const [{ data: transactions, error: transactionError }, { data: appointments, error: appointmentError }] = await Promise.all([
-        supabase
-          .from('transactions')
-          .select('total_amount, transaction_date')
-          .eq('client_id', clientId)
-          .eq('salon_id', salonId),
-        supabase
-          .from('appointments')
-          .select('start_time, status')
-          .eq('salon_id', salonId)
-          .eq('client_phone', client.phone)
-          .neq('status', 'cancelled')
-          .lte('start_time', new Date().toISOString()),
-      ]);
-
-      if (!current()) throw new Error('client_context_changed');
-      if (transactionError) throw transactionError;
-      if (appointmentError) throw appointmentError;
-      // Accounting revenue is canonical from POS transactions only.
-      const totalSpent = transactions?.reduce(
-        (sum, transaction) => sum + Number(transaction.total_amount),
-        0
-      ) || 0;
-
-      const transactionDates = transactions?.map(
-        transaction => new Date(transaction.transaction_date)
-      ) || [];
-      const appointmentDates = appointments?.map(
-        appointment => new Date(appointment.start_time)
-      ) || [];
-      const allDates = [...transactionDates, ...appointmentDates];
-
-      const lastVisit = allDates.length > 0
-        ? allDates.sort((a, b) => b.getTime() - a.getTime())[0].toISOString()
-        : null;
-
-      return {
-        totalSpent,
-        visitCount: Math.max(appointments?.length || 0, transactions?.length || 0),
-        lastVisit,
-      };
-    } catch (error) {
-      console.error('Error fetching client stats:', error);
-      throw error;
-    }
-  }, [visibleClients, contextKey, salonId]);
+    if (!current() || !salonId || !hasSnapshot || error) throw new Error('client_context_unavailable');
+    const client = visibleClients.find(row => row.id === clientId);
+    if (!client) throw new Error('client_unavailable');
+    const now = new Date();
+    const result = await readClientStats(async (from, to) => {
+      const response = await supabase.from('transactions').select('id, total_amount, transaction_date, appointment_id', { count: 'exact' })
+        .eq('client_id', clientId).eq('salon_id', salonId).lte('transaction_date', now.toISOString()).order('transaction_date').order('id').range(from, to);
+      // appointment_id exists in the split-payment migration; the generated schema predates it.
+      return { ...response, data: response.data as unknown as ClientStatsTransaction[] | null };
+    }, async (from, to) => {
+      return await supabase.from('appointments').select('id, start_time, status', { count: 'exact' })
+        .eq('salon_id', salonId).eq('client_phone', client.phone).eq('status', 'completed').lte('start_time', now.toISOString()).order('start_time').order('id').range(from, to);
+    }, current, now);
+    if (!current() || result === null) throw new Error('client_context_changed');
+    return result;
+  }, [visibleClients, contextKey, salonId, hasSnapshot, error, statsRevision]);
 
   useEffect(() => {
     if (!contextKey) { setSnapshot(null); setReadState(null); return; }
     void fetchClients();
-    const channel = supabase.channel(`clients-changes-${salonId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'clients', filter: `salon_id=eq.${salonId}` }, () => { void fetchClients(); }).subscribe();
+    const channel = supabase.channel(`clients-changes-${salonId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients', filter: `salon_id=eq.${salonId}` }, () => { void fetchClients(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `salon_id=eq.${salonId}` }, () => setStatsRevision(value => value + 1))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `salon_id=eq.${salonId}` }, () => setStatsRevision(value => value + 1))
+      .subscribe();
     return () => { scope.current.invalidate(); void supabase.removeChannel(channel); };
   }, [contextKey, salonId, fetchClients]);
   return <ClientsContext.Provider value={{ clients: visibleClients, loading, error, hasSnapshot, contextKey, addClient, updateClient, getClientStats, refreshClients: fetchClients }}>{children}</ClientsContext.Provider>;

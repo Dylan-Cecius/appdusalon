@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-clients-2026-10-15T14-00-21Z",
-  "task": "Sauvegarde client conditionnelle ; statistiques complètes à suivre",
+  "task": "Statistiques client paginées ; recherche et exports à traiter",
   "started_at": "2026-10-15T14:00:21Z",
-  "last_checkpoint_at": "2026-10-15T14:14:43.269173+00:00",
-  "lease_expires_at": "2026-10-15T15:29:43.269173+00:00",
-  "last_application_commit": "18b3c40ef64810db62ec1cf46311e40e95ecf450",
+  "last_checkpoint_at": "2026-10-15T14:19:18.618325+00:00",
+  "lease_expires_at": "2026-10-15T15:34:18.618325+00:00",
+  "last_application_commit": "7e1c3bd7ae07f2e3b2d0407512164dd86b2246a1",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Paginer les statistiques et compter les passages sans doubler un rendez-vous lié à sa transaction.",
+  "next_task": "Recherche accents/téléphones et export CSV/JSON vérifié, avec lectures bornées et annulation au changement de contexte.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",

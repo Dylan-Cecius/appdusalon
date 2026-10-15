@@ -100,3 +100,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Clients — sauvegarde de fiche
 - Champs autorisés, filtre salon/révision, résultat confirmé, verrou et saisies conservées. 210 unitaires, typecheck et build réussis. Recette navigateur/hébergée encore manquante ; aucune donnée réelle modifiée.
+
+## Clients — statistiques et passages
+- Montants paginés, erreurs explicites, passages liés dédoublonnés et statuts confirmés. 219 unitaires, typecheck/build réussis. Lecture hébergée/RLS et recette navigateur encore manquantes ; recherche/export à poursuivre.

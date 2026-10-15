@@ -62,8 +62,9 @@ const euro = (value: number) =>
 
 const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps) => {
   const { updateClient, getClientStats, refreshClients, error: clientsError, loading: clientsLoading } = useClients();
-  const { transactions } = useSupabaseTransactions();
-  const { appointments } = useSupabaseAppointments();
+  const { transactions, loading: transactionsLoading, error: transactionsError, hasSnapshot: transactionsReady, refreshTransactions } = useSupabaseTransactions();
+  const { appointments, loading: appointmentsLoading, error: appointmentsError, refreshAppointments } = useSupabaseAppointments();
+  const historyReady = transactionsReady && !transactionsLoading && !transactionsError && !appointmentsLoading && !appointmentsError;
   const { permissions } = usePermissions();
   const { toast } = useToast();
   const { rights } = useSubscriptionRights();
@@ -302,37 +303,39 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
           {saveError && <p role="alert" ref={saveErrorRef} tabIndex={-1} className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{saveError}</p>}
           {isSaving && <p role="status" className="mb-3 text-sm">Enregistrement en cours…</p>}
           {clientsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{clientsError} Votre saisie reste conservée.</p><Button variant="outline" size="sm" onClick={() => void refreshClients()}>Recharger les clients</Button></div>}
+          <p className="mb-3 text-xs text-muted-foreground">Les passages regroupent les rendez-vous terminés et les ventes. Un rendez-vous lié à son ticket compte une fois ; les anciens tickets sans lien restent indépendants.</p>
+          {(transactionsError || appointmentsError) && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>Une partie de l’historique ne peut pas être chargée.</p><Button variant="outline" size="sm" onClick={() => { void refreshTransactions(); void refreshAppointments(); }}>Recharger l’historique</Button></div>}
           {statsLoading && <p role="status" className="mb-3 text-sm text-muted-foreground">Chargement des statistiques…</p>}
           {statsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{statsError}</p><Button variant="outline" size="sm" onClick={retryStats}>Réessayer les statistiques</Button></div>}
           <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 label: 'CA généré',
-                value: euro(insights.paidRevenue),
+                value: stats ? euro(stats.totalSpent) : '—',
                 icon: DollarSign,
-                helper: clientTransactions.length + ' encaissement' + (clientTransactions.length > 1 ? 's' : ''),
+                helper: 'ventes enregistrées pour cette fiche',
               },
               {
                 label: 'Panier moyen',
-                value: euro(insights.averageBasket),
+                value: historyReady ? euro(insights.averageBasket) : '—',
                 icon: TrendingUp,
                 helper: 'sur les ventes enregistrées',
               },
               {
-                label: 'Visites',
+                label: 'Passages enregistrés',
                 value: stats ? String(stats.visitCount) : '—',
                 icon: UserRound,
                 helper:
-                  insights.averageVisitGapDays !== null
+                  historyReady && insights.averageVisitGapDays !== null
                     ? 'tous les ' + Math.round(insights.averageVisitGapDays) + ' j. en moyenne'
-                    : 'historique client',
+                    : 'RDV terminés et tickets hors RDV',
               },
               {
                 label: 'No-shows',
-                value: String(insights.noShows),
+                value: historyReady ? String(insights.noShows) : '—',
                 icon: UserX,
                 helper:
-                  insights.cancellations > 0
+                  !historyReady ? 'historique indisponible' : insights.cancellations > 0
                     ? insights.cancellations + ' annulation' + (insights.cancellations > 1 ? 's' : '')
                     : 'aucune annulation',
               },
@@ -436,7 +439,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                     <CalendarClock className="h-4 w-4 text-primary" />
                     <h3 className="text-sm font-semibold">Prochain rendez-vous</h3>
                   </div>
-                  {insights.upcoming ? (
+                  {!historyReady ? <p className="mt-4 text-sm text-muted-foreground">Historique en cours de vérification.</p> : insights.upcoming ? (
                     <div className="mt-4">
                       <div className="text-xl font-semibold text-slate-950">
                         {format(new Date(insights.upcoming.startTime), 'EEEE d MMMM', {
@@ -472,7 +475,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                     <div className="flex items-center justify-between gap-4">
                       <dt className="text-sm text-slate-500">Prestation favorite</dt>
                       <dd className="text-sm font-semibold text-slate-900">
-                        {insights.favoriteService || 'Pas assez de données'}
+                        {historyReady ? insights.favoriteService || 'Pas assez de données' : '—'}
                       </dd>
                     </div>
                     <div className="flex items-center justify-between gap-4">
@@ -486,7 +489,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
                     <div className="flex items-center justify-between gap-4">
                       <dt className="text-sm text-slate-500">Fréquence moyenne</dt>
                       <dd className="text-sm font-semibold text-slate-900">
-                        {insights.averageVisitGapDays !== null
+                        {historyReady && insights.averageVisitGapDays !== null
                           ? Math.round(insights.averageVisitGapDays) + ' jours'
                           : '—'}
                       </dd>
@@ -510,7 +513,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
 
             <TabsContent value="history" className="mt-4">
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                {allVisits.length === 0 ? (
+                {!historyReady ? <p className="p-6 text-sm text-muted-foreground">L’historique n’est pas disponible. Réessayez avant de vous fier à cette liste.</p> : allVisits.length === 0 ? (
                   <div className="py-12 text-center text-sm text-muted-foreground">
                     Aucun historique de visite
                   </div>
