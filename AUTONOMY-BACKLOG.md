@@ -122,3 +122,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Fidélité — réglages confirmés
 - Validation sans arrondi silencieux, mise à jour par révision/insert sans écrasement, saisie conservée et verrou d’attente. 299 unitaires, typecheck/build réussis, lint 0 erreur/210 avertissements. Scénarios navigateur et RLS à vérifier ; aucun réglage réel sauvegardé.
+
+## Fidélité — scénarios préparés
+- 14 nouveaux cas navigateur découverts/typecheckés, non exécutés ; total 62. Contrôles locaux du formulaire, sauvegarde et lecture couverts par fixtures. Serveur rapports automatiques différé : Deno absent ; erreurs de livraison/last_sent_at ajoutées à l’audit, aucun envoi réel.

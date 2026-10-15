@@ -180,4 +180,3 @@ export const LoyaltyProgramForm = ({ program, disabled, onRefresh, saveProgram }
     </Card>
   );
 };
-
