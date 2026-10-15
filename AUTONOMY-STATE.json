@@ -2,19 +2,19 @@
   "schema_version": 1,
   "project": "AppDuSalon V2 iOS / App Store",
   "branch": "v2/ios-appstore",
-  "status": "running",
-  "run_id": "ios-2026-10-15T14-14-40-744Z",
-  "task": "Contrôles de clôture",
-  "started_at": "2026-10-15T14:14:40.744Z",
-  "last_checkpoint_at": "2026-10-15T15:01:53Z",
-  "lease_expires_at": "2026-10-15T16:16:53.000Z",
+  "status": "idle",
+  "run_id": null,
+  "task": null,
+  "started_at": null,
+  "last_checkpoint_at": "2026-10-15T15:03:54Z",
+  "lease_expires_at": null,
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Vérifier les commits et libérer le bail ; prochain lot : parcours métier mobiles, agenda/clients/caisse.",
+  "next_task": "Parcours métier mobiles agenda/clients/caisse : audit du code courant, défaut concret, fixtures, correction et checkpoint. Recettes WebKit/iOS et stockage natif restent ouverts.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "253 tests in 28 files passed; TypeScript passed",
@@ -37,9 +37,9 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "6beb6c8efcc622f26972a53b58d45f7b08bee613",
-  "last_run_id": "ios-2026-10-15T13-14-44-195Z",
-  "last_run_started_at": "2026-10-15T13:14:44.195Z",
-  "last_run_finished_at": "2026-10-15T14:01:38.092Z",
-  "last_run_duration_seconds": 2814
+  "last_application_commit": "2078b4178d9618b9513e8e60a79f4c2f7410ed5d",
+  "last_run_id": "ios-2026-10-15T14-14-40-744Z",
+  "last_run_started_at": "2026-10-15T14:14:40.744Z",
+  "last_run_finished_at": "2026-10-15T15:03:54Z",
+  "last_run_duration_seconds": 2953
 }

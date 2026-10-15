@@ -34,3 +34,5 @@ Lire les fichiers AUTONOMY-* de cette branche, prendre le bail, traiter le premi
 - Pont App 8.1.2, liens PKCE corrélés et cycle de session préparés sous opt-in explicite ; aucune configuration Apple/backend réelle. Voir NATIVE_AUTH.md et SESSION_AUDIT.md.
 - Dernière suite observée : 253 tests/28 fichiers passants ; recette navigateur étendue à 20 cas découverts, toujours non exécutés. Aucun binaire iOS compilé/signé.
 - Les commandes agenda et panneaux latéraux ont reçu des adaptations tactiles/safe areas/clavier. Les preuves unitaires et de build ne valident pas leur rendu sur iPhone.
+
+Dernier code récupéré à la clôture 2026-10-15T15:03:54Z : 2078b4178d9618b9513e8e60a79f4c2f7410ed5d. Huit lots du cycle consignés dans le journal, bail libéré. Après la suite de 253 tests, le contrôle ciblé de flux compte 20 tests passants avec les deux derniers ajouts. Reprendre la priorité métier mobile décrite dans le backlog ; ne pas reconstruire le projet depuis zéro.

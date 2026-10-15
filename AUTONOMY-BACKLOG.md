@@ -20,7 +20,7 @@
 1. **P0 — Build mobile isolée et reproductible (code et contrôles locaux terminés ; recette navigateur restante).** Récupérer le code complet sans charger les secrets/données réels, vérifier lockfile et dépendances, établir un script de build mobile démo explicite. Garantir qu'aucun artefact de test ne se connecte au backend réel ; distinguer démo et candidat de diffusion. Exécuter les contrôles disponibles et auditer le besoin de mise à niveau Capacitor/Xcode/SDK selon les exigences actuelles.
 2. **P0 — Projet iOS (démo générée ; compilation et recette natives restantes).** Vérifier la configuration native, préparer le projet iOS reproductible avec les ressources réelles, traiter l'identifiant et la signature comme non validés tant qu'aucune preuve Apple n'existe. Génération possible sans publication ; une compilation iOS nécessite un environnement compatible. Si ce prérequis manque, avancer sur P1.
 3. **P1 — Ergonomie iPhone (premier lot implémenté/testé unitairement ; recette visuelle restante).** Navigation, safe areas, clavier, modales, scroll, agenda pastel, taille des cibles tactiles, mode paysage, accessibilité. Recette sur largeurs iPhone puis iPad ; ne pas présenter l'émulation web comme un essai natif.
-4. **P1 — Session native (audit et corrections du fournisseur réalisés ; pont et liens restants).** Audit persistance de session, reprise après arrière-plan, reconnexion, liens de réinitialisation/deep links et stockage adapté. Tests synthétiques puis validation native lorsque possible.
+4. **P1 — Session native (pont/liens/cycle préparés et testés sur fixtures ; stockage adapté et recette native restants).** Audit persistance de session, reprise après arrière-plan, reconnexion, liens de réinitialisation/deep links et stockage adapté. Tests synthétiques puis validation native lorsque possible.
 5. **P1 — Parcours métier.** Agenda, création/modification de rendez-vous, clients, caisse et consultation des statistiques. Réutiliser les règles et droits V2, intégrer les correctifs web pertinents sans recopier les fichiers de pilotage web.
 6. **P2 — Fonctions mobiles utiles.** Évaluer notifications pertinentes, états réseau/perte de connexion et accès en lecture contrôlé aux informations nécessaires ; définir avant d'implémenter les limites de confidentialité et synchronisation.
 7. **P2 — Préparation Apple.** Auditer les règles en vigueur, valeur fonctionnelle mobile, confidentialité/données collectées, suppression de compte si création de compte, permissions minimales, politique de facturation SaaS distincte du paiement de prestations physiques. Préparer métadonnées et captures véridiques, support et mode de revue à données synthétiques.
@@ -37,7 +37,7 @@
 - Premier lot encore prêt : spécifier et tester strictement les callbacks natifs sur fixtures (origine/chemin autorisés, type de flux, doublons, démarrage/reprise), puis raccorder le pont App lorsque ses prérequis sont établis. Voir SESSION_AUDIT.md.
 - Garder ouverts les contrôles visuels des marges/clavier/menus et les essais iOS ; ne pas les cocher sur la base des tests unitaires ou de --list.
 
-## Cycle 2 en cours
+## Cycle 2 terminé
 - [x] Contrat de callbacks PKCE strict et contrôleur indépendant : 42 tests synthétiques passants.
 - [x] Raccorder démarrage à froid/appUrlOpen sous configuration native explicite : 51 tests natifs ciblés, 203 au total ; aucun callback hébergé ni schéma Apple enregistré.
 - [x] Cycle App de rafraîchissement unique préparé et raccordé sous opt-in : 12 tests synthétiques de cycle/remontage passants.
@@ -46,3 +46,8 @@
 - [x] Commandes tactiles de l’agenda/création : minimum 44 px en petit écran ou pointeur grossier ; 12 cas navigateur préparés, non exécutés.
 - [x] Panneaux latéraux adaptés au viewport visible et aux safe areas ; fermeture 44 px/français, hauteurs internes flexibles. 20 cas navigateur découverts, non exécutés.
 - [x] Nettoyage défensif du marqueur si le contrat SDK retourne déjà une session : 20 tests ciblés passants ; ne rend pas PKCE compatible avec autoconfirm.
+
+## Reprise après le cycle clos 2026-10-15T15:03:54Z
+- Huit checkpoints indépendants ; dernier code 2078b4178d9618b9513e8e60a79f4c2f7410ed5d. Durée observée : 49 min 13 s ; bail libéré.
+- Prochain lot gratuit prêt : audit et corrections des parcours mobiles agenda/clients/caisse (sélecteur de date, déplacement sans drag obligatoire, formulaires et confirmation des mutations), avec fixtures synthétiques. Reprendre le code courant et sélectionner un défaut concret avant chaque correction.
+- Conserver ouverts les 20 cas WebKit non exécutés et la recette native des liens/UIScene/clavier ; absence de Xcode, stockage Keychain et backend isolé toujours non résolue. La préparation opt-in ne constitue pas un candidat connecté distribuable.
