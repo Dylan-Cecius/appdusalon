@@ -137,3 +137,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 ## Fin du cycle fidélité/rapports — 2026-10-15T15:30:57.292711+00:00
 - Six checkpoints sauvegardés, dernière source 8d54f1b2e0d3425972de378f4a259f3432171bcc ; 317 unitaires et contrôles locaux réussis, 70 nouveaux cas navigateur encore non exécutés. Aperçu inchangé.
 - Bail libéré ; prochain développement : état fictif partagé et compatibilité du stockage agenda. Serveur rapports différé faute de Deno, sans envoi réel.
+
+## Démonstration — contrat de stockage
+- Contrat de stockage versionné et catalogue commun préparés, non encore raccordés ; reprise anciens formats sans écraser les données illisibles. 332 unitaires, typecheck/build réussis. Intégration multi-écran et recette navigateur restent à faire.
