@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T16-14-28Z",
-  "task": "Disponibilités et reconnexion agenda explicites",
+  "task": "Indisponibilités isolées et confirmées",
   "started_at": "2026-10-15T16:14:28Z",
-  "last_checkpoint_at": "2026-10-15T16:29:05Z",
-  "lease_expires_at": "2026-10-15T17:44:05.000Z",
+  "last_checkpoint_at": "2026-10-15T16:31:14Z",
+  "lease_expires_at": "2026-10-15T17:46:14.000Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Isoler aussi les indisponibilités de l’équipe par utilisateur et confirmer leurs mutations avant fermeture.",
+  "next_task": "Empêcher les doubles appuis et la fermeture du panneau d’indisponibilité pendant une sauvegarde ; conserver les saisies en échec.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "339 tests in 38 files passed; TypeScript passed",
@@ -44,7 +44,8 @@
     "appointment_mutation_scope": "26 tests ciblés passants ; TypeScript et compilation source isolée passants (3618 modules).",
     "appointment_edit_draft": "5 tests synthétiques passants ; TypeScript et compilation isolée 3619 modules passants ; révision originale conservée.",
     "appointment_mobile": "44 cas navigateur découverts, non exécutés ; TypeScript, 2 tests de sûreté et build/sync démo passants (2555 modules).",
-    "appointment_availability": "11 tests ciblés passants ; suite complète 339 tests/38 fichiers, TypeScript et compilation isolée 3620 modules passants."
+    "appointment_availability": "11 tests ciblés passants ; suite complète 339 tests/38 fichiers, TypeScript et compilation isolée 3620 modules passants.",
+    "time_off_scope": "18 tests ciblés passants ; TypeScript et compilation isolée 3621 modules passants."
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -52,7 +53,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "8a0eed3812fda7cc84d7655b42c5534e1645d52a",
+  "last_application_commit": "13eab30f5255904e47cfa098a990ae342bf2f140",
   "last_run_id": "ios-2026-10-15T15-14-35Z",
   "last_run_started_at": "2026-10-15T15:14:35Z",
   "last_run_finished_at": "2026-10-15T16:04:45Z",

@@ -143,3 +143,7 @@ Clôture 2026-10-15T16:04:45Z : 50 min 10 s observées, dix lots fonctionnels pl
 ## Cycle 5 — 2026-10-15T16:29:05Z : Disponibilités et reconnexion agenda explicites
 - [x] Disponibilités et reconnexion agenda explicites : sources préparées, preuves et limites dans le journal.
 - [ ] Isoler aussi les indisponibilités de l’équipe par utilisateur et confirmer leurs mutations avant fermeture.
+
+## Cycle 5 — 2026-10-15T16:31:14Z : Indisponibilités isolées et confirmées
+- [x] Indisponibilités isolées et confirmées : sources préparées, preuves et limites dans le journal.
+- [ ] Empêcher les doubles appuis et la fermeture du panneau d’indisponibilité pendant une sauvegarde ; conserver les saisies en échec.

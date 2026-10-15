@@ -92,3 +92,7 @@ Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieu
 ## 2026-10-15T16:29:05Z — Disponibilités et reconnexion agenda explicites
 877 secondes cumulées ; précédent 8a0eed3812fda7cc84d7655b42c5534e1645d52a, lot présent dans ce commit. 11 tests ciblés passants ; suite complète 339 tests/38 fichiers, TypeScript et compilation isolée 3620 modules passants. 339 tests in 38 files passed; TypeScript passed Passed with synthetic .invalid configuration (3620 modules); no backend/native runtime
 Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Isoler aussi les indisponibilités de l’équipe par utilisateur et confirmer leurs mutations avant fermeture.
+
+## 2026-10-15T16:31:14Z — Indisponibilités isolées et confirmées
+1006 secondes cumulées ; précédent 13eab30f5255904e47cfa098a990ae342bf2f140, lot présent dans ce commit. 18 tests ciblés passants ; TypeScript et compilation isolée 3621 modules passants.
+Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Empêcher les doubles appuis et la fermeture du panneau d’indisponibilité pendant une sauvegarde ; conserver les saisies en échec.
