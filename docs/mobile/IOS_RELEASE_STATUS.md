@@ -69,3 +69,6 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## 2026-10-15T16:04:04Z — Audit final
 2969 secondes observées ; dix checkpoints fonctionnels référencés dans le journal. Dernier code fonctionnel 4e699530c8efd8344f3a6c621f8f54970f38dda6. Contrôle global des différences corrigé (espaces fin de ligne uniquement), .env/workflows/PreviewStandalone inchangés. Sources préparées et contrôles web passants ; 32 recettes navigateur restent non exécutées, aucune compilation/signature/distribution/acceptation Apple. Reprise : parcours mobile agenda et confirmations de mutation.
+
+## Clôture 2026-10-15T16:04:45Z
+Durée 50 min 10 s, bail libéré. Dernier commit source/audit 684d082cd2bca990f6138d3aab4c4d9af5efd845 ; clôture documentaire dans le présent commit. Dix lots fonctionnels sauvegardés, preuves détaillées ci-dessus. Sources et projet démo préparés ; aucune build iOS signée, aucun TestFlight distribué, aucune validation Apple. Prochaine tâche : parcours agenda mobile.

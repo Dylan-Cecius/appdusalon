@@ -2,19 +2,19 @@
   "schema_version": 1,
   "project": "AppDuSalon V2 iOS / App Store",
   "branch": "v2/ios-appstore",
-  "status": "running",
-  "run_id": "ios-2026-10-15T15-14-35Z",
-  "task": "Contrôle final et préparation de reprise",
-  "started_at": "2026-10-15T15:14:35Z",
-  "last_checkpoint_at": "2026-10-15T16:04:04Z",
-  "lease_expires_at": "2026-10-15T17:19:04.000Z",
+  "status": "idle",
+  "run_id": null,
+  "task": null,
+  "started_at": null,
+  "last_checkpoint_at": "2026-10-15T16:04:45Z",
+  "lease_expires_at": null,
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Clôture, contrôle des références et libération du bail.",
+  "next_task": "Auditer le parcours agenda mobile : confirmation de mutation, saisies conservées et portée utilisateur/salon ; fixtures synthétiques uniquement.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "293 tests in 33 files passed; TypeScript passed",
@@ -47,10 +47,10 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "4e699530c8efd8344f3a6c621f8f54970f38dda6",
-  "last_run_id": "ios-2026-10-15T15-08-49Z",
-  "last_run_started_at": "2026-10-15T15:08:49Z",
-  "last_run_finished_at": "2026-10-15T15:13:04Z",
-  "last_run_duration_seconds": 255,
+  "last_application_commit": "684d082cd2bca990f6138d3aab4c4d9af5efd845",
+  "last_run_id": "ios-2026-10-15T15-14-35Z",
+  "last_run_started_at": "2026-10-15T15:14:35Z",
+  "last_run_finished_at": "2026-10-15T16:04:45Z",
+  "last_run_duration_seconds": 3010,
   "draft_checkpoint": null
 }

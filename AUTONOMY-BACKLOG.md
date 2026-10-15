@@ -121,3 +121,5 @@ Les cases historiques ci-dessus décrivent leur checkpoint ; les points suivants
 - [ ] Prochain lot gratuit : auditer le parcours mobile de création/modification de rendez-vous (confirmation de mutation, saisies conservées, contexte session/salon, navigation sans drag obligatoire) sur le code actuel et fixtures synthétiques. Conserver les couleurs pastel.
 - [ ] Ensuite : audit de restitution des statistiques en cas d’erreur/chargement, et téléchargement/partage natif des exports (aucune dépendance ni service payant sans preuve).
 - [ ] Recettes ouvertes : 32 cas navigateur, montage React/changement de session réel, tableurs/CSV et iPhone/iPad. Blocages connus : bibliothèques WebKit indisponibles, pas de Xcode/signature/backend isolé. Ne pas retenter les mêmes installations refusées.
+
+Clôture 2026-10-15T16:04:45Z : 50 min 10 s observées, dix lots fonctionnels plus audit 684d082cd2bca990f6138d3aab4c4d9af5efd845. Bail libéré ; priorité prête : agenda mobile et confirmations de mutations. Les contrôles UI/natifs manquants restent ouverts.
