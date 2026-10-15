@@ -66,7 +66,7 @@ const AgendaHeader = ({
       : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr });
 
   return (
-    <div className="shrink-0 border-b border-slate-200 bg-white">
+    <div className="agenda-touch-controls shrink-0 border-b border-slate-200 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           {onToggleSidebar && (

@@ -117,3 +117,11 @@
 - npm run test:mobile:unit -- src/native : 101 tests dans 6 fichiers passants, dont 14 nouveaux cas de fragment ; scénario intégré d’annulation/rejeu adapté. npm run typecheck et git diff --check : succès. Suite complète de 239 tests vérifiée au checkpoint précédent ; elle n’a pas été relancée pour ce seul parseur.
 - Recette native à froid/reprise/réseau/MFA listée dans NATIVE_AUTH.md, toujours non exécutée. Aucun e-mail, backend réel, schéma enregistré ni build Xcode.
 - Prochaine tâche prête : les commandes de l’agenda comportent des cibles de 28–36 px dans les sources ; adaptation tactile ciblée sans modification des couleurs métier.
+
+## 2026-10-15T14:53:58Z — Cycle 2, checkpoint 6 : commandes tactiles de l’agenda
+- Checkpoint précédent : c7dc7b6479572b08eaa78015863a08fc89878d00. Durée observée : 39 minutes.
+- Lecture des commandes : tailles h-7/h-8/h-9 (28/32/36 px) dans l’en-tête et l’ordre des prestations. Ajout d’un minimum 44 × 44 CSS px sur les boutons de ces deux zones, seulement sous 768 px ou avec pointeur grossier. Grille calendrier en portail exclue de cette règle ; palette pastel inchangée.
+- npm run typecheck et git diff --check : succès. npm run test:mobile:browser -- --list : 12 cas reconnus sur quatre profils, aucun exécuté. Cas ajouté : dimensions des commandes et absence de débordement horizontal avant/après ouverture du formulaire.
+- npm run test:mobile:build : 2 contrôles passants. npm run ios:prepare:demo : build isolée et sync réussies (2539 modules). Il ne s’agit pas de compilation Xcode ni de recette visuelle.
+- Revue React/CSS : aucun nouvel effet ou état, boutons réellement agrandis sans agrandir seulement les icônes ; flex-shrink conservé pour éviter un débordement du libellé de date.
+- Prochaine tâche : les SheetContent partagés sont encore plein écran fixe sans marges clavier/safe areas ; navigation mobile, attente et indisponibilités concernés.

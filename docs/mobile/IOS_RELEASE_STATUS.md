@@ -8,7 +8,7 @@
 - Recette navigateur : non exécutée à ce checkpoint ; Chromium indisponible, WebKit téléchargé mais bibliothèques Linux indisponibles (installation refusée par les permissions du runtime).
 - Projet Xcode démo : généré dans ios-demo/ avec Capacitor 8.5.3, SPM et UIScene ; synchronisation répétée réussie.
 - Icône et splash : placeholders réels du template Capacitor, à remplacer avant diffusion.
-- Ergonomie : safe areas, clavier et navigation adaptés dans les sources ; 5 tests viewport passants. 8 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
+- Ergonomie : safe areas, clavier, navigation et cibles tactiles agenda adaptés dans les sources ; 5 tests viewport passants. 12 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
 - Dernier checkpoint de code récupéré et vérifié : 4f07b198e465995f19d5c5596025710894239cdc (checkpoint précédent ; actuel identifié par le commit Git de ce fichier, 2026-10-15T14:47:36Z).
 - Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; liens entrants raccordés sous opt-in, cycle App raccordé sous opt-in (12 tests ciblés), stockage natif encore à réaliser. Voir SESSION_AUDIT.md.
 - Callbacks natifs : parseur, contrôleur et pont App préparés sous configuration explicite, 101 tests natifs synthétiques passants ; aucun essai natif ni retour hébergé configuré.

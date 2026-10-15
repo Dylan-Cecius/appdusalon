@@ -62,3 +62,26 @@ test('appointment form stays scrollable in a reduced viewport and can be closed'
   await close.click();
   await expect(dialog).toBeHidden();
 });
+
+// Prepared browser recipe: requires the documented WebKit host dependencies.
+test('agenda commands and appointment actions expose full touch targets', async ({ page }) => {
+  const header = page.locator('.agenda-touch-controls').first();
+  await expect(header).toBeVisible();
+  const checkTargets = async (scope: typeof header) => {
+    for (const button of await scope.getByRole('button').all()) {
+      if (!await button.isVisible()) continue;
+      const bounds = (await button.boundingBox())!;
+      expect(bounds.height).toBeGreaterThanOrEqual(44);
+      expect(bounds.width).toBeGreaterThanOrEqual(44);
+    }
+  };
+  await checkTargets(header);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Nouveau rendez-vous', exact: true }).click();
+  const form = page.getByRole('dialog').locator('form.agenda-touch-controls');
+  await expect(form).toBeVisible();
+  await checkTargets(form);
+  const bounds = (await form.boundingBox())!;
+  expect(bounds.x).toBeGreaterThanOrEqual(16);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual((await page.evaluate(() => innerWidth)) - 16);
+});

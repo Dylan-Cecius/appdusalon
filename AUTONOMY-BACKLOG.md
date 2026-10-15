@@ -43,4 +43,5 @@
 - [x] Cycle App de rafraîchissement unique préparé et raccordé sous opt-in : 12 tests synthétiques de cycle/remontage passants.
 - [x] Garde des flux locaux avant échange PKCE : marqueur aléatoire consommé une seule fois, 18 tests dédiés ; 239 tests au total.
 - [x] Erreurs fournisseur en fragment prises en charge sans jeton : 101 tests natifs passants ; recette native toujours manquante.
-- [ ] Agrandir les commandes tactiles de l’agenda et documenter la recette visuelle restante.
+- [x] Commandes tactiles de l’agenda/création : minimum 44 px en petit écran ou pointeur grossier ; 12 cas navigateur préparés, non exécutés.
+- [ ] Étendre safe areas/clavier aux panneaux latéraux (navigation, attente, indisponibilités), puis recette visuelle.

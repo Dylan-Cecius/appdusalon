@@ -58,7 +58,7 @@ export default function CreateAppointmentDialog({ clientSuggestions = [], prefil
   return <Dialog open={isOpen} onOpenChange={open => { if (!open && !saving.current) onClose(); }}>
     <DialogContent className="max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-3xl overflow-y-auto rounded-2xl p-4 sm:p-6" onInteractOutside={event => { if (busy) event.preventDefault(); }}>
       <DialogHeader><DialogTitle>Nouveau rendez-vous</DialogTitle><DialogDescription>{demo ? 'Testez librement avec un client fictif. Aucun message ne sera envoyé.' : 'Choisissez les prestations dans l’ordre de réalisation.'}</DialogDescription></DialogHeader>
-      <form onSubmit={async event => {
+      <form className="agenda-touch-controls" onSubmit={async event => {
         event.preventDefault(); if (saving.current || !draft || issue) return;
         saving.current = true; setBusy(true); setError('');
         try { await onSave({ ...draft, clientName: clientName.trim(), clientPhone: phone.trim(), notes: notes.trim() }, recurrence); onCreated?.(draft); onClose(); }

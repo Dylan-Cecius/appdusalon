@@ -166,6 +166,12 @@ All colors MUST be HSL.
 }
 @media (max-width: 767px), (pointer: coarse) {
   :root :is(input, select, textarea) { font-size: max(1rem, 16px); }
+  /* Enlarge the actual hit area; compact desktop controls remain unchanged.
+     Calendar popovers are portals and have their own grid sizing. */
+  .agenda-touch-controls button {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 @layer components {
