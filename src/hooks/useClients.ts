@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -111,7 +111,7 @@ export const useClients = () => {
     }
   };
 
-  const getClientStats = async (clientId: string): Promise<ClientStats> => {
+  const getClientStats = useCallback(async (clientId: string): Promise<ClientStats> => {
     if (!user || !salonId) return { totalSpent: 0, visitCount: 0, lastVisit: null };
 
     try {
@@ -160,7 +160,7 @@ export const useClients = () => {
       console.error('Error fetching client stats:', error);
       return { totalSpent: 0, visitCount: 0, lastVisit: null };
     }
-  };
+  }, [clients, user?.id, salonId]);
 
   useEffect(() => {
     if (!user || !salonId) {

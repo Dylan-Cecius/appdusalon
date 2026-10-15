@@ -91,3 +91,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 ## Fin du cycle — 2026-10-15T13:39:38.419833+00:00
 - Six lots applicatifs supplémentaires sauvegardés ; dernière source : 06d846510550e2c37af74a4dc932797cb0ce940b. 189 unitaires réussis, typecheck/builds réussis ; 42 cas navigateur nouveaux restent non exécutés. Aperçu inchangé.
 - Revue Clients et rapports automatiques consignée avec critères de reprise. Bail libéré ; aucune tâche facturable ou activité entre cycles n’est prétendue.
+
+## Clients — stabilité de la fiche
+- Lecture des statistiques stabilisée et séparée du brouillon ; réponses après fermeture/changement ignorées. Typecheck, 189 unitaires et build réussis ; six cas navigateur supplémentaires préparés (48 cumulés), non exécutés. Source Clients et erreurs/pagination à poursuivre.

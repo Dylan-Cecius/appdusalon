@@ -1,3 +1,4 @@
+import { useClientDetailStats } from '@/hooks/useClientDetailStats';
 import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarClock,
@@ -58,7 +59,7 @@ const euro = (value: number) =>
     currency: 'EUR',
   }).format(value);
 
-const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) => {
+const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps) => {
   const { updateClient, getClientStats, refreshClients } = useClients();
   const { transactions } = useSupabaseTransactions();
   const { appointments } = useSupabaseAppointments();
@@ -75,22 +76,11 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const { logActivity } = useActivityLog();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [stats, setStats] = useState<ClientStats>({
-    totalSpent: 0,
-    visitCount: 0,
-    lastVisit: null,
-  });
+  const { stats, error: statsError, loading: statsLoading, retry: retryStats } = useClientDetailStats(open ? client.id : null, getClientStats);
   const [editedClient, setEditedClient] = useState(client);
   const [rgpdConfirmName, setRgpdConfirmName] = useState('');
   const [isRgpdDeleting, setIsRgpdDeleting] = useState(false);
   const [rgpdDialogOpen, setRgpdDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (open && client) {
-      setEditedClient(client);
-      void getClientStats(client.id).then(setStats);
-    }
-  }, [open, client, getClientStats]);
 
   useEffect(() => {
     if (!rgpdDialogOpen) setRgpdConfirmName('');
@@ -287,7 +277,7 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                   </Button>
                 </>
               ) : (
-                <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+                <Button size="sm" variant="outline" onClick={() => { setEditedClient(client); setIsEditing(true); }}>
                   <Edit2 className="mr-1 h-4 w-4" />
                   Modifier
                 </Button>
@@ -297,6 +287,8 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
         </DialogHeader>
 
         <div className="bg-slate-50/70 p-4 sm:p-6">
+          {statsLoading && <p role="status" className="mb-3 text-sm text-muted-foreground">Chargement des statistiques…</p>}
+          {statsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{statsError}</p><Button variant="outline" size="sm" onClick={retryStats}>Réessayer les statistiques</Button></div>}
           <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
@@ -313,7 +305,7 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
               },
               {
                 label: 'Visites',
-                value: String(stats.visitCount),
+                value: stats ? String(stats.visitCount) : '—',
                 icon: UserRound,
                 helper:
                   insights.averageVisitGapDays !== null
@@ -471,9 +463,9 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                     <div className="flex items-center justify-between gap-4">
                       <dt className="text-sm text-slate-500">Dernière visite</dt>
                       <dd className="text-sm font-semibold text-slate-900">
-                        {stats.lastVisit
+                        {stats?.lastVisit
                           ? format(new Date(stats.lastVisit), 'd MMM yyyy', { locale: fr })
-                          : 'Jamais'}
+                          : stats ? 'Jamais' : '—'}
                       </dd>
                     </div>
                     <div className="flex items-center justify-between gap-4">
@@ -688,4 +680,7 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   );
 };
 
-export default ClientDetailModal;
+export default function ClientDetailModal(props: ClientDetailModalProps) {
+  if (!props.open) return null;
+  return <ClientDetailContents key={props.client.id} {...props} />;
+}

@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-clients-2026-10-15T14-00-21Z",
-  "task": "Stabiliser la fiche client et ses lectures",
+  "task": "Fiche client stabilisée ; isolation du chargement Clients",
   "started_at": "2026-10-15T14:00:21Z",
-  "last_checkpoint_at": "2026-10-15T14:01:21.185Z",
-  "lease_expires_at": "2026-10-15T15:16:21.185Z",
+  "last_checkpoint_at": "2026-10-15T14:04:27.867348+00:00",
+  "lease_expires_at": "2026-10-15T15:19:27.867348+00:00",
   "last_application_commit": "06d846510550e2c37af74a4dc932797cb0ce940b",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Stabiliser getClientStats et l’effet de ClientDetailModal : éviter les relectures en boucle, préserver le brouillon et ignorer les réponses périmées ; puis isolation/erreurs/pagination Clients. Voir docs/V2_REVIEW_2026-10-15.md.",
+  "next_task": "Partager une source Clients avec pagination, contexte salon et erreur/reprise ; sécuriser les mutations.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
