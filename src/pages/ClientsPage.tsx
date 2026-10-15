@@ -1,3 +1,4 @@
+import { useAuth } from '@/hooks/useAuth';
 import NewClientDialog from '@/components/NewClientDialog';
 import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
@@ -16,8 +17,8 @@ import type { Client } from '@/hooks/useClients';
 import { format } from 'date-fns';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 
-const ClientsPage = () => {
-  const { clients, loading, addClient, updateClient, getClientStats } = useClients();
+const ClientsWorkspace = () => {
+  const { clients, loading, error, refreshClients, captureScope, addClient, updateClient, getClientStats } = useClients();
   const { permissions } = usePermissions();
   const { salonSettings } = useSupabaseSettings();
   const { logActivity } = useActivityLog();
@@ -49,6 +50,8 @@ const ClientsPage = () => {
   const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
 
   const handleExport = useCallback(async (type: 'csv' | 'json') => {
+    const isCurrentExport = captureScope();
+    if (!isCurrentExport() || error || loading) return;
     setIsExporting(true);
     try {
       // Fetch stats for all clients
@@ -59,6 +62,7 @@ const ClientsPage = () => {
         })
       );
 
+      if (!isCurrentExport()) return;
       const salonName = sanitizeName(salonSettings?.name || 'salon');
       const dateStr = format(new Date(), 'yyyy-MM-dd');
       const filename = `clients-${salonName}-${dateStr}`;
@@ -98,7 +102,7 @@ const ClientsPage = () => {
       setIsExporting(false);
       setExportConfirmType(null);
     }
-  }, [clients, getClientStats, salonSettings]);
+  }, [clients, getClientStats, salonSettings, captureScope, error, loading]);
 
   const downloadFile = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob(['\uFEFF' + content], { type: mimeType });
@@ -113,6 +117,10 @@ const ClientsPage = () => {
   return (
     <MainLayout>
       <div className="space-y-4 sm:space-y-6">
+        {error && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          <p>Liste des clients non actualisée. Les fiches affichées peuvent être incomplètes.</p>
+          <Button variant="outline" disabled={loading} className="mt-3 min-h-11" onClick={() => void refreshClients()}>{loading ? 'Actualisation…' : 'Actualiser les clients'}</Button>
+        </div>}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Clients</h1>
@@ -121,11 +129,11 @@ const ClientsPage = () => {
           <div className="flex flex-wrap gap-2">
             {permissions.isAdmin && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0}>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('csv')} disabled={clients.length === 0 || loading || error}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter CSV (RGPD)
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0}>
+                <Button variant="outline" size="sm" onClick={() => setExportConfirmType('json')} disabled={clients.length === 0 || loading || error}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter JSON
                 </Button>
@@ -179,7 +187,7 @@ const ClientsPage = () => {
             <CardContent className="py-12 text-center">
               <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                {searchQuery ? 'Aucun client trouvé' : 'Aucun client enregistré'}
+                {error ? 'Liste des clients indisponible' : searchQuery ? 'Aucun client trouvé' : 'Aucun client enregistré'}
               </p>
             </CardContent>
           </Card>
@@ -254,4 +262,10 @@ const ClientsPage = () => {
   );
 };
 
-export default ClientsPage;
+// A session/salon switch discards open details, drafts and export confirmations.
+export default function ClientsPage() {
+  const { user, isReady } = useAuth();
+  const { permissions } = usePermissions();
+  const scopeKey = JSON.stringify([isReady, user?.id, permissions.salonId]);
+  return <ClientsWorkspace key={scopeKey} />;
+}

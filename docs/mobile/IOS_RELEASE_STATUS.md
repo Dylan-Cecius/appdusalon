@@ -48,3 +48,6 @@ Durée cumulée 922 secondes ; checkpoint précédent 1079373cea6648aee3e88bb0bf
 
 ## 2026-10-15T15:38:22Z — État d’actualisation visible
 Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae1d60, lot présent dans ce commit. 9 tests ciblés et TypeScript passants ; compilation source isolée 3612 modules réussie. Source des avertissements/réessai prête ; recette navigateur/reconnexion réelle manquante. Aucune nouvelle preuve native ou Apple. Prochaine étape : portée de session de la liste clients.
+
+## 2026-10-15T15:41:56Z — Liste clients isolée
+1641 secondes cumulées ; précédent 9bbeed4f170d460d3c573a2979318c2bf31dd358, lot courant dans ce commit. Source des gardes de session/erreur préparée ; 16 tests ciblés existants, TypeScript et compilation isolée passants. Recette UI/backend toujours manquante. Prochaine étape : résultat indisponible des statistiques client. Xcode/signature/TestFlight/validation Apple non réalisés.

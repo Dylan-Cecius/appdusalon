@@ -79,3 +79,9 @@
 - [x] Erreur d’historique visible dans le cadre commun et la modale ; actualisation manuelle disponible, données connues conservées.
 - [x] Caisse/historique sans faux zéro lors d’un chargement initial en attente/échec ; cents affichés dans le résumé caisse. Liste de la modale dérivée directement pour éviter un rendu de l’ancien salon ; date civile sans conversion UTC implicite.
 - [x] Rafraîchissement après abonnement/reconnexion et signal d’erreur du canal préparés. 9 tests ciblés, TypeScript et compilation isolée passants ; recette réseau/UI restante.
+
+## Cycle 4 — checkpoint portée clients 2026-10-15T15:41:56Z
+- [x] Lectures/mutations/abonnement clients bornés au contexte utilisateur/salon ; résultats tardifs ignorés, liste ancienne masquée et erreurs visibles.
+- [x] Fiches/brouillons/confirmations réinitialisés lors du changement de session ; export en cours abandonné avant téléchargement si le contexte a changé. Export désactivé avec liste en chargement/échec.
+- [x] 16 tests existants de portée/édition, TypeScript et compilation isolée passants.
+- [ ] Statistiques : les erreurs Supabase retournées sont encore absorbées en zéro ; traiter explicitement l’indisponibilité et l’export incomplet.
