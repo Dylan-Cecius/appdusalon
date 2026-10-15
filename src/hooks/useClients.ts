@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -84,16 +84,19 @@ export const useClients = () => {
   };
 
   const updateClient = async (id: string, updates: Partial<Client>) => {
+    if (!user || !salonId) return null;
     try {
       const { data, error } = await supabase
         .from('clients')
         .update(updates)
         .eq('id', id)
+        .eq('salon_id', salonId)
         .select()
         .single();
 
       if (error) throw error;
 
+      if (!data || data.id !== id) throw new Error('client_update_unconfirmed');
       setClients(prev => prev.map(c => c.id === id ? data : c));
       toast({
         title: "Client mis à jour",
@@ -111,7 +114,7 @@ export const useClients = () => {
     }
   };
 
-  const getClientStats = async (clientId: string): Promise<ClientStats> => {
+  const getClientStats = useCallback(async (clientId: string): Promise<ClientStats> => {
     if (!user || !salonId) return { totalSpent: 0, visitCount: 0, lastVisit: null };
 
     try {
@@ -160,7 +163,7 @@ export const useClients = () => {
       console.error('Error fetching client stats:', error);
       return { totalSpent: 0, visitCount: 0, lastVisit: null };
     }
-  };
+  }, [clients, user?.id, salonId]);
 
   useEffect(() => {
     if (!user || !salonId) {

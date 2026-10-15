@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 
 const ClientsPage = () => {
-  const { clients, loading, addClient, getClientStats } = useClients();
+  const { clients, loading, addClient, updateClient, getClientStats } = useClients();
   const { permissions } = usePermissions();
   const { salonSettings } = useSupabaseSettings();
   const { logActivity } = useActivityLog();
@@ -224,7 +224,10 @@ const ClientsPage = () => {
 
         {selectedClient && (
           <ClientDetailModal
+            key={selectedClient.id}
             client={selectedClient}
+            onSave={updateClient}
+            onUpdated={setSelectedClient}
             open={!!selectedClient}
             onClose={() => setSelectedClient(null)}
           />
