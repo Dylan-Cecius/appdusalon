@@ -62,9 +62,11 @@ test('quota failure retains the draft and a retry confirms only one ticket', asy
     window.restorePreviewStorage = () => { Storage.prototype.setItem = original; };
     Storage.prototype.setItem = () => { throw new DOMException('quota', 'QuotaExceededError'); };
   });
+  await page.getByLabel('Client fictif (facultatif)').fill('Dernière saisie conservée');
+  await expect(page.getByLabel('Client fictif (facultatif)')).toHaveValue('Dernière saisie conservée');
   await page.getByRole('button', { name: 'Simuler espèces' }).click();
   await expect(page.getByRole('alert').first()).toContainText(/Enregistrement local impossible/);
-  await expect(page.getByLabel('Client fictif (facultatif)')).toHaveValue('Saisie conservée');
+  await expect(page.getByLabel('Client fictif (facultatif)')).toHaveValue('Dernière saisie conservée');
   expect((await readState(page)).tickets).toHaveLength(0);
   await page.evaluate(() => window.restorePreviewStorage?.());
   await page.getByRole('button', { name: 'Simuler espèces' }).click();
@@ -135,4 +137,18 @@ test('reset restores the complete shared demo and keeps every main view within m
     await navigate(page, view);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   }
+});
+
+
+test('reuses an agenda contact and combines only its confirmed visits', async ({ page }) => {
+  await page.goto(url); await addCut(page);
+  const selector = page.getByLabel('Reprendre un contact fictif');
+  await selector.selectOption({ label: 'Élodie Noël · 0000 00 00 00' });
+  await expect(page.getByLabel('Client fictif (facultatif)')).toHaveValue('Élodie Noël');
+  await expect(page.getByLabel('Téléphone fictif (facultatif)')).toHaveValue('0000 00 00 00');
+  await page.getByRole('button', { name: 'Simuler carte' }).click();
+  await navigate(page, 'Clients'); await page.getByLabel('Rechercher un client').fill('elodie noel');
+  const row = page.getByRole('row', { name: /Élodie Noël/ });
+  await expect(row).toHaveCount(1); await expect(row.getByRole('cell').nth(1)).toHaveText('1');
+  await expect(row).toContainText(/25,00/);
 });

@@ -65,6 +65,22 @@ describe('preview storage compatibility', () => {
     seed.cart.lines = Array(100).fill({ ...previewServices[0], price: 90071992547400 });
     expect(() => decodePreviewState(JSON.stringify(seed), seed)).toThrow();
   });
+  it('keeps new draft edits on quota failure, but never confirms a failed sale', () => {
+    const seed = seedPreviewState(); let fail = true; const storage = store();
+    const session = createPreviewSession({ ...storage, setItem: (key, value) => { if (fail) throw Error('quota'); storage.setItem(key, value); } }, 'k', seed);
+    const cart = { ...seed.cart, clientName: 'Nouvelle frappe', lines: [previewServices[0]] };
+    expect(() => session.editCart(cart)).toThrow(/Brouillon conservé/);
+    expect(session.getState().cart).toBe(cart); expect(storage.getItem()).toBeNull();
+    expect(() => session.commit({ ...session.getState(), cart: { ...cart, lines: [] } })).toThrow();
+    expect(session.getState().cart.lines).toHaveLength(1);
+    fail = false; session.editCart({ ...cart, clientPhone: '0000' });
+    expect(JSON.parse(storage.getItem()!).cart.clientName).toBe('Nouvelle frappe');
+  });
+  it('refuses invalid drafts instead of publishing them', () => {
+    const seed = seedPreviewState(); const session = createPreviewSession(store(), 'k', seed);
+    expect(() => session.editCart({ ...seed.cart, lines: [{ ...previewServices[0], price: NaN }] })).toThrow();
+    expect(session.getState()).toBe(seed);
+  });
   it('keeps session usable when storage access is blocked', () => {
     const seed = seedPreviewState(); const session = createPreviewSession({ getItem: () => { throw Error('blocked'); }, setItem: () => { throw Error('must not write'); } }, 'k', seed);
     session.commit({ ...seed, appointments: [] }); expect(session.getState().appointments).toEqual([]);

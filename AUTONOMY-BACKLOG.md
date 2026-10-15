@@ -152,3 +152,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Démonstration — parcours navigateur préparés
 - 16 nouveaux cas navigateur préparés et typecheckés/découverts, non exécutés ; total 86 en attente. Couvrent le vrai workspace et sa compatibilité. À corriger après revue : nouvelle saisie de panier à conserver même si localStorage échoue, puis recette navigateur quand disponible.
+
+## Démonstration — brouillon conservé et contacts repris
+- Nouvelle saisie conservée en mémoire sur échec du stockage, confirmation de ticket toujours refusée tant que l’écriture échoue. Sélection de contacts fictifs existants ajoutée. 363 unitaires, typecheck/builds réussis, lint 0 erreur/207 avertissements ; 88 nouveaux cas navigateur restent non exécutés.

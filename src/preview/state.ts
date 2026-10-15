@@ -91,24 +91,36 @@ export function createPreviewSession(storage: PreviewStorage, key: string, seed:
     persistent = false;
     warning = 'Stockage indisponible ou illisible : vos essais restent dans cet onglet. Les anciennes données ne seront pas écrasées.';
   }
+  const commit = (next: PreviewState) => {
+    // Validate before any write or visible success, even in memory-only mode.
+    const serialized = JSON.stringify(next);
+    decodePreviewState(serialized, seed);
+    if (persistent) {
+      let latest: string | null;
+      try { latest = storage.getItem(key); }
+      catch { throw new Error('Impossible de vérifier le stockage. Votre saisie est conservée.'); }
+      if (latest !== raw) throw new Error('La démo a changé dans un autre onglet. Copiez vos saisies puis rechargez la page avant de continuer.');
+      try { storage.setItem(key, serialized); }
+      catch { throw new Error('Enregistrement local impossible. Votre saisie est conservée ; libérez de l’espace ou réessayez.'); }
+      raw = serialized;
+    }
+    state = next;
+    return state;
+  };
   return {
     getState: () => state,
     getWarning: () => warning,
-    commit(next: PreviewState) {
-      // Validate before any write or visible success, even in memory-only mode.
-      const serialized = JSON.stringify(next);
-      decodePreviewState(serialized, seed);
-      if (persistent) {
-        let latest: string | null;
-        try { latest = storage.getItem(key); }
-        catch { throw new Error('Impossible de vérifier le stockage. Votre saisie est conservée.'); }
-        if (latest !== raw) throw new Error('La démo a changé dans un autre onglet. Rechargez la page avant de continuer.');
-        try { storage.setItem(key, serialized); }
-        catch { throw new Error('Enregistrement local impossible. Votre saisie est conservée ; libérez de l’espace ou réessayez.'); }
-        raw = serialized;
+    commit,
+    editCart(cart: PreviewCart) {
+      const next = { ...state, cart };
+      // Invalid data never reaches the UI. A valid draft may remain in memory
+      // after a storage failure; confirmed tickets always use commit instead.
+      decodePreviewState(JSON.stringify(next), seed);
+      try { return commit(next); }
+      catch (cause) {
+        state = next;
+        throw new Error(`Brouillon conservé dans cet onglet, non enregistré. ${cause instanceof Error ? cause.message : ''}`);
       }
-      state = next;
-      return state;
     },
   };
 }

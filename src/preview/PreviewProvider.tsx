@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useContext, useRef, useState, type MutableRefObject, type ReactNode, type SetStateAction } from 'react';
-import { createPreviewSession, previewStorageKey, seedPreviewState, type PreviewState, type PreviewStorage } from './state';
+import { createPreviewSession, previewStorageKey, seedPreviewState, type PreviewCart, type PreviewState, type PreviewStorage } from './state';
 
 const PreviewContext = createContext<{
   state: PreviewState;
@@ -7,6 +7,7 @@ const PreviewContext = createContext<{
   currentState: MutableRefObject<PreviewState>;
   setState: (action: SetStateAction<PreviewState>) => void;
   reset: () => void;
+  setCart: (action: (cart: PreviewCart) => PreviewCart) => void;
 } | null>(null);
 
 export function PreviewProvider({ children }: { children: ReactNode }) {
@@ -42,8 +43,18 @@ export function PreviewProvider({ children }: { children: ReactNode }) {
       throw cause;
     }
   }, [session]);
+  const setCart = useCallback((action: (cart: PreviewCart) => PreviewCart) => {
+    try {
+      session.editCart(action(currentState.current.cart));
+      currentState.current = session.getState(); publish(session.getState()); setError(null);
+    } catch (cause) {
+      currentState.current = session.getState(); publish(session.getState());
+      setError(cause instanceof Error ? cause.message : 'Le brouillon n’a pas pu être enregistré.');
+      throw cause;
+    }
+  }, [session]);
   const reset = useCallback(() => setState(seedPreviewState()), [setState]);
-  return <PreviewContext.Provider value={{ state, now, currentState, setState, reset }}>
+  return <PreviewContext.Provider value={{ state, now, currentState, setState, setCart, reset }}>
     {session.getWarning() && <p role="status" className="border-b border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">{session.getWarning()}</p>}
     {error && <div role="alert" className="border-b border-red-200 bg-red-50 p-3 text-sm text-red-950">{error} <button type="button" onClick={() => window.location.reload()} className="underline">Recharger la démo</button></div>}
     {children}

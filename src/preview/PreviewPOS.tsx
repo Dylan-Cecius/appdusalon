@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CreditCard, ReceiptText, Scissors, ShoppingCart, Trash2, WalletCards } from 'lucide-react';
+import { previewClients, previewClientKey } from './projections';
 import { previewServices } from './data';
 import { usePreview } from './PreviewProvider';
 import { completePreviewCheckout, previewTotalCents } from './checkout';
@@ -7,12 +8,14 @@ import type { PreviewCart, PreviewTicket } from './state';
 
 const money = (cents: number) => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 export default function PreviewPOS() {
-  const { state, setState } = usePreview();
+  const { state, setState, setCart } = usePreview();
   const [error, setError] = useState<string | null>(null);
   const cart = state.cart;
+  const contacts = previewClients(state);
+  const selectedContact = contacts.find(contact => contact.id === previewClientKey(cart.clientName, cart.clientPhone));
   const lastTicket = !cart.lines.length ? state.tickets.at(-1) : undefined;
   const updateCart = (update: (current: PreviewCart) => PreviewCart) => {
-    try { setState(current => ({ ...current, cart: update(current.cart) })); setError(null); }
+    try { setCart(update); setError(null); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'La saisie n’a pas pu être conservée.'); }
   };
   const confirm = (method: PreviewTicket['method']) => {
@@ -31,6 +34,10 @@ export default function PreviewPOS() {
     <section aria-label="Ticket de démonstration" className="h-fit rounded-2xl border bg-white p-5 shadow-sm lg:sticky lg:top-20">
       <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Ticket</h2><ReceiptText className="text-slate-400" /></div>
       <div className="mt-4 space-y-3">
+        <label className="block text-sm">Reprendre un contact fictif<select value={selectedContact?.id || ''} onChange={event => {
+          const contact = contacts.find(item => item.id === event.target.value);
+          updateCart(current => ({ ...current, clientName: contact?.name || '', clientPhone: contact?.phone || '' }));
+        }} className="mt-1 w-full min-w-0 rounded-xl border bg-white p-2"><option value="">Nouveau client / sans contact</option>{contacts.map(contact => <option key={contact.id} value={contact.id}>{contact.name} · {contact.phone || 'sans téléphone'}</option>)}</select></label>
         <label className="block text-sm">Client fictif (facultatif)<input maxLength={100} value={cart.clientName} onChange={event => updateCart(current => ({ ...current, clientName: event.target.value }))} className="mt-1 w-full rounded-xl border p-2" placeholder="Nom de démonstration" /></label>
         <label className="block text-sm">Téléphone fictif (facultatif)<input maxLength={30} type="tel" value={cart.clientPhone} onChange={event => updateCart(current => ({ ...current, clientPhone: event.target.value }))} className="mt-1 w-full rounded-xl border p-2" placeholder="0000 00 00 00" /></label>
       </div>
