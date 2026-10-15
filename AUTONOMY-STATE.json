@@ -1,25 +1,27 @@
 {
   "schema_version": 1,
-  "project": "AppDuSalon V2",
-  "branch": "v2/chatgpt-rebuild",
+  "project": "AppDuSalon V2 iOS / App Store",
+  "branch": "v2/ios-appstore",
   "status": "idle",
   "run_id": null,
   "task": null,
   "started_at": null,
-  "last_checkpoint_at": "2026-10-15T12:45:29Z",
+  "last_checkpoint_at": "2026-10-15T12:59:44.893Z",
   "lease_expires_at": null,
-  "last_application_commit": "498c8a487a327c661555a15321ea90fca0030934",
+  "upstream_branch": "v2/chatgpt-rebuild",
+  "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
-    "development": "6ad0bea074788191a2d3c6552cbaea3e",
-    "daily_report": "6ad0beb1a5248191b071436ccba6117a"
+    "development": null,
+    "daily_report": null
   },
-  "next_task": "Recette des 26 nouveaux cas navigateur si autorisée/disponible ; sinon répartition cash/card/mixed/prepaid dans les statistiques à partir des paiements réels de transaction, sur fixtures uniquement.",
-  "schedules": {
-    "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
-    "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
-    "timezone": "Europe/Brussels"
+  "next_task": "P0 : build mobile isolée et reproductible, sans backend réel ; vérifier les prérequis Capacitor/iOS actuels.",
+  "validation": {
+    "capacitor_config": "Node 24 import and assertions passed",
+    "full_app_suite": "not run in initialization",
+    "ios_project": "not generated",
+    "native_build": "not run",
+    "testflight": "not submitted",
+    "apple_review": "not submitted"
   },
-  "last_run_id": "salon-v2-2026-10-15T11-59-28-462Z",
-  "last_run_started_at": "2026-10-15T11:59:28.462Z",
-  "finished_at": "2026-10-15T12:45:29Z"
+  "timezone": "Etc/GMT-1"
 }

@@ -1,0 +1,22 @@
+# État de livraison iOS
+
+## État initial — 15 octobre 2026
+- Base V2 et configuration Capacitor : présentes.
+- Configuration locale embarquée : corrigée et chargée avec succès sous Node 24.
+- Tests complets sur la branche iOS : non exécutés.
+- Projet Xcode : non généré.
+- Compilation iOS / simulateur / iPhone réel : non réalisés.
+- Identifiant, signature et équipe Apple : non vérifiés.
+- Build TestFlight : non créée ni distribuée.
+- Soumission App Store / validation Apple : aucune.
+
+## Conditions de progression
+1. Build isolée reproductible avec aucune connexion aux données réelles pendant les tests.
+2. Tests web pertinents et tests des adaptations natives, avec preuves du commit exact.
+3. Projet iOS et ressources, version Capacitor/SDK compatibles avec les règles actuelles.
+4. Validation native des parcours essentiels, session, reprise, liens, clavier et réseau.
+5. Revue confidentialité, permissions, suppression de compte et facturation selon les fonctions réellement livrées.
+6. Environnement de compilation/signature et absence de coût supplémentaire établis.
+7. Autorisation spécifique avant soumission/distribution ; examen Apple distinct de nos tests.
+
+Ne jamais présenter une étape non réalisée comme terminée et ne pas calculer un pourcentage global artificiel.
