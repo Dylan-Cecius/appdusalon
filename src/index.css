@@ -195,7 +195,8 @@ All colors MUST be HSL.
   :root :is(input, select, textarea) { font-size: max(1rem, 16px); }
   /* Enlarge the actual hit area; compact desktop controls remain unchanged.
      Calendar popovers are portals and have their own grid sizing. */
-  .agenda-touch-controls button {
+  .agenda-touch-controls button,
+  .cart-touch-controls button {
     min-width: 44px;
     min-height: 44px;
   }
@@ -214,4 +215,12 @@ All colors MUST be HSL.
     transform: translateY(-1px);
     box-shadow: var(--shadow-medium);
   }
+}
+
+/* The cart owns viewport placement; Vaul input repositioning is disabled for it. */
+.app-cart-drawer {
+  left: var(--app-safe-left);
+  right: var(--app-safe-right);
+  bottom: calc(100% - var(--app-viewport-top, 0px) - var(--app-viewport-height, 100vh) + var(--app-safe-bottom));
+  max-height: max(0px, calc(var(--app-viewport-height, 100vh) - var(--app-safe-top) - var(--app-safe-bottom) - 0.75rem));
 }

@@ -90,3 +90,11 @@
 - [x] Résultats Supabase en erreur/absents/invalides distingués d’un historique vide ; zéro réservé aux deux requêtes réussies sans ligne. Règles V2 de total/visites conservées.
 - [x] Fiche : états chargement/indisponibilité/réessai, montants inconnus non affichés à zéro. Export incomplet bloqué avant téléchargement, erreur affichée, verrou contre double demande.
 - [x] 7 tests synthétiques ciblés, TypeScript et compilation isolée passants ; aucune donnée/export réel.
+
+## Cycle 4 — checkpoint panier tactile 2026-10-15T15:52:02Z
+- [x] CartPanel réutilisable sans backend, commandes nommées et cibles 44 px au tactile, noms longs repliables, paiement en une colonne sur très petit écran.
+- [x] Panneau mobile avec zone défilante/fermeture explicite et safe areas/viewport ; placement clavier centralisé (repositionnement Vaul désactivé pour ce panneau).
+- [x] Démo mobile dédiée ?mobile-cart=1, données synthétiques, composants de production partagés ; entrée PreviewStandalone/Sites non modifiée.
+- [x] TypeScript, 2 tests de sûreté, compilation source isolée, build/sync démo passants.
+- [ ] 28 cas navigateur préparés/découverts (8 nouveaux panier), aucun exécuté ; recettes visuelles/natives restent ouvertes.
+- [ ] Préserver le prestataire lors de la bascule mobile/bureau et retirer le panier d’un contexte utilisateur/salon précédent.

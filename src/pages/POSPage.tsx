@@ -14,7 +14,7 @@ import CartSidebar from '@/components/CartSidebar';
 import MainLayout from '@/components/MainLayout';
 import TransactionsManager from '@/components/TransactionsManager';
 import CashSessionPanel from '@/components/CashSessionPanel';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import MobileCartDrawer from '@/components/MobileCartDrawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -420,21 +420,14 @@ const POSPage = () => {
 
       {/* Mobile Cart Drawer */}
       {isMobile && (
-        <Drawer open={isCartOpen} onOpenChange={open => { if (!checkoutLock.current) setIsCartOpen(open); }}>
-          <DrawerContent className="max-h-[80vh]">
-            <DrawerHeader>
-              <DrawerTitle>Panier</DrawerTitle>
-            </DrawerHeader>
-            <div className="px-4 pb-4">
+        <MobileCartDrawer open={isCartOpen} processing={checkingOut} onOpenChange={open => { if (!checkoutLock.current) setIsCartOpen(open); }}>
               <CartSidebar processing={checkingOut} error={checkoutError}
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}
                 onCheckout={handleCheckout}
               />
-            </div>
-          </DrawerContent>
-        </Drawer>
+        </MobileCartDrawer>
       )}
       {/* Transactions Manager Modal */}
       <TransactionsManager

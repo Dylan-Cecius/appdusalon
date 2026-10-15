@@ -54,3 +54,6 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## 2026-10-15T15:45:57Z — Statistiques client fiables sur résultat confirmé
 1882 secondes cumulées ; précédent aacf27dcd8f8909fa281de305ba48245575b9619, lot actuel dans ce commit. 7 tests synthétiques ciblés, TypeScript et compilation source isolée 3613 modules passants. Indisponibilité et export incomplet traités dans les sources ; recette UI/export/backend restante. Aucun nouveau résultat Xcode/signature/TestFlight/Apple. Prochaine étape : ergonomie panier iPhone.
+
+## 2026-10-15T15:52:02Z — Panier mobile préparé et démo synchronisée
+2247 secondes cumulées ; précédent d2982bb5008169648ac9917cbd816dc86ec521e8, lot présent dans ce commit. Composants panier/panneau partagés avec une fixture hors connexion. TypeScript, 2 tests de sûreté et compilation isolée passants ; build/sync ios-demo réussis. 28 tests navigateur découverts, aucun exécuté ; avertissement taille du bundle démo à suivre. Projet Xcode préparé seulement : aucune build native/signée/TestFlight/validation Apple. Prochaine étape : portée et sélection du panier.
