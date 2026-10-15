@@ -4,6 +4,19 @@ Branch: `v2/chatgpt-rebuild`
 
 This document separates machine-verified release guarantees from checks that still require an isolated deployed staging environment.
 
+## Current prepared source — 15 October 2026
+
+Application source: `06d846510550e2c37af74a4dc932797cb0ce940b`. Six additional checkpoints cover payment funding statistics, complete salon transaction reads, report filters/text and POS cart confirmation. All are saved on V2 with `[skip ci]`.
+
+- TypeScript passed; 189 unit tests passed in 25 files; normal build passed (8.76 s); standalone build passed (4.09 s) with VITE_PREVIEW_STANDALONE=true and VITE_PREVIEW_DEMO_ONLY=true.
+- Lint: 0 errors, 216 warnings. Diff reviewed and whitespace checks passed. No package, workflow, SQL or Edge Function changes in this cycle.
+- 42 newly prepared browser cases across the two cycles remain **unexecuted**. Discovery and fixture/spec typechecks are not browser validation. Connected provider/error/retry, email form and real mobile drawer also need integration coverage.
+- No hosted mutation, actual financial operation, email/SMS, remote CI or publication occurred. Unit cases use synthetic data and mocks only. Existing SQL/provider/CI gates below remain required at the exact eventual release commit.
+- The same owner-private preview remains deployment `appgdep_6acf7158d7288191a2ace0a51208bac2`, source `740f8758eab36e5a30cf03a14f9f76dfe5605dd3`; this prepared source is not published there. Current cache/Sites cost prerequisites remain unresolved.
+- Next ready task: stabilize client-detail reads and preserve its editing draft, then salon-scoped client loading/errors. Audit criteria: docs/V2_REVIEW_2026-10-15.md.
+
+The dated follow-ups below are historical checkpoint evidence; later checkpoints supersede their outstanding-task lists.
+
 ## Payment-statistics follow-up — 15 October 2026
 
 - Funding allocation integrated into period statistics, selected-day statistics and transaction history. Cash/card/prepayment/unallocated amounts reconcile to recorded sales without counting a deposit twice. This is not a cash-flow report by payment date.
@@ -29,7 +42,7 @@ This document separates machine-verified release guarantees from checks that sti
 - Local checks: TypeScript passed, 180 unit tests passed, normal build passed (8.07 s), lint 0 errors/216 warnings. Browser form and hosted transport checks remain outstanding.
 - Automated server reports were only audited: paging/error handling and rolling-period semantics need a separate isolated follow-up.
 
-## Current candidate — 15 October 2026
+## Earlier candidate — 15 October 2026, first cycle
 
 Application source: `498c8a487a327c661555a15321ea90fca0030934` (15 October 2026).
 

@@ -14,7 +14,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Priorités prêtes
 1. Lire les nouveaux checkpoints puis exécuter la recette des 42 nouveaux cas de fiche RDV/création client/statistiques/rapports/panier sur ordinateur/mobile dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ne pas confondre découverte/typecheck des tests et exécution.
-2. Panier mobile corrigé et rapports interactifs alignés. Auditer les rapports automatiques serveur (erreurs/pagination/périodes), sans envoi réel ; établir les tests isolés et le contrat de période avant toute modification Edge.
+2. Stabiliser la fiche client : getClientStats recréé à chaque rendu relance son effet et peut réinitialiser les saisies. Séparer brouillon et lecture, ignorer les réponses périmées ; critères détaillés dans docs/V2_REVIEW_2026-10-15.md. Ensuite auditer les rapports automatiques serveur (erreurs/pagination/périodes), sans envoi réel. Panier mobile et rapports interactifs déjà corrigés.
 3. Source transactions unifiée, changement de salon et pagination protégés : recette navigateur/hébergée à faire, notamment erreurs et reprises avec plusieurs pages. Ne pas refaire la lecture commune.
 4. Revoir chargement/erreur de la liste Clients, recherche accents/téléphones et cohérence du détail ; la création a été corrigée au lot 6, ne pas la refaire. Recette mobile/clavier des longs formulaires, focus après échec et fermeture à vérifier.
 5. Préparer un parcours fictif complet agenda → caisse → historique client → statistiques, avec un état partagé, pour remplacer progressivement les écrans de démonstration encore statiques. Conserver les composants partagés et distinguer simulation/connexion réelle.
@@ -87,3 +87,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 ## Caisse — confirmation et prestataire
 - Prestataire transmis sur mobile, fermeture et effacement après confirmation seulement ; panier verrouillé contre les actions simultanées, erreur visible avec saisies conservées. Changement de salon réinitialise le panier.
 - 189 unitaires, typecheck/build réussis ; lint 0 erreur/216 avertissements. Six cas navigateur supplémentaires découverts et typecheckés, non exécutés (42 cumulés). Aucune vente ni opération financière réelle effectuée.
+
+## Fin du cycle — 2026-10-15T13:39:38.419833+00:00
+- Six lots applicatifs supplémentaires sauvegardés ; dernière source : 06d846510550e2c37af74a4dc932797cb0ce940b. 189 unitaires réussis, typecheck/builds réussis ; 42 cas navigateur nouveaux restent non exécutés. Aperçu inchangé.
+- Revue Clients et rapports automatiques consignée avec critères de reprise. Bail libéré ; aucune tâche facturable ou activité entre cycles n’est prétendue.
