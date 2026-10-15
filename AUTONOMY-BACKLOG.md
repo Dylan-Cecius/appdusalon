@@ -30,3 +30,9 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Attente des mutations de fiche, verrou commun contre les doubles actions, erreurs visibles et conservation des saisies après échec. Annulation/absence/encaissement attendent la sauvegarde d’un brouillon.
 - Typecheck et 101 tests unitaires réussis ; build standalone réussi. Six scénarios navigateur ajoutés pour ordinateur/mobile, non exécutés dans cet environnement.
 - À poursuivre : statuts terminaux, informations de paiement et sauvegarde des coordonnées ; recette navigateur requise avant publication.
+
+## Checkpoint du 15 octobre — statuts de fiche, lot 2
+- Lot 1 sauvegardé : 174ab02dfb772877e091988eaddb34aa215ffc6e.
+- Règles de fiche centralisées : historique en lecture seule ; aucun encaissement/achèvement pour terminé/annulé/absent, paiement en attente/remboursé/expiré. Acompte préservé, solde uniquement pour dossier pertinent, prépaiement sans nouvel encaissement. Badge partagé avec l’agenda.
+- 113 tests unitaires et typecheck réussis ; build standalone réussi. Dix scénarios navigateur de fiche préparés (20 cas ordinateur/mobile), toujours non exécutés.
+- Prochaine priorité : mise à jour des coordonnées et détection de faux succès côté persistance.

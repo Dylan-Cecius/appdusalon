@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-2026-10-15T11-59-28-462Z",
-  "task": "Checkpoint 1 : mutations de fiche attendues ; prochaine tâche statuts et montants",
+  "task": "Checkpoint 2 : statuts terminaux et affichage des montants",
   "started_at": "2026-10-15T11:59:28.462Z",
-  "last_checkpoint_at": "2026-10-15T12:07:12Z",
-  "lease_expires_at": "2026-10-15T13:22:12Z",
-  "last_application_commit": "86e4f6cdfe7aca8ca5a3b835c8903f8562415d76",
+  "last_checkpoint_at": "2026-10-15T12:11:17Z",
+  "lease_expires_at": "2026-10-15T13:26:17Z",
+  "last_application_commit": "174ab02dfb772877e091988eaddb34aa215ffc6e",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Corriger les actions et informations financières proposées pour les statuts terminaux.",
+  "next_task": "Fiabiliser la sauvegarde de coordonnées : téléphone vide, lignes non modifiées, concurrence.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",

@@ -32,3 +32,12 @@
 - Tests ajoutés : 2 unitaires de concurrence/échec/reprise exécutés ; 6 scénarios Playwright sur fiche réelle avec mutations fictives différées, préparés mais NON exécutés. Ces unitaires ne remplacent pas la recette navigateur.
 - Limites : environnement Sites géré sans control-browser ; pas de serveur de preview ni contournement navigateur. CI distante et publication différées faute de preuve actuelle de coût nul. Aucun appel à un backend réel, aucune donnée réelle, aucun workflow lancé, aperçu précédent conservé.
 - Prochaine tâche : règles d’action et montants affichés pour rendez-vous annulés/absents/terminés. Bail renouvelé.
+
+## 2026-10-15T12:11:17Z — checkpoint 2 : statuts et montants cohérents
+- Lot précédent confirmé : 174ab02dfb772877e091988eaddb34aa215ffc6e. Durée cumulée observée : 11.8 min depuis prise du bail.
+- Défaut établi par lecture : encaissement et clôture prépayée n’excluaient ni annulation ni absence ; coordonnées modifiables sans bouton de sauvegarde sur historique ; le libellé « payé en ligne » était appliqué aussi aux règlements de caisse.
+- Correction : politique getAppointmentDetails, badges partagés, contrôles de statut dans les handlers, historique en lecture seule, solde nul pour ancien dossier encaissé même sans amountPaid, libellé neutre du montant réglé et libellé historique après remboursement. Aucune logique backend/transaction financière modifiée.
+- Commit de ce checkpoint : « fix(agenda): respect terminal appointment states in details [skip ci] » ; parent 174ab02dfb772877e091988eaddb34aa215ffc6e.
+- Commandes : npm run typecheck (succès), npm test (113/113, dont 12 nouveaux tests de politique), VITE_PREVIEW_STANDALONE=true VITE_PREVIEW_DEMO_ONLY=true npm run build (succès), git diff --check (succès). Diff et règles financières existantes relus.
+- Playwright --list : 20 cas découverts pour la fixture (10 scénarios sur 2 formats), sans lancer serveur ni navigateur. Ceci n’est PAS une exécution de recette. Quatre scénarios de statuts ajoutés au lot précédent.
+- Limites inchangées : navigateur, CI distante et publication non réalisés ; ancien aperçu conservé. Prochain lot : coordonnées/sauvegarde concurrente. Bail renouvelé.

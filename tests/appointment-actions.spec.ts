@@ -35,3 +35,21 @@ test('unsaved notes cannot be lost through cancellation or settlement', async ({
   }
   await expect(dialog.getByRole('button', { name: 'Sauvegarder', exact: true })).toBeEnabled();
 });
+
+for (const status of ['cancelled', 'no_show', 'completed']) {
+  test(`${status}: prepaid history stays read-only without payment actions`, async ({ page }) => {
+    await page.goto(`/tests/fixtures/appointment-actions.html?status=${status}&payment=paid&settled=true`);
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByLabel('Nom du client')).toHaveAttribute('readonly', '');
+    await expect(dialog.getByRole('button', { name: /Clôturer|Espèces|Carte|Sauvegarder|Annuler le RDV|No-show/ })).toHaveCount(0);
+    await expect(dialog.getByText('Montant déjà réglé')).toBeVisible();
+    if (status !== 'completed') await expect(dialog.getByText('Reste à payer')).toHaveCount(0);
+  });
+}
+
+test('a scheduled prepaid appointment offers completion, not a second collection', async ({ page }) => {
+  await page.goto('/tests/fixtures/appointment-actions.html?payment=paid');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'Clôturer la prestation' })).toBeEnabled();
+  await expect(dialog.getByRole('button', { name: /Espèces|Carte/ })).toHaveCount(0);
+});

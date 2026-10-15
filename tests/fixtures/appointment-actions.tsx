@@ -5,11 +5,14 @@ import EditAppointmentModal from '../../src/components/EditAppointmentModal';
 import type { Appointment } from '../../src/data/appointments';
 import '../../src/index.css';
 
+const params = new URLSearchParams(location.search);
 const appointment: Appointment = {
   id: 'fixture', clientName: 'Client test', clientPhone: '0400 00 00 00', notes: 'Note initiale',
   services: [{ id: 's1', name: 'Coupe', price: 40, duration: 30, category: 'coupe' }],
   startTime: new Date('2026-10-15T10:00:00'), endTime: new Date('2026-10-15T10:30:00'),
-  status: 'scheduled', isPaid: false, totalPrice: 40, paymentStatus: 'deposit_paid', amountPaid: 10,
+  status: (params.get('status') || 'scheduled') as Appointment['status'], isPaid: params.get('settled') === 'true',
+  totalPrice: 40, paymentStatus: (params.get('payment') || 'deposit_paid') as Appointment['paymentStatus'],
+  amountPaid: params.get('payment') === 'paid' ? 40 : 10,
 };
 const controls = { calls: 0, resolve: () => {}, reject: () => {} };
 Object.assign(window, { appointmentActionsFixture: controls });

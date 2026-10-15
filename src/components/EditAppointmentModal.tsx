@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import AppointmentStatusBadge from './agenda/AppointmentStatusBadge';
+import { getAppointmentDetails } from '@/lib/appointmentDetails';
 import { Separator } from '@/components/ui/separator';
 import { User, Phone, Scissors, Euro, Clock, XCircle, UserX, CreditCard, Banknote } from 'lucide-react';
 import { format } from 'date-fns';
@@ -57,26 +58,10 @@ const EditAppointmentModal = ({
   }, [appointment]);
 
   if (!appointment) return null;
-  const amountPaid = Math.max(0, Number(appointment.amountPaid || 0));
-  const remainingAmount = Math.max(0, Number(appointment.totalPrice || 0) - amountPaid);
-  const hasDeposit = amountPaid > 0 && remainingAmount > 0;
-  const isFullyPrepaid =
-    appointment.paymentStatus === 'paid' &&
-    amountPaid + 0.001 >= Number(appointment.totalPrice || 0);
-  const isPaymentPending =
-    appointment.status === 'pending_payment' || appointment.paymentStatus === 'pending';
-
-  const paymentBadgeLabel = isPaymentPending
-    ? 'Paiement en attente'
-    : appointment.status === 'completed' && appointment.isPaid
-      ? '✓ Encaissé'
-      : isFullyPrepaid
-        ? 'Prépayé'
-        : hasDeposit
-          ? 'Acompte payé'
-          : appointment.isPaid
-            ? '✓ Payé'
-            : 'À encaisser';
+  const {
+    amountPaid, remainingAmount, hasDeposit, canEdit: canCloseAppointment,
+    paymentPending: isPaymentPending, showBalance, canCompletePrepaid, canCollectBalance, paidAmountLabel,
+  } = getAppointmentDetails(appointment);
 
   const requestClose = () => {
     if (!pendingAction.current) onClose();
@@ -98,7 +83,7 @@ const EditAppointmentModal = ({
     });
 
   const handleSave = async () => {
-    if (pendingAction.current) return;
+    if (pendingAction.current || !canCloseAppointment) return;
     if (!editedAppointment.clientName?.trim()) {
       setActionError('Le nom du client est requis.');
       return;
@@ -108,7 +93,7 @@ const EditAppointmentModal = ({
   };
 
   const handleCancel = async () => {
-    if (pendingAction.current || clientDraftChanged) return;
+    if (pendingAction.current || clientDraftChanged || !canCloseAppointment) return;
     if (confirm('Annuler ce rendez-vous ? Le créneau sera libéré et l’historique sera conservé.')) {
       await performAction(() => onCancel(appointment.id),
         'Annulation non confirmée. La fiche reste ouverte ; vérifiez l’agenda avant de réessayer.');
@@ -116,7 +101,7 @@ const EditAppointmentModal = ({
   };
 
   const handleNoShow = async () => {
-    if (pendingAction.current || clientDraftChanged) return;
+    if (pendingAction.current || clientDraftChanged || !canCloseAppointment) return;
     if (confirm('Marquer ce client comme absent (no-show) ?')) {
       await performAction(() => onNoShow(appointment.id),
         'Absence non confirmée. La fiche reste ouverte ; vérifiez l’agenda avant de réessayer.');
@@ -124,16 +109,13 @@ const EditAppointmentModal = ({
   };
 
   const handlePay = async (method: 'cash' | 'card') => {
-    if (pendingAction.current || clientDraftChanged) return;
+    if (pendingAction.current || clientDraftChanged || (!canCompletePrepaid && !canCollectBalance)) return;
     await performAction(() => onPay(appointment.id, method),
       'Encaissement non confirmé. Vérifiez l’agenda et la caisse avant de réessayer.');
   };
 
   const clientDraftChanged = ['clientName', 'clientPhone', 'notes'].some(field =>
     (editedAppointment[field as keyof Appointment] || '') !== (appointment[field as keyof Appointment] || ''));
-
-  const canCloseAppointment =
-    !['completed', 'cancelled', 'no_show'].includes(appointment.status);
 
   const modalContent = (
     <div className="space-y-4" aria-busy={saving}>
@@ -145,9 +127,7 @@ const EditAppointmentModal = ({
           <div className="text-sm font-medium">
             📅 {format(appointment.startTime, isMobile ? 'dd/MM/yy' : 'EEEE d MMMM yyyy', { locale: fr })}
           </div>
-          <Badge variant={appointment.isPaid || amountPaid > 0 ? "secondary" : "default"}>
-            {paymentBadgeLabel}
-          </Badge>
+          <AppointmentStatusBadge appointment={appointment} />
         </div>
         
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -183,14 +163,14 @@ const EditAppointmentModal = ({
           </div>
           {amountPaid > 0 && (
             <div className="mt-1 flex items-center justify-between text-sm">
-              <span className="text-emerald-700">Déjà payé en ligne</span>
+              <span className="text-emerald-700">{paidAmountLabel}</span>
               <span className="font-semibold text-emerald-700">− {amountPaid.toFixed(2)} €</span>
             </div>
           )}
-          <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
+          {showBalance && <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
             <span className="font-semibold">Reste à payer</span>
             <span className="text-lg font-bold text-slate-950">{remainingAmount.toFixed(2)} €</span>
-          </div>
+          </div>}
         </div>
       </div>
 
@@ -214,6 +194,7 @@ const EditAppointmentModal = ({
           <Input 
             id="clientName"
             disabled={saving}
+            readOnly={!canCloseAppointment}
             value={editedAppointment.clientName || ''}
             onChange={(e) => setEditedAppointment({
               ...editedAppointment, 
@@ -228,6 +209,7 @@ const EditAppointmentModal = ({
           <Input 
             id="clientPhone"
             disabled={saving}
+            readOnly={!canCloseAppointment}
             value={editedAppointment.clientPhone || ''}
             onChange={(e) => setEditedAppointment({
               ...editedAppointment, 
@@ -243,6 +225,7 @@ const EditAppointmentModal = ({
           <Textarea 
             id="notes"
             disabled={saving}
+            readOnly={!canCloseAppointment}
             value={editedAppointment.notes || ''}
             onChange={(e) => setEditedAppointment({
               ...editedAppointment, 
@@ -262,7 +245,7 @@ const EditAppointmentModal = ({
         <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm text-violet-800">
           Le créneau est temporairement réservé en attente du paiement en ligne.
         </div>
-      ) : isFullyPrepaid && appointment.status !== 'completed' ? (
+      ) : canCompletePrepaid ? (
         <div>
           <Label className="mb-2 block text-sm font-medium">Prestation déjà payée</Label>
           <p className="mb-3 text-sm text-muted-foreground">
@@ -273,7 +256,7 @@ const EditAppointmentModal = ({
             Clôturer la prestation
           </Button>
         </div>
-      ) : !appointment.isPaid && remainingAmount > 0 ? (
+      ) : canCollectBalance ? (
         <div>
           <Label className="mb-1 block text-sm font-medium">Encaisser le solde</Label>
           {hasDeposit && (
