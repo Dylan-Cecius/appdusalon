@@ -98,3 +98,9 @@
 - [x] TypeScript, 2 tests de sûreté, compilation source isolée, build/sync démo passants.
 - [ ] 28 cas navigateur préparés/découverts (8 nouveaux panier), aucun exécuté ; recettes visuelles/natives restent ouvertes.
 - [ ] Préserver le prestataire lors de la bascule mobile/bureau et retirer le panier d’un contexte utilisateur/salon précédent.
+
+## Cycle 4 — checkpoint état du panier 2026-10-15T15:55:03Z
+- [x] Sélection du prestataire partagée par les présentations mobile/bureau et conservée après fermeture/réouverture ; brouillon retiré quand la clé utilisateur/salon change.
+- [x] Erreur de panier focalisée pour être visible après un appui en bas d’une liste longue.
+- [x] Suite complète 293 tests/33 fichiers, TypeScript, compilation isolée et build/sync démo passants.
+- [ ] 32 cas navigateur préparés/découverts (12 panier), aucun exécuté ; rotation, fermeture et changements de session restent à recetter en UI/native.

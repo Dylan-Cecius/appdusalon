@@ -25,6 +25,7 @@ export interface Transaction {
 }
 
 interface TransactionsContextType {
+  scopeKey: string | null;
   transactions: Transaction[];
   loading: boolean;
   error: boolean;
@@ -287,6 +288,7 @@ export const TransactionsProvider = ({ children }: { children: ReactNode }) => {
   return (
     <TransactionsContext.Provider
       value={{
+        scopeKey: contextKey,
         transactions: visibleTransactions,
         loading: transactionsContext.current !== contextKey || loading,
         error: transactionsContext.current === contextKey && error,

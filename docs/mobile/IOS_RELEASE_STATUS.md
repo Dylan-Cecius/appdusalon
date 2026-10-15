@@ -57,3 +57,6 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## 2026-10-15T15:52:02Z — Panier mobile préparé et démo synchronisée
 2247 secondes cumulées ; précédent d2982bb5008169648ac9917cbd816dc86ec521e8, lot présent dans ce commit. Composants panier/panneau partagés avec une fixture hors connexion. TypeScript, 2 tests de sûreté et compilation isolée passants ; build/sync ios-demo réussis. 28 tests navigateur découverts, aucun exécuté ; avertissement taille du bundle démo à suivre. Projet Xcode préparé seulement : aucune build native/signée/TestFlight/validation Apple. Prochaine étape : portée et sélection du panier.
+
+## 2026-10-15T15:55:03Z — Panier conservé dans son contexte
+2428 secondes cumulées ; précédent ca22754d1091d9aab34fb4a7cd90a013fcd54e40, lot courant dans ce commit. 293 tests/33 fichiers passants, TypeScript/compilation isolée/build-sync démo passants. 32 cas navigateur préparés mais non exécutés ; aucun essai natif. Prochaine étape : revue finale et sauvegarde. Signature/TestFlight/Apple restent non réalisés.

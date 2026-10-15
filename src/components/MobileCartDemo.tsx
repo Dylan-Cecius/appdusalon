@@ -13,6 +13,7 @@ const staff = [{ id: 'synthetic-staff', name: 'Équipe fictive', role: 'Coiffure
 /** Offline fixture for the actual cart components; no backend or native bridge imports. */
 export default function MobileCartDemo() {
   const [open, setOpen] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
   const [items, setItems] = useState(initialItems);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export default function MobileCartDemo() {
       {confirmed && <p role="status" className="mt-4">Enregistrement fictif confirmé.</p>}
     </div>
     <MobileCartDrawer open={open} processing={processing} onOpenChange={next => { if (!lock.current) setOpen(next); }}>
-      <CartPanel items={items} activeStaff={staff} processing={processing} error={error}
+      <CartPanel selectedStaffId={selectedStaffId} onStaffChange={setSelectedStaffId} items={items} activeStaff={staff} processing={processing} error={error}
         onCheckout={checkout}
         onRemoveItem={id => { if (!lock.current) setItems(current => current.filter(item => item.id !== id)); }}
         onUpdateQuantity={(id, quantity) => { if (!lock.current) setItems(current => quantity < 1 ? current.filter(item => item.id !== id) : current.map(item => item.id === id ? { ...item, quantity } : item)); }}

@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Trash2, CreditCard, Banknote, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,8 @@ export interface CartItem {
 
 export interface CartPanelProps {
   activeStaff: Array<{ id: string; name: string; role: string; color: string }>;
+  selectedStaffId?: string;
+  onStaffChange: (id: string) => void;
   processing?: boolean;
   error?: string | null;
   items: CartItem[];
@@ -25,9 +27,10 @@ export interface CartPanelProps {
   onCheckout: (method: 'cash' | 'card', staffId?: string) => void;
 }
 
-const CartPanel = ({ activeStaff, processing = false, error, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartPanelProps) => {
+const CartPanel = ({ activeStaff, selectedStaffId, onStaffChange, processing = false, error, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartPanelProps) => {
   const staffInputId = useId();
-  const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalDuration = items.reduce(
     (sum, item) => sum + (item.kind === 'product' ? 0 : item.duration * item.quantity),
@@ -53,7 +56,7 @@ const CartPanel = ({ activeStaff, processing = false, error, items, onUpdateQuan
   return (
     <Card className="cart-touch-controls min-w-0 bg-card p-3 sm:p-6" aria-busy={processing}>
       {processing && <p role="status" className="mb-3 text-sm text-muted-foreground">Enregistrement en cours…</p>}
-      {error && <p role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" ref={errorRef} tabIndex={-1} className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
       <h2 className="text-xl font-bold mb-4 text-primary">Commande en cours</h2>
       
       <div className="flex-1 space-y-3 mb-6">
@@ -130,7 +133,7 @@ const CartPanel = ({ activeStaff, processing = false, error, items, onUpdateQuan
             <Users className="h-4 w-4" />
             Prestataire (optionnel)
           </label>
-          <Select disabled={processing} value={selectedStaffId} onValueChange={setSelectedStaffId}>
+          <Select disabled={processing} value={selectedStaffId} onValueChange={onStaffChange}>
             <SelectTrigger id={staffInputId}>
               <SelectValue placeholder="Sélectionner un prestataire" />
             </SelectTrigger>

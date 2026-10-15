@@ -28,6 +28,8 @@ test('long cart has labelled touch targets, reachable payment and preserves item
   await payment.click();
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('alert')).toContainText('Le panier est conservé');
+  await expect(dialog.getByRole('alert')).toBeFocused();
+  await expect(dialog.getByRole('alert')).toBeInViewport();
   await expect(dialog.getByRole('button', { name: /^Retirer .* du panier$/ })).toHaveCount(12);
 });
 
@@ -46,4 +48,15 @@ test('cart stays inside synthetic viewport insets with an explicit close button'
   const close = dialog.getByRole('button', { name: 'Fermer le panier', exact: true });
   await expect(close).toBeInViewport();
   await close.click(); await expect(dialog).toBeHidden();
+});
+
+test('staff selection survives closing and reopening the mobile cart', async ({ page }) => {
+  const dialog = page.getByRole('dialog');
+  const staff = dialog.getByRole('combobox', { name: 'Prestataire (optionnel)' });
+  await staff.scrollIntoViewIfNeeded(); await staff.click();
+  await page.getByRole('option', { name: 'Équipe fictive — Coiffure' }).click();
+  await dialog.getByRole('button', { name: 'Fermer le panier' }).click();
+  await expect(dialog).toBeHidden();
+  await page.getByRole('button', { name: 'Ouvrir le panier fictif' }).click();
+  await expect(dialog.getByRole('combobox', { name: 'Prestataire (optionnel)' })).toContainText('Équipe fictive');
 });

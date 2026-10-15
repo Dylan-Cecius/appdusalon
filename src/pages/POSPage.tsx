@@ -33,12 +33,13 @@ interface CartItem {
   stock?: number;
 }
 
-const POSPage = () => {
+const POSWorkspace = () => {
   const checkoutLock = useRef(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
   const [isTransactionsOpen, setIsTransactionsOpen] = useState(false);
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
@@ -408,6 +409,7 @@ const POSPage = () => {
           <div className="">
             <div className="sticky top-20 rounded-2xl">
               <CartSidebar processing={checkingOut} error={checkoutError}
+                selectedStaffId={selectedStaffId} onStaffChange={setSelectedStaffId}
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}
@@ -422,6 +424,7 @@ const POSPage = () => {
       {isMobile && (
         <MobileCartDrawer open={isCartOpen} processing={checkingOut} onOpenChange={open => { if (!checkoutLock.current) setIsCartOpen(open); }}>
               <CartSidebar processing={checkingOut} error={checkoutError}
+                selectedStaffId={selectedStaffId} onStaffChange={setSelectedStaffId}
                 items={cartItems}
                 onUpdateQuantity={updateQuantity}
                 onRemoveItem={removeFromCart}
@@ -507,4 +510,8 @@ const POSPage = () => {
   );
 };
 
-export default POSPage;
+// A draft belongs to one authenticated salon; old promises cannot clear a new cart.
+export default function POSPage() {
+  const { scopeKey } = useTransactions();
+  return <POSWorkspace key={scopeKey || 'signed-out'} />;
+}

@@ -9,7 +9,7 @@ function fixture() {
     { id: 'week', items: [], totalAmount: 20, paymentMethod: 'cash', transactionDate: new Date(2026, 9, 13, 10) },
     { id: 'month', items: [], totalAmount: 10, paymentMethod: 'cash', transactionDate: new Date(2026, 9, 2, 10) },
   ];
-  const context = { transactions, loading: false, error: false, addTransaction: vi.fn(), deleteTransaction: vi.fn(), refreshTransactions: vi.fn() };
+  const context = { scopeKey: 'synthetic-scope', transactions, loading: false, error: false, addTransaction: vi.fn(), deleteTransaction: vi.fn(), refreshTransactions: vi.fn() };
   vi.mocked(useTransactions).mockReturnValue(context);
   return context;
 }
