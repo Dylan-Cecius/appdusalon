@@ -1,4 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { runExclusiveAction } from '@/lib/exclusiveAction';
+import { buildPaymentReportText, type PaymentReportType } from '@/lib/paymentReportText';
+import { paymentReportFilters, type PaymentFilter } from '@/lib/paymentReports';
+import { toZonedTime } from 'date-fns-tz';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,63 +12,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, Send, Calendar, Info } from 'lucide-react';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, eachDayOfInterval } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, parseISO } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 import { useAuth } from '@/hooks/useAuth';
 
-interface StatsData {
-  todayRevenue: number;
-  todayClients: number;
-  weeklyRevenue: number;
-  weeklyClients: number;
-  monthlyRevenue: number;
-  monthlyClients: number;
-  paymentStats: {
-    today: {
-      cash: number;
-      card: number;
-      cashPercent: number;
-      cardPercent: number;
-    };
-    weekly: {
-      cash: number;
-      card: number;
-      cashPercent: number;
-      cardPercent: number;
-    };
-    monthly: {
-      cash: number;
-      card: number;
-      cashPercent: number;
-      cardPercent: number;
-    };
-  };
-}
-
-interface EmailReportsProps {
-  statsData: StatsData;
-}
-
-const EmailReports = ({ statsData }: EmailReportsProps) => {
+const EmailReports = () => {
   const { user } = useAuth();
-  const { transactions } = useSupabaseTransactions();
+  const { transactions, loading: transactionsLoading, error: transactionsError, hasSnapshot } = useSupabaseTransactions();
   
   const [email, setEmail] = useState('');
-  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily');
+  const [reportType, setReportType] = useState<PaymentReportType>('daily');
   const [dateRangePreset, setDateRangePreset] = useState<'current_week' | 'current_month' | 'previous_month' | 'last_3_months' | 'custom'>('current_week');
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [paymentMethod, setPaymentMethod] = useState<'all' | 'cash' | 'card'>('all');
+  const [selectedDate, setSelectedDate] = useState(format(toZonedTime(new Date(), 'Europe/Brussels'), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(toZonedTime(new Date(), 'Europe/Brussels'), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(toZonedTime(new Date(), 'Europe/Brussels'), 'yyyy-MM-dd'));
+  const [paymentMethod, setPaymentMethod] = useState<PaymentFilter>('all');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const sending = useRef(false);
 
   // Apply date range preset
-  const getPresetDateRange = () => {
-    const now = new Date();
+  const getPresetDateRange = useCallback(() => {
+    const now = toZonedTime(new Date(), 'Europe/Brussels');
     switch (dateRangePreset) {
       case 'current_week':
         return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
@@ -77,9 +48,9 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
       case 'last_3_months':
         return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) };
       case 'custom':
-        return { start: startOfDay(new Date(startDate)), end: endOfDay(new Date(endDate)) };
+        return { start: startOfDay(parseISO(startDate)), end: endOfDay(parseISO(endDate)) };
     }
-  };
+  }, [dateRangePreset, startDate, endDate]);
 
   // Pré-remplir l'email avec l'adresse de l'utilisateur connecté au chargement initial
   useEffect(() => {
@@ -88,229 +59,18 @@ const EmailReports = ({ statsData }: EmailReportsProps) => {
     }
   }, [user]);
 
-  // Calculate custom stats based on date range and payment method
-  const customStats = useMemo(() => {
-    if (reportType === 'daily') return null;
-
-    const { start, end } = getPresetDateRange();
-
-    // Filter transactions
-    const filteredTransactions = transactions.filter(tx => {
-      const txDate = new Date(tx.transactionDate);
-      const matchesDate = txDate >= start && txDate <= end;
-      const matchesPayment = paymentMethod === 'all' || tx.paymentMethod === paymentMethod;
-      return matchesDate && matchesPayment;
-    });
-
-    const cashCount = filteredTransactions.filter(tx => tx.paymentMethod === 'cash').length;
-    const cardCount = filteredTransactions.filter(tx => tx.paymentMethod === 'card').length;
-    const totalTransactions = filteredTransactions.length;
-
-    return {
-      revenue: filteredTransactions.reduce((sum, tx) => sum + tx.totalAmount, 0),
-      clients: filteredTransactions.length,
-      cash: cashCount,
-      card: cardCount,
-      cashPercent: totalTransactions > 0 ? (cashCount / totalTransactions) * 100 : 0,
-      cardPercent: totalTransactions > 0 ? (cardCount / totalTransactions) * 100 : 0,
-    };
-  }, [reportType, dateRangePreset, startDate, endDate, paymentMethod, transactions]);
-
-  const generateReport = () => {
-    const currentDate = new Date(selectedDate);
-    const formattedDate = format(currentDate, 'dd MMMM yyyy', { locale: fr });
-    
-    let reportContent = '';
-    let subject = '';
-    
-    // Determine date range based on report type
-    let dateRange = { start: new Date(), end: new Date() };
-    
-    switch (reportType) {
-      case 'daily':
-        dateRange = {
-          start: startOfDay(currentDate),
-          end: endOfDay(currentDate)
-        };
-        break;
-      case 'weekly':
-      case 'monthly':
-      case 'custom':
-        dateRange = getPresetDateRange();
-        break;
+  const reportPreview = useMemo(() => {
+    try {
+      const range = reportType === 'daily'
+        ? { start: startOfDay(parseISO(selectedDate)), end: endOfDay(parseISO(selectedDate)) }
+        : getPresetDateRange();
+      return { report: buildPaymentReportText({ transactions, ...range, type: reportType, filter: paymentMethod, message }), error: null };
+    } catch (failure) {
+      return { report: null, error: failure instanceof Error ? failure.message : 'Rapport indisponible.' };
     }
-    
-    // Calculate daily breakdown for the table
-    const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
-    const dailyData = days.map(day => {
-      const dayStart = startOfDay(day);
-      const dayEnd = endOfDay(day);
-      
-      const dayTransactions = transactions.filter(tx => {
-        const txDate = new Date(tx.transactionDate);
-        return txDate >= dayStart && txDate <= dayEnd;
-      });
-      
-      const filteredTransactions = paymentMethod === 'all' 
-        ? dayTransactions 
-        : dayTransactions.filter(tx => tx.paymentMethod === paymentMethod);
-      
-      const cashAmount = filteredTransactions
-        .filter(tx => tx.paymentMethod === 'cash')
-        .reduce((sum, tx) => sum + tx.totalAmount, 0);
-        
-      const cardAmount = filteredTransactions
-        .filter(tx => tx.paymentMethod === 'card')
-        .reduce((sum, tx) => sum + tx.totalAmount, 0);
-      
-      return {
-        date: day,
-        transactions: filteredTransactions.length,
-        cashAmount,
-        cardAmount,
-        totalAmount: cashAmount + cardAmount
-      };
-    });
-    
-    // Calculate totals
-    const totals = dailyData.reduce((acc, day) => ({
-      transactions: acc.transactions + day.transactions,
-      cashAmount: acc.cashAmount + day.cashAmount,
-      cardAmount: acc.cardAmount + day.cardAmount,
-      totalAmount: acc.totalAmount + day.totalAmount
-    }), { transactions: 0, cashAmount: 0, cardAmount: 0, totalAmount: 0 });
-    
-    // Generate table in text format
-    const paymentFilter = paymentMethod === 'all' ? 'Tous' : paymentMethod === 'cash' ? 'Espèces uniquement' : 'Bancontact uniquement';
-    let tableContent = `\n📋 DÉTAIL JOUR PAR JOUR\n`;
-    tableContent += `Filtre de paiement : ${paymentFilter}\n\n`;
-    
-    // Table header
-    tableContent += `Date          | Trans. |`;
-    if (paymentMethod === 'all' || paymentMethod === 'cash') {
-      tableContent += ` Cash    |`;
-    }
-    if (paymentMethod === 'all' || paymentMethod === 'card') {
-      tableContent += ` Bancont. |`;
-    }
-    tableContent += ` Total\n`;
-    tableContent += `${'='.repeat(50)}\n`;
-    
-    // Table rows
-    dailyData.forEach(day => {
-      tableContent += `${format(day.date, 'dd/MM/yyyy')} | ${String(day.transactions).padStart(6)} |`;
-      if (paymentMethod === 'all' || paymentMethod === 'cash') {
-        tableContent += ` ${day.cashAmount.toFixed(2)}€ |`;
-      }
-      if (paymentMethod === 'all' || paymentMethod === 'card') {
-        tableContent += ` ${day.cardAmount.toFixed(2)}€ |`;
-      }
-      tableContent += ` ${day.totalAmount.toFixed(2)}€\n`;
-    });
-    
-    // Total row
-    tableContent += `${'='.repeat(50)}\n`;
-    tableContent += `TOTAL         | ${String(totals.transactions).padStart(6)} |`;
-    if (paymentMethod === 'all' || paymentMethod === 'cash') {
-      tableContent += ` ${totals.cashAmount.toFixed(2)}€ |`;
-    }
-    if (paymentMethod === 'all' || paymentMethod === 'card') {
-      tableContent += ` ${totals.cardAmount.toFixed(2)}€ |`;
-    }
-    tableContent += ` ${totals.totalAmount.toFixed(2)}€\n`;
+  }, [transactions, reportType, selectedDate, getPresetDateRange, paymentMethod, message]);
 
-    const rangeStart = format(dateRange.start, 'dd MMMM yyyy', { locale: fr });
-    const rangeEnd = format(dateRange.end, 'dd MMMM yyyy', { locale: fr });
-    const rangePeriod = `${rangeStart} au ${rangeEnd}`;
-
-    switch (reportType) {
-      case 'custom':
-        subject = `Rapport personnalisé - ${rangePeriod}`;
-        reportContent = `
-📊 RAPPORT PERSONNALISÉ - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
-
-💰 RÉSUMÉ
-• CA encaissé : ${totals.totalAmount.toFixed(2)}€
-• Total Transactions : ${totals.transactions}
-${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
-
-${tableContent}
-
-${message ? `\n📝 NOTES :\n${message}` : ''}
-
----
-Rapport de caisse généré automatiquement par L'app du salon
-${format(new Date(), 'dd/MM/yyyy à HH:mm')}
-        `;
-        break;
-        
-      case 'daily':
-        subject = `Rapport journalier - ${formattedDate}`;
-        reportContent = `
-📊 RAPPORT JOURNALIER - ${formattedDate.toUpperCase()}
-
-💰 RÉSUMÉ
-• CA encaissé : ${totals.totalAmount.toFixed(2)}€
-• Total Transactions : ${totals.transactions}
-${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
-
-${tableContent}
-
-${message ? `\n📝 NOTES :\n${message}` : ''}
-
----
-Rapport généré automatiquement par L'app du salon
-${format(new Date(), 'dd/MM/yyyy à HH:mm')}
-        `;
-        break;
-        
-      case 'weekly':
-        subject = `Rapport hebdomadaire - ${rangePeriod}`;
-        reportContent = `
-📊 RAPPORT HEBDOMADAIRE - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
-
-💰 RÉSUMÉ
-• CA encaissé : ${totals.totalAmount.toFixed(2)}€
-• Moyenne journalière : ${(totals.totalAmount / dailyData.length).toFixed(2)}€
-• Total Transactions : ${totals.transactions}
-${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
-
-${tableContent}
-
-${message ? `\n📝 NOTES :\n${message}` : ''}
-
----
-Rapport généré automatiquement par L'app du salon
-${format(new Date(), 'dd/MM/yyyy à HH:mm')}
-        `;
-        break;
-        
-      case 'monthly':
-        subject = `Rapport mensuel - ${rangePeriod}`;
-        reportContent = `
-📊 RAPPORT MENSUEL - ${rangeStart.toUpperCase()} AU ${rangeEnd.toUpperCase()}
-
-💰 RÉSUMÉ
-• CA encaissé : ${totals.totalAmount.toFixed(2)}€
-• Moyenne journalière : ${(totals.totalAmount / dailyData.length).toFixed(2)}€
-• Total Transactions : ${totals.transactions}
-${paymentMethod === 'all' ? `• Cash : ${totals.cashAmount.toFixed(2)}€\n• Bancontact : ${totals.cardAmount.toFixed(2)}€` : ''}
-
-${tableContent}
-
-${message ? `\n📝 NOTES :\n${message}` : ''}
-
----
-Rapport généré automatiquement par L'app du salon
-${format(new Date(), 'dd/MM/yyyy à HH:mm')}
-        `;
-        break;
-    }
-
-    return { subject, content: reportContent };
-  };
-
-  const handleSendReport = async () => {
+  const handleSendReport = () => runExclusiveAction(sending, async () => {
     if (!email) {
       toast({
         title: "Erreur",
@@ -330,10 +90,11 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
       return;
     }
 
+    if (!reportPreview.report || transactionsLoading || transactionsError || !hasSnapshot) return;
     setIsLoading(true);
 
     try {
-      const { subject, content } = generateReport();
+      const { subject, content } = reportPreview.report;
       
       const { data, error } = await supabase.functions.invoke('send-report-email', {
         body: {
@@ -393,9 +154,9 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
     } finally {
       setIsLoading(false);
     }
-  };
+  });
 
-  const { content: previewContent } = generateReport();
+  const previewContent = reportPreview.report?.content || '';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -479,12 +240,12 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
           {reportType === 'daily' && (
             <div>
-              <Label htmlFor="selectedDate" className="flex items-center gap-2">
+              <Label htmlFor="email-selectedDate" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Date du rapport journalier
               </Label>
               <Input
-                id="selectedDate"
+                id="email-selectedDate"
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
@@ -496,24 +257,24 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startDate" className="flex items-center gap-2">
+                  <Label htmlFor="email-startDate" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     Date de début
                   </Label>
                   <Input
-                    id="startDate"
+                    id="email-startDate"
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="endDate" className="flex items-center gap-2">
+                  <Label htmlFor="email-endDate" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     Date de fin
                   </Label>
                   <Input
-                    id="endDate"
+                    id="email-endDate"
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
@@ -522,26 +283,18 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
                 </div>
               </div>
 
-              <div>
-                <Label className="mb-3 block">Moyen de paiement</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="all" />
-                    <Label htmlFor="all" className="cursor-pointer">Tous</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cash" id="cash" />
-                    <Label htmlFor="cash" className="cursor-pointer">Espèces</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="cursor-pointer">Bancontact</Label>
-                  </div>
-                </RadioGroup>
-              </div>
             </>
           )}
 
+          <div>
+            <Label className="mb-3 block">Part de paiement</Label>
+            <RadioGroup value={paymentMethod} onValueChange={(value: PaymentFilter) => setPaymentMethod(value)} className="flex flex-wrap gap-3">
+              {paymentReportFilters.map(option => <div key={option.key} className="flex items-center gap-2">
+                <RadioGroupItem value={option.key} id={`email-payment-${option.key}`} />
+                <Label htmlFor={`email-payment-${option.key}`}>{option.label}</Label>
+              </div>)}
+            </RadioGroup>
+          </div>
           <div>
             <Label htmlFor="message">Message personnalisé (optionnel)</Label>
             <Textarea
@@ -555,7 +308,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
 
           <Button 
             onClick={handleSendReport}
-            disabled={isLoading || !email}
+            disabled={isLoading || !email || !reportPreview.report || transactionsLoading || !!transactionsError || !hasSnapshot}
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
           >
             <Send className="h-4 w-4 mr-2" />
@@ -571,6 +324,7 @@ ${format(new Date(), 'dd/MM/yyyy à HH:mm')}
           Aperçu du rapport
         </h4>
         
+        {reportPreview.error && <p role="alert" className="mb-3 text-sm text-destructive">{reportPreview.error}</p>}
         <div className="bg-muted/20 p-4 rounded-lg max-h-96 overflow-y-auto">
           <pre className="text-sm whitespace-pre-wrap font-mono">
             {previewContent}

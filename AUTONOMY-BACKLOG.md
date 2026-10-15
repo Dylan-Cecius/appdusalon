@@ -14,7 +14,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Priorités prêtes
 1. Lire les nouveaux checkpoints puis exécuter la recette des 26 nouveaux cas de fiche RDV/création client sur ordinateur/mobile dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ne pas confondre découverte/typecheck des tests et exécution.
-2. Statistiques, historique, rapports détaillés et période personnalisée corrigés. Aligner ensuite le générateur de rapport e-mail et auditer les exports automatiques côté serveur, sans envoi réel.
+2. Corriger le panier mobile : staffId perdu par le callback, fermeture prématurée et absence de verrou sur les boutons. Ensuite auditer les rapports automatiques serveur (erreurs/pagination/périodes), sans envoi réel. Les rapports interactifs et leur texte e-mail sont alignés.
 3. Source transactions unifiée, changement de salon et pagination protégés : recette navigateur/hébergée à faire, notamment erreurs et reprises avec plusieurs pages. Ne pas refaire la lecture commune.
 4. Revoir chargement/erreur de la liste Clients, recherche accents/téléphones et cohérence du détail ; la création a été corrigée au lot 6, ne pas la refaire. Recette mobile/clavier des longs formulaires, focus après échec et fermeture à vérifier.
 5. Préparer un parcours fictif complet agenda → caisse → historique client → statistiques, avec un état partagé, pour remplacer progressivement les écrans de démonstration encore statiques. Conserver les composants partagés et distinguer simulation/connexion réelle.
@@ -80,3 +80,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Rapports — filtres des parts réalisés
 - 173 unitaires réussis ; typecheck et build réussis. 6 nouveaux cas navigateur préparés, non exécutés (36 cumulés). Génération e-mail encore à aligner ; aucun envoi réel.
+
+## Rapports — texte local aligné
+- 180 tests unitaires réussis ; typecheck/build réussis, lint 0 erreur/216 avertissements. Aperçu et texte généré réutilisent les parts communes. Aucun e-mail transmis. Recette du formulaire restant à faire.

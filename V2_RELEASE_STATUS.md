@@ -23,6 +23,12 @@ This document separates machine-verified release guarantees from checks that sti
 - TypeScript passed; 173 unit tests passed; final normal build passed (9.48 s). Six additional browser cases prepared and typechecked, not executed (36 cumulative pending cases).
 - Email report generation remains a separate follow-up. No real email/export, hosted transaction or publication performed.
 
+## Local email-report generation follow-up — 15 October 2026
+
+- Email preview/text now shares the funding calculation, guards invalid dates and payload size, and blocks sending from an incomplete snapshot. No email or provider operation was executed.
+- Local checks: TypeScript passed, 180 unit tests passed, normal build passed (8.07 s), lint 0 errors/216 warnings. Browser form and hosted transport checks remain outstanding.
+- Automated server reports were only audited: paging/error handling and rolling-period semantics need a separate isolated follow-up.
+
 ## Current candidate — 15 October 2026
 
 Application source: `498c8a487a327c661555a15321ea90fca0030934` (15 October 2026).

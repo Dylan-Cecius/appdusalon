@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useCombinedStats } from '@/hooks/useCombinedStats';
 import MainLayout from '@/components/MainLayout';
 import AutomatedReports from '@/components/AutomatedReports';
 import EmailReports from '@/components/EmailReports';
@@ -7,7 +6,6 @@ import DetailedReportsView from '@/components/DetailedReportsView';
 import { FeatureGate } from '@/components/FeatureGate';
 
 const ReportsPage = () => {
-  const { stats } = useCombinedStats();
   const navigate = useNavigate();
 
   return (
@@ -35,7 +33,7 @@ const ReportsPage = () => {
               requiredFeature="canSendEmails"
               onUpgrade={() => navigate('/abonnements')}
             >
-              <EmailReports statsData={stats} />
+              <EmailReports />
             </FeatureGate>
 
             <FeatureGate
