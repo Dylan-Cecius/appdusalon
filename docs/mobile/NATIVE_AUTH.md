@@ -23,3 +23,8 @@ Le pont écoute avant de lire getLaunchUrl, donne priorité à un callback réce
 Le client iOS utilise PKCE et n’installe pas de session à partir d’une URL détectée automatiquement. Les retours d’inscription/récupération exigent une destination configurée ; OAuth natif reste indisponible tant que le parcours de navigateur système n’est pas implémenté. Le web conserve son comportement.
 
 Limites de ce checkpoint : reprise de rafraîchissement à raccorder, garde de flux local et rejeu après rechargement à traiter, stockage Keychain absent, aucune destination Apple/backend enregistrée. La compilation isolée des sources connectées ne valide pas ces parcours sur appareil.
+
+## Reprise de session préparée
+Le pont appStateChange prend la main après initialize et l’arrêt du gestionnaire automatique navigateur. Les démarrages/arrêts sont sérialisés, un état initial tardif ne remplace pas un événement plus récent et le dernier arrêt d’un composant précède le démarrage de son remplaçant. Une prise de contrôle échouée ne démarre pas de second rafraîchissement.
+
+Douze tests synthétiques couvrent ces transitions et la propriété lors d’un remontage. La réception effective d’appStateChange avec le projet UIScene reste à vérifier sur iOS ; cette préparation ne constitue pas une validation du mode arrière-plan natif. Le stockage des jetons reste celui décrit dans SESSION_AUDIT.md.

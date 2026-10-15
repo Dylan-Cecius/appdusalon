@@ -91,3 +91,13 @@
 - npm run typecheck : succès ; npm run test:mobile:unit : 203 tests dans 25 fichiers passants ; npm run test:mobile:build : 2 tests passants, y compris frontière src/native et variables natives hostiles.
 - npm run build:mobile:check-connected : succès, configuration synthétique et sortie supprimée. npm run ios:prepare:demo : succès. Assertions : includePlugins=[] et aucun CapacitorApp dans le package démo, version App du lockfile exacte. Pas de build/signature ni essai iOS.
 - Revue des composants React et git diff --check : succès. Prochaine tâche : propriétaire du rafraîchissement et garde des flux natifs en attente, notamment contre le rejeu d’une ancienne URL au redémarrage.
+
+## 2026-10-15T14:37:34.351Z — Cycle 2, checkpoint 3 : propriétaire du rafraîchissement
+- Checkpoint précédent : 5a70d26e2d553111493da063f2733edf95239abb. Durée écoulée observée : 22 minutes.
+- Pont appStateChange ajouté sous le même opt-in : attend initialize, arrête le gestionnaire navigateur SDK avant prise en charge, sérialise start/stop, ignore getState obsolète et arrête au démontage. Un slot commun attend le dernier arrêt de l’ancien composant avant de laisser démarrer le suivant.
+- Ne démarre pas de second propriétaire si l’arrêt initial échoue. Événements identiques dédupliqués ; erreurs génériques sans payload ; rafraîchissement seulement en activité selon les états synthétiques fournis.
+- npm run typecheck : succès après correction du type d’un mock de test. npm run test:mobile:unit -- src/native/sessionLifecycle.test.ts src/native/lifecycleSlot.test.ts : 12 tests passants. npm run build:mobile:check-connected : succès. git diff --check : succès.
+- Tests : arrière-plan, démarrage en arrière-plan, événements en double, état initial obsolète, start non terminé, démontage, inscription tardive, défaillance et remplacement du propriétaire. Aucun SDK auth réel exécuté par ces tests.
+- Le code natif App 8.1.2 et auth-js 2.71.1 a été inspecté. Réception effective des événements avec UIScene/WKWebView à vérifier sur iOS ; pas de preuve Xcode/simulateur/appareil. La démo reste sans plugin App.
+- Incident technique transitoire : git fetch a retourné HTTP 502 après le checkpoint précédent ; nouvelle lecture réussie, sources locales réalignées sans force ni perte des modifications courantes. Pas de conflit de bail.
+- Prochaine tâche : protéger les échanges contre une ancienne URL retenue par le système, puis bilan des preuves et fermeture.

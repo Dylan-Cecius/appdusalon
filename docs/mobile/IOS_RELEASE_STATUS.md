@@ -10,7 +10,7 @@
 - Icône et splash : placeholders réels du template Capacitor, à remplacer avant diffusion.
 - Ergonomie : safe areas, clavier et navigation adaptés dans les sources ; 5 tests viewport passants. 8 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
 - Dernier checkpoint de code récupéré et vérifié : 52220ffb195b357acefeac27ef2dd89968e177a2 (2026-10-15T14:01:38.092Z).
-- Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; liens entrants raccordés sous opt-in, cycle App et stockage natif encore à réaliser. Voir SESSION_AUDIT.md.
+- Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; liens entrants raccordés sous opt-in, cycle App raccordé sous opt-in (12 tests ciblés), stockage natif encore à réaliser. Voir SESSION_AUDIT.md.
 - Callbacks natifs : parseur, contrôleur et pont App préparés sous configuration explicite, 51 tests ciblés passants ; aucun essai natif ni retour hébergé configuré.
 - Sources connectées : compilation isolée réussie (configuration .invalid, sortie supprimée) ; aucun backend connecté testé.
 - Compilation iOS / simulateur / iPhone réel : non réalisés.

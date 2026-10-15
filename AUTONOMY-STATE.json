@@ -4,17 +4,17 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T14-14-40-744Z",
-  "task": "P1 reprise native et garde des flux PKCE",
+  "task": "Garde des flux PKCE en attente et prévention des vieux retours",
   "started_at": "2026-10-15T14:14:40.744Z",
-  "last_checkpoint_at": "2026-10-15T14:29:35.390Z",
-  "lease_expires_at": "2026-10-15T15:44:35.390Z",
+  "last_checkpoint_at": "2026-10-15T14:37:34.351Z",
+  "lease_expires_at": "2026-10-15T15:52:34.351Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Raccorder un propriétaire unique du rafraîchissement à appStateChange ; protéger les retours sans flux local en attente.",
+  "next_task": "Associer chaque retour à un flux local, refuser le rejeu/les retours obsolètes, contrôler les builds et libérer le bail.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "203 tests in 25 files passed; TypeScript passed",
@@ -27,7 +27,8 @@
     "mobile_ergonomics": "safe areas and keyboard source prepared; 5 viewport tests passed; 8 browser cases discovered but not executed",
     "auth_session": "11 synthetic session/logout tests passed; no live backend or native authentication tested",
     "connected_source_build": "passed with synthetic .invalid configuration after native callback integration",
-    "native_callback_parser": "51 native contract/configuration/link tests passed; bridge gated behind explicit configuration"
+    "native_callback_parser": "51 native contract/configuration/link tests passed; bridge gated behind explicit configuration",
+    "native_session_lifecycle": "12 synthetic activity/ownership tests passed; TypeScript and isolated connected build passed; no iOS runtime tested"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -35,7 +36,7 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "e66b2a4c09fb6a45bf471f3562aac857bbdb3b44",
+  "last_application_commit": "5a70d26e2d553111493da063f2733edf95239abb",
   "last_run_id": "ios-2026-10-15T13-14-44-195Z",
   "last_run_started_at": "2026-10-15T13:14:44.195Z",
   "last_run_finished_at": "2026-10-15T14:01:38.092Z",

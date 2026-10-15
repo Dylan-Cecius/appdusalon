@@ -4,6 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { nativeAuth } from './config';
 import { installNativeAuthLinks } from './authLinks';
+import { installNativeSessionLifecycle } from './sessionLifecycle';
+import { createLifecycleSlot } from './lifecycleSlot';
+
+const lifecycleSlot = createLifecycleSlot();
 
 export function NativeAuthBridge() {
   const navigate = useNavigate();
@@ -11,6 +15,7 @@ export function NativeAuthBridge() {
     if (!nativeAuth.enabled) return;
     let disposed = false;
     let links: ReturnType<typeof installNativeAuthLinks> | undefined;
+    let lifecycle: ReturnType<typeof lifecycleSlot.mount> | undefined;
     const failed = () => { if (!disposed) toast({
       title: 'Connexion non finalisée',
       description: 'Demandez un nouveau lien depuis cette application, puis réessayez.',
@@ -18,6 +23,15 @@ export function NativeAuthBridge() {
     }); };
     void import('@capacitor/app').then(({ App }) => {
       if (disposed) return;
+      lifecycle = lifecycleSlot.mount(() => installNativeSessionLifecycle({
+        app: App,
+        auth: {
+          async initialize() { const { error } = await supabase.auth.initialize(); if (error) throw error; },
+          startAutoRefresh: () => supabase.auth.startAutoRefresh(),
+          stopAutoRefresh: () => supabase.auth.stopAutoRefresh(),
+        },
+        failed: () => { if (!disposed) toast({ title: 'Session indisponible', description: 'Vérifiez votre connexion puis rouvrez l’application.', variant: 'destructive' }); },
+      }));
       links = installNativeAuthLinks({
         app: App,
         redirect: nativeAuth.redirect!,
@@ -31,7 +45,7 @@ export function NativeAuthBridge() {
         failed,
       });
     }).catch(failed);
-    return () => { disposed = true; links?.dispose(); };
+    return () => { disposed = true; links?.dispose(); void lifecycle?.dispose(); };
   }, [navigate]);
   return null;
 }
