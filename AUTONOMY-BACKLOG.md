@@ -31,3 +31,8 @@
 - Aucun environnement macOS/Xcode testé dans cette session. Ne bloque pas les tests web/unitaires et la préparation.
 - Backend isolé et intégrations réelles non validés. Ne toucher à aucune donnée réelle ; les mocks ne prouvent pas leur fonctionnement.
 - Le candidat web de départ contient 26 cas navigateur non exécutés selon V2_RELEASE_STATUS.md. Ne pas hériter de la mention « validé » sans les exécuter.
+
+## Reprise après le cycle clos 2026-10-15T14:01:38.092Z
+- Dernier code : 52220ffb195b357acefeac27ef2dd89968e177a2. Quatre checkpoints de développement, 46 minutes observées ; bail libéré.
+- Premier lot encore prêt : spécifier et tester strictement les callbacks natifs sur fixtures (origine/chemin autorisés, type de flux, doublons, démarrage/reprise), puis raccorder le pont App lorsque ses prérequis sont établis. Voir SESSION_AUDIT.md.
+- Garder ouverts les contrôles visuels des marges/clavier/menus et les essais iOS ; ne pas les cocher sur la base des tests unitaires ou de --list.

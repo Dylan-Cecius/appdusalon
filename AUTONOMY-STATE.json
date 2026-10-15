@@ -2,19 +2,19 @@
   "schema_version": 1,
   "project": "AppDuSalon V2 iOS / App Store",
   "branch": "v2/ios-appstore",
-  "status": "running",
-  "run_id": "ios-2026-10-15T13-14-44-195Z",
-  "task": "Final checkpoint verification and lease release",
-  "started_at": "2026-10-15T13:14:44.195Z",
-  "last_checkpoint_at": "2026-10-15T13:58:23.859Z",
-  "lease_expires_at": "2026-10-15T15:13:23.859Z",
+  "status": "idle",
+  "run_id": null,
+  "task": null,
+  "started_at": null,
+  "last_checkpoint_at": "2026-10-15T14:01:38.092Z",
+  "lease_expires_at": null,
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "P1 session native : callbacks stricts et reprise app, tests synthétiques ; recette visuelle WebKit/native encore manquante.",
+  "next_task": "P1 : préparer et tester les callbacks natifs stricts (démarrage/reprise), puis pont de visibilité unique et stockage adapté ; exécution visuelle/native toujours à réaliser.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
     "full_app_suite": "152 tests in 22 files passed; TypeScript passed",
@@ -34,5 +34,9 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "fd89d5cd0c38bcfc7907411af020c4dd20771b15"
+  "last_application_commit": "52220ffb195b357acefeac27ef2dd89968e177a2",
+  "last_run_id": "ios-2026-10-15T13-14-44-195Z",
+  "last_run_started_at": "2026-10-15T13:14:44.195Z",
+  "last_run_finished_at": "2026-10-15T14:01:38.092Z",
+  "last_run_duration_seconds": 2814
 }

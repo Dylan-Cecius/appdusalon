@@ -9,7 +9,7 @@
 - Projet Xcode démo : généré dans ios-demo/ avec Capacitor 8.5.3, SPM et UIScene ; synchronisation répétée réussie.
 - Icône et splash : placeholders réels du template Capacitor, à remplacer avant diffusion.
 - Ergonomie : safe areas, clavier et navigation adaptés dans les sources ; 5 tests viewport passants. 8 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
-- Dernier checkpoint de code vérifié avant ce lot : fd89d5cd0c38bcfc7907411af020c4dd20771b15.
+- Dernier checkpoint de code récupéré et vérifié : 52220ffb195b357acefeac27ef2dd89968e177a2 (2026-10-15T14:01:38.092Z).
 - Session : restauration/événements et déconnexion corrigés, 11 tests synthétiques passants ; pont App, liens entrants et stockage natif non implémentés. Voir SESSION_AUDIT.md.
 - Sources connectées : compilation isolée réussie (configuration .invalid, sortie supprimée) ; aucun backend connecté testé.
 - Compilation iOS / simulateur / iPhone réel : non réalisés.
