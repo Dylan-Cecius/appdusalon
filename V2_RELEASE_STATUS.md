@@ -9,7 +9,13 @@ This document separates machine-verified release guarantees from checks that sti
 - Funding allocation integrated into period statistics, selected-day statistics and transaction history. Cash/card/prepayment/unallocated amounts reconcile to recorded sales without counting a deposit twice. This is not a cash-flow report by payment date.
 - Local checks: TypeScript passed, 157 unit tests passed, normal build passed (9.67 s), lint 0 errors/222 warnings.
 - Four more browser cases prepared and typechecked, not executed (30 new pending cases including the earlier agenda/client work).
-- Remaining detailed/export/email report filters and loading-context handling are tracked in AUTONOMY-BACKLOG.md. Hosted RLS/relationship reads are unverified; no backend or preview deployment performed.
+- Remaining detailed/export/email report filters are tracked in AUTONOMY-BACKLOG.md. Hosted RLS/relationship reads are unverified; no backend or preview deployment performed.
+
+## Transaction-loading follow-up — 15 October 2026
+
+- Shared salon-scoped provider replaces independent hook reads/subscriptions. Paged reads reject incomplete results and stale requests; errors/retry are visible and report views are withheld until a usable snapshot exists.
+- Local checks: TypeScript passed, 166 unit tests passed, normal build passed (8.31 s), lint 0 errors/218 warnings. Nine new pagination/concurrency tests use a fake reader.
+- Hosted paging/RLS and browser error/retry flows remain unverified. Cross-page count checks do not provide a database transaction snapshot.
 
 ## Current candidate — 15 October 2026
 

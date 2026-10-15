@@ -1,3 +1,4 @@
+import { useTransactions } from '@/contexts/TransactionsContext';
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -79,6 +80,9 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   const { permissions, isLoading: permissionsLoading } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
+  const { loading: transactionsLoading, error: transactionsError, hasSnapshot, refreshTransactions } = useTransactions();
+  const transactionPage = ['/', '/dashboard', '/pos', '/clients', '/stats', '/ca-total', '/rapports', '/historique', '/encaissements'].includes(location.pathname);
+  const requiresCompleteTransactions = ['/stats', '/ca-total', '/rapports', '/historique', '/encaissements'].includes(location.pathname);
   const isMobile = useIsMobile();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -218,7 +222,13 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         </header>
 
         <main className="mx-auto max-w-[1680px] px-4 py-4 pb-24 sm:px-6 sm:py-5 md:pb-8">
-          {children}
+          {transactionPage && transactionsError && <div role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+            <p>{transactionsError}</p>
+            {hasSnapshot && <p className="mt-1">Les dernières données reçues peuvent être périmées.</p>}
+            <Button className="mt-3" variant="outline" disabled={transactionsLoading} onClick={() => void refreshTransactions()}>Réessayer le chargement</Button>
+          </div>}
+          {transactionPage && transactionsLoading && <p role="status" className="mb-4 text-sm text-muted-foreground">Chargement des transactions…</p>}
+          {requiresCompleteTransactions && (!hasSnapshot || transactionsError) ? null : children}
         </main>
       </div>
 
