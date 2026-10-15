@@ -1,3 +1,5 @@
+import { clientCreateFields, persistClientEdit, type ClientWriter } from '@/lib/clientPersistence';
+import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,7 +12,7 @@ const emptyClients: Client[] = [];
 interface ClientsValue {
   clients: Client[]; loading: boolean; error: string | null; hasSnapshot: boolean; contextKey: string | null;
   addClient: (input: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<Client | null>;
-  updateClient: (id: string, updates: Partial<Client>) => Promise<Client | null>;
+  updateClient: (id: string, updates: Partial<Client>, expectedRevision: string) => Promise<Client | null>;
   getClientStats: (id: string) => Promise<ClientStats>;
   refreshClients: () => Promise<void>;
 }
@@ -19,6 +21,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   const { user, isReady } = useAuth();
   const { permissions } = usePermissions();
   const salonId = permissions.salonId;
+  const { rights } = useSubscriptionRights();
   const contextKey = isReady && user && salonId ? JSON.stringify([user.id, salonId]) : null;
   const scope = useRef(createLatestRequestScope());
   scope.current.setContext(contextKey);
@@ -49,7 +52,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     const current = scope.current.captureContext(contextKey);
     if (!current() || !user || !salonId) return null;
     try {
-      const { data, error } = await supabase.from('clients').insert([{ ...client, user_id: user.id, salon_id: salonId }]).select().single();
+      const { data, error } = await supabase.from('clients').insert([{ ...clientCreateFields(client, rights.canAccessFullClientNotes), user_id: user.id, salon_id: salonId }]).select().single();
       if (error) throw error;
       if (!current() || !data?.id) return null;
       setSnapshot(previous => previous?.context === contextKey ? { ...previous, clients: [...previous.clients.filter(row => row.id !== data.id), data] } : previous);
@@ -61,13 +64,12 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
       return null;
     }
   };
-  const updateClient = async (id: string, updates: Partial<Client>) => {
+  const updateClient = async (id: string, updates: Partial<Client>, expectedRevision: string) => {
     const current = scope.current.captureContext(contextKey);
     if (!current() || !salonId) return null;
     try {
-      const { data, error } = await supabase.from('clients').update(updates).eq('id', id).eq('salon_id', salonId).select().single();
-      if (error) throw error;
-      if (!current() || !data?.id) return null;
+      const data = await persistClientEdit(supabase as unknown as ClientWriter, salonId, id, expectedRevision, updates, rights.canAccessFullClientNotes);
+      if (!current()) return null;
       setSnapshot(previous => previous?.context === contextKey ? { ...previous, clients: previous.clients.map(row => row.id === id ? data : row) } : previous);
       await fetchClients();
       if (current()) toast({ title: 'Client mis à jour', description: 'Les informations du client ont été mises à jour' });

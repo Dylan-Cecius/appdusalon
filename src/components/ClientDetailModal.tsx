@@ -1,5 +1,6 @@
+import { runExclusiveAction } from '@/lib/exclusiveAction';
 import { useClientDetailStats } from '@/hooks/useClientDetailStats';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CalendarClock,
   Clock,
@@ -75,6 +76,11 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
   } = useLoyalty(client.id);
   const { logActivity } = useActivityLog();
 
+  const savePending = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saveErrorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (saveError) saveErrorRef.current?.focus(); }, [saveError]);
   const [isEditing, setIsEditing] = useState(false);
   const { stats, error: statsError, loading: statsLoading, retry: retryStats } = useClientDetailStats(open ? client.id : null, getClientStats);
   const [editedClient, setEditedClient] = useState(client);
@@ -191,13 +197,19 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
     [clientTransactions, clientAppointments]
   );
 
-  const handleSave = async () => {
-    const updates = canUseClientNotes
-      ? editedClient
-      : { ...editedClient, notes: client.notes };
-
-    await updateClient(client.id, updates);
-    setIsEditing(false);
+  const handleSave = () => {
+    if (clientsError || clientsLoading) return;
+    void runExclusiveAction(savePending, async () => {
+      setIsSaving(true); setSaveError(null);
+      try {
+        const result = await updateClient(client.id, editedClient, editedClient.updated_at);
+        if (!result || result.id !== client.id) throw new Error('unconfirmed');
+        setEditedClient(result);
+        setIsEditing(false);
+      } catch {
+        setSaveError('Modification non confirmée. Votre saisie est conservée. Si la fiche a changé ailleurs, annulez la modification pour reprendre la dernière version.');
+      } finally { setIsSaving(false); }
+    });
   };
 
   const handleRgpdDelete = async () => {
@@ -234,7 +246,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={next => { if (!next && !savePending.current && !isRgpdDeleting) onClose(); }}>
       <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto p-0">
         <DialogHeader className="border-b border-slate-200 bg-white px-6 py-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -267,17 +279,17 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
             <div className="flex gap-2">
               {isEditing ? (
                 <>
-                  <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                  <Button size="sm" variant="outline" disabled={isSaving} onClick={() => { setEditedClient(client); setSaveError(null); setIsEditing(false); }}>
                     <X className="mr-1 h-4 w-4" />
                     Annuler
                   </Button>
-                  <Button disabled={!!clientsError || clientsLoading} size="sm" onClick={handleSave}>
+                  <Button disabled={!!clientsError || clientsLoading || isSaving} size="sm" onClick={handleSave}>
                     <Save className="mr-1 h-4 w-4" />
-                    Enregistrer
+                    {isSaving ? 'Enregistrement…' : 'Enregistrer'}
                   </Button>
                 </>
               ) : (
-                <Button disabled={!!clientsError || clientsLoading} size="sm" variant="outline" onClick={() => { setEditedClient(client); setIsEditing(true); }}>
+                <Button disabled={!!clientsError || clientsLoading || isSaving} size="sm" variant="outline" onClick={() => { setEditedClient(client); setSaveError(null); setIsEditing(true); }}>
                   <Edit2 className="mr-1 h-4 w-4" />
                   Modifier
                 </Button>
@@ -287,6 +299,8 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
         </DialogHeader>
 
         <div className="bg-slate-50/70 p-4 sm:p-6">
+          {saveError && <p role="alert" ref={saveErrorRef} tabIndex={-1} className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{saveError}</p>}
+          {isSaving && <p role="status" className="mb-3 text-sm">Enregistrement en cours…</p>}
           {clientsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{clientsError} Votre saisie reste conservée.</p><Button variant="outline" size="sm" onClick={() => void refreshClients()}>Recharger les clients</Button></div>}
           {statsLoading && <p role="status" className="mb-3 text-sm text-muted-foreground">Chargement des statistiques…</p>}
           {statsError && <div role="alert" className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"><p>{statsError}</p><Button variant="outline" size="sm" onClick={retryStats}>Réessayer les statistiques</Button></div>}
@@ -555,45 +569,45 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <Label>Nom complet</Label>
-                    <Input
-                      value={editedClient.name}
+                    <Label htmlFor="client-edit-name">Nom complet</Label>
+                    <Input id="client-edit-name"
+                      value={isEditing ? editedClient.name : client.name}
                       onChange={(event) =>
                         setEditedClient({ ...editedClient, name: event.target.value })
                       }
-                      disabled={!isEditing}
+                      disabled={!isEditing || isSaving}
                     />
                   </div>
                   <div>
-                    <Label>Téléphone</Label>
-                    <Input
-                      value={editedClient.phone}
+                    <Label htmlFor="client-edit-phone">Téléphone</Label>
+                    <Input id="client-edit-phone"
+                      value={isEditing ? editedClient.phone : client.phone}
                       onChange={(event) =>
                         setEditedClient({ ...editedClient, phone: event.target.value })
                       }
-                      disabled={!isEditing}
+                      disabled={!isEditing || isSaving}
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <Label>Email</Label>
-                    <Input
+                    <Label htmlFor="client-edit-email">Email</Label>
+                    <Input id="client-edit-email"
                       type="email"
-                      value={editedClient.email || ''}
+                      value={(isEditing ? editedClient.email : client.email) || ''}
                       onChange={(event) =>
                         setEditedClient({ ...editedClient, email: event.target.value })
                       }
-                      disabled={!isEditing}
+                      disabled={!isEditing || isSaving}
                     />
                   </div>
                   {canUseClientNotes ? (
                     <div className="sm:col-span-2">
-                      <Label>Notes</Label>
-                      <Textarea
-                        value={editedClient.notes || ''}
+                      <Label htmlFor="client-edit-notes">Notes</Label>
+                      <Textarea id="client-edit-notes"
+                        value={(isEditing ? editedClient.notes : client.notes) || ''}
                         onChange={(event) =>
                           setEditedClient({ ...editedClient, notes: event.target.value })
                         }
-                        disabled={!isEditing}
+                        disabled={!isEditing || isSaving}
                         rows={5}
                         placeholder="Préférences, allergies, remarques..."
                       />
@@ -625,7 +639,7 @@ const ClientDetailContents = ({ client, open, onClose }: ClientDetailModalProps)
 
                 <AlertDialog open={rgpdDialogOpen} onOpenChange={setRgpdDialogOpen}>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
+                    <Button variant="destructive" size="sm" disabled={isSaving || isEditing || !!clientsError || clientsLoading}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Supprimer définitivement ce client
                     </Button>

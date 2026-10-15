@@ -97,3 +97,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Clients — liste complète par salon
 - Source partagée, pagination et réponses périmées protégées ; erreurs/reprise explicites. Détail suit son identifiant, changement de salon ferme les formulaires. 199 unitaires et typecheck/build réussis. Statistiques paginées et confirmation de modification restent prioritaires.
+
+## Clients — sauvegarde de fiche
+- Champs autorisés, filtre salon/révision, résultat confirmé, verrou et saisies conservées. 210 unitaires, typecheck et build réussis. Recette navigateur/hébergée encore manquante ; aucune donnée réelle modifiée.
