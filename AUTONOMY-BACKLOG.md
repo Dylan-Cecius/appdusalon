@@ -140,3 +140,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Démonstration — contrat de stockage
 - Contrat de stockage versionné et catalogue commun préparés, non encore raccordés ; reprise anciens formats sans écraser les données illisibles. 332 unitaires, typecheck/build réussis. Intégration multi-écran et recette navigateur restent à faire.
+
+## Démonstration — état partagé intégré
+- Provider local unique, agenda et panier raccordés, catalogue/équipe communs ; persistance avant succès et erreurs visibles. 332 unitaires et typecheck/build standalone réussis. Clôture simulée et statistiques restent à réaliser, navigateur non exécuté.

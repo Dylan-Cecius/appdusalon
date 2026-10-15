@@ -1,3 +1,5 @@
+import { PreviewProvider, usePreview } from './preview/PreviewProvider';
+import { previewServices as services, previewMembers } from './preview/data';
 import PreviewAgenda from './components/agenda/PreviewAgenda';
 import { useMemo, useState } from 'react';
 import {
@@ -20,15 +22,6 @@ const nav: {id:View;label:string;icon:any}[] = [
   {id:'stats',label:'Statistiques',icon:BarChart3},
   {id:'reports',label:'Rapports',icon:ReceiptText},
   {id:'settings',label:'Paramètres',icon:Settings},
-];
-
-const services = [
-  {id:'s1',name:'Coupe homme',price:25,duration:30},
-  {id:'s2',name:'Coupe + barbe',price:35,duration:45},
-  {id:'s3',name:'Barbe',price:15,duration:20},
-  {id:'s4',name:'Coupe enfant',price:20,duration:25},
-  {id:'s5',name:'Coloration',price:55,duration:60},
-  {id:'s6',name:'Soin',price:18,duration:20},
 ];
 
 const clients = [
@@ -109,7 +102,11 @@ function Dashboard(){
 }
 
 function POS(){
-  const [cart,setCart]=useState<{id:string;name:string;price:number}[]>([]);
+  const {state, setState} = usePreview();
+  const cart = state.cart.lines;
+  const setCart = (action: (lines: typeof cart) => typeof cart) => {
+    try { setState(current => ({ ...current, cart: { ...current.cart, lines: action(current.cart.lines) } })); } catch { /* Provider displays the storage error. */ }
+  };
   const total=cart.reduce((s,x)=>s+x.price,0);
   return <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
     <div><h1 className="text-3xl font-semibold">Caisse</h1><p className="mt-1 text-slate-500">Clique sur une prestation pour l’ajouter au ticket.</p>
@@ -117,7 +114,7 @@ function POS(){
     </div>
     <Card className="h-fit p-5 lg:sticky lg:top-6"><div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Ticket</h2><ReceiptText className="text-slate-400"/></div>
       <div className="mt-4 min-h-48 space-y-2">{cart.length===0?<div className="flex h-44 flex-col items-center justify-center text-center text-slate-400"><ShoppingCart/><p className="mt-2 text-sm">Aucune prestation</p></div>:cart.map((x,i)=><div key={i} className="flex justify-between rounded-xl bg-slate-50 p-3 text-sm"><span>{x.name}</span><span className="font-medium">{money(x.price)}</span></div>)}</div>
-      <div className="mt-4 border-t pt-4"><div className="flex justify-between text-xl font-semibold"><span>Total</span><span>{money(total)}</span></div><div className="mt-4 grid grid-cols-2 gap-2"><button disabled={!cart.length} className="rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white disabled:opacity-40"><WalletCards className="mx-auto mb-1" size={18}/>Espèces</button><button disabled={!cart.length} className="rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white disabled:opacity-40"><CreditCard className="mx-auto mb-1" size={18}/>Carte</button></div>{cart.length>0&&<button onClick={()=>setCart([])} className="mt-2 w-full rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-50">Vider le ticket</button>}</div>
+      <div className="mt-4 border-t pt-4"><div className="flex justify-between text-xl font-semibold"><span>Total</span><span>{money(total)}</span></div><div className="mt-4 grid grid-cols-2 gap-2"><button disabled={!cart.length} className="rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white disabled:opacity-40"><WalletCards className="mx-auto mb-1" size={18}/>Espèces</button><button disabled={!cart.length} className="rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white disabled:opacity-40"><CreditCard className="mx-auto mb-1" size={18}/>Carte</button></div>{cart.length>0&&<button onClick={()=>setCart(()=>[])} className="mt-2 w-full rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-50">Vider le ticket</button>}</div>
     </Card>
   </div>
 }
@@ -131,10 +128,10 @@ function Stats(){return <div><h1 className="text-3xl font-semibold">Statistiques
 
 function SettingsView(){const[notif,setNotif]=useState(true);const[booking,setBooking]=useState(true);return <div><h1 className="text-3xl font-semibold">Paramètres</h1><p className="mt-1 text-slate-500">Configuration générale du salon.</p><div className="mt-5 grid gap-5 lg:grid-cols-2"><Card className="p-5"><h2 className="font-semibold">Salon</h2><div className="mt-4 space-y-4"><label className="block text-sm">Nom du salon<input defaultValue="Salon Éclat" className="mt-1 w-full rounded-xl border p-2.5"/></label><label className="block text-sm">Email<input defaultValue="contact@salon-eclat.demo" className="mt-1 w-full rounded-xl border p-2.5"/></label><button className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white">Enregistrer</button></div></Card><Card className="p-5"><h2 className="font-semibold">Fonctionnalités</h2><div className="mt-4 space-y-4">{[[notif,setNotif,'Notifications','Recevoir les alertes importantes'],[booking,setBooking,'Réservation en ligne','Autoriser les réservations publiques']].map(([v,setV,a,b]:any)=><button key={a} onClick={()=>setV(!v)} className="flex w-full items-center justify-between rounded-xl border p-4 text-left"><div><p className="font-medium">{a}</p><p className="text-sm text-slate-500">{b}</p></div><span className={'h-6 w-11 rounded-full p-1 transition '+(v?'bg-indigo-600':'bg-slate-200')}><span className={'block h-4 w-4 rounded-full bg-white transition '+(v?'translate-x-5':'')}/></span></button>)}</div></Card></div></div>}
 
-export default function PreviewStandalone(){
+function PreviewShell(){
   const [view,setView]=useState<View>(() => new URLSearchParams(window.location.search).get('view') === 'agenda' ? 'agenda' : 'dashboard');
   const current=useMemo(()=>nav.find(n=>n.id===view)!,[view]);
-  const rowsTeam=[['Marie Dupont','Coiffeuse','09:00–19:00'],['Thomas Martin','Barbier','09:00–19:00'],['Sophie Laurent','Esthéticienne','10:00–18:00']];
+  const rowsTeam=previewMembers.map(member=>[member.name, 'Collaborateur', '09:00–19:00']);
   return <div className="min-h-screen bg-slate-50 text-slate-900">
     <div className="flex min-h-screen">
       <aside className="hidden w-64 shrink-0 border-r bg-white md:flex md:flex-col">
@@ -160,4 +157,8 @@ export default function PreviewStandalone(){
       </main>
     </div>
   </div>
+}
+
+export default function PreviewStandalone() {
+  return <PreviewProvider><PreviewShell /></PreviewProvider>;
 }

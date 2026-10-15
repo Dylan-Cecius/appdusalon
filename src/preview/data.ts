@@ -63,12 +63,12 @@ export function seedWaitlist(): BookingWaitlistEntry[] {
   }));
 }
 
-export const previewServices: (Service & { color?: string })[] = [
+export const previewServices: (Service & WaitlistService & { color: string })[] = [
   ...agendaServices,
-  { id: 'demo-barbe-seule', name: 'Barbe', price: 15, duration: 20, category: 'barbe' },
-  { id: 'demo-enfant', name: 'Coupe enfant', price: 20, duration: 25, category: 'coupe' },
-  { id: 'demo-coloration', name: 'Coloration', price: 55, duration: 60, category: 'coupe' },
-  { id: 'demo-soin', name: 'Soin', price: 18, duration: 20, category: 'coupe' },
+  { id: 'demo-barbe-seule', name: 'Barbe', price: 15, duration: 20, category: 'barbe', color: '#d97706' },
+  { id: 'demo-enfant', name: 'Coupe enfant', price: 20, duration: 25, category: 'coupe', color: '#0284c7' },
+  { id: 'demo-coloration', name: 'Coloration', price: 55, duration: 60, category: 'coupe', color: '#9333ea' },
+  { id: 'demo-soin', name: 'Soin', price: 18, duration: 20, category: 'coupe', color: '#0d9488' },
 ];
 
 // The former POS had no persistence. Keep an explicit mapping for consumers;
