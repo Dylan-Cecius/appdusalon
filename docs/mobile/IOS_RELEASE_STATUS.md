@@ -3,11 +3,13 @@
 ## État initial — 15 octobre 2026
 - Base V2 et configuration Capacitor : présentes.
 - Configuration locale embarquée : corrigée et chargée avec succès sous Node 24.
-- Vérification TypeScript et 136 tests métier : passants (pas des tests natifs).
+- Vérification TypeScript et 141 tests métier : passants (pas des tests natifs).
 - Build mobile démo isolée : produite, 2 tests de sûreté passants ; fichiers .env non chargés, ressources locales et connexions réseau bloquées par CSP.
 - Recette navigateur : non exécutée à ce checkpoint ; Chromium indisponible, WebKit téléchargé mais bibliothèques Linux indisponibles (installation refusée par les permissions du runtime).
 - Projet Xcode démo : généré dans ios-demo/ avec Capacitor 8.5.3, SPM et UIScene ; synchronisation répétée réussie.
 - Icône et splash : placeholders réels du template Capacitor, à remplacer avant diffusion.
+- Ergonomie : safe areas, clavier et navigation adaptés dans les sources ; 5 tests viewport passants. 8 cas WebKit préparés/détectés, non exécutés ; recette visuelle/native manquante.
+- Dernier checkpoint de code vérifié avant ce lot : 31f196e66fee9496a044a22ab99e5e386ad14ad9.
 - Compilation iOS / simulateur / iPhone réel : non réalisés.
 - Identifiant, signature et équipe Apple : non vérifiés.
 - Build TestFlight : non créée ni distribuée.

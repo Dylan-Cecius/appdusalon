@@ -42,3 +42,14 @@
 - WebKit a finalement été téléchargé via le miroir fourni par Playwright ; ses bibliothèques Linux manquent encore. Aucun test navigateur exécuté à ce checkpoint.
 - macOS/Xcode absent : compilation, simulateur, signature, TestFlight et revue Apple non réalisés. Pas de publication ni dépense.
 - Complément : playwright install-deps webkit a échoué avec setgroups/seteuid Operation not permitted ; aucun contournement des permissions tenté. Recette navigateur différée.
+
+## 2026-10-15T13:48:13.709Z — Checkpoint 3 : marges et clavier mobiles
+- Checkpoint précédent : 31f196e66fee9496a044a22ab99e5e386ad14ad9. Durée écoulée observée : 33 minutes.
+- Défauts constatés dans les sources : centrage fixe des modales sans tenir compte du clavier, classes text-sm prioritaires sur la taille des champs, onglets tactiles trop courts, absence de marges haut/latérales.
+- Adaptation des deux entrées React : suivi VisualViewport avec regroupement par animation frame et nettoyage StrictMode ; zoom manuel préservé. Safe areas sur le cadre, l’en-tête, le menu bas et les modales ; formulaire défilable, champs >=16 px sur tactile ; navigation démo et fermeture à cibles >=44 px. Couleurs métier/pastel inchangées.
+- npm run typecheck : succès. Suite via startVitest avec envFile:false : 141 tests dans 20 fichiers, tous passants, dont 5 nouveaux scénarios clavier/fallback/zoom/nettoyage.
+- npm run test:mobile:build : 2 tests passants. npm run ios:prepare:demo : build isolée et sync iOS réussies ; JS 553,58 kB, CSS 117,48 kB avant compression. Pas de compilation native.
+- npm run test:mobile:browser -- --list : 8 cas reconnus sur 4 profils WebKit. Le serveur de cette recette reconstruit uniquement la démo et ignore les .env ; aucune recette navigateur exécutée, dépendances système toujours indisponibles.
+- Revue React : un seul gestionnaire de viewport par racine, événements passifs, nettoyage complet sans état React sur scroll. git diff --check : succès. Aucun comportement visuel certifié sans exécution navigateur/appareil.
+- Source technique consultée : https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport (15 octobre 2026) pour la distinction entre viewport visuel/clavier et viewport de mise en page.
+- Prochaine tâche : audit session native/reconnexion, puis préparation des contrôles nécessaires ; aucun appel aux données réelles.

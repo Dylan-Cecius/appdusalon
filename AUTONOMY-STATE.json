@@ -4,26 +4,27 @@
   "branch": "v2/ios-appstore",
   "status": "running",
   "run_id": "ios-2026-10-15T13-14-44-195Z",
-  "task": "P1 mobile viewport and safe-area adaptation",
+  "task": "P1 native session and reconnect audit",
   "started_at": "2026-10-15T13:14:44.195Z",
-  "last_checkpoint_at": "2026-10-15T13:33:00.670Z",
-  "lease_expires_at": "2026-10-15T14:48:00.670Z",
+  "last_checkpoint_at": "2026-10-15T13:48:13.709Z",
+  "lease_expires_at": "2026-10-15T15:03:13.709Z",
   "upstream_branch": "v2/chatgpt-rebuild",
   "upstream_base_commit": "8a6933c853544e6629bad6d0d62e1097213adaf8",
   "automation_ids": {
     "development": "6ad0ce94a6ac8191b8dd4338752547bd",
     "daily_report": "6ad0cea82ba48191b8cff315d3fc5fe9"
   },
-  "next_task": "Adapter les zones sûres, le clavier et la navigation iPhone ; exécuter la recette WebKit si les dépendances système peuvent être installées.",
+  "next_task": "Auditer la session/reconnexion et les liens natifs ; recette visuelle mobile différée tant que le runtime WebKit manque.",
   "validation": {
     "capacitor_config": "Node 24 import and assertions passed",
-    "full_app_suite": "136 tests in 19 files passed; TypeScript passed",
+    "full_app_suite": "141 tests in 20 files passed; TypeScript passed",
     "ios_project": "generated and re-synced with Capacitor 8.5.3; native structures inspected",
     "native_build": "not run: Linux host has no Xcode",
     "testflight": "not submitted",
     "apple_review": "not submitted",
     "mobile_demo_build": "passed; 2 build safety tests passed",
-    "browser_tests": "not run: WebKit host dependency installation denied by runtime permissions"
+    "browser_tests": "not run: WebKit host dependency installation denied by runtime permissions",
+    "mobile_ergonomics": "safe areas and keyboard source prepared; 5 viewport tests passed; 8 browser cases discovered but not executed"
   },
   "timezone": "Etc/GMT-1",
   "schedules": {
@@ -31,5 +32,5 @@
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Etc/GMT-1:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",
     "timezone": "Etc/GMT-1"
   },
-  "last_application_commit": "cc1565941587ecbf9b70dcf6773a957a5002cef9"
+  "last_application_commit": "31f196e66fee9496a044a22ab99e5e386ad14ad9"
 }

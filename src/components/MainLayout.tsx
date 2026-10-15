@@ -116,8 +116,8 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   const initials = user?.email?.slice(0, 2).toUpperCase() || 'US';
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[236px] flex-col border-r border-border/80 bg-slate-950 text-white shadow-xl">
+    <div className="app-safe-shell bg-background text-foreground">
+      <aside className="app-safe-sidebar hidden md:flex fixed inset-y-0 left-0 z-40 w-[236px] flex-col border-r border-border/80 bg-slate-950 text-white shadow-xl">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
@@ -186,7 +186,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
       </aside>
 
       <div className="md:pl-[236px]">
-        <header className="sticky top-0 z-30 border-b border-border/70 bg-white/92 backdrop-blur-xl">
+        <header className="app-safe-header sticky top-0 z-30 border-b border-border/70 bg-white/92 backdrop-blur-xl">
           <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <div className="min-w-0">
               <p className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 sm:block">
@@ -222,7 +222,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         </main>
       </div>
 
-      <nav className="fixed bottom-0 inset-x-0 z-40 flex items-stretch border-t border-border/80 bg-card/95 px-1 pb-[max(env(safe-area-inset-bottom),4px)] pt-1 backdrop-blur-xl md:hidden">
+      <nav aria-label="Navigation principale" className="app-safe-bottom-nav fixed bottom-0 inset-x-0 z-40 flex items-stretch border-t border-border/80 bg-card/95 px-1 pb-[max(env(safe-area-inset-bottom),4px)] pt-1 backdrop-blur-xl md:hidden">
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -230,6 +230,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
             <Link
               key={item.path}
               to={item.path}
+              aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-colors',
                 active ? 'text-primary' : 'text-muted-foreground'

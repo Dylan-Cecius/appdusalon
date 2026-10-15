@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { ThemeProvider } from "next-themes";
+import { MobileViewport } from './components/MobileViewport';
 
 // Keep the standalone demo independent from authentication and production clients.
 const Root = import.meta.env.VITE_PREVIEW_STANDALONE === 'true'
@@ -10,6 +11,7 @@ const Root = import.meta.env.VITE_PREVIEW_STANDALONE === 'true'
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <MobileViewport>
     <ThemeProvider
       attribute="class"
       defaultTheme="light"
@@ -21,5 +23,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Root />
       </React.Suspense>
     </ThemeProvider>
+    </MobileViewport>
   </React.StrictMode>
 );
