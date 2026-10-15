@@ -13,11 +13,11 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 - Aperçu privé Sites : déploiement appgdep_6acf7158d7288191a2ace0a51208bac2, source 740f8758eab36e5a30cf03a14f9f76dfe5605dd3.
 
 ## Priorités prêtes
-1. Exécuter les 70 nouveaux cas navigateur préparés dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Ajouter la recette des hooks connectés (contexte/droits/RLS, mutations, erreurs/reprises), du vrai tiroir mobile et des dialogues. Découverte/typecheck ne valent pas exécution.
-2. Prochain développement local gratuit : état fictif partagé pour la démonstration agenda → caisse → clients → statistiques. Commencer par contrat/migration du stockage et catalogues, préserver clé quotidienne/ancien format agenda, étapes/pastels/absences/liste d’attente ; critères dans docs/V2_REVIEW_2026-10-15.md. Aucun backend ni second aperçu.
+1. Exécuter les 92 nouveaux cas navigateur préparés dès qu’un navigateur autorisé ou une CI sans coût additionnel vérifié est disponible. Les 22 nouveaux parcours standalone couvrent migration, navigation, panier/ticket, contacts/statistiques, erreurs/reset ; ajouter la recette connectée des providers/droits/RLS et du vrai tiroir mobile. Découverte/typecheck ne valent pas exécution.
+2. Prochain développement local gratuit : clarifier les contrôles de présentation encore inactifs dans PreviewStandalone (Ajouter/Ouvrir/Enregistrer), puis réglages fictifs persistants seulement. Préserver le contrat partagé versionné, la clé quotidienne/compatibilité, les étapes/pastels et les données d’essai ; critères/limites dans docs/V2_REVIEW_2026-10-15.md. Aucun backend ni second aperçu.
 3. Rapports automatiques serveur : erreurs/pagination/périodes civiles, contenu stats absent, compte des clients servis, résultat fournisseur négatif/succès partiel et last_sent_at. Deno et contrôles isolés nécessaires avant modification ; aucun envoi réel.
-4. Lots Clients, fidélité et configuration des rapports sont préparés ; ne pas les refaire. Poursuivre les recettes et traiter séparément identité client par téléphone, horodatage fidélité sans trigger, configuration de rapports liée au propriétaire et idempotence serveur. Tests SQL uniquement sur base jetable.
-5. Validations de livraison selon V2_RELEASE_STATUS.md. Aucun renommage commercial ni fonction redondante ; pas de publication d’un candidat dont les contrôles nécessaires manquent.
+4. Ne pas refaire les lots Clients/fidélité/configuration rapports/état commun de démo terminés. Poursuivre recettes ; traiter séparément identité client par téléphone, horodatage fidélité sans trigger, configuration de rapports liée au propriétaire, concurrence de stockage inter-onglets et idempotence serveur. SQL uniquement sur base jetable.
+5. Validations selon V2_RELEASE_STATUS.md. Aucun renommage commercial ni publication d’un candidat dont une validation nécessaire manque.
 
 ## Bloqués par prérequis
 - CI distante et publication supplémentaires : preuve actuelle d'absence de coût additionnel, sinon tests dans le runtime disponible et commits [skip ci].
@@ -158,3 +158,7 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Démonstration — navigation et rechargement
 - Vue conservée dans l’URL, rechargement et précédent/suivant raccordés ; provider/panier partagés préservés. Typecheck/build standalone réussis, lint 0 erreur/206 avertissements. 22 cas navigateur standalone préparés, total 92 nouveaux cas non exécutés. Dernière suite unitaire : 363 réussis avant l’ajustement de navigation.
+
+## Fin du cycle démonstration — 2026-10-15T16:30:08.033544+00:00
+- Sept checkpoints sauvegardés ; dernière source 1b3c21ba5b0cb42356dd47762524da4691f81478. Dernière suite : 363 unitaires/37 fichiers avant l’ajustement navigation ; typecheck/build standalone final réussis (4.75 s), lint 0 erreur/206 avertissements. 92 nouveaux cas navigateur non exécutés, aperçu inchangé.
+- Bail libéré ; suite gratuite bornée sur les commandes/paramètres fictifs restants, ou recette navigateur autorisée. Aucun paiement/envoi réel, hébergement ou workflow déclenché.

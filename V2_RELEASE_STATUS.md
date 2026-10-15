@@ -4,7 +4,21 @@ Branch: `v2/chatgpt-rebuild`
 
 This document separates machine-verified release guarantees from checks that still require an isolated deployed staging environment.
 
-## Current prepared source — 15 October 2026
+## Current prepared source — 15 October 2026, shared demonstration
+
+Application source: `1b3c21ba5b0cb42356dd47762524da4691f81478`. Seven checkpoints prepare a shared browser-local demonstration: compatible agenda storage, common catalogue, persistent cart, idempotent simulated receipts, derived dashboard/contacts/statistics, recoverable draft edits and URL/history navigation. Saved only on V2 with `[skip ci]`; **not published**.
+
+- Latest TypeScript check and standalone build passed at this source (4.75 s, VITE_PREVIEW_STANDALONE=true and VITE_PREVIEW_DEMO_ONLY=true). Lint: 0 errors, 206 warnings. Full-cycle whitespace/diff review passed; clean checkout observed before closing documentation.
+- Latest unit execution: 363 passed in 37 files, at the preceding draft/contact checkpoint (before the navigation-only adjustment). Latest normal build: 9.21 s, also before that navigation adjustment. These results are not described as new test executions at the final navigation commit.
+- 22 new standalone browser cases typechecked and discovered, **not executed**. Total newly prepared browser cases across the five development cycles: **92 unexecuted**. Existing historical browser/preview-safety CI does not validate the current source. No alternate browser/server was launched in the managed runtime.
+- Legacy daily key, array/envelope formats, booked prices/steps/recurrences, waitlist and absences are preserved. Malformed/unknown storage remains untouched and the demo uses memory with an explicit warning. Valid drafts remain visible after quota failures; receipts are not confirmed on a failed write. Same-cart replay returns one receipt, including after reload. This is local demo idempotency, not a hosted financial guarantee.
+- Cross-tab changes are detected by comparing the expected serialized value, not an atomic multi-tab transaction. The session keeps the legacy local-calendar daily key; a reload on another day starts that day's demonstration. Memory-only or unsaved drafts are lost when the page is reloaded, as announced. Old corrupt storage is not automatically repaired by reset.
+- Statistics use Brussels calendar dates: completed/paid appointments at their reserved date and direct tickets at confirmation. Cancelled/no-show/refunded/unconfirmed appointments are excluded; deposits are not added twice. Appointment payment method is explicitly unknown. Contacts are demo-only name/phone groups, not production identities.
+- Shared agenda controls and pastel styling remain; other preview pages (stock, report cards, parts of settings/catalogue management) retain presentation-only controls and must not be presented as complete workflows. No hosted backend, SQL, Edge Function, package, workflow, secret or real customer/payment/message was changed or exercised.
+- The same owner-private preview remains deployment `appgdep_6acf7158d7288191a2ace0a51208bac2`, source `740f8758eab36e5a30cf03a14f9f76dfe5605dd3`. Current cache/Sites cost prerequisites and required browser verification remain unresolved; no deployment attempted.
+- Next: authorized browser verification of the shared flows and existing connected-work fixtures; otherwise a bounded free follow-up for explicit presentation-only controls and locally persisted demo settings. Server reports still require Deno/isolation prerequisites, not real sends.
+
+## Loyalty/report configuration checkpoint — 15 October 2026
 
 Application source: `8d54f1b2e0d3425972de378f4a259f3432171bcc`. Six additional checkpoints prepare coherent loyalty reads, revision-checked settings, browser regression fixtures, shared report configuration reads and confirmed report forms. Saved only on V2 with `[skip ci]`.
 
