@@ -4,16 +4,16 @@
   "branch": "v2/chatgpt-rebuild",
   "status": "running",
   "run_id": "salon-v2-loyalty-2026-10-15T14-58-26Z",
-  "task": "Scénarios fidélité préparés ; audit des rapports automatiques",
+  "task": "Source des rapports partagée ; formulaire à confirmer",
   "started_at": "2026-10-15T14:58:26Z",
-  "last_checkpoint_at": "2026-10-15T15:14:58.395415+00:00",
-  "lease_expires_at": "2026-10-15T16:29:58.395415+00:00",
-  "last_application_commit": "c0a2c8cc3847c3f49a6ac026030148bcee50ed21",
+  "last_checkpoint_at": "2026-10-15T15:18:36.206326+00:00",
+  "lease_expires_at": "2026-10-15T16:33:36.206326+00:00",
+  "last_application_commit": "7627c771f7598d25f97f01deb7aa47a8121e19ee",
   "automation_ids": {
     "development": "6ad0bea074788191a2d3c6552cbaea3e",
     "daily_report": "6ad0beb1a5248191b071436ccba6117a"
   },
-  "next_task": "Fiabiliser une partie locale des rapports automatiques ; serveur différé faute de Deno.",
+  "next_task": "Validation des champs et sauvegarde confirmée du formulaire de rapport, sans envoi ni configuration réelle.",
   "schedules": {
     "development": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261015T140000\nRRULE:FREQ=HOURLY;INTERVAL=1\nEND:VEVENT",
     "daily_report": "BEGIN:VEVENT\nDTSTART;TZID=Europe/Brussels:20261016T080000\nRRULE:FREQ=DAILY\nEND:VEVENT",

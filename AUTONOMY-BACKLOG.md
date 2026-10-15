@@ -125,3 +125,6 @@ Lire AUTONOMY.md avant toute action. État initial du 15 octobre 2026 ; les tâc
 
 ## Fidélité — scénarios préparés
 - 14 nouveaux cas navigateur découverts/typecheckés, non exécutés ; total 62. Contrôles locaux du formulaire, sauvegarde et lecture couverts par fixtures. Serveur rapports automatiques différé : Deno absent ; erreurs de livraison/last_sent_at ajoutées à l’audit, aucun envoi réel.
+
+## Rapports automatiques — source de configuration
+- Une seule source par workspace, liste paginée du propriétaire, erreurs/reprise et réponses périmées protégées. 299 unitaires, typecheck/build réussis. Formulaire de configuration à confirmer ; Edge et limites multi-salon restent séparés, aucun envoi réel.

@@ -24,7 +24,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAutomatedReports, CreateAutomatedReportData, AutomatedReport } from "@/hooks/useAutomatedReports";
 import { useFeatureAccess } from "@/components/FeatureGate";
-import { format } from "date-fns";
+import { useAuth } from '@/hooks/useAuth';
 import { formatInTimeZone } from "date-fns-tz";
 import { fr } from "date-fns/locale";
 
@@ -269,8 +269,8 @@ const AutomatedReportForm = ({
   );
 };
 
-const ReportCard = ({ report }: { report: AutomatedReport }) => {
-  const { toggleReportStatus, deleteReport, testReport, updateReport } = useAutomatedReports();
+const ReportCard = ({ report, actions, disabled }: { report: AutomatedReport; actions: ReturnType<typeof useAutomatedReports>; disabled: boolean }) => {
+  const { toggleReportStatus, deleteReport, testReport, updateReport } = actions;
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const getFrequencyLabel = (frequency: string) => {
@@ -305,6 +305,8 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
         </div>
         <div className="flex items-center gap-2">
           <Switch
+            disabled={disabled}
+            aria-label={`Activer ${report.report_name}`}
             checked={report.is_active}
             onCheckedChange={(checked) => toggleReportStatus(report.id, checked)}
           />
@@ -341,7 +343,8 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => testReport(report.id)}
+          disabled={disabled}
+          onClick={() => void testReport(report.id)}
         >
           <Play className="h-3 w-3 mr-1" />
           Test
@@ -349,7 +352,7 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
         
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button disabled={disabled} variant="outline" size="sm">
               <Edit className="h-3 w-3 mr-1" />
               Modifier
             </Button>
@@ -372,7 +375,8 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => deleteReport(report.id)}
+          disabled={disabled} aria-label={`Supprimer ${report.report_name}`}
+          onClick={() => void deleteReport(report.id)}
         >
           <Trash2 className="h-3 w-3" />
         </Button>
@@ -381,8 +385,10 @@ const ReportCard = ({ report }: { report: AutomatedReport }) => {
   );
 };
 
-export const AutomatedReports = () => {
-  const { reports, loading, createReport } = useAutomatedReports();
+const AutomatedReportsWorkspace = () => {
+  const actions = useAutomatedReports();
+  const { reports, loading, error, hasSnapshot, fetchReports, createReport } = actions;
+  const disabled = loading || !!error || !hasSnapshot;
   const { checkFeature } = useFeatureAccess();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -404,7 +410,7 @@ export const AutomatedReports = () => {
     );
   }
 
-  if (loading) {
+  if (loading && !hasSnapshot) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -416,6 +422,7 @@ export const AutomatedReports = () => {
 
   return (
     <div className="space-y-6">
+      {error && <Card className="p-4"><p role="alert">{error}</p><Button variant="outline" onClick={() => void fetchReports()}>Recharger les rapports</Button></Card>}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -431,7 +438,7 @@ export const AutomatedReports = () => {
             
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button disabled={disabled}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nouveau rapport
                 </Button>
@@ -453,7 +460,7 @@ export const AutomatedReports = () => {
         </CardHeader>
       </Card>
 
-      {reports.length === 0 ? (
+      {reports.length === 0 && !error ? (
         <Card>
           <CardContent className="p-6 text-center">
             <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -463,7 +470,7 @@ export const AutomatedReports = () => {
             </p>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button disabled={disabled}>
                   <Plus className="h-4 w-4 mr-2" />
                   Créer un rapport
                 </Button>
@@ -474,7 +481,7 @@ export const AutomatedReports = () => {
       ) : (
         <div className="grid gap-4">
           {reports.map(report => (
-            <ReportCard key={report.id} report={report} />
+            <ReportCard key={report.id} report={report} actions={actions} disabled={disabled} />
           ))}
         </div>
       )}
@@ -482,4 +489,8 @@ export const AutomatedReports = () => {
   );
 };
 
+export const AutomatedReports = () => {
+  const { user } = useAuth();
+  return <AutomatedReportsWorkspace key={user?.id ?? 'anonymous'} />;
+};
 export default AutomatedReports;
