@@ -63,3 +63,6 @@ Durée cumulée 1427 secondes ; précédent 244218ff2d938db1b673d012b680249a6aae
 
 ## 2026-10-15T15:57:20Z — Fiche et liste partagent leurs données
 2565 secondes cumulées ; précédent 79e8aff3f5e990aa3e85e1ece13a9ab9f3e68c87, lot présent dans ce commit. TypeScript et compilation isolée passants ; pas de test UI/backend natif ajouté. Les preuves complètes les plus récentes restent 293 tests/33 fichiers, 32 cas navigateur non exécutés. Prochaine étape : encodage CSV, puis contrôle final et libération du bail.
+
+## 2026-10-15T16:02:22Z — CSV client préparé
+2867 secondes cumulées ; précédent b0ffe187befebbdcf35a106831537dbf08f4819b, lot présent dans ce commit. 18 tests synthétiques ciblés, TypeScript et compilation isolée (3616 modules) passants. CSV échappé et textes risqués préfixés, JSON sans transformation des valeurs. Recette tableur/téléchargement native manquante ; aucune build iOS/signée/TestFlight/validation Apple. Prochaine étape : clôture et sauvegarde.

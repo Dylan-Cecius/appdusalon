@@ -16,6 +16,7 @@ import ClientDetailModal from '@/components/ClientDetailModal';
 import type { Client } from '@/hooks/useClients';
 import { format } from 'date-fns';
 import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
+import { clientCsvRow } from '@/lib/clientCsv';
 
 const ClientsWorkspace = () => {
   const { clients, loading, error, refreshClients, captureScope, addClient, updateClient, getClientStats } = useClients();
@@ -73,20 +74,20 @@ const ClientsWorkspace = () => {
       const filename = `clients-${salonName}-${dateStr}`;
 
       if (type === 'csv') {
-        const header = 'Nom,Téléphone,Email,Date de naissance,Date de création,Nombre de visites,Total dépensé (€),Notes';
+        const header = clientCsvRow(['Nom', 'Téléphone', 'Email', 'Date de naissance', 'Date de création', 'Nombre de visites', 'Total dépensé (€)', 'Notes']);
         const rows = clientsWithStats.map(c =>
-          [
-            `"${c.name}"`,
-            `"${c.phone}"`,
-            `"${c.email || ''}"`,
-            `"${c.birth_date ? format(new Date(c.birth_date + 'T12:00:00'), 'dd/MM/yyyy') : ''}"`,
-            `"${format(new Date(c.created_at), 'dd/MM/yyyy')}"`,
+          clientCsvRow([
+            c.name,
+            c.phone,
+            c.email,
+            c.birth_date ? format(new Date(c.birth_date + 'T12:00:00'), 'dd/MM/yyyy') : '',
+            format(new Date(c.created_at), 'dd/MM/yyyy'),
             c.visitCount,
             c.totalSpent.toFixed(2),
-            `"${(c.notes || '').replace(/"/g, '""')}"`,
-          ].join(',')
+            c.notes,
+          ])
         );
-        const csv = [header, ...rows].join('\n');
+        const csv = [header, ...rows].join('\r\n');
         downloadFile(csv, `${filename}.csv`, 'text/csv;charset=utf-8;');
       } else {
         const data = clientsWithStats.map(c => ({
@@ -259,6 +260,7 @@ const ClientsWorkspace = () => {
               <AlertDialogTitle>Export RGPD — Confirmation</AlertDialogTitle>
               <AlertDialogDescription>
                 Vous êtes sur le point de télécharger les données personnelles de vos clients. Assurez-vous de stocker ce fichier de manière sécurisée, conformément au RGPD.
+                {exportConfirmType === 'csv' && ' Le CSV est adapté à la lecture dans un tableur et peut préfixer certaines valeurs. Choisissez JSON pour conserver les valeurs lors d’une réimportation.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

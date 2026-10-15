@@ -109,3 +109,8 @@
 - [x] Fiche alimentée par les fonctions/lignes de sa page : plus de second chargement/abonnement clients ni de dépendance à une copie non chargée pour réessayer les statistiques.
 - [x] Lecture de la ligne courante pour la fiche ; édition en cours conservée face au rafraîchissement. TypeScript et compilation isolée passants.
 - [ ] Export CSV : seuls les guillemets des notes sont actuellement échappés ; traiter tous les champs texte et les valeurs interprétables en formule avant clôture.
+
+## Cycle 4 — checkpoint CSV 2026-10-15T16:02:22Z
+- [x] Tous les champs CSV échappés (guillemets, virgules, sauts de ligne), séparateurs CRLF ; préfixe tabulation sur texte potentiellement interprétable en formule. JSON conserve les valeurs pour réimportation ; indication dans la confirmation CSV.
+- [x] 18 tests synthétiques, TypeScript et compilation isolée passants. Aucun export réel.
+- [ ] Vérifier ouverture/réenregistrement avec les tableurs cibles : aucun mécanisme CSV universel contre les formules. Vérifier le téléchargement natif avant diffusion.
