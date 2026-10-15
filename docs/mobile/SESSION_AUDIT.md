@@ -16,10 +16,10 @@ Sept tests synthétiques couvrent restauration, renouvellement, déconnexion, é
 | Sujet | Constat dans les sources | Travail restant |
 | --- | --- | --- |
 | Persistance | client.ts utilise localStorage, persistSession et autoRefreshToken ; les erreurs de stockage sont absorbées. | Choisir et éprouver un stockage natif adapté aux jetons, traiter perte/indisponibilité et nettoyage ; aucun stockage Keychain n’est implémenté. |
-| Arrière-plan | auth-js gère déjà visibilitychange en environnement navigateur. Aucun pont Capacitor App. | Vérifier le comportement WKWebView, puis adapter le cycle natif avec une seule autorité de rafraîchissement et des tests d’ordre/cleanup. Ne pas ajouter naïvement un second timer. |
+| Arrière-plan | Pont App opt-in préparé ; une seule autorité remplace la visibilité navigateur après initialize. | 12 tests d’ordre/cleanup passants ; vérifier les événements UIScene/WKWebView sur appareil. |
 | Reconnexion | Les règles de session sont corrigées unitairement. | Rejouer expiration, réseau interrompu, révocation, redémarrage et MFA avec backend isolé, puis sur appareil. |
-| Liens entrants | Auth.tsx utilise window.location.origin pour OAuth et récupération ; pas de getLaunchUrl/appUrlOpen, schéma ni domaine associé configuré. | Définir les callbacks autorisés, parser strictement origine/chemin/type, traiter démarrage à froid et reprise, dédupliquer, éviter tout journal de jeton ; tester les liens malformés. |
-| Récupération | La page distingue invite/recovery et PASSWORD_RECOVERY pour le web. | Vérifier le retour natif vers le formulaire et la cohérence du flux PKCE avant d’activer OAuth/récupération mobile. |
+| Liens entrants | Pont getLaunchUrl/appUrlOpen opt-in, parseur strict, corrélation locale et anti-rejeu préparés ; schéma/domaine non enregistrés. | Configurer et éprouver une destination autorisée dans un environnement isolé ; traiter les erreurs fournisseur en fragment ; recette native manquante. |
+| Récupération | La page suit le Router ; retour natif issu de la demande locale après échange PKCE réussi. | Valider préservation de flow, e-mails et PKCE sur backend isolé/appareil. OAuth natif reste bloqué. |
 | Démo | ios-demo utilise PreviewStandalone sans module auth/backend. | Conserver cette frontière ; ne pas confondre le bouton démo connecté de Auth.tsx avec cette démo autonome. |
 
 Aucun identifiant de schéma, domaine associé, URL autorisée Supabase, équipe Apple ou secret n’est enregistré par cet audit. La cible connectée ios/ n’est pas encore générée. Un candidat connecté exige un backend isolé et des parcours natifs démontrés avant toute diffusion autorisée.

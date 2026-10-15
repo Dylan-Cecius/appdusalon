@@ -101,3 +101,11 @@
 - Le code natif App 8.1.2 et auth-js 2.71.1 a été inspecté. Réception effective des événements avec UIScene/WKWebView à vérifier sur iOS ; pas de preuve Xcode/simulateur/appareil. La démo reste sans plugin App.
 - Incident technique transitoire : git fetch a retourné HTTP 502 après le checkpoint précédent ; nouvelle lecture réussie, sources locales réalignées sans force ni perte des modifications courantes. Pas de conflit de bail.
 - Prochaine tâche : protéger les échanges contre une ancienne URL retenue par le système, puis bilan des preuves et fermeture.
+
+## 2026-10-15T14:47:36Z — Cycle 2, checkpoint 4 : corrélation locale et anti-rejeu
+- Checkpoint précédent : db71da94e8249d2d4fb4550f9d31e10cb549e060. Durée observée : 32 minutes.
+- Chaque demande native d’inscription/récupération porte un identifiant CSPRNG de 128 bits, un but et une date ; aucun e-mail/code/jeton ajouté au stockage. Expiration une heure, consommation avant échange, même après remontage ; aucun échange si la suppression n’est pas confirmée.
+- Une demande plus récente ne peut pas être annulée/consommée par un ancien retour ou un échec tardif. Un événement obsolète ne masque plus une URL de démarrage valide. Le parcours recovery utilise le but local et un échange réussi ; dépendance au champ privé redirectType supprimée.
+- npm run test:mobile:unit -- src/native : 87 tests passants. npm run typecheck : succès. npm run test:mobile:unit : 239 tests dans 28 fichiers passants. npm run test:mobile:build : 2 tests passants. npm run build:mobile:check-connected : succès, 3608 modules, variables synthétiques et sortie supprimée.
+- Documentation Supabase redirect-urls relue le 15 octobre : allowlist et modèles d’e-mail devront conserver flow, à éprouver sur backend isolé. Aucune configuration hébergée ni envoi effectué. Le retour d’erreur en fragment documenté est encore ignoré ; lot suivant dédié.
+- Revue du diff et des composants : état dérivé, effets avec nettoyage ; aucune palette agenda modifiée. Toujours aucun test navigateur/native ni build iOS signée.

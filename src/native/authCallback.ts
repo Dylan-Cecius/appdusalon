@@ -1,4 +1,4 @@
-export type NativeAuthCallback = { kind: 'code'; code: string } | { kind: 'error' };
+export type NativeAuthCallback = { kind: 'code'; code: string; flowId: string } | { kind: 'error'; flowId: string };
 
 /** No default: this is an explicit allowlist entry, not an Apple registration. */
 export function validateNativeRedirect(value: unknown): string | null {
@@ -23,12 +23,14 @@ export function parseNativeAuthCallback(raw: unknown, redirect: string): NativeA
     if (url.hash || raw.includes('#')) return null;
     const keys = [...url.searchParams.keys()];
     if (new Set(keys).size !== keys.length) return null;
-    if (keys.length === 1 && keys[0] === 'code') {
+    const flowId = url.searchParams.get('flow');
+    if (!flowId || !/^[a-f0-9]{32}$/.test(flowId)) return null;
+    if (keys.length === 2 && keys.includes('code')) {
       const code = url.searchParams.get('code')!;
-      return /^[A-Za-z0-9._~-]{1,2048}$/.test(code) ? { kind: 'code', code } : null;
+      return /^[A-Za-z0-9._~-]{1,2048}$/.test(code) ? { kind: 'code', code, flowId } : null;
     }
-    if (keys.includes('error') && url.searchParams.get('error') && keys.every(key => ['error', 'error_code', 'error_description'].includes(key))) {
-      return { kind: 'error' }; // Never expose provider error descriptions/URLs.
+    if (keys.includes('error') && url.searchParams.get('error') && keys.every(key => ['flow', 'error', 'error_code', 'error_description'].includes(key))) {
+      return { kind: 'error', flowId }; // Never expose provider error descriptions/URLs.
     }
     return null;
   } catch { return null; }
@@ -36,7 +38,9 @@ export function parseNativeAuthCallback(raw: unknown, redirect: string): NativeA
 
 export function createNativeAuthCallbackHandler(options: {
   redirect: string;
-  exchange: (code: string) => Promise<{ authenticated: boolean; recovery: boolean }>;
+  exchange: (code: string, flowId: string) => Promise<{ authenticated: boolean; recovery: boolean; ignored?: boolean }>;
+  isPending?: (flowId: string) => boolean;
+  rejected?: (flowId: string) => void;
   authenticated: (recovery: boolean) => void;
   failed: () => void;
 }) {
@@ -49,7 +53,8 @@ export function createNativeAuthCallbackHandler(options: {
       if (!active) return Promise.resolve();
       const callback = parseNativeAuthCallback(raw, options.redirect);
       if (!callback) return Promise.resolve();
-      if (callback.kind === 'error') { options.failed(); return Promise.resolve(); }
+      if (options.isPending && !options.isPending(callback.flowId)) return Promise.resolve();
+      if (callback.kind === 'error') { options.rejected?.(callback.flowId); options.failed(); return Promise.resolve(); }
       if (seen.has(callback.code)) return Promise.resolve();
       if (pending >= 4) return Promise.resolve();
       // Bound sensitive in-memory data; no URL or code is persisted or logged.
@@ -59,8 +64,9 @@ export function createNativeAuthCallbackHandler(options: {
       queue = queue.then(async () => {
         try {
           if (!active) return;
-          const result = await options.exchange(callback.code);
+          const result = await options.exchange(callback.code, callback.flowId);
           if (!active) return;
+          if (result.ignored) return;
           if (result.authenticated) options.authenticated(result.recovery);
           else options.failed();
         } catch { if (active) options.failed(); }

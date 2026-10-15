@@ -3,7 +3,8 @@ import { createNativeAuthCallbackHandler, parseNativeAuthCallback, validateNativ
 
 // Test-only scheme; not an identifier registered with Apple or a backend.
 const redirect = 'com.example.appdusalon.test://auth/callback';
-const link = (code = 'synthetic-code') => `${redirect}?code=${code}`;
+const flowId = 'a'.repeat(32);
+const link = (code = 'synthetic-code') => `${redirect}?code=${code}&flow=${flowId}`;
 
 describe('native callback allowlist', () => {
   it('accepts only an explicit canonical HTTPS or reverse-DNS custom endpoint', () => {
@@ -18,7 +19,7 @@ describe('native callback allowlist', () => {
     expect(validateNativeRedirect(value)).toBeNull();
   });
   it('parses a PKCE code without extracting session tokens', () => {
-    expect(parseNativeAuthCallback(link(), redirect)).toEqual({ kind: 'code', code: 'synthetic-code' });
+    expect(parseNativeAuthCallback(link(), redirect)).toEqual({ kind: 'code', code: 'synthetic-code', flowId });
   });
   it.each([
     `${redirect}.evil?code=a`, 'com.example.other://auth/callback?code=a',
@@ -31,10 +32,14 @@ describe('native callback allowlist', () => {
     `${redirect}?code=a#`, `${redirect}?code=a%0A`, `${redirect}?code=a+b`,
     `${redirect}?code=a&error=denied`, ` ${link()}`, `${redirect}?code=${'a'.repeat(2049)}`,
   ])('rejects wrong destinations and ambiguous input %#', raw => {
-    expect(parseNativeAuthCallback(raw, redirect)).toBeNull();
+    const withFlow = raw.includes('flow=') ? raw : raw.replace('?', `?flow=${flowId}&`);
+    expect(parseNativeAuthCallback(withFlow, redirect)).toBeNull();
+  });
+  it.each(['', '&flow=short', '&flow=' + 'A'.repeat(32), '&flow=' + flowId + '&flow=' + flowId, '&flow=' + flowId + '&%66low=' + flowId])('rejects missing, invalid or duplicate correlation IDs %#', suffix => {
+    expect(parseNativeAuthCallback(redirect + '?code=fixture' + suffix, redirect)).toBeNull();
   });
   it('reduces provider errors to a generic result', () => {
-    expect(parseNativeAuthCallback(`${redirect}?error=access_denied&error_description=private%20detail`, redirect)).toEqual({ kind: 'error' });
+    expect(parseNativeAuthCallback(`${redirect}?flow=${flowId}&error=access_denied&error_description=private%20detail`, redirect)).toEqual({ kind: 'error', flowId });
   });
 });
 

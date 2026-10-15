@@ -4,11 +4,11 @@
 
 La destination est une adresse de retour canonique configurée explicitement. Aucune valeur par défaut ni identité Apple n’est créée. Les exemples `com.example.appdusalon.test://auth/callback` et `https://example.invalid/auth/callback` sont exclusivement synthétiques.
 
-Le parseur accepte un unique code PKCE ou une erreur fournisseur réduite à un résultat générique. Il refuse les jetons d’accès/rafraîchissement dans les URL, les fragments, les paramètres ambigus et toute destination différente. Le type recovery ne provient jamais d’un paramètre entrant : seul le résultat de l’échange avec vérificateur local peut le demander.
+Le parseur exige une corrélation flow locale et un unique code PKCE, ou une erreur fournisseur réduite à un résultat générique. Il refuse les jetons d’accès/rafraîchissement dans les URL, les fragments, les paramètres ambigus et toute destination différente. Le type recovery ne provient jamais d’un paramètre entrant : la demande locale détermine le parcours après un échange PKCE réussi. Aucun champ privé du SDK n’est requis.
 
 Le contrôleur sérialise les échanges, ignore les doublons démarrage/événement et borne la file à quatre demandes et le cache à 32 codes en mémoire. Les codes ne sont ni persistés ni journalisés. Après une erreur, demander un nouveau lien ; pas de rejeu automatique. Le démontage supprime les callbacks UI et le travail en attente ; il ne peut pas annuler un échange SDK déjà parti.
 
-42 tests synthétiques contrôlent ces règles. Aucun compte réel ni appel réseau n’est nécessaire. À ce checkpoint, ce module n’est pas encore relié au plugin App.
+Le parseur et le contrôleur sont raccordés au pont App sous opt-in. Les tests utilisent exclusivement des fixtures synthétiques.
 
 ## Sources consultées
 - https://capacitorjs.com/docs/apis/app : événements d’URL et lecture de l’URL de démarrage.
@@ -22,9 +22,16 @@ Le pont écoute avant de lire getLaunchUrl, donne priorité à un callback réce
 
 Le client iOS utilise PKCE et n’installe pas de session à partir d’une URL détectée automatiquement. Les retours d’inscription/récupération exigent une destination configurée ; OAuth natif reste indisponible tant que le parcours de navigateur système n’est pas implémenté. Le web conserve son comportement.
 
-Limites de ce checkpoint : reprise de rafraîchissement à raccorder, garde de flux local et rejeu après rechargement à traiter, stockage Keychain absent, aucune destination Apple/backend enregistrée. La compilation isolée des sources connectées ne valide pas ces parcours sur appareil.
+Limites : stockage Keychain absent, aucune destination Apple/backend enregistrée, recette réelle des liens et de la reprise non exécutée. La compilation isolée des sources connectées ne valide pas ces parcours sur appareil.
 
 ## Reprise de session préparée
 Le pont appStateChange prend la main après initialize et l’arrêt du gestionnaire automatique navigateur. Les démarrages/arrêts sont sérialisés, un état initial tardif ne remplace pas un événement plus récent et le dernier arrêt d’un composant précède le démarrage de son remplaçant. Une prise de contrôle échouée ne démarre pas de second rafraîchissement.
 
 Douze tests synthétiques couvrent ces transitions et la propriété lors d’un remontage. La réception effective d’appStateChange avec le projet UIScene reste à vérifier sur iOS ; cette préparation ne constitue pas une validation du mode arrière-plan natif. Le stockage des jetons reste celui décrit dans SESSION_AUDIT.md.
+
+## Corrélation locale et rejeu
+La demande d’inscription ou de récupération crée 128 bits aléatoires via crypto.getRandomValues et ajoute `?flow=<identifiant>` à l’adresse de retour. Seuls cet identifiant, le but et la date sont conservés dans localStorage ; aucun e-mail, code ou jeton supplémentaire. Le vérificateur PKCE reste géré par le SDK. Une seule demande est active, valide pendant au plus une heure.
+
+Le retour exige cet identifiant exact, consomme le marqueur avant l’échange et refuse la répétition même après remontage/rechargement. Une demande plus récente remplace l’ancienne ; un échec tardif ne peut pas l’annuler. Stockage inaccessible, écriture ou suppression non confirmée : aucun échange. Une interruption/erreur après consommation impose un nouveau lien.
+
+87 tests natifs synthétiques sont passants à ce checkpoint, dont 18 sur la corrélation et l’initiation. Le parcours natif reste opt-in et sans configuration réelle. La future recette backend isolée devra démontrer que les URL autorisées et modèles d’e-mail conservent flow ; aucune liste de redirections ni aucun modèle hébergé n’a été modifié. Source relue le 15 octobre 2026 : https://supabase.com/docs/guides/auth/redirect-urls. Les erreurs en fragment décrites par cette documentation restent à traiter dans le lot suivant ; elles sont pour l’instant ignorées.

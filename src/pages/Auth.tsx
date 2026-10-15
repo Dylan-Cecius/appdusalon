@@ -9,6 +9,8 @@ import logoImg from '@/assets/logo-auth.png';
 import { toast } from '@/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { nativeAuth } from '@/native/config';
+import { pendingNativeAuth } from '@/native/pendingFlow';
+import { requestNativeEmailAuth } from '@/native/pendingAuthFlow';
 import { resolveAuthRedirect } from '@/native/authConfiguration';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { isDemoOnlyPreview, isAllowedPreviewUser } from '@/lib/previewSafety';
@@ -260,17 +262,20 @@ const Auth = () => {
           return;
         }
         
-        const { error } = await supabase.auth.signUp({
+        const request = (returnUrl: string) => supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: redirectUrl,
+            emailRedirectTo: returnUrl,
             data: {
               salon_name: salonName.trim(),
               display_name: salonName.trim(),
             },
           }
         });
+        const { error } = nativeAuth.nativeIOS
+          ? await requestNativeEmailAuth({ flow: pendingNativeAuth, purpose: 'signup', redirect: redirectUrl, request })
+          : await request(redirectUrl);
 
         if (error) {
           if (error.message === 'User already registered') {
@@ -331,9 +336,10 @@ const Auth = () => {
         toast({ title: 'Récupération indisponible', description: 'La récupération de compte n’est pas encore disponible dans cette application.', variant: 'destructive' });
         return;
       }
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo,
-      });
+      const request = (returnUrl: string) => supabase.auth.resetPasswordForEmail(email, { redirectTo: returnUrl });
+      const { error } = nativeAuth.nativeIOS
+        ? await requestNativeEmailAuth({ flow: pendingNativeAuth, purpose: 'recovery', redirect: redirectTo, request })
+        : await request(redirectTo);
 
       if (error) {
         toast({

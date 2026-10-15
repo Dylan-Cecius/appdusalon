@@ -17,7 +17,9 @@ export function installNativeAuthLinks(options: Parameters<typeof createNativeAu
     if (disposed) return;
     try {
       const handle = await options.app.addListener('appUrlOpen', ({ url }) => {
-        if (disposed || !parseNativeAuthCallback(url, options.redirect)) return;
+        if (disposed) return;
+        const callback = parseNativeAuthCallback(url, options.redirect);
+        if (!callback || (options.isPending && !options.isPending(callback.flowId))) return;
         receivedLiveLink = true;
         void handler.handle(url);
       });

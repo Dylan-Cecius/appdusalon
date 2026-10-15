@@ -6,6 +6,7 @@ import { nativeAuth } from './config';
 import { installNativeAuthLinks } from './authLinks';
 import { installNativeSessionLifecycle } from './sessionLifecycle';
 import { createLifecycleSlot } from './lifecycleSlot';
+import { pendingNativeAuth } from './pendingFlow';
 
 const lifecycleSlot = createLifecycleSlot();
 
@@ -35,10 +36,13 @@ export function NativeAuthBridge() {
       links = installNativeAuthLinks({
         app: App,
         redirect: nativeAuth.redirect!,
-        async exchange(code) {
+        isPending: id => pendingNativeAuth.isPending(id),
+        rejected: id => pendingNativeAuth.cancel(id),
+        async exchange(code, flowId) {
+          const pending = pendingNativeAuth.consume(flowId);
+          if (!pending) return { authenticated: false, recovery: false, ignored: true };
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          // auth-js 2.71.1 returns this from its local PKCE verifier; not URL input.
-          const recovery = 'redirectType' in data && data.redirectType === 'recovery';
+          const recovery = pending.purpose === 'recovery';
           return { authenticated: !error && !!data.session, recovery };
         },
         authenticated: recovery => navigate(recovery ? '/auth?type=recovery' : '/auth', { replace: true }),
