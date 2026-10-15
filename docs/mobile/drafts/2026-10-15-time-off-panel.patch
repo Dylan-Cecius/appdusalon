@@ -1,0 +1,103 @@
+diff --git a/src/components/agenda/StaffTimeOffPanel.tsx b/src/components/agenda/StaffTimeOffPanel.tsx
+index cd9f35a..3634ad1 100644
+--- a/src/components/agenda/StaffTimeOffPanel.tsx
++++ b/src/components/agenda/StaffTimeOffPanel.tsx
+@@ -1,4 +1,5 @@
+-import { useState } from 'react';
++import { useEffect, useRef, useState } from 'react';
++import { runExclusiveAction } from '@/lib/exclusiveAction';
+ import { addDays, format, subDays } from 'date-fns';
+ import { fr } from 'date-fns/locale';
+ import type { Staff } from '@/hooks/useStaff';
+@@ -16,17 +17,21 @@ function TimeOffForm({ entry, date, staff, staffId, onSave, onCancel }: {
+   const [allDay, setAllDay] = useState(wholeDay);
+   const [busy, setBusy] = useState(false);
+   const [error, setError] = useState('');
++  const saving = useRef(false);
++  const errorRef = useRef<HTMLParagraphElement>(null);
++  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
+   const selectClass = 'h-10 w-full rounded-md border bg-white px-2 text-sm';
+-  return <form aria-label="Indisponibilité" className="space-y-3 rounded-xl border bg-white p-4" onSubmit={async event => {
+-    event.preventDefault(); if (busy) return;
++  return <form aria-label="Indisponibilité" className="agenda-touch-controls rounded-xl border bg-white p-4" aria-busy={busy} onSubmit={async event => {
++    event.preventDefault(); if (saving.current) return;
+     const data = new FormData(event.currentTarget), value = (key: string) => String(data.get(key) || '');
+     const startTime = new Date(`${value('from')}T${allDay ? '00:00' : value('start')}:00`);
+     const endTime = allDay ? addDays(new Date(`${value('to')}T00:00:00`), 1) : new Date(`${value('to')}T${value('end')}:00`);
+     if (!(endTime > startTime)) { setError('La fin doit suivre le début de l’indisponibilité.'); return; }
+-    setBusy(true); setError('');
++    saving.current = true; setBusy(true); setError('');
+     try { await onSave({ staffId: value('staff'), title: value('title').trim(), reason: value('reason') as StaffTimeOff['reason'], startTime, endTime }, entry?.id); onCancel(); }
+-    catch (err) { setError(err instanceof Error ? err.message : 'Enregistrement impossible.'); } finally { setBusy(false); }
++    catch (err) { setError(err instanceof Error ? err.message : 'Enregistrement impossible.'); } finally { saving.current = false; setBusy(false); }
+   }}>
++    <fieldset disabled={busy} className="space-y-3">
+     <h3 className="text-sm font-semibold">{entry ? 'Modifier l’indisponibilité' : 'Bloquer un créneau'}</h3>
+     <div><Label htmlFor="off-staff">Collaborateur</Label><select id="off-staff" name="staff" required className={selectClass} defaultValue={entry?.staffId || staffId || staff[0]?.id}>{staff.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}</select></div>
+     <div><Label htmlFor="off-reason">Motif</Label><select id="off-reason" name="reason" className={selectClass} defaultValue={entry?.reason || 'unavailable'}>{Object.entries(timeOffReasons).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>
+@@ -38,8 +43,9 @@ function TimeOffForm({ entry, date, staff, staffId, onSave, onCancel }: {
+       {!allDay && <><div><Label htmlFor="off-start">Début</Label><Input id="off-start" name="start" type="time" required defaultValue={entry ? format(entry.startTime, 'HH:mm') : '16:00'} /></div><div><Label htmlFor="off-end">Fin</Label><Input id="off-end" name="end" type="time" required defaultValue={entry ? format(entry.endTime, 'HH:mm') : '17:00'} /></div></>}
+     </div>
+     <p className="text-xs text-slate-500">Les rendez-vous existants doivent être déplacés ou annulés avant de bloquer leur créneau. Horaires de cet appareil.</p>
+-    {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
++    {error && <p ref={errorRef} tabIndex={-1} role="alert" className="text-sm text-red-700">{error}</p>}
+     <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={busy} onClick={onCancel}>Annuler</Button><Button disabled={busy || !staff.length}>{busy ? 'Enregistrement…' : 'Enregistrer l’indisponibilité'}</Button></div>
++    </fieldset>
+   </form>;
+ }
+ 
+@@ -50,17 +56,27 @@ export default function StaffTimeOffPanel({ open, onOpenChange, entries, staff,
+   const [editing, setEditing] = useState<StaffTimeOff | 'new' | null>(null);
+   const [busyId, setBusyId] = useState('');
+   const [actionError, setActionError] = useState('');
++  const pending = useRef(false);
++  const actionErrorRef = useRef<HTMLParagraphElement>(null);
++  useEffect(() => { if (actionError) actionErrorRef.current?.focus(); }, [actionError]);
++  const runMutation = async (id: string, operation: () => Promise<void>) => {
++    const started = await runExclusiveAction(pending, async () => {
++      setBusyId(id); setActionError('');
++      try { await operation(); } finally { setBusyId(''); }
++    });
++    if (!started) throw new Error('Une modification est déjà en cours.');
++  };
+   const visible = entries.filter(item => item.endTime > new Date(format(date, 'yyyy-MM-dd') + 'T00:00:00')).sort((a,b) => a.startTime.getTime() - b.startTime.getTime());
+-  return <Sheet open={open} onOpenChange={onOpenChange}><SheetContent className="w-[94vw] overflow-y-auto sm:max-w-lg">
++  return <Sheet open={open} onOpenChange={next => { if (!pending.current) onOpenChange(next); }}><SheetContent className="w-[94vw] overflow-y-auto sm:max-w-lg">
+     <SheetHeader><SheetTitle>Indisponibilités</SheetTitle><SheetDescription>Pauses, congés et formations de l’équipe. Ces périodes ne comptent pas comme des rendez-vous.</SheetDescription></SheetHeader>
+-    <div className="mt-4 space-y-3">
++    <div className="agenda-touch-controls mt-4 space-y-3" aria-busy={!!busyId}>
+       {onSave && <Button className="w-full" disabled={loading || error || !!busyId} onClick={() => setEditing('new')}>Bloquer un créneau</Button>}
+-      {editing && onSave && <TimeOffForm key={editing === 'new' ? 'new' : editing.id} entry={editing === 'new' ? undefined : editing} date={date} staff={staff} staffId={staffId} onSave={onSave} onCancel={() => setEditing(null)} />}
+-      {(error || actionError) && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError || 'Les indisponibilités ne sont pas disponibles sur cet environnement. Vérifiez la connexion et la mise à jour du serveur.'}</p>}
++      {editing && onSave && <TimeOffForm key={editing === 'new' ? 'new' : editing.id} entry={editing === 'new' ? undefined : editing} date={date} staff={staff} staffId={staffId} onSave={async (input, id) => { if (loading || error) throw new Error('Actualisez les indisponibilités avant de les modifier.'); await runMutation(id || 'new', () => onSave(input, id)); }} onCancel={() => setEditing(null)} />}
++      {(error || actionError) && <p ref={actionErrorRef} tabIndex={-1} role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError || 'Les indisponibilités ne sont pas disponibles sur cet environnement. Vérifiez la connexion et la mise à jour du serveur.'}</p>}
+       {loading ? <p>Chargement…</p> : <><p className="text-xs text-slate-500">À partir du {format(date, 'd MMMM yyyy', { locale: fr })}</p>{visible.map(item => <article key={item.id} aria-label={`Indisponibilité ${item.title}`} className="rounded-xl border border-slate-300 bg-slate-100 p-3">
+         <p className="font-semibold text-slate-800">{item.title}</p><p className="text-xs text-slate-600">{timeOffReasons[item.reason]} · {staff.find(member => member.id === item.staffId)?.name || 'Collaborateur'}</p>
+         <p className="my-2 text-sm">{format(item.startTime, 'dd/MM HH:mm')} → {format(item.endTime, 'dd/MM HH:mm')}</p>
+-        {onSave && onRemove && <div className="flex gap-2"><Button size="sm" variant="outline" disabled={!!busyId} onClick={() => setEditing(item)}>Modifier</Button><Button size="sm" variant="outline" disabled={!!busyId} onClick={async () => { setBusyId(item.id); setActionError(''); try { await onRemove(item.id); if (editing !== 'new' && editing?.id === item.id) setEditing(null); } catch (err) { setActionError(err instanceof Error ? err.message : 'Suppression impossible.'); } finally { setBusyId(''); } }}>Libérer le créneau</Button></div>}
++        {onSave && onRemove && <div className="flex gap-2"><Button size="sm" variant="outline" disabled={!!busyId || loading || error} onClick={() => setEditing(item)}>Modifier</Button><Button size="sm" variant="outline" disabled={!!busyId || loading || error} onClick={async () => { if (pending.current || loading || error) return; try { await runMutation(item.id, () => onRemove(item.id)); if (editing !== 'new' && editing?.id === item.id) setEditing(null); } catch (err) { setActionError(err instanceof Error ? err.message : 'Suppression impossible.'); } }}>Libérer le créneau</Button></div>}
+       </article>)}{!visible.length && !error && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-slate-500">Aucune indisponibilité sur cette période.</p>}</>}
+     </div>
+   </SheetContent></Sheet>;
+diff --git a/src/hooks/useStaffTimeOff.ts b/src/hooks/useStaffTimeOff.ts
+index 36e08f2..d02c0e7 100644
+--- a/src/hooks/useStaffTimeOff.ts
++++ b/src/hooks/useStaffTimeOff.ts
+@@ -5,7 +5,7 @@ import { confirmedTimeOffId } from '@/lib/timeOffMutationResult';
+ import { useQuery, useQueryClient } from '@tanstack/react-query';
+ import { supabase } from '@/integrations/supabase/client';
+ import { usePermissions } from './usePermissions';
+-import type { StaffTimeOff, TimeOffInput } from '@/lib/staffTimeOff';
++import { validateTimeOff, type StaffTimeOff, type TimeOffInput } from '@/lib/staffTimeOff';
+ 
+ function mutationError(error: { message?: string }) {
+   if (error.message?.includes('time_off_appointment_conflict')) return new Error('Un rendez-vous existe sur cette période. Déplacez-le ou annulez-le avant de bloquer le créneau.');
+@@ -41,6 +41,8 @@ export function useStaffTimeOff() {
+   const save = async (input: TimeOffInput, id?: string) => {
+     const isCurrent = scope.current.captureContext(contextKey);
+     if (!isCurrent() || !salonId || !permissions.isAdmin) throw new Error('La gestion des indisponibilités est réservée au responsable du salon.');
++    if (query.isLoading || query.isError) throw new Error('Actualisez les indisponibilités avant de les modifier.');
++    validateTimeOff(input, [], [], id); // Basic input checks; server enforces concurrent conflicts.
+     const row = { salon_id: salonId, staff_id: input.staffId, title: input.title.trim(), reason: input.reason, starts_at: input.startTime.toISOString(), ends_at: input.endTime.toISOString() };
+     const result = id ? await supabase.from('staff_time_off').update(row).eq('id', id).eq('salon_id', salonId).select('id').single() : await supabase.from('staff_time_off').insert(row).select('id').single();
+     if (result.error) throw mutationError(result.error);

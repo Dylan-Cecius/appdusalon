@@ -43,3 +43,12 @@ Dernière suite complète exécutée : 293 tests/33 fichiers ; ensuite 18 tests 
 Commandes sûres : `npm run typecheck`, `npm run test:mobile:unit`, `npm run test:mobile:build`, `npm run build:mobile:check-connected`, `npm run ios:prepare:demo`. Ne pas substituer les commandes par défaut chargeant .env. Priorité suivante : parcours agenda mobile, confirmation de mutation et conservation des saisies ; stockage natif, export natif, recettes UI/iPhone et dossier Apple restent ouverts. AppId/équipe/signature toujours non vérifiés, pas de TestFlight.
 
 Clôture 2026-10-15T16:04:45Z (50 min 10 s) : code/audit 684d082cd2bca990f6138d3aab4c4d9af5efd845, bail libre. Relire les six fichiers de pilotage et la référence actuelle avant toute écriture ; prochaine priorité agenda dans le backlog.
+
+
+## Pause demandée par Dylan — 2026-10-15T16:34:27Z
+
+Développement interrompu à la demande explicite « stop les agents IA pour le moment ». Développement et bilans automatiques des trois projets en pause ; aucune reprise sans nouvelle demande de Dylan. Bail iOS libéré. Durée observée de cette session jusqu’au contrôle de pause : 1199 secondes (19 min 59 s), incluant les contrôles et la sauvegarde, sans activité continue revendiquée.
+
+Dernier checkpoint source vérifié : `27a1a552918b942be1e9e9137820c8691a5bb020`. Six checkpoints indépendants enregistrés pendant cette session. Suite complète observée au checkpoint 5 : 339 tests / 38 fichiers passants ; checkpoint 6 : 18 tests ciblés, TypeScript et compilation source isolée (3621 modules) passants. 44 cas navigateur découverts, aucun exécuté. Projet Capacitor généré/synchronisé ; aucune compilation iOS, signature, distribution TestFlight ou validation Apple.
+
+Le travail commencé ensuite sur les doubles appuis du panneau d’indisponibilités est conservé uniquement comme brouillon dans `docs/mobile/drafts/2026-10-15-time-off-panel.patch`, non appliqué aux sources GitHub. La commande de vérification a été interrompue (code 130) : aucun résultat de succès attribué à ce brouillon. Ne pas le considérer comme validé ni le publier. Après autorisation explicite de reprise : relire les sources et ce diff, puis décider de sa reprise et exécuter les contrôles nécessaires.

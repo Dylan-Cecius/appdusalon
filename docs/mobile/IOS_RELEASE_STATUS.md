@@ -96,3 +96,12 @@ Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieu
 ## 2026-10-15T16:31:14Z — Indisponibilités isolées et confirmées
 1006 secondes cumulées ; précédent 13eab30f5255904e47cfa098a990ae342bf2f140, lot présent dans ce commit. 18 tests ciblés passants ; TypeScript et compilation isolée 3621 modules passants.
 Recette UI/backend/native non exécutée. Projet Xcode démo généré antérieurement ; aucune build iOS/signée, distribution TestFlight ou validation Apple. Prochaine étape : Empêcher les doubles appuis et la fermeture du panneau d’indisponibilité pendant une sauvegarde ; conserver les saisies en échec.
+
+
+## Pause demandée par Dylan — 2026-10-15T16:34:27Z
+
+Développement interrompu à la demande explicite « stop les agents IA pour le moment ». Développement et bilans automatiques des trois projets en pause ; aucune reprise sans nouvelle demande de Dylan. Bail iOS libéré. Durée observée de cette session jusqu’au contrôle de pause : 1199 secondes (19 min 59 s), incluant les contrôles et la sauvegarde, sans activité continue revendiquée.
+
+Dernier checkpoint source vérifié : `27a1a552918b942be1e9e9137820c8691a5bb020`. Six checkpoints indépendants enregistrés pendant cette session. Suite complète observée au checkpoint 5 : 339 tests / 38 fichiers passants ; checkpoint 6 : 18 tests ciblés, TypeScript et compilation source isolée (3621 modules) passants. 44 cas navigateur découverts, aucun exécuté. Projet Capacitor généré/synchronisé ; aucune compilation iOS, signature, distribution TestFlight ou validation Apple.
+
+Le travail commencé ensuite sur les doubles appuis du panneau d’indisponibilités est conservé uniquement comme brouillon dans `docs/mobile/drafts/2026-10-15-time-off-panel.patch`, non appliqué aux sources GitHub. La commande de vérification a été interrompue (code 130) : aucun résultat de succès attribué à ce brouillon. Ne pas le considérer comme validé ni le publier. Après autorisation explicite de reprise : relire les sources et ce diff, puis décider de sa reprise et exécuter les contrôles nécessaires.

@@ -47,3 +47,12 @@ Mandat de Dylan du 15 octobre 2026 : créer un troisième agent, avec les mêmes
 - AUTONOMY-LOG.md : heure UTC, durée observée, tâche, fichiers/commit, commandes réellement exécutées, résultats, limites et priorité suivante.
 - Distinguer : source préparée, tests exécutés, projet iOS généré, build signée, TestFlight distribué et validation Apple.
 - Progrès ordinaires dans le journal et bilan quotidien français ; notification immédiate seulement pour un nouveau blocage nécessitant Dylan ou un incident réel. Aucun pourcentage global inventé.
+
+
+## Pause demandée par Dylan — 2026-10-15T16:34:27Z
+
+Développement interrompu à la demande explicite « stop les agents IA pour le moment ». Développement et bilans automatiques des trois projets en pause ; aucune reprise sans nouvelle demande de Dylan. Bail iOS libéré. Durée observée de cette session jusqu’au contrôle de pause : 1199 secondes (19 min 59 s), incluant les contrôles et la sauvegarde, sans activité continue revendiquée.
+
+Dernier checkpoint source vérifié : `27a1a552918b942be1e9e9137820c8691a5bb020`. Six checkpoints indépendants enregistrés pendant cette session. Suite complète observée au checkpoint 5 : 339 tests / 38 fichiers passants ; checkpoint 6 : 18 tests ciblés, TypeScript et compilation source isolée (3621 modules) passants. 44 cas navigateur découverts, aucun exécuté. Projet Capacitor généré/synchronisé ; aucune compilation iOS, signature, distribution TestFlight ou validation Apple.
+
+Le travail commencé ensuite sur les doubles appuis du panneau d’indisponibilités est conservé uniquement comme brouillon dans `docs/mobile/drafts/2026-10-15-time-off-panel.patch`, non appliqué aux sources GitHub. La commande de vérification a été interrompue (code 130) : aucun résultat de succès attribué à ce brouillon. Ne pas le considérer comme validé ni le publier. Après autorisation explicite de reprise : relire les sources et ce diff, puis décider de sa reprise et exécuter les contrôles nécessaires.
