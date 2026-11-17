@@ -258,45 +258,45 @@ const Dashboard = () => {
         </div>
 
         {/* Projection CA mensuel */}
-        <Card>
+        <Card className="border-0 bg-ink text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-primary" />
+              <Calculator className="h-5 w-5 text-gold" />
               Projection CA mensuel
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <p className="text-xs text-muted-foreground">CA réalisé ce mois</p>
+                <p className="text-xs text-sidebar-foreground">CA réalisé ce mois</p>
                 <p className="text-lg font-bold">{stats.monthlyRevenue.toFixed(0)} €</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Jours ouvrés écoulés</p>
+                <p className="text-xs text-sidebar-foreground">Jours ouvrés écoulés</p>
                 <p className="text-lg font-bold">{elapsedBusinessDays}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Jours ouvrés restants</p>
+                <p className="text-xs text-sidebar-foreground">Jours ouvrés restants</p>
                 <p className="text-lg font-bold">{remainingBusinessDays}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Taux journalier moyen</p>
+                <p className="text-xs text-sidebar-foreground">Taux journalier moyen</p>
                 <p className="text-lg font-bold">{dailyRate.toFixed(0)} €</p>
               </div>
             </div>
 
             <div className="text-center py-2">
-              <p className="text-xs text-muted-foreground mb-1">CA projeté fin de mois</p>
-              <p className="text-3xl sm:text-4xl font-bold text-primary">{projectedCA.toFixed(0)} €</p>
+              <p className="text-sm text-sidebar-foreground mb-1">CA projeté fin de mois</p>
+              <p className="font-display text-5xl sm:text-6xl font-bold tracking-tight text-gold">{projectedCA.toFixed(0)} €</p>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm text-muted-foreground">Avancement du mois</span>
+                <span className="text-sm text-sidebar-foreground">Avancement du mois</span>
                 <span className="text-sm font-semibold">{projectionProgress}%</span>
               </div>
-              <Progress value={projectionProgress} className="h-2.5" />
-              <p className="text-[10px] text-muted-foreground mt-1">
+              <Progress value={projectionProgress} className="h-2.5 bg-white/15 [&>div]:bg-gold" />
+              <p className="text-xs text-sidebar-foreground mt-1">
                 {elapsedBusinessDays} jours ouvrés écoulés sur {totalBusinessDays} au total
               </p>
             </div>

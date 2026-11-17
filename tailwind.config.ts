@@ -19,10 +19,14 @@ export default {
 		},
 		extend: {
 			fontFamily: {
+				'sans': ['Inter', 'system-ui', 'sans-serif'],
+				'display': ['Bricolage Grotesque', 'Inter', 'system-ui', 'sans-serif'],
 				'bukhari': ['Bukhari Script', 'cursive'],
 				'dancing': ['Dancing Script', 'cursive'],
 			},
 			colors: {
+				gold: 'hsl(var(--gold))',
+				ink: 'hsl(var(--ink))',
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
-import logoImg from '@/assets/logo-auth.png';
+import logoImg from '@/assets/logo-dore.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
@@ -282,7 +282,28 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-card flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
+      <aside className="hidden lg:flex flex-col justify-between gap-12 bg-sidebar text-white p-12 xl:p-16">
+        <img src={logoImg} alt="L'app du salon" className="h-16 w-auto self-start" />
+        <div className="max-w-lg space-y-5">
+          <h1 className="font-display text-5xl xl:text-6xl font-bold leading-[1.02] tracking-tight">
+            Votre salon,<br />
+            <span className="text-gold">bien en main.</span>
+          </h1>
+          <p className="text-lg leading-relaxed text-sidebar-foreground">
+            Rendez-vous, encaissements et statistiques, réunis au même endroit.
+          </p>
+        </div>
+        <div aria-hidden="true" />
+      </aside>
+      <div className="flex min-h-screen flex-col lg:min-h-0">
+      <div className="lg:hidden bg-sidebar px-6 pt-10 pb-8 text-white">
+        <img src={logoImg} alt="L'app du salon" className="h-12 w-auto mb-6" />
+        <p className="font-display text-3xl font-bold leading-tight tracking-tight">
+          Votre salon, <span className="text-gold">bien en main.</span>
+        </p>
+      </div>
+      <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-md p-6 sm:p-8 shadow-medium">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           {mfaRequired ? (
@@ -291,7 +312,9 @@ const Auth = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center w-full">
-              <img src={logoImg} alt="L'app du salon" className="h-64 sm:h-80 w-auto mb-4" />
+              <h2 className="font-display text-3xl font-bold tracking-tight text-foreground mb-2">
+                {isForgotPassword ? 'Mot de passe oublié' : isLogin ? 'Bon retour' : 'Bienvenue'}
+              </h2>
               <p className="text-muted-foreground text-center text-sm sm:text-base">
                 {isForgotPassword 
                   ? 'Réinitialisez votre mot de passe' 
@@ -536,6 +559,8 @@ const Auth = () => {
           </div>
         )}
       </Card>
+      </div>
+      </div>
     </div>
   );
 };

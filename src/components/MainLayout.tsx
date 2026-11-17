@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import logoImg from '@/assets/logo-auth.png';
+import logoImg from '@/assets/logo-dore.png';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -83,15 +83,15 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[220px] flex-col border-r border-border bg-sidebar">
-        <div className="flex items-center justify-center px-4 py-4 border-b border-border">
-          <img src={logoImg} alt="L'app du salon" className="h-20 w-auto" />
+      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[220px] flex-col border-r border-sidebar-border bg-sidebar">
+        <div className="flex items-center px-5 py-5 border-b border-sidebar-border">
+          <img src={logoImg} alt="L'app du salon" className="h-14 w-auto" />
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
           {navGroups.map((group) => (
             <div key={group.label} className="space-y-1">
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/70">
                 {group.label}
               </p>
               {group.items.map((item) => {
@@ -103,8 +103,8 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       isActive(item.path)
-                        ? 'bg-accent text-accent-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                        : 'text-sidebar-foreground hover:bg-white/10 hover:text-white'
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -117,21 +117,21 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         </nav>
 
         {/* User block */}
-        <div className="border-t border-border p-3">
+        <div className="border-t border-sidebar-border p-3">
           <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground font-semibold">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground font-semibold">
               {user?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{user?.email}</p>
-              {isDemo && <p className="text-[11px] font-semibold uppercase text-primary">Mode démo</p>}
+              <p className="truncate text-sm font-medium text-white">{user?.email}</p>
+              {isDemo && <p className="text-[11px] font-semibold uppercase text-sidebar-primary">Mode démo</p>}
             </div>
             <Button
               variant="ghost"
               size="icon"
               type="button"
               onClick={() => signOut()}
-              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+              className="h-8 w-8 shrink-0 text-sidebar-foreground hover:bg-white/10 hover:text-white"
               title="Déconnexion"
             >
               <LogOut className="h-4 w-4" />

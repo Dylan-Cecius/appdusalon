@@ -9,35 +9,39 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Modern clean light theme */
-    --background: 210 40% 98%;        /* #F8FAFC */
-    --foreground: 222 47% 11%;        /* #0F172A */
+    --background: 255 50% 98%;        /* #FAF9FD */
+    --foreground: 250 39% 12%;        /* #17132B */
 
     --card: 0 0% 100%;                /* #FFFFFF */
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 250 39% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 250 39% 12%;
 
-    /* Indigo primary */
-    --primary: 243 75% 59%;           /* #4F46E5 */
+    /* Violet primary */
+    --primary: 246 66% 53%;           /* #4A3AD6 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 252 55% 96%;
+    --secondary-foreground: 250 39% 12%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;  /* #64748B */
+    --muted: 252 55% 96%;
+    --muted-foreground: 250 16% 37%;  /* #55506E */
 
     /* Soft indigo accent (active states) */
-    --accent: 226 100% 97%;           /* #EEF2FF */
-    --accent-foreground: 243 75% 59%; /* #4F46E5 */
+    --accent: 249 57% 95%;            /* #EFEDFA */
+    --accent-foreground: 246 66% 53%; /* #4A3AD6 */
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;            /* #E2E8F0 */
-    --input: 214 32% 91%;
-    --ring: 243 75% 59%;
+    --border: 253 41% 91%;            /* #E4E0F2 */
+    --input: 253 41% 91%;
+    --ring: 246 66% 53%;
+
+    /* Gold accent (logo, highlights on dark surfaces) */
+    --gold: 31 100% 71%;              /* #FFB86B */
+    --ink: 250 39% 12%;               /* #17132B */
 
     --radius: 0.75rem;
 
@@ -45,27 +49,27 @@ All colors MUST be HSL.
     --pos-success: 142 71% 45%;
     --pos-success-foreground: 0 0% 100%;
     --pos-cash: 142 71% 45%;
-    --pos-card: 243 75% 59%;
+    --pos-card: 246 66% 53%;
     --pos-warning: 38 92% 50%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(243 75% 59%), hsl(252 75% 64%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 40% 99%));
+    --gradient-primary: linear-gradient(135deg, hsl(246 66% 53%), hsl(250 66% 60%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(255 50% 99%));
 
     /* Shadows */
-    --shadow-soft: 0 1px 3px hsl(222 47% 11% / 0.06), 0 1px 2px hsl(222 47% 11% / 0.04);
-    --shadow-medium: 0 4px 16px hsl(222 47% 11% / 0.08);
+    --shadow-soft: 0 1px 3px hsl(250 39% 12% / 0.06), 0 1px 2px hsl(250 39% 12% / 0.04);
+    --shadow-medium: 0 4px 16px hsl(250 39% 12% / 0.08);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 16% 47%;
-    --sidebar-primary: 243 75% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 226 100% 97%;
-    --sidebar-accent-foreground: 243 75% 59%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 243 75% 59%;
+    --sidebar-background: 250 39% 12%;   /* #17132B */
+    --sidebar-foreground: 249 30% 83%;   /* #C9C5E0 */
+    --sidebar-primary: 31 100% 71%;      /* #FFB86B */
+    --sidebar-primary-foreground: 250 39% 12%;
+    --sidebar-accent: 31 100% 71%;
+    --sidebar-accent-foreground: 250 39% 12%;
+    --sidebar-border: 250 32% 29%;       /* #3A3260 */
+    --sidebar-ring: 31 100% 71%;
   }
 
   .dark {
@@ -113,11 +117,16 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     /* Laisser le navigateur gérer le touch/scroll (plus fiable sur iOS/Capacitor) */
     touch-action: pan-x pan-y;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Bricolage Grotesque', Inter, system-ui, sans-serif;
+    letter-spacing: -0.01em;
   }
 
   /* Amélioration du tactile sur mobile (sans bloquer certains taps iOS) */
