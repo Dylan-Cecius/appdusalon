@@ -50,7 +50,20 @@ jobs:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
           mkdir -p "$RUNNER_TEMP/keys"
-          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8"
+          # Le secret peut avoir été collé avec des fins de ligne Windows, sans retours
+          # à la ligne ou sans en-têtes : on reconstruit un fichier PEM propre.
+          body=$(printf '%s' "$ASC_KEY_P8" \
+            | sed 's/-----BEGIN PRIVATE KEY-----//g; s/-----END PRIVATE KEY-----//g' \
+            | tr -d ' \t\r\n')
+          if [ "${#body}" -lt 100 ]; then
+            echo "::error::Le secret ASC_KEY_P8 semble incomplet (${#body} caractères utiles). Recollez tout le contenu du fichier .p8."
+            exit 1
+          fi
+          {
+            echo "-----BEGIN PRIVATE KEY-----"
+            printf '%s\n' "$body" | fold -w 64
+            echo "-----END PRIVATE KEY-----"
+          } > "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8"
 
       - name: Archiver l'app
         run: |
