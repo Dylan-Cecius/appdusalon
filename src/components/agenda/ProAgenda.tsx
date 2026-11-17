@@ -64,33 +64,26 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isHal
         isHalfHour && "border-t border-dashed",
         !isHourStart && !isHalfHour && "border-t",
         blocked ? "cursor-not-allowed" : "cursor-pointer",
-        !blocked && "hover:bg-indigo-500/[0.04]",
-        isAbsent && "bg-white/[0.012]",
-        isBreak && !isAbsent && "bg-black/15",
-        isOver && !blocked && "bg-indigo-500/[0.08] ring-1 ring-inset ring-indigo-500/20"
+        !blocked && "hover:bg-primary/[0.06]",
+        isAbsent && "bg-muted",
+        isBreak && !isAbsent && "bg-muted/60",
+        isOver && !blocked && "bg-primary/10 ring-1 ring-inset ring-primary/40"
       )}
       style={{
         height: `${SLOT_HEIGHT}px`,
         borderColor: isHourStart
-          ? 'rgba(255,255,255,0.07)'
+          ? 'hsl(var(--border))'
           : isHalfHour
-            ? 'rgba(255,255,255,0.035)'
+            ? 'hsl(var(--border) / 0.55)'
             : 'transparent',
       }}
       onClick={() => !blocked && onClick()}
     >
-      {isAbsent && isHourStart && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[8px] font-semibold tracking-[0.2em] text-white/8 uppercase select-none">
-            ABSENT
-          </span>
-        </div>
-      )}
       {isAbsent && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.025]"
+          className="absolute inset-0 pointer-events-none opacity-[0.07]"
           style={{
-            backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 8px, white 8px, white 9px)',
+            backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 8px, hsl(var(--ink)) 8px, hsl(var(--ink)) 9px)',
           }}
         />
       )}
@@ -146,7 +139,7 @@ const ProAgenda = () => {
     });
   };
 
-  const accentColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
+  const accentColors = ['#4A3AD6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
 
   // Map each member to a stable accent color for appointment blocks
   const memberColorMap = useMemo(() => {
@@ -298,7 +291,7 @@ const ProAgenda = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="flex flex-col h-full" style={{ backgroundColor: '#0d0d1a' }}>
+      <div className="flex flex-col h-full overflow-hidden rounded-2xl border border-border bg-card">
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -309,20 +302,17 @@ const ProAgenda = () => {
             setIsModalOpen(true);
           }}
         />
-        <div className="flex gap-1.5 px-3 py-2.5 overflow-x-auto" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex gap-2 px-3 py-2.5 overflow-x-auto border-b border-border">
           {agendaMembers.map((member, i) => (
             <button
               key={member.id}
               onClick={() => setSelectedBarberId(member.id)}
               className={cn(
-                "px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-2",
+                "px-3.5 min-h-[44px] rounded-xl text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 border",
                 selectedBarberId === member.id
-                  ? "text-white"
-                  : "text-white/40 hover:text-white/60"
+                  ? "border-ink bg-ink text-white"
+                  : "border-border bg-card text-foreground hover:bg-muted"
               )}
-              style={{
-                backgroundColor: selectedBarberId === member.id ? '#2a2a3e' : 'transparent',
-              }}
             >
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
@@ -344,23 +334,23 @@ const ProAgenda = () => {
               return (
                 <div
                   key={apt.id}
-                  className="flex items-center gap-3 p-3 rounded-xl active:scale-[0.98] transition-transform"
-                  style={{ backgroundColor: '#2a2a3e', borderLeft: `3px solid ${color}` }}
+                  className="flex items-center gap-3 p-3 rounded-xl text-foreground active:scale-[0.98] transition-transform"
+                  style={{ backgroundColor: `color-mix(in srgb, ${color} 16%, white)`, borderLeft: `4px solid ${color}` }}
                   onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
                 >
-                  <div className="text-sm font-mono font-medium text-white/40 w-12 shrink-0">
+                  <div className="text-sm font-semibold tabular-nums w-12 shrink-0">
                     {format(st, 'HH:mm')}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-white truncate">{apt.clientName}</div>
-                    <div className="text-xs text-white/40 truncate">{apt.services?.[0]?.name}</div>
+                    <div className="font-semibold text-sm truncate">{apt.clientName}</div>
+                    <div className="text-xs text-foreground/75 truncate">{apt.services?.[0]?.name}</div>
                   </div>
-                  <div className="text-sm font-semibold text-white/70 shrink-0">{apt.totalPrice}€</div>
+                  <div className="text-sm font-semibold shrink-0">{apt.totalPrice} €</div>
                 </div>
               );
             })}
           {(appointmentsByMember[selectedBarberId] || []).length === 0 && (
-            <div className="text-center text-white/30 text-sm py-12">Aucun rendez-vous</div>
+            <div className="text-center text-muted-foreground text-sm py-12">Aucun rendez-vous</div>
           )}
         </div>
         <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
@@ -384,7 +374,7 @@ const ProAgenda = () => {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#0d0d1a' }}>
+      <div className="flex flex-col h-full overflow-hidden rounded-2xl border border-border bg-card">
         <AgendaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -401,17 +391,15 @@ const ProAgenda = () => {
         <div className="flex flex-1 overflow-hidden">
           {/* Staff filter sidebar */}
           <div
-            className="shrink-0 flex flex-col border-r overflow-y-auto transition-all duration-300 ease-out"
+            className="shrink-0 flex flex-col border-r border-border bg-background overflow-y-auto transition-all duration-300 ease-out"
             style={{
               width: sidebarOpen ? `${SIDEBAR_WIDTH}px` : '0px',
               opacity: sidebarOpen ? 1 : 0,
-              backgroundColor: '#111120',
-              borderColor: 'rgba(255,255,255,0.06)',
               overflow: sidebarOpen ? 'auto' : 'hidden',
             }}
           >
-            <div className="px-3 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-              <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">Équipe</span>
+            <div className="px-3 pt-4 pb-2">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Équipe</span>
             </div>
             {agendaMembers.map((member, i) => {
               const isVisible = visibleMemberIds.has(member.id);
@@ -426,16 +414,16 @@ const ProAgenda = () => {
                   className={cn(
                     "flex items-center gap-2.5 px-3 py-2.5 text-left w-full transition-all duration-200",
                     isVisible
-                      ? "hover:bg-white/[0.04]"
-                      : "opacity-35 hover:opacity-55"
+                      ? "hover:bg-muted"
+                      : "opacity-60 hover:opacity-80"
                   )}
+                  aria-pressed={isVisible}
                 >
                   <div className="relative shrink-0">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-200"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white transition-colors duration-200"
                       style={{
-                        backgroundColor: isVisible ? memberColor : 'rgba(255,255,255,0.1)',
-                        boxShadow: isVisible ? `0 2px 8px ${memberColor}40` : 'none',
+                        backgroundColor: isVisible ? memberColor : 'hsl(var(--muted-foreground))',
                       }}
                     >
                       {getInitials(member.name)}
@@ -443,7 +431,7 @@ const ProAgenda = () => {
                     <div
                       className={cn(
                         "absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200",
-                        isVisible ? "bg-emerald-500 border-emerald-400" : "bg-transparent border-white/15"
+                        isVisible ? "bg-emerald-600 border-background" : "bg-background border-border"
                       )}
                     >
                       {isVisible && (
@@ -454,16 +442,16 @@ const ProAgenda = () => {
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className={cn("text-xs font-medium block truncate", isVisible ? "text-white/75" : "text-white/35")}>
+                    <span className="text-sm font-medium block truncate text-foreground">
                       {member.name}
                     </span>
-                    <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex items-center gap-1.5">
                       {!worksToday ? (
-                        <span className="text-[9px] text-red-400/50 font-medium">Absent</span>
+                        <span className="text-[11px] text-red-700 font-medium">Absent</span>
                       ) : aptCount > 0 ? (
-                        <span className="text-[9px] text-white/25">{aptCount} RDV</span>
+                        <span className="text-[11px] text-muted-foreground">{aptCount} RDV</span>
                       ) : (
-                        <span className="text-[9px] text-white/15">Libre</span>
+                        <span className="text-[11px] text-muted-foreground">Libre</span>
                       )}
                     </div>
                   </div>
@@ -476,12 +464,8 @@ const ProAgenda = () => {
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
             {/* Staff column headers */}
             <div
-              className="flex shrink-0"
-              style={{
-                paddingLeft: `${TIME_COL_WIDTH}px`,
-                background: 'linear-gradient(180deg, #14142a 0%, #121225 100%)',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
+              className="flex shrink-0 border-b border-border bg-card"
+              style={{ paddingLeft: `${TIME_COL_WIDTH}px` }}
             >
               {filteredMembers.map((member, i) => {
                 const dayName = jsWeekDayMap[getDay(selectedDate)];
@@ -494,28 +478,29 @@ const ProAgenda = () => {
                     className="flex-1 px-3 py-3"
                     style={{
                       minWidth: `${colMinWidth}px`,
-                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined,
+                      borderLeft: '1px solid hsl(var(--border))',
                     }}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 transition-all duration-200"
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 transition-colors duration-200"
                         style={{
-                          backgroundColor: worksToday ? memberColor : 'rgba(255,255,255,0.08)',
-                          boxShadow: worksToday ? `0 2px 10px ${memberColor}35` : 'none',
+                          backgroundColor: worksToday ? memberColor : 'hsl(var(--muted-foreground))',
                         }}
                       >
                         {getInitials(member.name)}
                       </div>
                       <div className="min-w-0">
-                        <span className={cn("text-sm font-semibold block truncate", worksToday ? "text-white/90" : "text-white/25")}>
+                        <span className={cn("text-[15px] font-semibold block truncate", worksToday ? "text-foreground" : "text-muted-foreground")}>
                           {member.name}
                         </span>
                         {!worksToday ? (
-                          <span className="text-[10px] text-red-400/40 font-medium">Absent</span>
+                          <span className="text-xs text-red-700 font-medium">Absent</span>
                         ) : aptCount > 0 ? (
-                          <span className="text-[10px] text-white/25">{aptCount} rendez-vous</span>
-                        ) : null}
+                          <span className="text-xs text-muted-foreground">{aptCount} rendez-vous</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Libre</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -528,35 +513,24 @@ const ProAgenda = () => {
               <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
                 {/* Time column */}
                 <div
-                  className="sticky left-0 z-10 shrink-0"
-                  style={{
-                    width: `${TIME_COL_WIDTH}px`,
-                    backgroundColor: '#0d0d1a',
-                    borderRight: '1px solid rgba(255,255,255,0.05)',
-                  }}
+                  className="sticky left-0 z-10 shrink-0 bg-card"
+                  style={{ width: `${TIME_COL_WIDTH}px` }}
                 >
                   {timeLabels.map(({ hour, minute, label, isBreak }, idx) => (
                     <div
                       key={idx}
                       className={cn(
-                        "flex items-start justify-end pr-3 pt-[-2px]",
-                        isBreak && "opacity-30"
+                        "flex items-start justify-end pr-3",
+                        isBreak && "opacity-60"
                       )}
-                      style={{
-                        height: `${SLOT_HEIGHT}px`,
-                        borderTop: minute === 0
-                          ? '1px solid rgba(255,255,255,0.06)'
-                          : minute === 30
-                            ? '1px dashed rgba(255,255,255,0.03)'
-                            : '1px solid transparent',
-                      }}
+                      style={{ height: `${SLOT_HEIGHT}px` }}
                     >
                       {label && (
                         <span className={cn(
-                          "leading-none -mt-1.5 font-mono",
+                          "leading-none -mt-1.5 tabular-nums bg-card",
                           minute === 0
-                            ? "text-[11px] text-white/35 font-medium"
-                            : "text-[10px] text-white/18"
+                            ? "text-xs text-foreground font-semibold"
+                            : "text-[11px] text-muted-foreground"
                         )}>
                           {label}
                         </span>
@@ -572,8 +546,7 @@ const ProAgenda = () => {
                     className="flex-1 relative"
                     style={{
                       minWidth: `${colMinWidth}px`,
-                      backgroundColor: '#16162a',
-                      borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.04)' : undefined,
+                      borderLeft: '1px solid hsl(var(--border))',
                     }}
                   >
                     {timeLabels.map(({ hour, minute, isBreak }, idx) => {

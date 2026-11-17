@@ -43,14 +43,14 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
         width: 220,
         minHeight: '44px',
         height: `${cardHeight}px`,
-        opacity: 0.95,
+        opacity: 0.97,
       }
     : {
         top: `${topPx}px`,
         minHeight: '44px',
         height: `${cardHeight}px`,
         transform: CSS.Translate.toString(transform),
-        opacity: isDragging ? 0.2 : 1,
+        opacity: isDragging ? 0.25 : 1,
       };
 
   const card = (
@@ -59,22 +59,19 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       {...listeners}
       {...attributes}
       className={cn(
-        "rounded-lg cursor-grab overflow-hidden group",
-        "transition-all duration-200 ease-out",
-        !isDragOverlay && "absolute left-1 right-1",
-        isDragOverlay && "shadow-2xl ring-1 ring-white/10",
+        "rounded-xl cursor-grab overflow-hidden text-foreground",
+        "transition-shadow duration-150",
+        !isDragOverlay && "absolute left-1.5 right-1.5",
+        isDragOverlay && "shadow-xl",
         isDragging && "z-50",
-        "hover:z-20 hover:shadow-lg",
+        "hover:z-20 hover:shadow-md",
         "active:cursor-grabbing"
       )}
       style={{
         ...style,
-        background: `linear-gradient(135deg, ${color}18 0%, ${color}10 100%)`,
-        borderLeft: `3px solid ${color}`,
-        backdropFilter: 'blur(8px)',
-        border: `1px solid ${color}25`,
-        borderLeftWidth: '3px',
-        borderLeftColor: color,
+        // Teinte claire de la couleur du coiffeur / service, lisible avec du texte foncé
+        backgroundColor: `color-mix(in srgb, ${color} 16%, white)`,
+        borderLeft: `4px solid ${color}`,
       }}
       onClick={(e) => {
         if (isDragging) return;
@@ -83,37 +80,40 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       }}
     >
       <div className={cn(
-        "px-2.5 h-full flex flex-col overflow-hidden",
+        "px-3 h-full flex flex-col overflow-hidden",
         isShort ? "justify-center py-1" : "justify-start py-2"
       )}>
         {isShort ? (
-          <div className="flex items-center gap-1.5 text-[11px] leading-normal font-medium min-w-0">
-            <span className="font-semibold text-white truncate flex-1 min-w-0">{appointment.clientName}</span>
-            <span className="text-white/35 shrink-0 text-[10px] font-mono">{format(startTime, 'HH:mm')}</span>
+          <div className="flex items-center gap-2 text-[13px] leading-normal min-w-0">
+            <span className="font-semibold shrink-0 tabular-nums">{format(startTime, 'HH:mm')}</span>
+            <span className="font-medium truncate flex-1 min-w-0">{appointment.clientName}</span>
+            {!appointment.isPaid && (
+              <span className="w-2 h-2 rounded-full bg-destructive shrink-0" aria-label="Non payé" />
+            )}
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-1">
-              <span className="text-[13px] font-semibold text-white truncate leading-normal min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold truncate leading-normal min-w-0 flex-1">
                 {appointment.clientName}
               </span>
-              {!appointment.isPaid && (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 animate-pulse" />
+              {!appointment.isPaid && !isTall && (
+                <span className="w-2 h-2 rounded-full bg-destructive shrink-0" aria-label="Non payé" />
               )}
             </div>
-            <div className="text-[11px] leading-normal mt-0.5 text-white/45 truncate min-w-0">
+            <div className="text-xs leading-normal text-foreground/75 truncate min-w-0">
               {serviceName}
             </div>
             {heightPx >= 60 && (
-              <div className="text-[10px] text-white/30 leading-snug mt-1 font-mono tracking-wide">
+              <div className="text-xs text-foreground/75 leading-snug mt-0.5 tabular-nums">
                 {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
               </div>
             )}
             {isTall && (
-              <div className="flex items-center gap-1.5 mt-auto pt-1">
-                <span className="text-[11px] font-semibold text-white/60">{appointment.totalPrice}€</span>
+              <div className="flex items-center gap-2 mt-auto pt-1">
+                <span className="text-xs font-semibold">{appointment.totalPrice} €</span>
                 {!appointment.isPaid && (
-                  <span className="text-[9px] font-medium text-red-400/80 bg-red-400/10 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-red-800 bg-red-100 px-2 py-0.5 rounded-full">
                     Non payé
                   </span>
                 )}
@@ -122,14 +122,6 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
           </>
         )}
       </div>
-
-      {/* Hover glow effect */}
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-lg"
-        style={{
-          background: `linear-gradient(135deg, ${color}10 0%, transparent 60%)`,
-        }}
-      />
     </div>
   );
 
@@ -138,18 +130,14 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
   return (
     <Tooltip>
       <TooltipTrigger asChild>{card}</TooltipTrigger>
-      <TooltipContent
-        side="right"
-        className="max-w-[220px] border-white/10"
-        style={{ backgroundColor: '#1e1e35', borderColor: 'rgba(255,255,255,0.1)' }}
-      >
-        <div className="space-y-1.5">
-          <div className="font-bold text-white">{appointment.clientName}</div>
-          <div className="text-xs text-white/50">{serviceName}</div>
-          <div className="text-xs text-white/70 font-mono">{format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}</div>
-          <div className="text-xs font-semibold text-white/80">{appointment.totalPrice}€</div>
-          {appointment.notes && <div className="text-xs italic text-white/40">{appointment.notes}</div>}
-          {!appointment.isPaid && <div className="text-xs font-bold text-red-400">Non payé</div>}
+      <TooltipContent side="right" className="max-w-[240px] bg-ink text-white border-ink">
+        <div className="space-y-1">
+          <div className="font-semibold">{appointment.clientName}</div>
+          <div className="text-xs text-white/80">{serviceName}</div>
+          <div className="text-xs text-white/80 tabular-nums">{format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}</div>
+          <div className="text-xs font-semibold">{appointment.totalPrice} €</div>
+          {appointment.notes && <div className="text-xs italic text-white/70">{appointment.notes}</div>}
+          {!appointment.isPaid && <div className="text-xs font-semibold text-gold">Non payé</div>}
         </div>
       </TooltipContent>
     </Tooltip>

@@ -27,11 +27,8 @@ const CurrentTimeIndicator = ({ startHour, slotHeight }: CurrentTimeIndicatorPro
       style={{ top: `${topPx}px` }}
     >
       <div className="flex items-center">
-        <div className="relative -ml-1.5">
-          <div className="w-3 h-3 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/50" />
-          <div className="absolute inset-0 w-3 h-3 rounded-full bg-indigo-400 animate-ping opacity-30" />
-        </div>
-        <div className="flex-1 h-[2px] bg-gradient-to-r from-indigo-500 via-indigo-500/60 to-transparent" />
+        <div className="-ml-1.5 w-3 h-3 rounded-full bg-destructive" />
+        <div className="flex-1 h-[2px] bg-destructive" />
       </div>
     </div>
   );
