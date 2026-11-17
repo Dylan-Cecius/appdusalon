@@ -360,7 +360,7 @@ const ProAgenda = () => {
               return (
                 <div
                   key={apt.id}
-                  className="flex items-center gap-3 p-3 rounded-xl text-foreground active:scale-[0.98] transition-transform"
+                  className="flex items-center gap-3 p-3 rounded-none text-foreground active:scale-[0.98] transition-transform"
                   style={{ backgroundColor: `color-mix(in srgb, ${color} 16%, white)`, borderLeft: `4px solid ${color}` }}
                   onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
                 >
@@ -493,7 +493,7 @@ const ProAgenda = () => {
                   {dayServiceLegend.map(({ name, color }) => (
                     <li key={name} className="flex items-center gap-2 text-xs text-foreground">
                       <span
-                        className="h-4 w-4 shrink-0 rounded-md"
+                        className="h-4 w-4 shrink-0 rounded-none"
                         style={{ backgroundColor: `color-mix(in srgb, ${color} 30%, white)`, boxShadow: `inset 0 0 0 1.5px ${color}` }}
                       />
                       <span className="truncate">{name}</span>
