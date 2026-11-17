@@ -1,17 +1,15 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// L'app embarque le site compilé (dossier dist) : pas d'URL distante.
 const config: CapacitorConfig = {
-  appId: 'app.lovable.bc4f1f063375468ea2e9bd0862a8c643',
-  appName: 'coiff-cash-pro',
+  appId: 'com.appdusalon.app',
+  appName: "L'app du salon",
   webDir: 'dist',
-  server: {
-    url: 'https://bc4f1f06-3375-468e-a2e9-bd0862a8c643.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
+  backgroundColor: '#17132B',
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
-      backgroundColor: '#ffffff',
+      launchShowDuration: 1200,
+      backgroundColor: '#17132B',
       showSpinner: false
     }
   }

@@ -13,7 +13,7 @@ import { useSupabaseAppointments } from '@/hooks/useSupabaseAppointments';
 import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { Edit2, Save, X, DollarSign, Calendar, Clock, Trash2, ShieldAlert } from 'lucide-react';
+import { Edit2, Save, X, DollarSign, Calendar, Clock, Trash2, ShieldAlert, Phone, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -37,10 +37,12 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
   const [rgpdConfirmName, setRgpdConfirmName] = useState('');
   const [isRgpdDeleting, setIsRgpdDeleting] = useState(false);
   const [rgpdDialogOpen, setRgpdDialogOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (open && client) {
       setEditedClient(client);
+      setConfirmDelete(false);
       loadStats();
     }
   }, [open, client]);
@@ -115,46 +117,112 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Fiche Client</span>
-            <div className="flex gap-2">
-              {isEditing ? (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                    <X className="h-4 w-4 mr-1" />
-                    Annuler
-                  </Button>
-                  <Button size="sm" onClick={handleSave}>
-                    <Save className="h-4 w-4 mr-1" />
-                    Enregistrer
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
-                    <Edit2 className="h-4 w-4 mr-1" />
-                    Modifier
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={handleDelete}>
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Supprimer
-                  </Button>
-                </>
-              )}
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto max-md:bottom-0 max-md:top-auto max-md:max-h-[92vh] max-md:translate-y-0 max-md:data-[state=open]:slide-in-from-bottom-full max-md:data-[state=closed]:slide-out-to-bottom-full max-md:rounded-t-[28px] max-md:border-0 max-md:p-5 max-md:pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+        <div className="md:flex md:items-start md:justify-between md:gap-4">
+          <DialogHeader className="max-md:sr-only">
+            <DialogTitle>Fiche Client</DialogTitle>
+            <DialogDescription>
+              Informations détaillées et historique
+            </DialogDescription>
+          </DialogHeader>
+          <div className="hidden gap-2 md:mr-6 md:flex">
+            {isEditing ? (
+              <>
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                  <X className="h-4 w-4 mr-1" />
+                  Annuler
+                </Button>
+                <Button size="sm" onClick={handleSave}>
+                  <Save className="h-4 w-4 mr-1" />
+                  Enregistrer
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+                  <Edit2 className="h-4 w-4 mr-1" />
+                  Modifier
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleDelete}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Supprimer
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* En-tête mobile */}
+        <div className="space-y-4 md:hidden">
+          <div className="flex flex-col items-center gap-2 pt-2 text-center">
+            <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-gold text-2xl font-bold text-ink">
+              {client.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
+            </span>
+            <p className="font-display text-[22px] font-bold leading-tight text-foreground">{client.name}</p>
+            <p className="text-sm text-muted-foreground">{client.phone}</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-2xl bg-muted px-2 py-3 text-center">
+              <p className="text-[17px] font-bold text-foreground">{stats.visitCount}</p>
+              <p className="text-xs text-muted-foreground">Visites</p>
             </div>
-          </DialogTitle>
-          <DialogDescription>
-            Informations détaillées et historique
-          </DialogDescription>
-        </DialogHeader>
+            <div className="rounded-2xl bg-muted px-2 py-3 text-center">
+              <p className="text-[17px] font-bold text-foreground">{stats.totalSpent.toFixed(0)} €</p>
+              <p className="text-xs text-muted-foreground">Dépensé</p>
+            </div>
+            <div className="rounded-2xl bg-muted px-2 py-3 text-center">
+              <p className="text-[17px] font-bold text-foreground">
+                {stats.lastVisit ? format(new Date(stats.lastVisit), 'd MMM', { locale: fr }) : 'Jamais'}
+              </p>
+              <p className="text-xs text-muted-foreground">Dernière visite</p>
+            </div>
+          </div>
+
+          {isEditing ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="h-12 rounded-2xl" onClick={() => { setEditedClient(client); setIsEditing(false); }}>
+                <X className="mr-2 h-4 w-4" />
+                Annuler
+              </Button>
+              <Button className="h-12 rounded-2xl" onClick={handleSave}>
+                <Save className="mr-2 h-4 w-4" />
+                Enregistrer
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              <a
+                href={`tel:${client.phone}`}
+                className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-semibold text-foreground active:bg-muted"
+              >
+                <Phone className="h-4 w-4" />
+                Appeler
+              </a>
+              <a
+                href={`sms:${client.phone}`}
+                className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-semibold text-foreground active:bg-muted"
+              >
+                <MessageSquare className="h-4 w-4" />
+                SMS
+              </a>
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-semibold text-foreground active:bg-muted"
+              >
+                <Edit2 className="h-4 w-4" />
+                Modifier
+              </button>
+            </div>
+          )}
+        </div>
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">Informations</TabsTrigger>
-            <TabsTrigger value="stats">Statistiques</TabsTrigger>
-            <TabsTrigger value="history">Historique</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 max-md:h-12 max-md:rounded-2xl md:grid-cols-3">
+            <TabsTrigger value="info" className="max-md:h-10 max-md:rounded-xl">Informations</TabsTrigger>
+            <TabsTrigger value="stats" className="hidden md:inline-flex">Statistiques</TabsTrigger>
+            <TabsTrigger value="history" className="max-md:h-10 max-md:rounded-xl">Historique</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4">
@@ -194,6 +262,16 @@ const ClientDetailModal = ({ client, open, onClose }: ClientDetailModalProps) =>
                   placeholder="Préférences, allergies, remarques..."
                 />
               </div>
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  className="h-12 w-full rounded-2xl text-destructive hover:text-destructive md:hidden"
+                  onClick={() => (confirmDelete ? handleDelete() : setConfirmDelete(true))}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {confirmDelete ? 'Toucher à nouveau pour confirmer' : 'Supprimer le client'}
+                </Button>
+              )}
             </div>
           </TabsContent>
 

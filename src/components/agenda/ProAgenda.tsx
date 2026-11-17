@@ -20,6 +20,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import AppointmentModal from '../AppointmentModal';
 import EditAppointmentModal from '../EditAppointmentModal';
 import AgendaHeader from './AgendaHeader';
+import MobileAgenda from './MobileAgenda';
 import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
@@ -298,71 +299,20 @@ const ProAgenda = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="flex flex-col h-full" style={{ backgroundColor: '#0d0d1a' }}>
-        <AgendaHeader
+      <>
+        <MobileAgenda
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
-          appointmentCount={dayAppointments.length}
-          onAddClick={() => {
+          members={agendaMembers}
+          memberColors={memberColorMap}
+          appointments={dayAppointments}
+          onAdd={(barberId) => {
             setSelectedTimeSlot('');
-            setSelectedBarberId(agendaMembers[0]?.id || '');
+            setSelectedBarberId(barberId || agendaMembers[0]?.id || '');
             setIsModalOpen(true);
           }}
+          onOpen={(apt) => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
         />
-        <div className="flex gap-1.5 px-3 py-2.5 overflow-x-auto" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          {agendaMembers.map((member, i) => (
-            <button
-              key={member.id}
-              onClick={() => setSelectedBarberId(member.id)}
-              className={cn(
-                "px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-2",
-                selectedBarberId === member.id
-                  ? "text-white"
-                  : "text-white/40 hover:text-white/60"
-              )}
-              style={{
-                backgroundColor: selectedBarberId === member.id ? '#2a2a3e' : 'transparent',
-              }}
-            >
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                style={{ backgroundColor: member.color?.startsWith('#') ? member.color : accentColors[i % accentColors.length] }}
-              >
-                {getInitials(member.name)}
-              </div>
-              {member.name.split(' ')[0]}
-            </button>
-          ))}
-        </div>
-        <div className="flex-1 overflow-auto p-3 space-y-1.5">
-          {(appointmentsByMember[selectedBarberId] || [])
-            .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-            .map((apt: any) => {
-              const color = getAppointmentColor(apt.services, apt.barberId);
-              const st = new Date(apt.startTime);
-              const et = new Date(apt.endTime);
-              return (
-                <div
-                  key={apt.id}
-                  className="flex items-center gap-3 p-3 rounded-xl active:scale-[0.98] transition-transform"
-                  style={{ backgroundColor: '#2a2a3e', borderLeft: `3px solid ${color}` }}
-                  onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
-                >
-                  <div className="text-sm font-mono font-medium text-white/40 w-12 shrink-0">
-                    {format(st, 'HH:mm')}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-white truncate">{apt.clientName}</div>
-                    <div className="text-xs text-white/40 truncate">{apt.services?.[0]?.name}</div>
-                  </div>
-                  <div className="text-sm font-semibold text-white/70 shrink-0">{apt.totalPrice}€</div>
-                </div>
-              );
-            })}
-          {(appointmentsByMember[selectedBarberId] || []).length === 0 && (
-            <div className="text-center text-white/30 text-sm py-12">Aucun rendez-vous</div>
-          )}
-        </div>
         <AppointmentModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); refreshAppointments(); }} selectedDate={selectedDate} barberId={selectedBarberId} selectedTimeSlot={selectedTimeSlot} />
         {selectedAppointment && (
           <EditAppointmentModal
@@ -374,7 +324,7 @@ const ProAgenda = () => {
             onPay={(id) => { markAsPaid(id); setIsEditModalOpen(false); setSelectedAppointment(null); }}
           />
         )}
-      </div>
+      </>
     );
   }
 

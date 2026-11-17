@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import MainLayout from '@/components/MainLayout';
 import {
   DollarSign, Users, AlertTriangle, TrendingUp, TrendingDown,
-  ArrowRight, BarChart3, Target, Clock, Calculator
+  ArrowRight, BarChart3, Target, Clock, Calculator, Calendar, CreditCard
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -173,8 +173,42 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="space-y-5 sm:space-y-6">
+        {/* Accueil mobile */}
+        <div className="space-y-4 md:hidden">
+          <div>
+            <p className="text-sm font-medium capitalize text-muted-foreground">{format(now, 'EEEE d MMMM', { locale: fr })}</p>
+            <h1 className="text-[26px] font-bold leading-tight text-foreground">Bonjour</h1>
+          </div>
+          <div className="rounded-3xl bg-ink p-5 text-white">
+            <p className="text-sm text-sidebar-foreground">Chiffre d'affaires du jour</p>
+            <p className="mt-1 font-display text-5xl font-bold tracking-tight text-gold">{stats.todayRevenue.toFixed(0)} €</p>
+            <p className="mt-2 text-sm text-sidebar-foreground">
+              {todayDistinctClients} {todayDistinctClients > 1 ? 'encaissements' : 'encaissement'} aujourd'hui
+            </p>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { to: '/agenda', label: 'Agenda', icon: Calendar },
+              { to: '/pos', label: 'Encaisser', icon: CreditCard },
+              { to: '/clients', label: 'Clients', icon: Users },
+              { to: '/stats', label: 'Stats', icon: BarChart3 },
+            ].map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className="flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card text-xs font-semibold text-foreground active:bg-muted"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                  <Icon className="h-5 w-5" />
+                </span>
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="hidden md:flex md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tableau de bord</h1>
             <p className="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
@@ -203,7 +237,7 @@ const Dashboard = () => {
         {/* 4 KPI Cards */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           {/* CA du jour */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
+          <Card className="hidden md:block border-2 hover:border-accent/50 transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">CA du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-success/10">
@@ -243,7 +277,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Clients encaissés aujourd'hui */}
-          <Card className="border-2 hover:border-accent/50 transition-all">
+          <Card className="hidden md:block border-2 hover:border-accent/50 transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 sm:p-5 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Clients du jour</CardTitle>
               <div className="p-1.5 rounded-lg bg-pos-card/10">

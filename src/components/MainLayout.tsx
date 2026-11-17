@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   ShoppingCart, Calendar, CheckSquare, Settings as SettingsIcon, User, LogOut,
   Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package, Store,
-  TrendingUp, Home, MoreHorizontal,
+  TrendingUp, Home, LayoutGrid, CreditCard, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -54,9 +54,14 @@ const allNavItems = navGroups.flatMap((g) => g.items);
 const bottomNavItems = [
   { path: '/dashboard', label: 'Accueil', icon: Home },
   { path: '/agenda', label: 'Agenda', icon: Calendar },
-  { path: '/pos', label: 'Caisse', icon: Scissors },
+  { path: '/pos', label: 'Caisse', icon: CreditCard },
   { path: '/clients', label: 'Clients', icon: Users },
 ];
+
+const bottomNavPaths = bottomNavItems.map((item) => item.path);
+const moreGroups = navGroups
+  .map((group) => ({ ...group, items: group.items.filter((item) => !bottomNavPaths.includes(item.path)) }))
+  .filter((group) => group.items.length > 0);
 
 const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProps) => {
   const { user, signOut } = useAuth();
@@ -79,6 +84,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   const isActive = (path: string) => location.pathname === path;
   const pageTitle = allNavItems.find((item) => isActive(item.path))?.label || 'Tableau de bord';
   const isDemo = user?.email === 'demo@appdusalon.com';
+  const moreActive = moreGroups.some((group) => group.items.some((item) => isActive(item.path)));
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,9 +149,17 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
       {/* Main column */}
       <div className="md:pl-[220px]">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-sm sm:px-6">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/80 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:px-6">
           <div className="flex items-center gap-3 min-w-0">
-            <h1 className="truncate text-lg font-semibold text-foreground sm:text-xl">{pageTitle}</h1>
+            <h1
+              className={cn(
+                'truncate text-lg font-semibold text-foreground sm:text-xl',
+                // Ces écrans affichent déjà leur propre titre sur mobile
+                ['/', '/dashboard', '/agenda', '/pos', '/clients'].includes(location.pathname) && 'invisible md:visible'
+              )}
+            >
+              {pageTitle}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
             {location.pathname === '/pos' && isMobile && onCartOpen && (
@@ -167,26 +181,38 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         </header>
 
         {/* Page content */}
-        <main className="mx-auto max-w-screen-2xl px-4 py-4 pb-24 sm:px-6 sm:py-6 md:pb-6">
+        <main className="mx-auto max-w-screen-2xl px-4 py-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-6 md:pb-6">
           {children}
         </main>
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 flex items-stretch border-t border-border bg-card md:hidden">
+      <nav
+        aria-label="Navigation principale"
+        className="fixed bottom-0 inset-x-0 z-40 flex items-stretch bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
+          const showBadge = item.path === '/pos' && cartItemsCount > 0;
           return (
             <Link
               key={item.path}
               to={item.path}
+              aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition-colors',
-                active ? 'text-primary' : 'text-muted-foreground'
+                'flex min-h-[62px] flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors',
+                active ? 'text-sidebar-primary' : 'text-sidebar-foreground'
               )}
             >
-              <Icon className="h-5 w-5" />
+              <span className="relative">
+                <Icon className="h-[22px] w-[22px]" />
+                {showBadge && (
+                  <span className="absolute -right-2.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-sidebar-primary px-1 text-[11px] font-bold text-sidebar-primary-foreground">
+                    {cartItemsCount}
+                  </span>
+                )}
+              </span>
               {item.label}
             </Link>
           );
@@ -194,56 +220,74 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
-          className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground"
+          className={cn(
+            'flex min-h-[62px] flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors',
+            moreActive || moreOpen ? 'text-sidebar-primary' : 'text-sidebar-foreground'
+          )}
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <LayoutGrid className="h-[22px] w-[22px]" />
           Plus
         </button>
       </nav>
 
       {/* Mobile "Plus" menu */}
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="right" className="w-72 p-0">
-          <SheetHeader className="border-b border-border p-4">
-            <SheetTitle>Menu</SheetTitle>
+        <SheetContent
+          side="bottom"
+          className="max-h-[88vh] overflow-y-auto rounded-t-3xl border-0 bg-background p-0 pb-[env(safe-area-inset-bottom)]"
+        >
+          <SheetHeader className="px-5 pt-6 pb-2 text-left">
+            <SheetTitle className="font-display text-2xl font-bold">Plus</SheetTitle>
           </SheetHeader>
-          <div className="flex flex-col overflow-y-auto py-2">
-            {navGroups.map((group) => (
-              <div key={group.label} className="py-1">
-                <p className="px-4 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="space-y-5 px-4 pb-6">
+            <div className="flex items-center gap-3 rounded-2xl bg-sidebar p-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sidebar-primary font-semibold text-sidebar-primary-foreground">
+                {user?.email?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">{user?.email}</p>
+                {isDemo && <p className="text-[11px] font-semibold uppercase text-sidebar-primary">Mode démo</p>}
+              </div>
+            </div>
+
+            {moreGroups.map((group) => (
+              <div key={group.label} className="space-y-2">
+                <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {group.label}
                 </p>
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setMoreOpen(false)}
-                      className={cn(
-                        'flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors',
-                        isActive(item.path)
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
+                <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setMoreOpen(false)}
+                        className={cn(
+                          'flex min-h-[56px] items-center gap-3 border-b border-border px-3 text-[15px] font-semibold text-foreground transition-colors last:border-b-0 active:bg-muted',
+                          isActive(item.path) && 'bg-accent'
+                        )}
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                          <Icon className="h-[18px] w-[18px]" />
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        <ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             ))}
-            <div className="border-t border-border mt-1 p-2">
-              <Button
-                variant="ghost"
-                onClick={() => signOut()}
-                className="w-full justify-start gap-3 text-destructive hover:text-destructive"
-              >
-                <LogOut className="h-4 w-4" />
-                Déconnexion
-              </Button>
-            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => signOut()}
+              className="h-12 w-full justify-center gap-2 rounded-2xl text-destructive hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+              Déconnexion
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
