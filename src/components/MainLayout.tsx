@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import logoImg from '@/assets/logo-dore.png';
+import InstallAppButton from '@/components/InstallAppButton';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -279,6 +280,8 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 </div>
               </div>
             ))}
+
+            <InstallAppButton className="h-12 rounded-2xl" />
 
             <Button
               variant="outline"

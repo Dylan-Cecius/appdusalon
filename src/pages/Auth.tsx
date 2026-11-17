@@ -9,6 +9,7 @@ import logoImg from '@/assets/logo-dore.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import InstallAppButton from '@/components/InstallAppButton';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -75,6 +76,10 @@ const Auth = () => {
     };
     checkUser();
   }, [navigate]);
+
+  // Connexion Google / Apple masquée : ces fournisseurs ne sont pas activés dans
+  // Supabase (Authentication > Providers). Repasser à true une fois configurés.
+  const SOCIAL_LOGIN_ENABLED = false;
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     setLoading(true);
@@ -483,7 +488,11 @@ const Auth = () => {
           </form>
         )}
 
-        {!isForgotPassword && !mfaRequired && (
+        {isLogin && !isForgotPassword && !mfaRequired && (
+          <InstallAppButton className="mt-3 border-transparent text-muted-foreground hover:text-foreground" />
+        )}
+
+        {SOCIAL_LOGIN_ENABLED && !isForgotPassword && !mfaRequired && (
           <>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
