@@ -22,8 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci --legacy-peer-deps --no-audit --no-fund
+      # Le package-lock n'est pas synchronisé avec package.json : npm ci échouerait
+      - run: npm install --legacy-peer-deps --no-audit --no-fund
       - run: npx vite build
       # Application monopage : toute adresse inconnue renvoie l'application
       - run: cp dist/index.html dist/404.html
