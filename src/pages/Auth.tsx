@@ -76,6 +76,10 @@ const Auth = () => {
     checkUser();
   }, [navigate]);
 
+  // Connexion Google / Apple masquée : ces fournisseurs ne sont pas activés dans
+  // Supabase (Authentication > Providers). Repasser à true une fois configurés.
+  const SOCIAL_LOGIN_ENABLED = false;
+
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     setLoading(true);
     try {
@@ -478,7 +482,7 @@ const Auth = () => {
           </form>
         )}
 
-        {!isForgotPassword && !mfaRequired && (
+        {SOCIAL_LOGIN_ENABLED && !isForgotPassword && !mfaRequired && (
           <>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
