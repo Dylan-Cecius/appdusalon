@@ -134,6 +134,14 @@ All colors MUST be HSL.
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Rangées défilantes sans barre visible (puces mobiles) */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Éviter le zoom sur les inputs sur mobile iOS */
   input, select, textarea {
     font-size: 16px;

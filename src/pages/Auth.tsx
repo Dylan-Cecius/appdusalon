@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
 import logoImg from '@/assets/logo-dore.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -282,7 +282,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
+    <div className="min-h-screen bg-card lg:bg-background lg:grid lg:grid-cols-2">
       <aside className="hidden lg:flex flex-col justify-between gap-12 bg-sidebar text-white p-12 xl:p-16">
         <img src={logoImg} alt="L'app du salon" className="h-16 w-auto self-start" />
         <div className="max-w-lg space-y-5">
@@ -297,14 +297,18 @@ const Auth = () => {
         <div aria-hidden="true" />
       </aside>
       <div className="flex min-h-screen flex-col lg:min-h-0">
-      <div className="lg:hidden bg-sidebar px-6 pt-10 pb-8 text-white">
-        <img src={logoImg} alt="L'app du salon" className="h-12 w-auto mb-6" />
-        <p className="font-display text-3xl font-bold leading-tight tracking-tight">
-          Votre salon, <span className="text-gold">bien en main.</span>
+      <div className="lg:hidden bg-sidebar px-6 pb-16 pt-[calc(env(safe-area-inset-top)+2.5rem)] text-white">
+        <img src={logoImg} alt="L'app du salon" className="h-14 w-auto mb-7" />
+        <p className="font-display text-4xl font-bold leading-[1.05] tracking-tight">
+          Votre salon,<br />
+          <span className="text-gold">bien en main.</span>
+        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-sidebar-foreground">
+          Rendez-vous, encaissements et statistiques, réunis au même endroit.
         </p>
       </div>
-      <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
-      <Card className="w-full max-w-md p-6 sm:p-8 shadow-medium">
+      <div className="flex flex-1 lg:items-center lg:justify-center lg:p-6">
+      <Card className="-mt-7 w-full rounded-b-none rounded-t-[28px] border-0 px-6 pt-8 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] shadow-none sm:px-8 lg:mt-0 lg:max-w-md lg:rounded-xl lg:border lg:p-8 lg:shadow-medium">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           {mfaRequired ? (
             <div className="p-3 bg-accent rounded-lg mb-4">
@@ -472,7 +476,8 @@ const Auth = () => {
                 disabled={loading}
                 onClick={handleDemoLogin}
               >
-                ✨ Essayer la démo gratuite
+                <Sparkles className="mr-2 h-4 w-4" />
+                Essayer la démo gratuite
               </Button>
             )}
           </form>
@@ -485,7 +490,7 @@ const Auth = () => {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-card px-2 text-muted-foreground">
                   Ou continuer avec
                 </span>
               </div>
