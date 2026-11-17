@@ -24,8 +24,26 @@ import AppointmentCard from './AppointmentCard';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 import { toast } from '@/hooks/use-toast';
 
-const SLOT_HEIGHT = 48;
+// Hauteur d'un créneau de 15 min : calculée pour que toute la journée tienne à l'écran
+const DEFAULT_SLOT_HEIGHT = 48;
+const MIN_SLOT_HEIGHT = 10;
+// Marge au-dessus de la grille pour que le libellé de la première heure ne soit pas coupé
+const GRID_TOP_GAP = 10;
 const TIME_COL_WIDTH = 64;
+// Teintes des services (accent). Le fond pastel des cartes en est dérivé.
+const SERVICE_PALETTE = [
+  '#7A6AE6', // lavande
+  '#F0974A', // pêche
+  '#3BA776', // menthe
+  '#E0689A', // rose
+  '#4A97D9', // ciel
+  '#D9B11E', // citron
+  '#B565CF', // lilas
+  '#E36D5B', // corail
+  '#7BA04A', // sauge
+  '#2FA3A3', // turquoise
+];
+const NEUTRAL_SERVICE_COLOR = '#8A86A3';
 const SIDEBAR_WIDTH = 180;
 
 const jsWeekDayMap: Record<number, string> = {
@@ -48,7 +66,8 @@ const getInitials = (name: string) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isHalfHour, isAbsent, onClick }: {
+const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isHalfHour, isAbsent, slotHeight, onClick }: {
+  slotHeight: number;
   id: string; barberId: string; hour: number; minute: number; isBreak: boolean; isHourStart: boolean; isHalfHour: boolean; isAbsent: boolean;
   onClick: () => void;
 }) => {
@@ -70,7 +89,7 @@ const DroppableSlot = ({ id, barberId, hour, minute, isBreak, isHourStart, isHal
         isOver && !blocked && "bg-primary/10 ring-1 ring-inset ring-primary/40"
       )}
       style={{
-        height: `${SLOT_HEIGHT}px`,
+        height: `${slotHeight}px`,
         borderColor: isHourStart
           ? 'hsl(var(--border))'
           : isHalfHour
@@ -150,31 +169,20 @@ const ProAgenda = () => {
     return map;
   }, [agendaMembers]);
 
-  const categoryColors: Record<string, string> = {
-    coupe: '#34d399', coloration: '#a78bfa', couleur: '#a78bfa',
-    barbe: '#60a5fa', soin: '#f472b6', combo: '#fb923c',
-    produit: '#94a3b8', general: '#94a3b8',
-  };
-
+  // Un code couleur par service : chaque service reçoit une teinte de la palette,
+  // dans l'ordre de la liste des services. Les cartes l'affichent en version pastel.
   const serviceColorMap = useMemo(() => {
     const map: Record<string, string> = {};
-    dbServices.forEach(s => {
-      map[s.name.toLowerCase()] = s.color || categoryColors[s.category] || '#94a3b8';
+    dbServices.forEach((s, i) => {
+      map[s.name.toLowerCase()] = SERVICE_PALETTE[i % SERVICE_PALETTE.length];
     });
     return map;
   }, [dbServices]);
 
-  const getAppointmentColor = useCallback((services: any[], barberId?: string): string => {
-    // Use barber color if available
-    if (barberId && memberColorMap[barberId]) return memberColorMap[barberId];
-    if (!services || services.length === 0) return '#6366f1';
-    const svc = services[0];
-    const name = (svc?.name || '').toLowerCase();
-    if (serviceColorMap[name]) return serviceColorMap[name];
-    const cat = (svc?.category || '').toLowerCase();
-    if (categoryColors[cat]) return categoryColors[cat];
-    return '#6366f1';
-  }, [serviceColorMap, memberColorMap]);
+  const getAppointmentColor = useCallback((services: any[], _barberId?: string): string => {
+    const name = (services?.[0]?.name || '').toLowerCase();
+    return serviceColorMap[name] || NEUTRAL_SERVICE_COLOR;
+  }, [serviceColorMap]);
 
   const { timeLabels, startHour } = useMemo(() => {
     const sched = getScheduleForDate(selectedDate);
@@ -208,18 +216,36 @@ const ProAgenda = () => {
 
   const totalSlots = timeLabels.length;
 
+  // Ajuste la hauteur des créneaux à la place disponible : la plage d'ouverture
+  // (réglée dans Paramètres > Horaires) tient à l'écran sans défilement.
+  const [slotHeight, setSlotHeight] = useState(DEFAULT_SLOT_HEIGHT);
   useEffect(() => {
-    if (scrollRef.current) {
-      const now = new Date();
-      const currentSlot = (now.getHours() - startHour) * 4 + Math.floor(now.getMinutes() / 15);
-      const scrollTo = Math.max(0, (currentSlot - 4) * SLOT_HEIGHT);
-      scrollRef.current.scrollTop = scrollTo;
-    }
-  }, [startHour]);
+    const el = scrollRef.current;
+    if (!el || totalSlots === 0) return;
+    const fit = () => {
+      const available = el.clientHeight - GRID_TOP_GAP - 2;
+      if (available <= 0) return;
+      const perSlot = Math.floor((available / totalSlots) * 100) / 100;
+      setSlotHeight(Math.min(DEFAULT_SLOT_HEIGHT, Math.max(MIN_SLOT_HEIGHT, perSlot)));
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [totalSlots, isMobile]);
 
   const dayAppointments = useMemo(() => {
     return appointments.filter(apt => isSameDay(new Date(apt.startTime), selectedDate));
   }, [appointments, selectedDate]);
+
+  const dayServiceLegend = useMemo(() => {
+    const seen = new Map<string, string>();
+    dayAppointments.forEach((apt: any) => {
+      const name = apt.services?.[0]?.name;
+      if (name && !seen.has(name)) seen.set(name, getAppointmentColor(apt.services));
+    });
+    return Array.from(seen, ([name, color]) => ({ name, color }));
+  }, [dayAppointments, getAppointmentColor]);
 
   const appointmentsByMember = useMemo(() => {
     const map: Record<string, any[]> = {};
@@ -458,6 +484,24 @@ const ProAgenda = () => {
                 </button>
               );
             })}
+
+            {/* Légende : couleur de chaque service présent ce jour-là */}
+            {dayServiceLegend.length > 0 && (
+              <div className="mt-2 border-t border-border px-3 pt-4 pb-3">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Services</span>
+                <ul className="mt-2 space-y-1.5">
+                  {dayServiceLegend.map(({ name, color }) => (
+                    <li key={name} className="flex items-center gap-2 text-xs text-foreground">
+                      <span
+                        className="h-4 w-4 shrink-0 rounded-md"
+                        style={{ backgroundColor: `color-mix(in srgb, ${color} 30%, white)`, boxShadow: `inset 0 0 0 1.5px ${color}` }}
+                      />
+                      <span className="truncate">{name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Main agenda area */}
@@ -510,7 +554,7 @@ const ProAgenda = () => {
 
             {/* Scrollable grid */}
             <div ref={scrollRef} className="flex-1 overflow-auto">
-              <div className="flex" style={{ height: `${totalSlots * SLOT_HEIGHT}px` }}>
+              <div className="flex" style={{ height: `${totalSlots * slotHeight}px`, marginTop: `${GRID_TOP_GAP}px` }}>
                 {/* Time column */}
                 <div
                   className="sticky left-0 z-10 shrink-0 bg-card"
@@ -523,9 +567,9 @@ const ProAgenda = () => {
                         "flex items-start justify-end pr-3",
                         isBreak && "opacity-60"
                       )}
-                      style={{ height: `${SLOT_HEIGHT}px` }}
+                      style={{ height: `${slotHeight}px` }}
                     >
-                      {label && (
+                      {label && (minute === 0 || slotHeight >= 14) && (
                         <span className={cn(
                           "leading-none -mt-1.5 tabular-nums bg-card",
                           minute === 0
@@ -562,6 +606,7 @@ const ProAgenda = () => {
                           isHourStart={minute === 0}
                           isHalfHour={minute === 30}
                           isAbsent={absent}
+                          slotHeight={slotHeight}
                           onClick={() => handleSlotClick(member.id, hour, minute)}
                         />
                       );
@@ -571,7 +616,7 @@ const ProAgenda = () => {
                       <AppointmentCard
                         key={apt.id}
                         appointment={apt}
-                        slotHeight={SLOT_HEIGHT}
+                        slotHeight={slotHeight}
                         startHour={startHour}
                         color={getAppointmentColor(apt.services, apt.barberId)}
                         onClick={() => { setSelectedAppointment(apt); setIsEditModalOpen(true); }}
@@ -579,7 +624,7 @@ const ProAgenda = () => {
                     ))}
 
                     {isSameDay(selectedDate, new Date()) && (
-                      <CurrentTimeIndicator startHour={startHour} slotHeight={SLOT_HEIGHT} />
+                      <CurrentTimeIndicator startHour={startHour} slotHeight={slotHeight} />
                     )}
                   </div>
                 ))}
@@ -593,7 +638,7 @@ const ProAgenda = () => {
           {draggedAppointment && (
             <AppointmentCard
               appointment={draggedAppointment}
-              slotHeight={SLOT_HEIGHT}
+              slotHeight={slotHeight}
               startHour={startHour}
               color={getAppointmentColor(draggedAppointment.services, draggedAppointment.barberId)}
               onClick={() => {}}
