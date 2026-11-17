@@ -5,7 +5,7 @@ name: iOS — envoyer sur TestFlight
 #   ASC_KEY_ID      identifiant de la clé API App Store Connect
 #   ASC_ISSUER_ID   Issuer ID de la clé
 #   ASC_KEY_P8      contenu complet du fichier AuthKey_XXXX.p8
-#   APPLE_TEAM_ID   identifiant d'équipe Apple Developer (10 caractères)
+# L'identifiant d'équipe Apple est inscrit dans le projet Xcode (DEVELOPMENT_TEAM).
 on:
   workflow_dispatch:
 
@@ -23,7 +23,6 @@ jobs:
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +30,7 @@ jobs:
         env:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
-          for name in ASC_KEY_ID ASC_ISSUER_ID APPLE_TEAM_ID ASC_KEY_P8; do
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
             if [ -z "${!name}" ]; then echo "::error::Secret manquant : $name"; missing=1; fi
           done
           [ -z "$missing" ]
@@ -65,7 +64,6 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CURRENT_PROJECT_VERSION="${{ github.run_number }}"
 
       - name: Signer et envoyer sur TestFlight
