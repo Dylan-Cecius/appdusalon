@@ -89,17 +89,18 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
         {isShort ? (
           <div className={cn("flex items-center gap-2 leading-none min-w-0", isTiny ? "text-[11px]" : "text-[13px]")}>
             <span className="font-bold shrink-0 tabular-nums" style={{ color: accentText }}>{format(startTime, 'HH:mm')}</span>
-            <span className="font-semibold truncate min-w-0">{appointment.clientName}</span>
-            {!isTiny && serviceName && (
-              <span className="truncate min-w-0 flex-1 text-foreground/70">{serviceName}</span>
+            {/* L'intitulé du service passe en premier et n'est jamais coupé avant le nom du client */}
+            {serviceName && (
+              <span className="font-semibold whitespace-nowrap shrink-0 max-w-[60%] truncate">{serviceName}</span>
             )}
+            <span className="truncate min-w-0 flex-1 text-foreground/75">{appointment.clientName}</span>
             {unpaidDot}
           </div>
         ) : (
           <>
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm font-semibold truncate leading-tight min-w-0 flex-1">
-                {appointment.clientName}
+                {serviceName || appointment.clientName}
               </span>
               {!isTall && unpaidDot}
             </div>
@@ -107,7 +108,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
               <span className="font-bold tabular-nums" style={{ color: accentText }}>
                 {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
               </span>
-              {serviceName && <span className="text-foreground/75"> · {serviceName}</span>}
+              {serviceName && <span className="text-foreground/75"> · {appointment.clientName}</span>}
             </div>
             {isTall && (
               <div className="flex items-center gap-2 mt-auto">
