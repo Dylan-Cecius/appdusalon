@@ -28,6 +28,19 @@ export interface SubscriptionRights {
   canAccessBasicStats: boolean;
 }
 
+// --- Interrupteurs de mise en service des abonnements -----------------------
+// Tant que SUBSCRIPTION_GATING_ENABLED est à false, toutes les fonctions restent
+// ouvertes à tout le monde (comportement actuel du site) : personne n'est bloqué.
+// À passer à true seulement quand Stripe est en mode réel.
+export const SUBSCRIPTION_GATING_ENABLED = false;
+// Tant que SUBSCRIPTIONS_PUBLIC est à false, la page Abonnement n'apparaît dans le
+// menu que pour le propriétaire de l'app et le compte démo (phase de test).
+export const SUBSCRIPTIONS_PUBLIC = false;
+const OWNER_EMAILS = ['dylan.cecius@gmail.com', 'demo@appdusalon.com'];
+
+export const canSeeSubscriptions = (email?: string | null) =>
+  SUBSCRIPTIONS_PUBLIC || (!!email && OWNER_EMAILS.includes(email));
+
 const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
   // Plan Gratuit (0€/mois)
   'none': {
@@ -64,9 +77,9 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     maxServicesPerBarber: -1,
     canAccessAdvancedStats: false,
     canAccessBasicStats: true,
-    canExportReports: false,
+    canExportReports: true,
     canSendEmails: true,
-    canManageInventory: false,
+    canManageInventory: true,
     canAccessCustomerPortal: false,
     canSetCustomPricing: false,
     canAccessMultiSalon: false,
@@ -85,7 +98,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
 
   // Plan Équipe (59€/mois)
   'Equipe': {
-    maxBarbers: 5,
+    maxBarbers: -1, // équipe illimitée
     maxAppointmentsPerMonth: -1,
     maxTransactionsPerMonth: -1,
     maxServicesPerBarber: -1,
@@ -145,9 +158,11 @@ export const useSubscriptionRights = () => {
   const isDemo = user?.email === 'demo@appdusalon.com';
 
   const rights = useMemo((): SubscriptionRights => {
-    // Tout est débloqué gratuitement pour tous les utilisateurs
-    return SUBSCRIPTION_RIGHTS['Lifetime'];
-  }, []);
+    // Verrous désactivés, ou compte démo : tout est ouvert
+    if (!SUBSCRIPTION_GATING_ENABLED || isDemo) return SUBSCRIPTION_RIGHTS['Lifetime'];
+    const tier = subscribed && subscription_tier ? subscription_tier : 'none';
+    return SUBSCRIPTION_RIGHTS[tier] ?? SUBSCRIPTION_RIGHTS['none'];
+  }, [subscribed, subscription_tier, isDemo]);
 
   const canAccess = (feature: keyof SubscriptionRights) => {
     return rights[feature] as boolean;

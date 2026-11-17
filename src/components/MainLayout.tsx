@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   ShoppingCart, Calendar, CheckSquare, Settings as SettingsIcon, User, LogOut,
   Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package, Store,
-  TrendingUp, Home, LayoutGrid, CreditCard, ChevronRight,
+  TrendingUp, Home, LayoutGrid, CreditCard, ChevronRight, Crown,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import logoImg from '@/assets/logo-dore.png';
 import InstallAppButton from '@/components/InstallAppButton';
+import { canSeeSubscriptions } from '@/hooks/useSubscriptionRights';
+import { toast } from '@/hooks/use-toast';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -85,6 +87,19 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   const isActive = (path: string) => location.pathname === path;
   const pageTitle = allNavItems.find((item) => isActive(item.path))?.label || 'Tableau de bord';
   const isDemo = user?.email === 'demo@appdusalon.com';
+  const showSubscription = canSeeSubscriptions(user?.email);
+
+  // Retour de la page de paiement Stripe (/?subscription=success ou cancelled)
+  useEffect(() => {
+    const result = new URLSearchParams(location.search).get('subscription');
+    if (!result) return;
+    if (result === 'success') {
+      toast({ title: 'Abonnement activé', description: 'Merci ! Votre abonnement est en cours d\'activation.' });
+    } else if (result === 'cancelled') {
+      toast({ title: 'Paiement annulé', description: 'Aucun montant n\'a été débité.' });
+    }
+    navigate('/abonnement', { replace: true });
+  }, [location.search, navigate]);
   const moreActive = moreGroups.some((group) => group.items.some((item) => isActive(item.path)));
 
   return (
@@ -121,6 +136,20 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
               })}
             </div>
           ))}
+          {showSubscription && (
+            <Link
+              to="/abonnement"
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                isActive('/abonnement')
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                  : 'text-sidebar-foreground hover:bg-white/10 hover:text-white'
+              )}
+            >
+              <Crown className="h-4 w-4 shrink-0" />
+              Abonnement
+            </Link>
+          )}
         </nav>
 
         {/* User block */}
@@ -280,6 +309,15 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 </div>
               </div>
             ))}
+
+            {showSubscription && (
+              <Button asChild variant="outline" className="h-12 w-full justify-center gap-2 rounded-2xl">
+                <Link to="/abonnement">
+                  <Crown className="h-4 w-4" />
+                  Abonnement
+                </Link>
+              </Button>
+            )}
 
             <InstallAppButton className="h-12 rounded-2xl" />
 
