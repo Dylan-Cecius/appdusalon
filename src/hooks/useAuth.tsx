@@ -145,10 +145,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        explicitSignOut.current = false;
-        throw error;
+        // La session n'existe plus côté serveur (expirée, ou fermée depuis un autre
+        // appareil) : le serveur refuse la déconnexion, mais il faut quand même
+        // effacer la session gardée dans ce navigateur, sinon on reste connecté.
+        console.warn('[Auth] signOut serveur refusé, déconnexion locale :', error.message);
+        await supabase.auth.signOut({ scope: 'local' });
       }
+    } catch (err) {
+      console.warn('[Auth] signOut error', err);
     } finally {
+      // Filet de sécurité : aucune session ne doit rester dans ce navigateur
+      try {
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith('sb-') && key.endsWith('-auth-token'))
+          .forEach((key) => localStorage.removeItem(key));
+      } catch {
+        // stockage indisponible : rien à effacer
+      }
       window.location.replace('/auth');
     }
   }, []);
