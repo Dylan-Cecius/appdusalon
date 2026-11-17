@@ -155,7 +155,7 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
               className={cn(
                 'truncate text-lg font-semibold text-foreground sm:text-xl',
                 // Ces écrans affichent déjà leur propre titre sur mobile
-                ['/', '/dashboard', '/agenda', '/pos'].includes(location.pathname) && 'invisible md:visible'
+                ['/', '/dashboard', '/agenda', '/pos', '/clients'].includes(location.pathname) && 'invisible md:visible'
               )}
             >
               {pageTitle}
