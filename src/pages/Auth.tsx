@@ -9,6 +9,7 @@ import logoImg from '@/assets/logo-dore.png';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import InstallAppButton from '@/components/InstallAppButton';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -485,6 +486,10 @@ const Auth = () => {
               </Button>
             )}
           </form>
+        )}
+
+        {isLogin && !isForgotPassword && !mfaRequired && (
+          <InstallAppButton className="mt-3 border-transparent text-muted-foreground hover:text-foreground" />
         )}
 
         {SOCIAL_LOGIN_ENABLED && !isForgotPassword && !mfaRequired && (
