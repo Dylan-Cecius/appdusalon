@@ -293,7 +293,7 @@ const Auth = () => {
         <div className="max-w-lg space-y-5">
           <h1 className="font-display text-5xl xl:text-6xl font-bold leading-[1.02] tracking-tight">
             Votre salon,<br />
-            <span className="text-gold">bien en main.</span>
+            <span className="text-gold">à portée de main</span>
           </h1>
           <p className="text-lg leading-relaxed text-sidebar-foreground">
             Rendez-vous, encaissements et statistiques, réunis au même endroit.
@@ -306,7 +306,7 @@ const Auth = () => {
         <img src={logoImg} alt="L'app du salon" className="h-14 w-auto mb-7" />
         <p className="font-display text-4xl font-bold leading-[1.05] tracking-tight">
           Votre salon,<br />
-          <span className="text-gold">bien en main.</span>
+          <span className="text-gold">à portée de main</span>
         </p>
         <p className="mt-3 text-[15px] leading-relaxed text-sidebar-foreground">
           Rendez-vous, encaissements et statistiques, réunis au même endroit.
