@@ -95,7 +95,10 @@ jobs:
           # Archive non signée : la signature de distribution est faite à l'export,
           # ce qui évite d'exiger un profil de développement (et donc un appareil enregistré).
 
-      - name: Signer et envoyer sur TestFlight
+      # Signature et envoi sont séparés : si l'un des deux bloque chez Apple,
+      # on sait lequel, et l'étape s'arrête au bout de 10 minutes au lieu d'attendre.
+      - name: Signer l'app (fichier .ipa)
+        timeout-minutes: 10
         run: |
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
@@ -105,7 +108,17 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          ls -lh "$RUNNER_TEMP/export"
+
+      - name: Envoyer sur TestFlight
+        timeout-minutes: 15
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          cp "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8" ~/.appstoreconnect/private_keys/
+          ipa=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)
+          xcrun altool --upload-app --type ios -f "$ipa" \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
 
       - name: Effacer la clé
         if: always()
-        run: rm -rf "$RUNNER_TEMP/keys"
+        run: rm -rf "$RUNNER_TEMP/keys" ~/.appstoreconnect/private_keys
