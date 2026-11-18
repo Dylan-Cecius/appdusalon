@@ -7,6 +7,7 @@ import type {
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
+const DEFAULT_TOAST_DURATION = 4000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -160,6 +161,13 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  // Fermeture garantie : sur écran tactile, le minuteur interne de la notification
+  // se met en pause quand elle apparaît sous le doigt et ne redémarre jamais.
+  const duration = props.duration ?? DEFAULT_TOAST_DURATION
+  if (Number.isFinite(duration)) {
+    setTimeout(dismiss, duration)
+  }
 
   return {
     id: id,
