@@ -24,6 +24,7 @@ import StocksPage from "./pages/StocksPage";
 import ServicesPage from "./pages/ServicesPage";
 import ProduitsPage from "./pages/ProduitsPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import GatedPage from "./components/GatedPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
@@ -62,13 +63,13 @@ const App = () => {
                 <Route path="/pos" element={<AuthGuard><POSPage /></AuthGuard>} />
                 <Route path="/clients" element={<AuthGuard><ClientsPage /></AuthGuard>} />
                 <Route path="/equipe" element={<AuthGuard><StaffPage /></AuthGuard>} />
-                <Route path="/sms" element={<AuthGuard><SMSPage /></AuthGuard>} />
-                <Route path="/stocks" element={<AuthGuard><StocksPage /></AuthGuard>} />
+                <Route path="/sms" element={<AuthGuard><GatedPage feature="canSendEmails" title="SMS et rappels" plan="Solo"><SMSPage /></GatedPage></AuthGuard>} />
+                <Route path="/stocks" element={<AuthGuard><GatedPage feature="canManageInventory" title="Stocks" plan="Solo"><StocksPage /></GatedPage></AuthGuard>} />
                 <Route path="/services" element={<AuthGuard><ServicesPage /></AuthGuard>} />
-                <Route path="/produits" element={<AuthGuard><ProduitsPage /></AuthGuard>} />
+                <Route path="/produits" element={<AuthGuard><GatedPage feature="canManageInventory" title="Produits" plan="Solo"><ProduitsPage /></GatedPage></AuthGuard>} />
                 <Route path="/agenda" element={<AuthGuard><AgendaPage /></AuthGuard>} />
                 <Route path="/todo" element={<AuthGuard><TodoPage /></AuthGuard>} />
-                <Route path="/ca-total" element={<AuthGuard><CATotalPage /></AuthGuard>} />
+                <Route path="/ca-total" element={<AuthGuard><GatedPage feature="canAccessAdvancedStats" title="CA total et statistiques avancées" plan="Équipe"><CATotalPage /></GatedPage></AuthGuard>} />
                 <Route path="/abonnement" element={<AuthGuard><SubscriptionPage /></AuthGuard>} />
                 <Route path="/abonnements" element={<Navigate to="/abonnement" replace />} />
                 
@@ -87,9 +88,11 @@ const App = () => {
                   path="/rapports" 
                   element={
                     <AuthGuard>
-                      <ProtectedRoute section="reports">
-                        <ReportsPage />
-                      </ProtectedRoute>
+                      <GatedPage feature="canUseAutomatedReports" title="Rapports automatiques" plan="Équipe">
+                        <ProtectedRoute section="reports">
+                          <ReportsPage />
+                        </ProtectedRoute>
+                      </GatedPage>
                     </AuthGuard>
                   } 
                 />
