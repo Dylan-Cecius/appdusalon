@@ -85,7 +85,9 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
   }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
-  const pageTitle = allNavItems.find((item) => isActive(item.path))?.label || 'Tableau de bord';
+  const pageTitle =
+    allNavItems.find((item) => isActive(item.path))?.label ||
+    (isActive('/abonnement') ? 'Abonnement' : 'Tableau de bord');
   const isDemo = user?.email === 'demo@appdusalon.com';
   const showSubscription = canSeeSubscriptions(user?.email);
 

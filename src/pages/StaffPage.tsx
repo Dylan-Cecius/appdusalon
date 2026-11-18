@@ -11,6 +11,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useStaff, Staff, DailySchedules, ALL_DAYS } from '@/hooks/useStaff';
 import { UserPlus, Edit2, Trash2, Users, Phone, Mail, Percent, Clock } from 'lucide-react';
 import { StaffPerformance } from '@/components/StaffPerformance';
+import { useSubscriptionRights } from '@/hooks/useSubscriptionRights';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 const roleBadgeColor: Record<string, string> = {
   'gérant': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -45,6 +48,21 @@ const dayLabelsShort: Record<string, string> = {
 
 const StaffPage = () => {
   const { staff, activeStaff, isLoading, createStaff, updateStaff, deleteStaff } = useStaff();
+  const { isWithinLimit } = useSubscriptionRights();
+  const navigate = useNavigate();
+
+  // Limite d'équipe liée à la formule (sans effet tant que les verrous sont éteints)
+  const openCreate = () => {
+    if (!isWithinLimit(activeStaff.length, 'maxBarbers')) {
+      toast({
+        title: 'Limite de votre formule atteinte',
+        description: "Passez à la formule Équipe pour ajouter d'autres membres.",
+      });
+      navigate('/abonnement');
+      return;
+    }
+    setIsCreateOpen(true);
+  };
   const [showInactive, setShowInactive] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
@@ -162,7 +180,7 @@ const StaffPage = () => {
               <Switch checked={showInactive} onCheckedChange={setShowInactive} />
               <Label className="text-sm">Voir inactifs</Label>
             </div>
-            <Button onClick={() => setIsCreateOpen(true)}><UserPlus className="h-4 w-4 mr-2" />Ajouter un membre</Button>
+            <Button onClick={openCreate}><UserPlus className="h-4 w-4 mr-2" />Ajouter un membre</Button>
           </div>
         </div>
 

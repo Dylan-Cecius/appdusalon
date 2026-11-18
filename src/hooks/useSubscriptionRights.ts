@@ -26,6 +26,7 @@ export interface SubscriptionRights {
   canAccessOnlineBooking: boolean;
   canAccessTargetedMarketing: boolean;
   canAccessBasicStats: boolean;
+  canUseAutomatedReports: boolean;
 }
 
 // --- Interrupteurs de mise en service des abonnements -----------------------
@@ -67,6 +68,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessFullClientNotes: false,
     canAccessOnlineBooking: false,
     canAccessTargetedMarketing: false,
+    canUseAutomatedReports: false,
   },
 
   // Plan Solo (19€/mois)
@@ -94,6 +96,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessFullClientNotes: true,
     canAccessOnlineBooking: true,
     canAccessTargetedMarketing: false,
+    canUseAutomatedReports: false,
   },
 
   // Plan Équipe (59€/mois)
@@ -121,6 +124,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessFullClientNotes: true,
     canAccessOnlineBooking: true,
     canAccessTargetedMarketing: true,
+    canUseAutomatedReports: true,
   },
 
   // Accès à vie (legacy / promo)
@@ -148,6 +152,7 @@ const SUBSCRIPTION_RIGHTS: Record<string, SubscriptionRights> = {
     canAccessFullClientNotes: true,
     canAccessOnlineBooking: true,
     canAccessTargetedMarketing: true,
+    canUseAutomatedReports: true,
   },
 };
 
