@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   ShoppingCart, Calendar, CheckSquare, Settings as SettingsIcon, User, LogOut,
   Scissors, History, Mail, LayoutDashboard, Users, MessageSquare, Package, Store,
-  TrendingUp, Home, LayoutGrid, CreditCard, ChevronRight, Crown,
+  TrendingUp, Home, LayoutGrid, CreditCard, ChevronRight, Crown, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -42,6 +42,7 @@ const navGroups = [
   {
     label: 'Gestion',
     items: [
+      { path: '/stats', label: 'Stats', icon: BarChart3 },
       { path: '/ca-total', label: 'CA Total', icon: TrendingUp },
       { path: '/equipe', label: 'Équipe', icon: Users },
       { path: '/sms', label: 'SMS', icon: MessageSquare },
