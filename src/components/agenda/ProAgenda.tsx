@@ -216,6 +216,21 @@ const ProAgenda = () => {
 
   const totalSlots = timeLabels.length;
 
+  // Horaires du jour pour la grille mobile (minutes depuis minuit)
+  const mobileHours = useMemo(() => {
+    const first = timeLabels[0];
+    const last = timeLabels[timeLabels.length - 1];
+    const breaks = new Set<number>();
+    timeLabels.forEach((slot) => {
+      if (slot.isBreak && slot.minute % 30 === 0) breaks.add(slot.hour * 60 + slot.minute);
+    });
+    return {
+      openMinute: first ? first.hour * 60 : 8 * 60,
+      closeMinute: last ? (last.hour + 1) * 60 : 20 * 60,
+      breakMinutes: breaks,
+    };
+  }, [timeLabels]);
+
   useEffect(() => {
     if (scrollRef.current) {
       const now = new Date();
@@ -306,8 +321,11 @@ const ProAgenda = () => {
           members={agendaMembers}
           memberColors={memberColorMap}
           appointments={dayAppointments}
-          onAdd={(barberId) => {
-            setSelectedTimeSlot('');
+          openMinute={mobileHours.openMinute}
+          closeMinute={mobileHours.closeMinute}
+          breakMinutes={mobileHours.breakMinutes}
+          onAdd={(barberId, time) => {
+            setSelectedTimeSlot(time || '');
             setSelectedBarberId(barberId || agendaMembers[0]?.id || '');
             setIsModalOpen(true);
           }}
