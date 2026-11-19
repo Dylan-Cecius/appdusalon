@@ -1,3 +1,4 @@
+import { appointmentLabel, hasClientName } from '@/lib/appointmentLabel';
 import { memo } from 'react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -33,7 +34,8 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
     disabled: isDragOverlay,
   });
 
-  const serviceName = appointment.services?.[0]?.name || '';
+  // Sans nom de client, le service sert de titre : on ne le répète pas en dessous
+  const serviceName = hasClientName(appointment) ? (appointment.services?.[0]?.name || '') : '';
   const cardHeight = Math.max(heightPx, 44);
   const isShort = cardHeight < 56;
   const isTall = cardHeight >= 75;
@@ -88,14 +90,14 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
       )}>
         {isShort ? (
           <div className="flex items-center gap-1.5 text-[11px] leading-normal font-medium min-w-0">
-            <span className="font-semibold text-white truncate flex-1 min-w-0">{appointment.clientName}</span>
+            <span className="font-semibold text-white truncate flex-1 min-w-0">{appointmentLabel(appointment)}</span>
             <span className="text-white/35 shrink-0 text-[10px] font-mono">{format(startTime, 'HH:mm')}</span>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between gap-1">
               <span className="text-[13px] font-semibold text-white truncate leading-normal min-w-0 flex-1">
-                {appointment.clientName}
+                {appointmentLabel(appointment)}
               </span>
               {!appointment.isPaid && (
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 animate-pulse" />
@@ -144,7 +146,7 @@ const AppointmentCard = memo(({ appointment, slotHeight, startHour, color, onCli
         style={{ backgroundColor: '#1e1e35', borderColor: 'rgba(255,255,255,0.1)' }}
       >
         <div className="space-y-1.5">
-          <div className="font-bold text-white">{appointment.clientName}</div>
+          <div className="font-bold text-white">{appointmentLabel(appointment)}</div>
           <div className="text-xs text-white/50">{serviceName}</div>
           <div className="text-xs text-white/70 font-mono">{format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}</div>
           <div className="text-xs font-semibold text-white/80">{appointment.totalPrice}€</div>

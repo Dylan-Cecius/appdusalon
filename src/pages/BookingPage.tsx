@@ -125,8 +125,9 @@ export default function BookingPage() {
   }, [selectedDate, selectedService, selectedStaff, noPreference, salonId]);
 
   const handleSubmit = async () => {
-    if (!selectedService || !selectedSlot || !firstName.trim() || !lastName.trim() || !phone.trim() || !salonId) {
-      toast.error('Veuillez remplir tous les champs');
+    // Prénom et nom sont facultatifs ; le téléphone reste demandé pour pouvoir joindre le client
+    if (!selectedService || !selectedSlot || !phone.trim() || !salonId) {
+      toast.error('Veuillez indiquer votre numéro de téléphone');
       return;
     }
     setSubmitting(true);
@@ -140,7 +141,9 @@ export default function BookingPage() {
           service: { name: selectedService.name, price: selectedService.price },
           start_time: selectedSlot.start_time,
           end_time: selectedSlot.end_time,
-          client_name: `${firstName.trim()} ${lastName.trim()}`,
+          // Sans nom, on envoie une espace : le serveur exige une valeur non vide,
+          // et l'agenda affiche alors l'intitulé du service à la place.
+          client_name: `${firstName.trim()} ${lastName.trim()}`.trim() || ' ',
           client_phone: phone.trim(),
         }),
       });
@@ -389,11 +392,11 @@ export default function BookingPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Prénom</Label>
+                  <Label htmlFor="firstName">Prénom (facultatif)</Label>
                   <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jean" maxLength={50} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Nom</Label>
+                  <Label htmlFor="lastName">Nom (facultatif)</Label>
                   <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Dupont" maxLength={50} />
                 </div>
               </div>
@@ -403,7 +406,7 @@ export default function BookingPage() {
               </div>
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || !firstName.trim() || !lastName.trim() || !phone.trim()}
+                disabled={submitting || !phone.trim()}
                 className="w-full"
                 size="lg"
               >

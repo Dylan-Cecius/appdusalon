@@ -28,7 +28,8 @@ serve(async (req) => {
     const { salon_id, staff_id, service, start_time, end_time, client_name, client_phone } = body;
 
     // Validate required fields
-    if (!salon_id || !service || !start_time || !end_time || !client_name || !client_phone) {
+    // Le nom du client est facultatif ; le téléphone reste obligatoire
+    if (!salon_id || !service || !start_time || !end_time || !client_phone) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -36,7 +37,7 @@ serve(async (req) => {
     }
 
     // Validate input lengths
-    if (client_name.length > 100 || client_phone.length > 20) {
+    if ((client_name ?? '').length > 100 || client_phone.length > 20) {
       return new Response(
         JSON.stringify({ error: 'Invalid input length' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

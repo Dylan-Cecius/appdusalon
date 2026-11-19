@@ -1,3 +1,4 @@
+import { appointmentLabel, hasClientName } from '@/lib/appointmentLabel';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { isSameDay, format, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -305,7 +306,7 @@ const ProAgenda = () => {
     try {
       await updateAppointment(apt.id, { startTime: newStart, endTime: newEnd, barberId: newBarberId });
       await refreshAppointments();
-      toast({ title: "RDV déplacé", description: `${apt.clientName} → ${format(newStart, 'HH:mm')}` });
+      toast({ title: "RDV déplacé", description: `${appointmentLabel(apt)} → ${format(newStart, 'HH:mm')}` });
     } catch {
       toast({ title: "Erreur", description: "Impossible de déplacer le rendez-vous", variant: "destructive" });
     }

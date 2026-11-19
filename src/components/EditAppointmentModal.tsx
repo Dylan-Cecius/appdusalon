@@ -49,14 +49,6 @@ const EditAppointmentModal = ({
   if (!appointment) return null;
 
   const handleSave = () => {
-    if (!editedAppointment.clientName?.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Le nom du client est requis",
-        variant: "destructive"
-      });
-      return;
-    }
 
     onUpdate(appointment.id, editedAppointment);
     onClose();
@@ -117,7 +109,7 @@ const EditAppointmentModal = ({
 
       {/* Services */}
       <div>
-        <Label className="text-sm font-medium mb-2 block">Services</Label>
+        <Label className="text-sm font-bold text-foreground mb-2 block">Services</Label>
         <div className="space-y-2">
           {appointment.services.map((service) => (
             <div 
@@ -143,11 +135,11 @@ const EditAppointmentModal = ({
 
       {/* Modifier l'horaire */}
       <div className="space-y-4">
-        <Label className="text-sm font-medium">Modifier l'horaire</Label>
+        <Label className="text-sm font-bold text-foreground">Modifier l'horaire</Label>
         
         <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
           <div>
-            <Label htmlFor="startTime">Heure de début</Label>
+            <Label className="font-bold text-foreground" htmlFor="startTime">Heure de début</Label>
             <Input 
               id="startTime"
               type="time"
@@ -177,7 +169,7 @@ const EditAppointmentModal = ({
           </div>
           
           <div>
-            <Label htmlFor="endTime">Heure de fin</Label>
+            <Label className="font-bold text-foreground" htmlFor="endTime">Heure de fin</Label>
             <Input 
               id="endTime"
               type="time"
@@ -205,7 +197,7 @@ const EditAppointmentModal = ({
       {/* Informations client modifiables */}
       <div className="space-y-4">
         <div>
-          <Label htmlFor="clientName">Nom du client</Label>
+          <Label className="font-bold text-foreground" htmlFor="clientName">Nom du client (facultatif)</Label>
           <Input 
             id="clientName"
             value={editedAppointment.clientName || ''}
@@ -218,7 +210,7 @@ const EditAppointmentModal = ({
         </div>
 
         <div>
-          <Label htmlFor="clientPhone">Téléphone</Label>
+          <Label className="font-bold text-foreground" htmlFor="clientPhone">Téléphone</Label>
           <Input 
             id="clientPhone"
             value={editedAppointment.clientPhone || ''}
@@ -232,7 +224,7 @@ const EditAppointmentModal = ({
         </div>
 
         <div>
-          <Label htmlFor="notes">Notes</Label>
+          <Label className="font-bold text-foreground" htmlFor="notes">Notes</Label>
           <Textarea 
             id="notes"
             value={editedAppointment.notes || ''}
@@ -252,7 +244,7 @@ const EditAppointmentModal = ({
       {/* Paiement */}
       {!appointment.isPaid && (
         <div>
-          <Label className="text-sm font-medium mb-3 block">Encaisser le paiement</Label>
+          <Label className="text-sm font-bold text-foreground mb-3 block">Encaisser le paiement</Label>
           <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
             <Button 
               onClick={() => handlePay('cash')}

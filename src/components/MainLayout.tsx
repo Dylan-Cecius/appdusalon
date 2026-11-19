@@ -200,6 +200,16 @@ const MainLayout = ({ children, cartItemsCount = 0, onCartOpen }: MainLayoutProp
                 <span className="text-xs">{cartItemsCount}</span>
               </Button>
             )}
+            {showSubscription && !isActive('/abonnement') && (
+              <Button
+                size="sm"
+                onClick={() => navigate('/abonnement')}
+                className="flex items-center gap-2 bg-gold font-semibold text-ink hover:bg-gold/85"
+              >
+                <Crown className="h-4 w-4" />
+                S'abonner
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

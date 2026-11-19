@@ -1,3 +1,4 @@
+import { appointmentLabel, hasClientName } from '@/lib/appointmentLabel';
 import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -192,7 +193,7 @@ const AppleCalendar = () => {
                             setIsEditModalOpen(true);
                           }}
                         >
-                          {format(new Date(apt.startTime), 'HH:mm')} - {apt.clientName}
+                          {format(new Date(apt.startTime), 'HH:mm')} - {appointmentLabel(apt)}
                           {serviceName && <div className="text-[9px] opacity-80 mt-0.5">{serviceName}</div>}
                           {!apt.isPaid && <div className="text-[8px] font-bold mt-0.5">NON PAYÉ</div>}
                         </div>
@@ -350,7 +351,7 @@ const AppleCalendar = () => {
                               setIsEditModalOpen(true);
                             }}
                           >
-                            <div className="font-bold truncate">{apt.clientName}</div>
+                            <div className="font-bold truncate">{appointmentLabel(apt)}</div>
                             {serviceName && <div className="text-[9px] opacity-80">{serviceName}</div>}
                             <div className="opacity-90 text-[10px] font-medium">
                               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
@@ -486,7 +487,7 @@ const AppleCalendar = () => {
                           }}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <div className="font-bold text-lg truncate">{apt.clientName}</div>
+                            <div className="font-bold text-lg truncate">{appointmentLabel(apt)}</div>
                             <div className="text-sm font-semibold bg-white/20 px-2 py-0.5 rounded-full">{apt.totalPrice}€</div>
                           </div>
                           {serviceName && <div className="text-sm opacity-90 font-medium mb-1">{serviceName}</div>}

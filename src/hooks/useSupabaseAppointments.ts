@@ -43,7 +43,7 @@ export const useSupabaseAppointments = () => {
 
       const formattedAppointments = data?.map((apt: any) => ({
         id: apt.id,
-        clientName: apt.client_name || 'Client',
+        clientName: (apt.client_name || '').trim(), // vide = nom non renseigné (le service s'affiche à la place)
         clientPhone: apt.client_phone || '',
         services: apt.services as any,
         startTime: new Date(apt.start_time),

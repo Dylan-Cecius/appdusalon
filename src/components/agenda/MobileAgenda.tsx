@@ -1,3 +1,4 @@
+import { appointmentLabel, hasClientName } from '@/lib/appointmentLabel';
 import { useMemo, useState } from 'react';
 import { addDays, addWeeks, format, isSameDay, startOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -283,12 +284,12 @@ const MobileAgenda = ({ selectedDate, onDateChange, members, memberColors, appoi
               >
                 <span className="flex items-center gap-1.5">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                  <span className="truncate text-[13px] font-semibold leading-tight text-foreground">{apt.clientName}</span>
+                  <span className="truncate text-[13px] font-semibold leading-tight text-foreground">{appointmentLabel(apt)}</span>
                 </span>
                 {height >= 46 && (
                   <span className="mt-0.5 block truncate text-[11px] leading-tight text-muted-foreground">
                     {toLabel(start)} – {toLabel(end)}
-                    {services ? ` · ${services}` : ''}
+                    {services && hasClientName(apt) ? ` · ${services}` : ''}
                   </span>
                 )}
                 {height >= 64 && staff && (

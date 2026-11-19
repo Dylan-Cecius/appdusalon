@@ -1,3 +1,4 @@
+import { appointmentLabel, hasClientName } from '@/lib/appointmentLabel';
 import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useCombinedStats } from '@/hooks/useCombinedStats';
@@ -381,7 +382,7 @@ const Dashboard = () => {
                   {upcomingAppointments.map(apt => (
                     <div key={apt.id} className="flex items-center justify-between gap-3 p-3 border rounded-lg hover:bg-accent/30 transition-colors">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{apt.clientName}</p>
+                        <p className="font-medium text-sm truncate">{appointmentLabel(apt)}</p>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(apt.startTime), 'EEE dd MMM • HH:mm', { locale: fr })}
                         </p>

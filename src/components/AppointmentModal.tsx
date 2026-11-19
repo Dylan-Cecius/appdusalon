@@ -88,7 +88,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
     
     // Validation depends on appointment type
     if (appointmentType === 'client') {
-      if (!clientName || !startTime || selectedServices.length === 0) {
+      if (!startTime || selectedServices.length === 0) {
         toast({
           title: "Erreur",
           description: "Veuillez remplir tous les champs obligatoires",
@@ -173,7 +173,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
               </DrawerTitle>
             </DrawerHeader>
             <div className="px-4 pb-4 overflow-y-auto">
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 [&_label]:font-bold [&_label]:text-foreground">
                 {/* Appointment Type Selection */}
                 <div>
                   <Label htmlFor="appointmentType">Type de rendez-vous *</Label>
@@ -198,13 +198,12 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
                 {appointmentType === 'client' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div key="client-name">
-                      <Label htmlFor="clientName">Nom du client *</Label>
+                      <Label htmlFor="clientName">Nom du client (facultatif)</Label>
                       <Input
                         id="clientName"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
                         placeholder="Jean Dupont"
-                        required
                       />
                     </div>
                     <div key="client-phone">
@@ -360,7 +359,7 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
                 Nouveau rendez-vous - {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 [&_label]:font-bold [&_label]:text-foreground">
               {/* Appointment Type Selection */}
               <div>
                 <Label htmlFor="appointmentType">Type de rendez-vous *</Label>
@@ -385,13 +384,12 @@ const AppointmentModal = ({ isOpen, onClose, selectedDate, barberId, selectedTim
               {appointmentType === 'client' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div key="client-name-desktop">
-                    <Label htmlFor="clientNameDesktop">Nom du client *</Label>
+                    <Label htmlFor="clientNameDesktop">Nom du client (facultatif)</Label>
                     <Input
                       id="clientNameDesktop"
                       value={clientName}
                       onChange={(e) => setClientName(e.target.value)}
                       placeholder="Jean Dupont"
-                      required
                     />
                   </div>
                   <div key="client-phone-desktop">
